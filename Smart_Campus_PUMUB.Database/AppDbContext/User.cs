@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Smart_Campus_PUMUB.Database.AppDbContext;
 
 [Table("User")]
-[Index("UserName", Name = "UQ__User__C9F284567185E82E", IsUnique = true)]
+[Index("UserName", Name = "UQ__User__C9F28456D3FE7075", IsUnique = true)]
 public partial class User
 {
     [Key]
@@ -32,12 +32,14 @@ public partial class User
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public string? CreatedBy { get; set; }
+
+    public int? PasswordLength { get; set; }
 
     [Column(TypeName = "datetime")]
     public DateTime? ModifiedDateTime { get; set; }
 
-    public int? ModifiedBy { get; set; }
+    public string? ModifiedBy { get; set; }
 
     public bool? IsDelete { get; set; }
 

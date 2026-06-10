@@ -216,13 +216,13 @@ public partial class StudentRegistration
     public DateTime? CreatedDatetime { get; set; }
 
     [Column("created_by")]
-    public int? CreatedBy { get; set; }
+    public string? CreatedBy { get; set; }
 
     [Column("modified_datetime", TypeName = "datetime")]
     public DateTime? ModifiedDatetime { get; set; }
 
     [Column("modified_by")]
-    public int? ModifiedBy { get; set; }
+    public string? ModifiedBy { get; set; }
 
     [Column("is_delete")]
     public bool? IsDelete { get; set; }

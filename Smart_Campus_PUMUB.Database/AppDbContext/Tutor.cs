@@ -43,12 +43,12 @@ public partial class Tutor
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }
 
-    public int? CreatedBy { get; set; }
+    public string? CreatedBy { get; set; }
 
     [Column(TypeName = "datetime")]
     public DateTime? ModifiedDateTime { get; set; }
 
-    public int? ModifiedBy { get; set; }
+    public string? ModifiedBy { get; set; }
 
     public bool? IsDelete { get; set; }
 
