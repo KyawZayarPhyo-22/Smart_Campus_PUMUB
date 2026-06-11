@@ -56,7 +56,7 @@ public partial class SmartCampusDbContext : DbContext
     {
         modelBuilder.Entity<Activity>(entity =>
         {
-            entity.HasKey(e => e.ActivityId).HasName("PK__Activity__393F5A45A685B627");
+            entity.HasKey(e => e.ActivityId).HasName("PK__Activity__393F5A452A0468C9");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -64,7 +64,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Book>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Book__C223F3B4C3DB5EFF");
+            entity.HasKey(e => e.BookId).HasName("PK__Book__C223F3B4A9366735");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -76,7 +76,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__6DB38D6ED34A75FE");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__6DB38D6EDD2875F1");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -84,7 +84,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Department>(entity =>
         {
-            entity.HasKey(e => e.DepartmentId).HasName("PK__Departme__151675F16DBDE873");
+            entity.HasKey(e => e.DepartmentId).HasName("PK__Departme__151675F14D7DCED4");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -96,7 +96,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Faculty>(entity =>
         {
-            entity.HasKey(e => e.FacultyId).HasName("PK__Faculty__4EFCEAAA0C0A986B");
+            entity.HasKey(e => e.FacultyId).HasName("PK__Faculty__4EFCEAAADECD7578");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -104,7 +104,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<PaymentFee>(entity =>
         {
-            entity.HasKey(e => e.FeesId).HasName("PK__Payment___24E61F7BFFCC4783");
+            entity.HasKey(e => e.FeesId).HasName("PK__Payment___24E61F7BD6034E00");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -113,7 +113,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Position>(entity =>
         {
-            entity.HasKey(e => e.PositionId).HasName("PK__Position__3C3EAE06C8013108");
+            entity.HasKey(e => e.PositionId).HasName("PK__Position__3C3EAE062191C9DE");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -121,7 +121,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<RegistrationPayment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__Registra__DA6C7FC15F953FE7");
+            entity.HasKey(e => e.PaymentId).HasName("PK__Registra__DA6C7FC1C239E7F3");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -136,7 +136,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Role__D80AB4BB62E5A443");
+            entity.HasKey(e => e.RoleId).HasName("PK__Role__D80AB4BB2E4B3432");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -144,7 +144,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<RulesRegulation>(entity =>
         {
-            entity.HasKey(e => e.RuleId).HasName("PK__Rules_Re__70B7089ED89B46A3");
+            entity.HasKey(e => e.RuleId).HasName("PK__Rules_Re__70B7089E77C8C2C5");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -152,7 +152,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Semester>(entity =>
         {
-            entity.HasKey(e => e.SemesterId).HasName("PK__Semester__12459A74446BD557");
+            entity.HasKey(e => e.SemesterId).HasName("PK__Semester__12459A74A033FE51");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -160,7 +160,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Student>(entity =>
         {
-            entity.HasKey(e => e.StudentId).HasName("PK__Student__A2F4E98C877A6A62");
+            entity.HasKey(e => e.StudentId).HasName("PK__Student__A2F4E98C1185513A");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -173,7 +173,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<StudentRegistration>(entity =>
         {
-            entity.HasKey(e => e.RegistrationId).HasName("PK__Student___22A298F63E510D63");
+            entity.HasKey(e => e.RegistrationId).HasName("PK__Student___22A298F6A8464C8B");
 
             entity.Property(e => e.ApplicationDate).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.CreatedDatetime).HasDefaultValueSql("(getdate())");
@@ -186,7 +186,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Subject>(entity =>
         {
-            entity.HasKey(e => e.SubjectId).HasName("PK__Subject__D98F54B6352D1111");
+            entity.HasKey(e => e.SubjectId).HasName("PK__Subject__D98F54B64787BB85");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -198,7 +198,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<Tutor>(entity =>
         {
-            entity.HasKey(e => e.TutorId).HasName("PK__Tutor__95664E0D7A0F3947");
+            entity.HasKey(e => e.TutorId).HasName("PK__Tutor__95664E0D409B1130");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
@@ -218,7 +218,7 @@ public partial class SmartCampusDbContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__User__206D9170D163B2BD");
+            entity.HasKey(e => e.UserId).HasName("PK__User__206D91702B22E388");
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
