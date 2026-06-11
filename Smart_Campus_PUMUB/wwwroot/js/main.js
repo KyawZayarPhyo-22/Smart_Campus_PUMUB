@@ -223,3 +223,4 @@
             if (a.getAttribute('href') === '#' + current) a.classList.add('active');
         });
     });
+

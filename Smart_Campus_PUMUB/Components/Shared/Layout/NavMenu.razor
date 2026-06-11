@@ -1,0 +1,68 @@
+﻿<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="nav-container">
+    <a href="#hero" class="nav-brand">
+      <div class="nav-logo">PU</div>
+      <div class="nav-brand-text">
+        <span>Polytechnic University</span>
+        <span>Maubin · Est. 1999</span>
+      </div>
+    </a>
+    <ul class="nav-links" >
+      <li style="margin-bottom: -1rem;">
+        <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Home</NavLink>
+      </li>
+      <li style="margin-bottom: -1rem;">
+        <NavLink class="nav-link" href="/faculties" Match="NavLinkMatch.Prefix">Faculties</NavLink>
+      </li>
+      <li style="margin-bottom: -1rem;">
+        <NavLink class="nav-link" href="programs">Programs</NavLink>
+      </li>
+      <li style="margin-bottom: -1rem;">
+        <NavLink class="nav-link" href="library">Library</NavLink>
+      </li>
+      <li style="margin-bottom: -1rem;">
+        <NavLink class="nav-link" href="activities">Activities</NavLink>
+      </li>
+      <li style="margin-bottom: -1rem;">
+        <NavLink class="nav-link" href="AI">AI</NavLink>
+      </li>
+      <li style="margin-bottom: -1rem;">
+        <NavLink class="nav-link" href="contact">Contact</NavLink>
+      </li>
+    </ul>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+      <a href="/register" class="btn-apply">Apply Now</a>
+      <div class="hamburger" onclick="toggleMobile()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu @(isMobileMenuOpen ? "open" : "")" id="mobileMenu">
+  <button class="mobile-close" @onclick="ToggleMobile"><i class="fas fa-times"></i></button>
+  <NavLink href="" Match="NavLinkMatch.All" @onclick="ToggleMobile">🏠 Home</NavLink>
+  <NavLink href="faculties" @onclick="ToggleMobile">🏛️ Faculties</NavLink>
+  <NavLink href="programs" @onclick="ToggleMobile">📚 Programs</NavLink>
+  <NavLink href="activities" @onclick="ToggleMobile">📅 Activities</NavLink>
+  <NavLink href="library" @onclick="ToggleMobile">📖 Library</NavLink>
+  <NavLink href="ai" @onclick="ToggleMobile">🤖 AI </NavLink>
+  <NavLink href="contact" @onclick="ToggleMobile">📞 Contact</NavLink>
+  <NavLink href="register" @onclick="ToggleMobile">👤 Register</NavLink>
+
+</div>
+
+@code
+{
+  // Menu ပွင့်နေ/ပိတ်နေ မှတ်ထားမယ့် Variable
+  private bool isMobileMenuOpen = false;
+
+  // Button နှိပ်တိုင်း၊ Link နှိပ်တိုင်း အဖွင့်အပိတ် လုပ်ပေးမယ့် Method
+  private void ToggleMobile()
+  {
+    isMobileMenuOpen = !isMobileMenuOpen;
+  }
+}

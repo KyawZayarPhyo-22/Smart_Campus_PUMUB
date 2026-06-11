@@ -1,0 +1,48 @@
+@page "/ai"
+<!-- AI ASSISTANT -->
+<section id="ai-assistant">
+  <div class="container">
+    <div class="ai-container" >
+      <div data-aos="fade-right">
+        <div class="section-tag"><i class="fas fa-robot"></i> AI-Powered</div>
+        <div class="ai-info">
+          <h2>Meet <span style="color:var(--secondary)">PU Assistant</span></h2>
+          <p>Your 24/7 intelligent university guide. Get instant answers about admissions, programs, scholarships, campus facilities, and more — powered by advanced AI.</p>
+          <div class="ai-features">
+            <div class="ai-feature"><div class="icon"><i class="fas fa-comments"></i></div><div><h4>Smart Responses</h4><p>Understands context and provides accurate university information.</p></div></div>
+            <div class="ai-feature"><div class="icon"><i class="fas fa-clock"></i></div><div><h4>24/7 Available</h4><p>Get help any time, day or night, including weekends.</p></div></div>
+            <div class="ai-feature"><div class="icon"><i class="fas fa-language"></i></div><div><h4>Bilingual</h4><p>Supports both English and Myanmar language queries.</p></div></div>
+            <div class="ai-feature"><div class="icon"><i class="fas fa-bolt"></i></div><div><h4>Instant Answers</h4><p>No waiting — get university information in seconds.</p></div></div>
+          </div>
+        </div>
+      </div>
+      <div data-aos="fade-left">
+        <div class="ai-chat-demo">
+          <div class="ai-chat-header">
+            <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+            <div class="ai-header-info">
+              <h3>PU Maubin AI Assistant</h3>
+              <span>🟢 Online · Powered by AI</span>
+            </div>
+          </div>
+          <div class="ai-messages" id="aiMessages">
+            <div class="ai-msg bot">
+              <div class="msg-bubble">မင်္ဂလာပါ! Hello! I'm the PU Maubin AI Assistant. I can help you with information about our programs, admissions, scholarships, campus life, and more. How can I assist you today? 😊</div>
+              <div class="msg-time">Just now</div>
+            </div>
+          </div>
+          <div class="suggested-qs">
+            <button class="sq-btn" onclick="askQuestion('How can I apply to PU Maubin?')">📝 How to apply?</button>
+            <button class="sq-btn" onclick="askQuestion('What programs are available?')">📚 Programs?</button>
+            <button class="sq-btn" onclick="askQuestion('Are there scholarships available?')">🎓 Scholarships?</button>
+            <button class="sq-btn" onclick="askQuestion('What are the library opening hours?')">📖 Library hours?</button>
+          </div>
+          <div class="ai-input-area">
+            <input class="ai-input" id="aiInput" type="text" placeholder="Ask me anything about PU Maubin..." onkeypress="if(event.key==='Enter')sendAiMsg()">
+            <button class="ai-send" onclick="sendAiMsg()"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
