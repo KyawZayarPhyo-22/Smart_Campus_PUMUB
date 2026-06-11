@@ -36,5 +36,5 @@ public partial class Activity
 
     public string? ModifiedBy { get; set; }
 
-    public bool? IsDelete { get; set; }
+    public bool? IsDelete { get; set; } 
 }

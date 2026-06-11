@@ -21,7 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetActivities()
         {
             var lst = _db.Activities
-                         .Where(x => !x.IsDelete)
+                         .Where(x => x.IsDelete == false)
                          .OrderByDescending(x => x.ActivityId)
                          .ToList();
             return Ok(lst);
@@ -31,7 +31,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpGet("{id}")]
         public IActionResult GetActivity(int id)
         {
-            var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && !x.IsDelete);
+            var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
             if (item is null) return NotFound("သတင်း/လှုပ်ရှားမှုအား ရှာမတွေ့ပါ။");
             return Ok(item);
         }
@@ -78,7 +78,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateActivity(int id, ActivityUpdateRequestModel request)
         {
-            var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && !x.IsDelete);
+            var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
             if (item is null) return NotFound(new ActivityUpdateResponseModel { IsSuccess = false, Message = "Activity not found" });
 
             item.ActivityTitle = request.ActivityTitle;
@@ -107,7 +107,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteActivity(int id)
         {
-            var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && !x.IsDelete);
+            var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
             if (item is null) return NotFound(new ActivityDeleteResponseModel { IsSuccess = false, Message = "သတင်း/လှုပ်ရှားမှုအား ရှာမတွေ့ပါ။" });
 
             // Soft Delete

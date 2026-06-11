@@ -21,7 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetSemesters()
         {
             var lst = _db.Semesters
-                         .Where(x => !x.IsDelete)
+                         .Where(x => x.IsDelete == false)
                          .OrderByDescending(x => x.SemesterId)
                          .ToList();
             return Ok(lst);
@@ -31,7 +31,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpGet("{id}")]
         public IActionResult GetSemester(int id)
         {
-            var item = _db.Semesters.FirstOrDefault(x => x.SemesterId == id && !x.IsDelete);
+            var item = _db.Semesters.FirstOrDefault(x => x.SemesterId == id && x.IsDelete == false);
             if (item is null) return NotFound("Semester ကို ရှာမတွေ့ပါ။");
             return Ok(item);
         }
@@ -41,7 +41,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult CreateSemester(SemesterCreateRequestModel request)
         {
             // Validation: နာမည်တူ စစ်ဆေးခြင်း
-            if (_db.Semesters.Any(x => x.SemesterName == request.SemesterName && !x.IsDelete))
+            if (_db.Semesters.Any(x => x.SemesterName == request.SemesterName && x.IsDelete == false))
             {
                 return BadRequest(new SemesterCreateResponseModel { IsSuccess = false, Message = "Semester အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
             }
@@ -56,11 +56,11 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateSemester(int id, SemesterUpdateRequestModel request)
         {
-            var item = _db.Semesters.FirstOrDefault(x => x.SemesterId == id && !x.IsDelete);
+            var item = _db.Semesters.FirstOrDefault(x => x.SemesterId == id && x.IsDelete == false);
             if (item is null) return NotFound(new SemesterUpdateResponseModel { IsSuccess = false, Message = "Semester ကို ရှာမတွေ့ပါ။" });
 
             // Validation: အခြားနာမည်တူ ရှိမရှိ စစ်ဆေးခြင်း
-            if (_db.Semesters.Any(x => x.SemesterName == request.SemesterName && x.SemesterId != id && !x.IsDelete))
+            if (_db.Semesters.Any(x => x.SemesterName == request.SemesterName && x.SemesterId != id && x.IsDelete == false))
             {
                 return BadRequest(new SemesterUpdateResponseModel { IsSuccess = false, Message = "Semester အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
             }
@@ -80,7 +80,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteSemester(int id)
         {
-            var item = _db.Semesters.FirstOrDefault(x => x.SemesterId == id && !x.IsDelete);
+            var item = _db.Semesters.FirstOrDefault(x => x.SemesterId == id && x.IsDelete == false);
             if (item is null) return NotFound(new SemesterDeleteResponseModel { IsSuccess = false, Message = "Semester ကို ရှာမတွေ့ပါ။" });
 
             // Soft Delete

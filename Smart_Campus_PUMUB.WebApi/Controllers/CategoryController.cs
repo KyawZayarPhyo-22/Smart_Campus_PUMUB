@@ -21,7 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetCategories()
         {
             var lst = _db.Categories
-                         .Where(x => !x.IsDelete)
+                         .Where(x => x.IsDelete == false)
                          .OrderByDescending(x => x.CategoryId)
                          .ToList();
             return Ok(lst);
@@ -31,7 +31,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpGet("{id}")]
         public IActionResult GetCategory(int id)
         {
-            var item = _db.Categories.FirstOrDefault(x => x.CategoryId == id && !x.IsDelete);
+            var item = _db.Categories.FirstOrDefault(x => x.CategoryId == id && x.IsDelete == false);
             if (item is null) return NotFound("Category ကို ရှာမတွေ့ပါ။");
             return Ok(item);
         }
@@ -41,7 +41,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult CreateCategory(CategoryCreateRequestModel request)
         {
             // Validation: Category Name တူနေခြင်း ရှိ/မရှိ စစ်ဆေးခြင်း
-            if (_db.Categories.Any(x => x.CategoryName == request.CategoryName && !x.IsDelete))
+            if (_db.Categories.Any(x => x.CategoryName == request.CategoryName && x.IsDelete == false))
             {
                 return BadRequest(new CategoryCreateResponseModel { IsSuccess = false, Message = "Category အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
             }
@@ -56,11 +56,11 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateCategory(int id, CategoryUpdateRequestModel request)
         {
-            var item = _db.Categories.FirstOrDefault(x => x.CategoryId == id && !x.IsDelete);
+            var item = _db.Categories.FirstOrDefault(x => x.CategoryId == id && x.IsDelete == false);
             if (item is null) return NotFound(new CategoryUpdateResponseModel { IsSuccess = false, Message = "Category ကို ရှာမတွေ့ပါ။" });
 
             // Validation: အခြား Category Name များတွင် တူနေခြင်း ရှိ/မရှိ စစ်ဆေးခြင်း
-            if (_db.Categories.Any(x => x.CategoryName == request.CategoryName && x.CategoryId != id && !x.IsDelete))
+            if (_db.Categories.Any(x => x.CategoryName == request.CategoryName && x.CategoryId != id && x.IsDelete == false))
             {
                 return BadRequest(new CategoryUpdateResponseModel { IsSuccess = false, Message = "Category အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
             }
@@ -80,7 +80,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteCategory(int id)
         {
-            var item = _db.Categories.FirstOrDefault(x => x.CategoryId == id && !x.IsDelete);
+            var item = _db.Categories.FirstOrDefault(x => x.CategoryId == id && x.IsDelete == false);
             if (item is null) return NotFound(new CategoryDeleteResponseModel { IsSuccess = false, Message = "Category ကို ရှာမတွေ့ပါ။" });
 
             // Soft Delete

@@ -21,7 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetFaculties()
         {
             var lst = _db.Faculties
-                         .Where(x => !x.IsDelete) // ဖျက်ထားသည့် data များ မပါဝင်စေရန်
+                         .Where(x => !x.IsDelete == false) // ဖျက်ထားသည့် data များ မပါဝင်စေရန်
                          .OrderByDescending(x => x.FacultyId)
                          .ToList();
             return Ok(lst);
@@ -31,7 +31,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpGet("{id}")]
         public IActionResult GetFaculty(int id)
         {
-            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && !x.IsDelete);
+            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false == false);
             if (item is null) return NotFound("Faculty ကို ရှာမတွေ့ပါ။");
             return Ok(item);
         }
@@ -41,7 +41,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult CreateFaculty(FacultyCreateRequestModel request)
         {
             // Validation: Faculty Name တူနေခြင်း ရှိ/မရှိ စစ်ဆေးခြင်း
-            if (_db.Faculties.Any(x => x.FacultyName == request.FacultyName && !x.IsDelete))
+            if (_db.Faculties.Any(x => x.FacultyName == request.FacultyName && x.IsDelete == false))
             {
                 return BadRequest(new FacultyCreateResponseModel { IsSuccess = false, Message = "Faculty အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
             }
@@ -56,11 +56,11 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpPut("{id}")]
         public IActionResult UpdateFaculty(int id, FacultyUpdateRequestModel request)
         {
-            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && !x.IsDelete);
+            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false);
             if (item is null) return NotFound(new FacultyUpdateResponseModel { IsSuccess = false, Message = "Faculty ကို ရှာမတွေ့ပါ။" });
 
             // Validation: အခြားသော Faculty Name များတွင် တူနေခြင်း ရှိ/မရှိ စစ်ဆေးခြင်း
-            if (_db.Faculties.Any(x => x.FacultyName == request.FacultyName && x.FacultyId != id && !x.IsDelete))
+            if (_db.Faculties.Any(x => x.FacultyName == request.FacultyName && x.FacultyId != id && x.IsDelete == false))
             {
                 return BadRequest(new FacultyUpdateResponseModel { IsSuccess = false, Message = "Faculty အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
             }
@@ -80,7 +80,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteFaculty(int id)
         {
-            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && !x.IsDelete);
+            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false);
             if (item is null) return NotFound(new FacultyDeleteResponseModel { IsSuccess = false, Message = "Faculty ကို ရှာမတွေ့ပါ။" });
 
             // Soft Delete အသုံးပြုခြင်း
