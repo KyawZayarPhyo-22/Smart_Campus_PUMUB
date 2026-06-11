@@ -1,0 +1,113 @@
+@page "/admin/rules"
+@layout AdminLayout
+
+<div class="tab-pane fade show active" id="v-pills-rules">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1">Rules & Regulations Directory</h3>
+    </div>
+
+    <div class="tech-card">
+        <div class="row g-3 mb-4">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search by Rule ID or Title...">
+                </div>
+            </div>
+
+            <div class="col-md-7 text-end">
+                <NavLink href="/admin/rule/create" class="btn btn-primary nav-link d-inline-block text-white">
+                    <span class="sidebar-text"><i class="bi bi-plus-lg me-1"></i> Add Rule</span>
+                </NavLink>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-tech align-middle mb-0" style="color: aliceblue;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Rule Title</th>
+                        <th>Penalty</th>
+                        <th>Created Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td class="fw-semibold">Academic Integrity Policy</td>
+                        <td><span class="badge bg-warning text-dark">Suspension / Expulsion</span></td>
+                        <td>Oct 24, 2023</td>
+                        <td>
+                            <NavLink href="/admin/rule/edit/1" class="btn btn-sm btn-outline-primary me-2">
+                                <i class="bi bi-pencil"></i> Edit
+                            </NavLink>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteRuleModal">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>2</td>
+                        <td class="fw-semibold">Late Assignment Submission</td>
+                        <td><span class="badge bg-secondary">10% Grade Deduction per day</span></td>
+                        <td>Oct 25, 2023</td>
+                        <td>
+                            <NavLink href="/admin/rule/edit/2" class="btn btn-sm btn-outline-primary me-2">
+                                <i class="bi bi-pencil"></i> Edit
+                            </NavLink>
+                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteRuleModal">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteRuleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content tech-card">
+
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-trash-fill" style="font-size:4rem;color:#dc3545;">
+                    </i>
+                </div>
+                <h4 class="fw-bold">
+                    Delete Rule?
+                </h4>
+                <p class="text-muted">
+                    This action cannot be undone.
+                    The rule and its associated details will be permanently removed.
+                </p>
+            </div>
+
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger">
+                    <i class="bi bi-trash me-2"></i>
+                    Yes, Delete
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

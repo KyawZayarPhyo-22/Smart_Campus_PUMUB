@@ -1,0 +1,54 @@
+@page "/admin/fee/create"
+@layout AdminLayout
+
+<div class="tab-pane fade show active" id="addFeeContainer" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content tech-card">
+
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    Add New Payment Fee
+                </h5>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+
+                    <div class="col-12 mb-2">
+                        <label class="form-label text-light">Class Year</label>
+                        <input type="text" class="form-control"
+                            placeholder="Enter Class Year (e.g., First Year, Senior)">
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-light">Monthly Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-light">Status</label>
+                        <select class="form-select">
+                            <option value="Active" selected>Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <NavLink href="/admin/fees" class="nav-link me-3">
+                    <span class="sidebar-text text-muted">Cancel</span>
+                </NavLink>
+
+                <button type="button" class="btn btn-primary">
+                    Create Fee
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

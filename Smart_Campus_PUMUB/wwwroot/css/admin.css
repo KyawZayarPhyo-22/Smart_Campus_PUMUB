@@ -1,193 +1,739 @@
+/* =====================================================================
+   Smart Campus Admin — admin.css
+   Bootstrap 5.1.0 + Custom Dark Theme
+   ===================================================================== */
 
+/* ── Google Font import ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Design Tokens ──────────────────────────────────────────────────── */
 :root {
-    --bg-base: #0f172a;
-    --bg-surface: #1e293b;
-    --accent-cyan: #06b6d4;
-    --border-color: #334155;
+    --sidebar-w:        260px;
+    --sidebar-w-sm:      68px;
+    --topnav-h:          64px;
+
+    --bg-base:          #0d1117;
+    --bg-surface:       #161b22;
+    --bg-surface-2:     #1c2333;
+    --bg-surface-hover: rgba(255,255,255,0.05);
+
+    --accent-cyan:      #22d3ee;
+    --accent-blue:      #3b82f6;
+    --accent-violet:    #8b5cf6;
+    --accent-green:     #10b981;
+    --accent-amber:     #f59e0b;
+    --accent-red:       #ef4444;
+
+    --border:           rgba(255,255,255,0.08);
+    --text-primary:     #f0f6fc;
+    --text-secondary:   #8b949e;
+    --text-muted:       #6e7681;
+
+    --radius-sm:        0.5rem;
+    --radius-md:        0.75rem;
+    --radius-lg:        1rem;
+
+    --shadow-sm:        0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md:        0 4px 16px rgba(0,0,0,0.5);
+    --shadow-lg:        0 10px 40px rgba(0,0,0,0.6);
+
+    --transition:       0.25s ease;
+}
+
+/* ── Global Reset & Base ────────────────────────────────────────────── */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     background-color: var(--bg-base);
-    color: #f8fafc;
+    color: var(--text-primary);
+    font-size: 0.9rem;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
-.dashboard-container {
+/* ── Admin Layout Wrapper ───────────────────────────────────────────── */
+.admin-wrapper {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
 }
 
-.sidebar {
-    width: 280px;
-    background-color: var(--bg-surface);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
+/* Force all text inside admin area to be light-coloured */
+.admin-wrapper *,
+.admin-offcanvas * {
+    color: inherit;
+}
+
+/* ── Desktop Sidebar ────────────────────────────────────────────────── */
+.admin-sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
     flex-shrink: 0;
+    flex-direction: column;
     overflow-y: auto;
-}
-
-.brand-box {
-    height: 80px;
-    display: flex;
-    align-items: center;
-    padding: 0 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    background: linear-gradient(90deg, rgba(6, 182, 212, 0.1) 0%, transparent 100%);
+    overflow-x: hidden;
+    transition: width var(--transition);
     position: sticky;
     top: 0;
-    z-index: 10;
+    align-self: flex-start;
+    max-height: 100vh;
+}
+
+.admin-sidebar.collapsed {
+    width: var(--sidebar-w-sm);
+}
+
+/* ── Sidebar Brand ──────────────────────────────────────────────────── */
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1.25rem;
+    height: var(--topnav-h);
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(34,211,238,0.08) 0%, transparent 70%);
+    flex-shrink: 0;
+    overflow: hidden;
 }
 
 .brand-text {
     font-weight: 800;
-    letter-spacing: 1px;
-    background: -webkit-linear-gradient(45deg, var(--accent-cyan), #3b82f6);
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
 }
 
-.nav-pills .nav-link {
-    color: #94a3b8;
-    border-radius: 0.5rem;
-    margin: 0.2rem 1rem;
-    padding: 0.75rem 1rem;
-    transition: all 0.3s ease;
-    text-align: left;
-    border: none;
+.sidebar-toggle-btn {
     background: transparent;
-    width: calc(100% - 2rem);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all var(--transition);
 }
-
-.nav-pills .nav-link:hover {
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.05);
-    transform: translateX(5px);
-}
-
-.nav-pills .nav-link.active {
-    background-color: rgba(6, 182, 212, 0.15);
+.sidebar-toggle-btn:hover {
+    background: var(--bg-surface-hover);
     color: var(--accent-cyan);
-    border-left: 4px solid var(--accent-cyan);
-    border-radius: 0 0.5rem 0.5rem 0;
-    transform: none;
-}
-
-.main-panel {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
-
-.top-header {
-    height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 2rem;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-base);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.tech-card {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: 1rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    padding: 1.5rem;
-}
-
-.table-tech {
-    --bs-table-bg: transparent;
-    --bs-table-color: #cbd5e1;
-    --bs-table-border-color: var(--border-color);
-}
-
-.table-tech thead th {
-    color: #94a3b8;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.modal-content {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-}
-
-.modal-header {
-    border-bottom: 1px solid var(--border-color);
-}
-
-.modal-footer {
-    border-top: 1px solid var(--border-color);
-}
-
-.form-control,
-.form-select {
-    background-color: var(--bg-base);
-    border: 1px solid var(--border-color);
-    color: #fff;
-}
-
-.form-control:focus,
-.form-select:focus {
-    background-color: var(--bg-base);
-    color: #fff;
     border-color: var(--accent-cyan);
-    box-shadow: 0 0 0 0.25rem rgba(6, 182, 212, 0.25);
 }
 
-.search-icon-bg {
-    background-color: transparent;
-    border-color: var(--border-color);
-    color: #94a3b8;
+/* ── Sidebar Nav ────────────────────────────────────────────────────── */
+.sidebar-nav-wrapper {
+    padding: 0.75rem 0;
+    flex: 1;
 }
 
-/* Sidebar styling */
-#sidebar {
-    width: 280px;
-    transition: width 0.3s ease;
-    /* ဒီနေရာမှာ transition ထည့်ပေးထားပါတယ် */
+.sidebar-section-label {
+    padding: 0.75rem 1.25rem 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    white-space: nowrap;
     overflow: hidden;
 }
 
-#sidebar.collapsed {
-    width: 80px;
-    /* ပိတ်လိုက်ရင် ဒီ size ဖြစ်သွားမယ် */
+.sidebar-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.65rem 1.25rem;
+    margin: 0.1rem 0.625rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition);
+    white-space: nowrap;
+    overflow: hidden;
+    border: 1px solid transparent;
 }
 
-/* စာသားတွေ ပျောက်သွားအောင် */
-#sidebar.collapsed .sidebar-text,
-#sidebar.collapsed small,
-#sidebar.brand-box .text-info,
-#sidebar.collapsed .brand-text {
-    display: none;
-}
-
-
-/* ခလုတ်တွေ အလယ်ရောက်အောင် */
-#sidebar.collapsed .nav-link {
+.sidebar-nav-link i {
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    width: 1.25rem;
     text-align: center;
+    transition: color var(--transition);
 }
 
-/* Sidebar က collapsed ဖြစ်သွားတဲ့အခါ */
-.sidebar.collapsed .sidebar-text {
+.sidebar-nav-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+    border-color: var(--border);
+    text-decoration: none;
+}
+
+.sidebar-nav-link:hover i {
+    color: var(--accent-cyan);
+}
+
+.sidebar-nav-link.active {
+    color: var(--accent-cyan);
+    background: rgba(34,211,238,0.1);
+    border-color: rgba(34,211,238,0.2);
+    font-weight: 600;
+}
+
+.sidebar-nav-link.active i {
+    color: var(--accent-cyan);
+}
+
+/* Collapsed sidebar: hide labels & section headings */
+.admin-sidebar.collapsed .sidebar-label,
+.admin-sidebar.collapsed .sidebar-section-label span {
     display: none !important;
 }
 
-/* Heading (Small tag) တွေကိုပါ ပိတ်ဖို့အတွက် */
-.sidebar.collapsed .sidebar-heading {
-    display: none !important;
+.admin-sidebar.collapsed .sidebar-nav-link {
+    justify-content: center;
+    padding: 0.65rem 0;
+    margin: 0.1rem 0.5rem;
 }
 
-/* Icon တွေကို အလယ်တည့်တည့်ရောက်အောင်လုပ်ဖို့ (Optional) */
-.sidebar.collapsed .bi {
-    margin-right: 0 !important;
+.admin-sidebar.collapsed .sidebar-brand {
+    justify-content: center;
+    padding: 0 0.5rem;
+}
+
+.admin-sidebar.collapsed .sidebar-toggle-btn {
+    margin: 0 auto;
+}
+
+/* ── Mobile Offcanvas Sidebar ───────────────────────────────────────── */
+.admin-offcanvas {
+    background: var(--bg-surface) !important;
+    border-right: 1px solid var(--border) !important;
+    width: var(--sidebar-w) !important;
+}
+
+.admin-offcanvas .sidebar-section-label {
+    padding: 0.75rem 1.25rem 0.25rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+}
+
+/* ── Main Content Area ──────────────────────────────────────────────── */
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Top Navbar ─────────────────────────────────────────────────────── */
+.admin-topnav {
+    height: var(--topnav-h);
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    gap: 0.75rem;
+    z-index: 1020;
+    top: 0;
+}
+
+.navbar-search .input-group-text {
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border);
+    border-right: none;
+}
+
+.navbar-search .form-control {
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border);
+    border-left: none;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+}
+
+.navbar-search .form-control:focus {
+    background: var(--bg-surface-2);
+    color: var(--text-primary);
+    border-color: var(--accent-cyan);
+    box-shadow: none;
+}
+
+.navbar-search .form-control::placeholder {
+    color: var(--text-muted);
+}
+
+/* breadcrumb theming */
+.breadcrumb-item + .breadcrumb-item::before {
+    color: var(--text-muted);
+}
+
+/* ── Page Body ──────────────────────────────────────────────────────── */
+.admin-body {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background-color: var(--bg-base) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Ensure <main> element itself is dark */
+main.admin-body,
+.admin-main main {
+    background-color: var(--bg-base) !important;
+    color: var(--text-primary) !important;
+}
+
+@media (max-width: 575.98px) {
+    .admin-body {
+        padding: 1rem;
+    }
+}
+
+/* ── Stat Cards ─────────────────────────────────────────────────────── */
+.stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--accent-cyan));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.stat-card .stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.stat-card .stat-value {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.stat-card .stat-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card .stat-change {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* ── Tech Card (content panels) ─────────────────────────────────────── */
+.tech-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.tech-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.tech-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────── */
+.table-tech {
+    --bs-table-bg:           transparent;
+    --bs-table-color:        var(--text-primary);
+    --bs-table-border-color: var(--border);
+    --bs-table-striped-bg:   rgba(255,255,255,0.02);
+    --bs-table-hover-bg:     rgba(34,211,238,0.04);
+    font-size: 0.875rem;
+}
+
+.table-tech thead th {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.table-tech tbody td {
+    padding: 0.875rem 1rem;
+    vertical-align: middle;
+    border-color: var(--border);
+}
+
+.table-tech tbody tr {
+    transition: background var(--transition);
+}
+
+/* ── Forms — Full Bootstrap Override ────────────────────────────────── */
+/* Use !important throughout to beat Bootstrap 5.1's default specificity  */
+
+.admin-wrapper .form-control,
+.admin-wrapper .form-select,
+.admin-wrapper textarea.form-control,
+.admin-offcanvas .form-control,
+.admin-offcanvas .form-select {
+    background-color: var(--bg-surface-2) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-sm);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.admin-wrapper .form-control::placeholder,
+.admin-wrapper textarea.form-control::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 1;
+}
+
+.admin-wrapper .form-control:focus,
+.admin-wrapper .form-select:focus,
+.admin-wrapper textarea.form-control:focus {
+    background-color: var(--bg-surface-2) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 3px rgba(34,211,238,0.15) !important;
+}
+
+/* Disabled state */
+.admin-wrapper .form-control:disabled,
+.admin-wrapper .form-control[readonly],
+.admin-wrapper .form-select:disabled {
+    background-color: rgba(255,255,255,0.04) !important;
+    color: var(--text-muted) !important;
+    border-color: var(--border) !important;
+    opacity: 1;
+}
+
+/* Select dropdown options */
+.admin-wrapper .form-select option,
+.admin-wrapper select option {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Autofill override (browser forces yellow bg) */
+.admin-wrapper .form-control:-webkit-autofill,
+.admin-wrapper .form-control:-webkit-autofill:hover,
+.admin-wrapper .form-control:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-surface-2) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    caret-color: var(--text-primary);
+}
+
+/* Input group text (icon prefix/suffix) */
+.admin-wrapper .input-group-text {
+    background-color: var(--bg-surface-2) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Form label */
+.admin-wrapper .form-label {
+    color: var(--text-secondary) !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+}
+
+/* Form text / helper text */
+.admin-wrapper .form-text {
+    color: var(--text-muted) !important;
+}
+
+/* Checkbox & Radio */
+.admin-wrapper .form-check-input {
+    background-color: var(--bg-surface-2) !important;
+    border-color: var(--border) !important;
+}
+
+.admin-wrapper .form-check-input:checked {
+    background-color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+}
+
+.admin-wrapper .form-check-label {
+    color: var(--text-secondary) !important;
+}
+
+/* Search icon input group shorthand */
+.input-group-text.search-icon-bg {
+    background-color: var(--bg-surface-2) !important;
+    border-color: var(--border) !important;
+    border-right: none !important;
+    color: var(--text-muted) !important;
+}
+
+/* ── Modals ─────────────────────────────────────────────────────────── */
+.modal-content {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg);
+    color: var(--text-primary) !important;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border) !important;
+    padding: 1.25rem 1.5rem;
+    background-color: transparent !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border) !important;
+    padding: 1rem 1.5rem;
+    background-color: transparent !important;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-title {
+    color: var(--text-primary) !important;
+}
+
+/* ── Modal Forms — Bootstrap specificity fix ────────────────────────── */
+/* Modals are portalled to <body> so we scope to .modal-content directly  */
+.modal-content .form-control,
+.modal-content .form-select,
+.modal-content textarea,
+.modal-content input[type="text"],
+.modal-content input[type="email"],
+.modal-content input[type="password"],
+.modal-content input[type="number"],
+.modal-content input[type="date"],
+.modal-content input[type="file"],
+.modal-content input[type="search"],
+.modal-content input[type="tel"],
+.modal-content input[type="url"] {
+    background-color: var(--bg-surface-2) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-content .form-control::placeholder,
+.modal-content textarea::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 1;
+}
+
+.modal-content .form-control:focus,
+.modal-content .form-select:focus,
+.modal-content textarea:focus {
+    background-color: var(--bg-surface-2) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 3px rgba(34,211,238,0.15) !important;
+}
+
+.modal-content .input-group-text {
+    background-color: var(--bg-surface-2) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-secondary) !important;
+}
+
+.modal-content .form-select option {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+}
+
+.modal-content .form-label {
+    color: var(--text-secondary) !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-content .form-text {
+    color: var(--text-muted) !important;
+}
+
+.modal-content p,
+.modal-content span,
+.modal-content small,
+.modal-content h5,
+.modal-content h6 {
+    color: inherit;
+}
+
+.modal-content .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+
+
+.btn-close-white {
+    filter: invert(1) grayscale(1) brightness(2);
+}
+
+/* ── Dropdown Menus ─────────────────────────────────────────────────── */
+.dropdown-menu {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    padding: 0.6rem 1.25rem;
+    transition: background var(--transition), color var(--transition);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: rgba(239,68,68,0.1);
+    color: var(--accent-red);
+}
+
+.dropdown-divider {
+    border-color: var(--border);
+}
+
+.dropdown-header {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.5rem 1.25rem;
+}
+
+/* ── Badges ─────────────────────────────────────────────────────────── */
+.badge {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn-cyan {
+    background: var(--accent-cyan);
+    color: #0d1117;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-cyan:hover {
+    background: #06b6d4;
+    color: #0d1117;
+}
+
+/* ── Page Header ─────────────────────────────────────────────────────── */
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.page-header h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.page-header p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0.25rem 0 0;
+}
+
+/* ── Chart containers ────────────────────────────────────────────────── */
+.chart-container {
+    position: relative;
+    height: 260px;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+/* ── Utility: Gradient text ──────────────────────────────────────────── */
+.text-gradient-cyan {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── Responsive tweaks ───────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    /* On <lg screens the desktop sidebar is hidden (d-none d-lg-flex) */
+    .admin-main { width: 100%; }
+}
+
+@media (max-width: 767.98px) {
+    .tech-card { padding: 1rem; }
+    .stat-card  { padding: 1rem; }
+    .stat-card .stat-value { font-size: 1.5rem; }
 }

@@ -1,48 +1,103 @@
-<nav class="sidebar" id="sidebar">
-    <div class="brand-box d-flex align-items-center">
-        <i class="bi bi-cpu fs-3 me-2 text-info"></i>
-        <span class="fs-5 brand-text sidebar-text" style="margin-right: 20px;">P.U. MAUBIN</span>
-        <button class="btn btn-sm btn-outline-secondary" onclick="toggleSidebar()">
-            <i class="bi bi-list"></i>
-        </button>
+<div class="sidebar-nav-wrapper">
+
+    <!-- ── MAIN MENU ──────────────────────────── -->
+    <div class="sidebar-section-label">
+        <span class="sidebar-label">Main Menu</span>
     </div>
 
-    <div class="nav flex-column nav-pills mt-3" id="v-pills-tab" role="tablist">
-        <small class="text-uppercase text-muted fw-bold mb-2 d-block ps-4 sidebar-text" style="font-size: 0.7rem;">Main
-            Menu</small>
+    <NavLink href="/admin/dashboard" class="sidebar-nav-link" Match="NavLinkMatch.All">
+        <i class="bi bi-speedometer2"></i>
+        <span class="sidebar-label">Dashboard</span>
+    </NavLink>
 
-        <NavLink href="/admin/dashboard" class="nav-link">
-            <i class="bi bi-speedometer2 me-3"></i>
-            <span class="sidebar-text">Dashboard</span>
-        </NavLink>
+    <NavLink href="/admin/student" class="sidebar-nav-link">
+        <i class="bi bi-people"></i>
+        <span class="sidebar-label">Student Databank</span>
+    </NavLink>
 
-        <NavLink href="/admin/student" class="nav-link">
-            <i class="bi bi-people me-3"></i>
-            <span class="sidebar-text">Student Databank</span>
-        </NavLink>
+    <NavLink href="/admin/tutors" class="sidebar-nav-link">
+        <i class="bi bi-person-workspace"></i>
+        <span class="sidebar-label">Tutor Directory</span>
+    </NavLink>
 
-        <NavLink href="/admin/tutors" class="nav-link">
-            <i class="bi bi-person-workspace me-3"></i>
-            <span class="sidebar-text">Tutor Directory</span>
-        </NavLink>
+    <NavLink href="/admin/library" class="sidebar-nav-link">
+        <i class="bi bi-book"></i>
+        <span class="sidebar-label">Library System</span>
+    </NavLink>
 
-        <NavLink href="/admin/library" class="nav-link">
-            <i class="bi bi-book me-3"></i>
-            <span class="sidebar-text">Library System</span>
-        </NavLink>
+    <NavLink href="/admin/roles" class="sidebar-nav-link">
+        <i class="bi bi-shield-check"></i>
+        <span class="sidebar-label">Roles</span>
+    </NavLink>
 
-        <small class="text-uppercase text-muted fw-bold mt-4 mb-2 d-block ps-4 sidebar-text" style="font-size: 0.7rem;">
-            Communications
-        </small>
+    <NavLink href="/admin/positions" class="sidebar-nav-link">
+        <i class="bi bi-person-badge"></i>
+        <span class="sidebar-label">Position</span>
+    </NavLink>
 
-        <NavLink href="/admin/events" class="nav-link">
-            <i class="bi bi-calendar-event me-3"></i>
-            <span class="sidebar-text">Activities & Events</span>
-        </NavLink>
+    <NavLink href="/admin/semesters" class="sidebar-nav-link">
+        <i class="bi bi-calendar2-range"></i>
+        <span class="sidebar-label">Semester</span>
+    </NavLink>
 
-        <NavLink href="/admin/alert" class="nav-link">
-            <i class="bi bi-megaphone me-3"></i>
-            <span class="sidebar-text">Important Alerts</span>
-        </NavLink>
+    <NavLink href="/admin/categories" class="sidebar-nav-link">
+        <i class="bi bi-tags"></i>
+        <span class="sidebar-label">Category</span>
+    </NavLink>
+
+    <NavLink href="/admin/departments" class="sidebar-nav-link">
+        <i class="bi bi-diagram-3"></i>
+        <span class="sidebar-label">Department</span>
+    </NavLink>
+
+    <NavLink href="/admin/subjects" class="sidebar-nav-link">
+        <i class="bi bi-journal-bookmark"></i>
+        <span class="sidebar-label">Subject</span>
+    </NavLink>
+
+    <!-- ── COMMUNICATIONS ─────────────────────── -->
+    <div class="sidebar-section-label mt-2">
+        <span class="sidebar-label">Communications</span>
     </div>
-</nav>
+
+    <NavLink href="/admin/events" class="sidebar-nav-link">
+        <i class="bi bi-calendar-event"></i>
+        <span class="sidebar-label">Activities &amp; Events</span>
+    </NavLink>
+
+    <NavLink href="/admin/activities" class="sidebar-nav-link">
+        <i class="bi bi-clipboard-check"></i>
+        <span class="sidebar-label">Activities</span>
+    </NavLink>
+
+    <NavLink href="/admin/alert" class="sidebar-nav-link">
+        <i class="bi bi-megaphone"></i>
+        <span class="sidebar-label">Important Alerts</span>
+    </NavLink>
+
+    <NavLink href="/admin/rules" class="sidebar-nav-link">
+        <i class="bi bi-file-earmark-ruled"></i>
+        <span class="sidebar-label">Rules</span>
+    </NavLink>
+
+    <NavLink href="/admin/fees" class="sidebar-nav-link">
+        <i class="bi bi-cash-coin"></i>
+        <span class="sidebar-label">Payment</span>
+    </NavLink>
+
+    <NavLink href="/admin/books" class="sidebar-nav-link">
+        <i class="bi bi-book-half"></i>
+        <span class="sidebar-label">Books</span>
+    </NavLink>
+
+    <!-- ── SYSTEM ───────────────────────────────────────────────────── -->
+    <div class="sidebar-section-label mt-2">
+        <span class="sidebar-label">System</span>
+    </div>
+
+    <NavLink href="/admin/users" class="sidebar-nav-link">
+        <i class="bi bi-people-fill"></i>
+        <span class="sidebar-label">User Management</span>
+    </NavLink>
+
+</div>
