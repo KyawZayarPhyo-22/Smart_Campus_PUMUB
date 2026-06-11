@@ -2,31 +2,113 @@
 
 <head>
     <link rel="stylesheet" href="css/admin.css" />
-
-    <!-- Bootstrap 5.3 CSS -->
-    @* <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"> *@
+    <!-- Bootstrap 5.1.0 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
+          crossorigin="anonymous">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Highcharts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 </head>
-<div class="dashboard-container">
 
-    <AdminSidebar />
+<!-- Mobile Offcanvas Sidebar -->
+<div class="offcanvas offcanvas-start admin-offcanvas" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+    <div class="offcanvas-header border-bottom border-secondary">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-cpu fs-4 text-info"></i>
+            <span class="fs-5 fw-bold brand-text" id="mobileSidebarLabel">P.U. MAUBIN</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <AdminSidebar />
+    </div>
+</div>
 
-    <div class="main-panel">
+<!-- Main Dashboard Wrapper -->
+<div class="admin-wrapper">
 
+    <!-- Desktop Sidebar -->
+    <nav class="admin-sidebar d-none d-lg-flex flex-column" id="desktopSidebar">
+        <div class="sidebar-brand">
+            <i class="bi bi-cpu fs-3 text-info" id="sidebarBrandIcon" style="cursor:pointer;" title="Toggle Sidebar"></i>
+            <span class="brand-text sidebar-label">P.U. MAUBIN</span>
+            <button class="btn btn-sm sidebar-toggle-btn ms-auto" id="sidebarToggleBtn" title="Toggle Sidebar">
+                <i class="bi bi-layout-sidebar"></i>
+            </button>
+        </div>
+        <AdminSidebar />
+    </nav>
+
+    <!-- Main Content Panel -->
+    <div class="admin-main" id="adminMain">
+
+        <!-- Top Navbar -->
         <AdminNavbar />
 
-        <main class="p-4">
+        <!-- Page Body -->
+        <main class="admin-body">
             @Body
         </main>
 
     </div>
-
 </div>
-<script src="js/admin.js"></script>
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Bootstrap 5.1.0 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+        crossorigin="anonymous"></script>
+<script src="js/admin.js"></script>
+
+<!-- Sidebar toggle wiring — inline so it always runs after DOM is ready,
+     bypassing Blazor's event interception on layout components. -->
+<script>
+    (function () {
+        function wireSidebarToggle() {
+            var btn  = document.getElementById('sidebarToggleBtn');
+            var icon = document.getElementById('sidebarBrandIcon');
+
+            if (!btn) {
+                // Blazor may not have painted the layout yet — retry once
+                setTimeout(wireSidebarToggle, 150);
+                return;
+            }
+
+            function doToggle() {
+                var sidebar = document.getElementById('desktopSidebar');
+                if (!sidebar) return;
+                sidebar.classList.toggle('collapsed');
+                var collapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('adminSidebarCollapsed', collapsed ? '1' : '0');
+            }
+
+            // Remove any old listeners first (safe guard for hot-reload)
+            btn.replaceWith(btn.cloneNode(true));
+            var freshBtn = document.getElementById('sidebarToggleBtn');
+            freshBtn.addEventListener('click', doToggle);
+
+            if (icon) {
+                icon.replaceWith(icon.cloneNode(true));
+                var freshIcon = document.getElementById('sidebarBrandIcon');
+                freshIcon.addEventListener('click', doToggle);
+            }
+
+            // Restore persisted sidebar state
+            var sidebar = document.getElementById('desktopSidebar');
+            if (sidebar && localStorage.getItem('adminSidebarCollapsed') === '1') {
+                sidebar.classList.add('collapsed');
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', wireSidebarToggle);
+        } else {
+            wireSidebarToggle();
+        }
+    })();
+</script>

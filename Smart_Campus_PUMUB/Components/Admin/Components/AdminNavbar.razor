@@ -1,30 +1,145 @@
-<!-- HEADER -->
-<header class="top-header">
+<header class="admin-topnav sticky-top">
     <div class="d-flex align-items-center gap-3">
-        <div class="dropdown">
-            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle"
-                id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="https://ui-avatars.com/api/?name=Admin+Ops&background=06b6d4&color=fff" alt="Admin" width="40"
-                    height="40" class="rounded-circle border border-2 border-info shadow-sm">
-                <div class="ms-2 d-none d-sm-block">
-                    <span class="d-block fw-bold small">Admin Ops</span>
-                    <span class="text-muted" style="font-size: 10px;">SUPER ADMIN</span>
-                </div>
-            </a>
 
-            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" aria-labelledby="profileDropdown"
-                style="width: 200px;">
-                <li>
-                    <h6 class="dropdown-header text-uppercase">Account</h6>
+        <!-- Mobile hamburger — triggers offcanvas sidebar -->
+        <button class="btn btn-link d-lg-none text-white p-0 me-1"
+                type="button"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#mobileSidebar"
+                aria-controls="mobileSidebar"
+                aria-label="Open sidebar">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+
+        <!-- Desktop sidebar toggle (icon only) -->
+        <button class="btn btn-link d-none d-lg-inline-flex text-white p-0 me-1"
+                type="button"
+                onclick="toggleDesktopSidebar()"
+                aria-label="Collapse sidebar">
+            <i class="bi bi-layout-sidebar fs-5"></i>
+        </button>
+
+        <!-- Page title / breadcrumb area -->
+        <div class="d-none d-sm-block">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-info text-decoration-none">Admin</a></li>
+                    <li class="breadcrumb-item active text-light" aria-current="page">Dashboard</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Right side controls -->
+    <div class="d-flex align-items-center gap-2 gap-sm-3 ms-auto">
+
+        <!-- Search (desktop only) -->
+        <div class="d-none d-md-block">
+            <div class="input-group input-group-sm navbar-search">
+                <span class="input-group-text">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" class="form-control" placeholder="Search..." style="width: 180px;" />
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="dropdown">
+            <button class="btn btn-link text-white p-1 position-relative"
+                    id="notifDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Notifications">
+                <i class="bi bi-bell fs-5"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                      style="font-size:0.6rem;">3</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0"
+                aria-labelledby="notifDropdown"
+                style="min-width:300px;">
+                <li class="px-3 py-2 border-bottom">
+                    <h6 class="mb-0 fw-bold text-dark">Notifications</h6>
                 </li>
-                <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i> My Profile</a></li>
-                <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i> Settings</a></li>
                 <li>
-                    <hr class="dropdown-divider">
+                    <a class="dropdown-item py-2" href="#">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-info rounded-pill p-2"><i class="bi bi-person-plus"></i></span>
+                            <div>
+                                <p class="mb-0 small fw-semibold">New student registered</p>
+                                <p class="mb-0 text-muted" style="font-size:0.75rem;">2 mins ago</p>
+                            </div>
+                        </div>
+                    </a>
                 </li>
-                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>
-                        Logout</a></li>
+                <li>
+                    <a class="dropdown-item py-2" href="#">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-warning rounded-pill p-2"><i class="bi bi-book"></i></span>
+                            <div>
+                                <p class="mb-0 small fw-semibold">New book uploaded</p>
+                                <p class="mb-0 text-muted" style="font-size:0.75rem;">1 hour ago</p>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2" href="#">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-danger rounded-pill p-2"><i class="bi bi-megaphone"></i></span>
+                            <div>
+                                <p class="mb-0 small fw-semibold">Alert posted</p>
+                                <p class="mb-0 text-muted" style="font-size:0.75rem;">3 hours ago</p>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                <li class="border-top">
+                    <a class="dropdown-item text-center small text-info py-2" href="#">View all notifications</a>
+                </li>
             </ul>
         </div>
+
+        <!-- Profile Dropdown -->
+        <div class="dropdown">
+            <a href="#"
+               class="d-flex align-items-center text-white text-decoration-none gap-2"
+               id="profileDropdown"
+               data-bs-toggle="dropdown"
+               aria-expanded="false">
+                <img src="https://ui-avatars.com/api/?name=Admin+Ops&background=06b6d4&color=fff"
+                     alt="Admin"
+                     width="36"
+                     height="36"
+                     class="rounded-circle border border-2 border-info" />
+                <div class="d-none d-sm-block lh-1">
+                    <span class="d-block fw-semibold" style="font-size:0.85rem;">Admin Ops</span>
+                    <span class="text-muted" style="font-size:0.7rem;">SUPER ADMIN</span>
+                </div>
+                <i class="bi bi-chevron-down d-none d-sm-inline" style="font-size:0.7rem;"></i>
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2"
+                aria-labelledby="profileDropdown"
+                style="min-width:200px;">
+                <li><h6 class="dropdown-header text-uppercase fw-bold" style="font-size:0.7rem;">Account</h6></li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2" href="#">
+                        <i class="bi bi-person-circle text-info"></i> My Profile
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2" href="#">
+                        <i class="bi bi-gear text-secondary"></i> Settings
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="#">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
     </div>
 </header>

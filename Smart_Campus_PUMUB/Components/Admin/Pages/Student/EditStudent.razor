@@ -1,112 +1,131 @@
-@page "/admin/student/edit"
+@page "/admin/student/edit/{id:int}"
 @layout AdminLayout
-<div class="tab-pane fade show active" id="editStudentModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content tech-card">
 
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">
-                    Edit New Student
-                </h5>
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <NavLink href="/admin/student" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </NavLink>
+        <div>
+            <h3><i class="bi bi-person-gear me-2 text-warning"></i>Edit Student</h3>
+            <p>Update student record and linked user account.</p>
+        </div>
+    </div>
+</div>
 
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
-                </button>
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+        <div class="tech-card">
+
+            <div class="mb-4 pb-3 border-bottom" style="border-color: var(--border) !important;">
+                <!-- Current student summary pill -->
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <img src="https://ui-avatars.com/api/?name=Mg+Mg&background=22d3ee&color=0d1117&size=40"
+                         width="40" height="40" class="rounded-circle" alt="Student" />
+                    <div>
+                        <h5 class="fw-bold mb-0">Mg Mg</h5>
+                        <span class="text-muted small">Student #1 &bull; <code class="text-info">ME-2026-001</code></span>
+                    </div>
+                    <span class="badge bg-success ms-auto">Active</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">Fields marked with <span class="text-danger">*</span> are required.</p>
             </div>
 
-            <div class="modal-body">
+            <div class="row g-3">
 
-                <div class="row">
+                <!-- User_Id FK Dropdown -->
+                <div class="col-12">
+                    <label class="form-label">
+                        User Account <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="">-- Select User Account --</option>
+                        <option value="1">admin.ops — Kyaw Zayar Phyo (Super Admin)</option>
+                        <option value="2">staff.lib — Su Su Myat (Admin)</option>
+                        <option value="3">staff.reg — Myo Min Aung (Staff)</option>
+                        <option value="4" selected>mg.mg — Mg Mg (Staff)</option>
+                        <option value="5">su.su — Su Su (Viewer)</option>
+                    </select>
+                    <div class="form-text">The user account this student is linked to (User_Id FK).</div>
+                </div>
 
-                    <!-- User -->
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            User Account
-                        </label>
-
-                        <select class="form-select">
-                            <option selected disabled>
-                                Select User
-                            </option>
-                            <option>Mg Mg</option>
-                            <option>Aung Aung</option>
-                            <option>Su Su</option>
-                        </select>
+                <!-- Current Roll No -->
+                <div class="col-12 col-sm-6">
+                    <label class="form-label">Roll Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-hash"></i>
+                        </span>
+                        <input type="text"
+                               class="form-control"
+                               value="ME-2026-001"
+                               placeholder="e.g., ME-2026-001"
+                               style="text-transform: uppercase;" />
                     </div>
+                    <div class="form-text">Optional. Max 20 characters.</div>
+                </div>
 
-                    <!-- Roll Number -->
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            Roll Number
-                        </label>
+                <!-- Status -->
+                <div class="col-12 col-sm-6">
+                    <label class="form-label">
+                        Status <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="Active" selected>Active</option>
+                        <option value="Suspended">Suspended</option>
+                        <option value="Graduated">Graduated</option>
+                        <option value="Leave">Leave</option>
+                    </select>
+                </div>
 
-                        <input type="text" class="form-control" placeholder="ME-2026-001">
-                    </div>
+                <!-- Current Class Year -->
+                <div class="col-12 col-sm-6">
+                    <label class="form-label">
+                        Current Class Year <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="">-- Select Year --</option>
+                        <option value="First Year">First Year</option>
+                        <option value="Second Year">Second Year</option>
+                        <option value="Third Year" selected>Third Year</option>
+                        <option value="Fourth Year">Fourth Year</option>
+                        <option value="Fifth Year">Fifth Year</option>
+                    </select>
+                </div>
 
-                    <!-- Class Year -->
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            Current Class Year
-                        </label>
-
-                        <select class="form-select">
-                            <option selected disabled>
-                                Select Year
-                            </option>
-                            <option>First Year</option>
-                            <option>Second Year</option>
-                            <option>Third Year</option>
-                            <option>Fourth Year</option>
-                        </select>
-                    </div>
-
-                    <!-- Major -->
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            Current Major
-                        </label>
-
-                        <select class="form-select">
-                            <option selected disabled>
-                                Select Major
-                            </option>
-                            <option>Mechanical Engineering</option>
-                            <option>Civil Engineering</option>
-                            <option>Electrical Engineering</option>
-                            <option>Information Technology</option>
-                        </select>
-                    </div>
-
-                    <!-- Status -->
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">
-                            Status
-                        </label>
-
-                        <select class="form-select">
-                            <option value="Active">Active</option>
-                            <option value="Suspended">Suspended</option>
-                            <option value="Graduated">Graduated</option>
-                            <option value="Leave">Leave</option>
-                        </select>
-                    </div>
-
+                <!-- Current Major -->
+                <div class="col-12 col-sm-6">
+                    <label class="form-label">
+                        Current Major <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="">-- Select Major --</option>
+                        <option value="Mechanical Engineering" selected>Mechanical Engineering</option>
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Electrical Engineering">Electrical Engineering</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                    </select>
                 </div>
 
             </div>
 
-            <div class="modal-footer">
-
-                <NavLink href="/admin/student" class="nav-link">
-                    <span class="sidebar-text">Cancel</span>
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top" style="border-color: var(--border) !important;">
+                <NavLink href="/admin/student" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
                 </NavLink>
-
-                <button type="button" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Create Student
+                <button type="button" class="btn btn-warning text-dark fw-semibold">
+                    <i class="bi bi-save me-1"></i>Save Changes
                 </button>
-
             </div>
 
         </div>
     </div>
 </div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}
