@@ -1,0 +1,87 @@
+@page "/admin/subject/edit/{id:int}"
+@layout AdminLayout
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <NavLink href="/admin/subjects" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </NavLink>
+        <div>
+            <h3><i class="bi bi-journal-bookmark me-2 text-warning"></i>Edit Subject</h3>
+            <p>Update subject details and semester assignment.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="tech-card">
+
+            <div class="mb-4 pb-3 border-bottom" style="border-color: var(--border) !important;">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-pencil-square me-2 text-warning"></i>Subject Details
+                </h5>
+                <p class="text-muted small mb-0 mt-1">Fields marked with <span class="text-danger">*</span> are required.</p>
+            </div>
+
+            <div class="row g-3">
+
+                <!-- Semester FK Dropdown -->
+                <div class="col-12">
+                    <label class="form-label">
+                        Semester <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="">-- Select Semester --</option>
+                        <option value="1" selected>First Semester 2024</option>
+                        <option value="2">Second Semester 2024</option>
+                        <option value="3">First Semester 2025</option>
+                        <option value="4">Second Semester 2025</option>
+                    </select>
+                    <div class="form-text">Select the semester this subject belongs to.</div>
+                </div>
+
+                <!-- Subject Name -->
+                <div class="col-12">
+                    <label class="form-label">
+                        Subject Name <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           value="Engineering Mathematics I"
+                           placeholder="e.g., Engineering Mathematics I" />
+                    <div class="form-text">Enter the full name of the subject (max 150 characters).</div>
+                </div>
+
+                <!-- Subject Code -->
+                <div class="col-12">
+                    <label class="form-label">
+                        Subject Code <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           value="MATH-101"
+                           placeholder="e.g., MATH-101, CS-205, PHY-101"
+                           style="text-transform: uppercase;" />
+                    <div class="form-text">Enter a unique subject code (max 50 characters). Use uppercase.</div>
+                </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top" style="border-color: var(--border) !important;">
+                <NavLink href="/admin/subjects" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
+                </NavLink>
+                <button type="button" class="btn btn-warning text-dark fw-semibold">
+                    <i class="bi bi-save me-1"></i>Save Changes
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}

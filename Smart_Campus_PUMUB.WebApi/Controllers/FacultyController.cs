@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
 
@@ -21,7 +22,10 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetFaculties()
         {
             var lst = _db.Faculties
-                         .Where(x => !x.IsDelete == false || x.IsDelete == null) 
+                         .Include(x => x.Departments)
+                         .ThenInclude(d => d.Tutors)// Faculty အောက်မှာ Department တွေပါဝင်စေရန်
+                         .ThenInclude(t => t.Position)// Department အောက်မှာ Tutor တွေပါဝင်စေရန်
+                         .Where(x => x.IsDelete == false) // ဖျက်ထားသည့် data များ မပါဝင်စေရန်
                          .OrderByDescending(x => x.FacultyId)
                          .ToList();
             return Ok(lst);
@@ -31,7 +35,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpGet("{id}")]
         public IActionResult GetFaculty(int id)
         {
-            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false == false);
+            var item = _db.Faculties.Include(x => x.Departments)
+                         .ThenInclude(d => d.Tutors)// Faculty အောက်မှာ Department တွေပါဝင်စေရန်
+                         .ThenInclude(t => t.Position).FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false);
             if (item is null) return NotFound("Faculty ကို ရှာမတွေ့ပါ။");
             return Ok(item);
         }

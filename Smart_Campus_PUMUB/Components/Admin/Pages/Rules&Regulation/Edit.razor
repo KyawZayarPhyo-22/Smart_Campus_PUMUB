@@ -1,0 +1,47 @@
+@page "/admin/rule/edit/{Id:int}"
+@layout AdminLayout
+
+<div class="tab-pane fade show active" id="editRuleContainer" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content tech-card">
+
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    Edit Rule
+                </h5>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-light">Rule Title</label>
+                        <input type="text" class="form-control" value="Academic Integrity Policy" placeholder="Enter Rule Title">
+                    </div>
+
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label text-light">Penalty</label>
+                        <input type="text" class="form-control" value="Suspension / Expulsion" placeholder="Enter Penalty Consequence">
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <label class="form-label text-light">Rule Description</label>
+                        <textarea class="form-control" rows="5" placeholder="Provide full details of the rule or regulation...">Any form of plagiarism, cheating, or academic dishonesty will not be tolerated and is subject to immediate disciplinary action by the board.</textarea>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <NavLink href="/admin/rules" class="nav-link me-3">
+                    <span class="sidebar-text text-muted">Cancel</span>
+                </NavLink>
+
+                <button type="button" class="btn btn-primary">
+                    Save Changes
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

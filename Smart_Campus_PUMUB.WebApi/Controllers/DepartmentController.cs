@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext; // ကိုကို့ DbContext နာမည်အတိုင်း ပြောင်းထားပါတယ်
 using Smart_Campus_PUMUB.WebApi.Models;
 
@@ -19,6 +20,7 @@ public class DepartmentController : ControllerBase
     public IActionResult GetDepartments()
     {
         var lst = _db.Departments
+                    .Include(x => x.Tutors)
                      .Where(x => x.IsDelete == false || x.IsDelete == null)
                      .OrderByDescending(x => x.DepartmentId)
                      .ToList();
@@ -32,7 +34,7 @@ public class DepartmentController : ControllerBase
         if (id <= 0)
             return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "မှားယွင်းသော ID ပုံစံဖြစ်နေပါသည်။" });
 
-        var item = _db.Departments.FirstOrDefault(x => x.DepartmentId == id && (x.IsDelete == false || x.IsDelete == null));
+        var item = _db.Departments.Include(x => x.Tutors).FirstOrDefault(x => x.DepartmentId == id && (x.IsDelete == false || x.IsDelete == null));
         if (item is null)
             return NotFound(new ActionResponseModel { IsSuccess = false, Message = "ဒေတာ ရှာမတွေ့ပါ။" });
 

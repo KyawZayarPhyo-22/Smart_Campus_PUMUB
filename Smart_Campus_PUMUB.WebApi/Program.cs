@@ -4,8 +4,8 @@ using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<SmartCampusDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// builder.Services.AddDbContext<SmartCampusDbContext>(options =>
+//     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Add services to the container.
 
 // builder.Services.AddControllers();
@@ -22,9 +22,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<SmartCampusDbContext>( opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));  
 
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<SmartCampusDbContext>(options =>
-    options.UseSqlServer(connectionString));
+// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// builder.Services.AddDbContext<SmartCampusDbContext>(options =>
+//     options.UseSqlServer(connectionString));
 
 var app = builder.Build();
 
