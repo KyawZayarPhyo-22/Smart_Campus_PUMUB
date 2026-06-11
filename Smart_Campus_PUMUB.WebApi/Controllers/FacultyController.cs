@@ -21,7 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetFaculties()
         {
             var lst = _db.Faculties
-                         .Where(x => !x.IsDelete == false) // ဖျက်ထားသည့် data များ မပါဝင်စေရန်
+                         .Where(x => !x.IsDelete == false || x.IsDelete == null) 
                          .OrderByDescending(x => x.FacultyId)
                          .ToList();
             return Ok(lst);
