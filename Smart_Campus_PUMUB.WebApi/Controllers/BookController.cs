@@ -6,7 +6,7 @@ using System.IO;
 namespace NLADotNetInternshipTraining.WebApi.Controllers;
 
 [ApiController]
-[Route("api/books")]
+[Route("api/[controller]")]
 public class BookController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -23,6 +23,13 @@ public class BookController : ControllerBase
     {
         var lst = _db.Books.Where(x => x.IsDelete == false || x.IsDelete == null).ToList();
         return Ok(lst);
+    }
+    [HttpGet("{id}")] // 👈 ဤ method အသစ်ကို ထည့်ပါ
+    public IActionResult GetBookById(int id)
+    {
+        var book = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
+        if (book == null) return NotFound();
+        return Ok(book);
     }
 
     [HttpPost]
@@ -69,7 +76,7 @@ public class BookController : ControllerBase
         {
             CategoryId = request.CategoryId,
             BookName = request.BookName.Trim(),
-            Image = dbImagePath, 
+            Image = dbImagePath,
             CreatedDateTime = DateTime.Now,
             CreatedBy = request.CreatedBy,
             IsDelete = false
@@ -79,7 +86,7 @@ public class BookController : ControllerBase
         return StatusCode(201, new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Book created with .jpg image!" : "Saving Failed" });
     }
 
-    [HttpPut("{id}")]
+   [HttpPost("update/{id}")]
     public IActionResult UpdateBook(int id, [FromForm] BookUpdateRequestModel request)
     {
         if (id <= 0) return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Invalid ID" });

@@ -104,7 +104,7 @@ public class TutorController : ControllerBase
 
     // ၃။ POST: Tutor Profile အသစ်ထည့်ရန် (ဓာတ်ပုံဖိုင် Upload Logic ပါဝင်သည်)
     [HttpPost]
-    public IActionResult CreateTutor([FromForm] TutorCreateRequestModel request) // File ပါ၍ [FromForm] သုံးရပါမည်
+    public IActionResult CreateTutor([FromBody] TutorCreateRequestModel request) // File ပါ၍ [FromForm] သုံးရပါမည်
     {
         // --- Validation စစ်ဆေးခြင်း ---
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Phone))

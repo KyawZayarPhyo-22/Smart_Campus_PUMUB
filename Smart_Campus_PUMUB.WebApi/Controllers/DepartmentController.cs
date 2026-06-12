@@ -6,7 +6,7 @@ using Smart_Campus_PUMUB.WebApi.Models;
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
-[Route("api/departments")]
+[Route("api/[controller]")]
 public class DepartmentController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -21,8 +21,15 @@ public class DepartmentController : ControllerBase
     {
         var lst = _db.Departments
                     .Include(x => x.Tutors)
+                    .Include(x => x.Faculty)
                      .Where(x => x.IsDelete == false || x.IsDelete == null)
-                     .OrderByDescending(x => x.DepartmentId)
+                     .OrderByDescending(x => x.DepartmentId).Select(x => new DepartmentModel 
+                 {
+                     DepartmentId = x.DepartmentId,
+                     DepartmentName = x.DepartmentName,
+                     FacultyId = x.FacultyId,
+                     FacultyName = x.Faculty.FacultyName // 💡 Faculty Name ကို ယူပေးရမည်
+                 })
                      .ToList();
         return Ok(lst);
     }

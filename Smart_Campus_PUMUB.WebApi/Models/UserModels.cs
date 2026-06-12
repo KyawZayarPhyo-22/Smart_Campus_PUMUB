@@ -44,6 +44,7 @@ public class UserModel
     public string? Password { get; set; }
     public DateTime? CreatedDateTime { get; set; }
     public int? PasswordLength { get; set; }
+    public string? RoleName {get;set;}
 }
 public class UserRegisterRequestModel
 {

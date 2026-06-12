@@ -142,7 +142,7 @@ public class RegistrationPaymentController : ControllerBase
     }
 
     // 🎯 ၄။ PUT: api/registrationpayment/{id} (Update)
-    [HttpPut("{id}")]
+    [HttpPost("update/{id}")]
     public IActionResult UpdatePayment(int id, [FromForm] RegistrationPaymentUpdateRequestModel request)
     {
         var item = _db.RegistrationPayments.FirstOrDefault(x => x.PaymentId == id && (x.IsDelete == false || x.IsDelete == null));

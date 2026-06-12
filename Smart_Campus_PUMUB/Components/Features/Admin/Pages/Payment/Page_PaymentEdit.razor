@@ -1,0 +1,60 @@
+@page "/admin/payment/edit/{id:int}"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Payment
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="modal-dialog modal-md mt-5">
+    <div class="modal-content tech-card">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">Edit Payment Info</h5>
+        </div>
+        @if (IsLoading)
+        {
+            <div class="modal-body text-center my-4"><div class="spinner-border text-primary"></div></div>
+        }
+        else
+        {
+            <EditForm Model="paymentModel" OnValidSubmit="UpdatePayment" FormName="EditPaymentForm">
+                <div class="modal-body">
+                    <div class="col-12 mb-3">
+                        <label class="form-label text-light">Payment ID</label>
+                        <input type="text" class="form-control" value="@Id" disabled />
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label text-light">Amount Paid</label>
+                        <InputNumber @bind-Value="paymentModel.AmountPaid" class="form-control" />
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label text-light">Payment Method</label>
+                        <InputSelect @bind-Value="paymentModel.PaymentMethod" class="form-control">
+                            <option value="Cash">Cash</option>
+                            <option value="KBZ">KBZ</option>
+                            <option value="AYA">AYA</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-12 mb-2">
+                        <label class="form-label text-light">Change Receipt (Optional)</label>
+                        <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png" />
+                        @if (!string.IsNullOrEmpty(PreviewImageUrl))
+                        {
+                            <div class="mt-2 text-center">
+                                <img src="@PreviewImageUrl" class="rounded img-thumbnail" style="max-height: 150px; object-fit: cover;" />
+                            </div>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="small text-info mt-2">@statusMessage</div>
+                    }
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <NavLink href="/admin/payments" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
+                    <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                        @(isProcessing ? "Saving..." : "Save Changes")
+                    </button>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>

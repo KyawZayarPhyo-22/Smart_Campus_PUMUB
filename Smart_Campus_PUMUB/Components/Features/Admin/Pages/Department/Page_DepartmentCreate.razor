@@ -1,0 +1,50 @@
+@page "/admin/department/create"
+@layout AdminLayout
+@rendermode InteractiveServer
+
+<div class="page-header mb-4">
+    <h3><i class="bi bi-plus-lg me-2 text-info"></i>Create New Department</h3>
+</div>
+
+<div class="tech-card">
+    <EditForm Model="departmentModel" OnValidSubmit="HandleSubmit" FormName="CreateDepartmentForm">
+        <DataAnnotationsValidator />
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div
+                class="alert @(statusMessage.Contains("Error") || statusMessage.Contains("ပြီးသား") ? "alert-danger" : "alert-info") mb-3">
+                @statusMessage
+            </div>
+        }
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Department Name</label>
+                <InputText class="form-control" @bind-Value="departmentModel.DepartmentName"
+                           placeholder="Enter department name" />
+                <ValidationMessage For="@(() => departmentModel.DepartmentName)" class="text-danger small" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Faculty</label>
+                <InputSelect class="form-select" @bind-Value="departmentModel.FacultyId">
+                    <option value="0">@(FacultyList == null ? "Loading..." : "Select Faculty...")</option>
+                    @if (FacultyList != null)
+                    {
+                        @foreach (var faculty in FacultyList)
+                        {
+                            <option value="@faculty.FacultyId">@faculty.FacultyName</option>
+                        }
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => departmentModel.FacultyId)" class="text-danger small" />
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-info text-dark fw-bold px-4" disabled="@isProcessing">
+                @(isProcessing ? "Saving..." : "Save Department")
+            </button>
+            <NavLink href="/admin/departments" class="btn btn-secondary px-4 ms-2">Cancel</NavLink>
+        </div>
+    </EditForm>
+</div>

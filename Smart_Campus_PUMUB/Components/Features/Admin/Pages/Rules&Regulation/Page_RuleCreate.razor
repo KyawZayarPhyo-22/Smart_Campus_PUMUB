@@ -1,0 +1,39 @@
+@page "/admin/rule/create"
+@layout AdminLayout
+@rendermode InteractiveServer
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Rules
+@using Smart_Campus_PUMUB.WebApi.Models
+
+<div class="container-fluid py-4">
+    <div class="tech-card p-4">
+        <h4 class="text-white mb-4">Add New Rule</h4>
+        
+        <EditForm Model="ruleModel" OnValidSubmit="SaveRule" FormName="CreateRuleForm">
+            <DataAnnotationsValidator />
+            
+            <div class="mb-3">
+                <label class="form-label text-light">Rule Title</label>
+                <InputText @bind-Value="ruleModel.Title" class="form-control" />
+                <ValidationMessage For="@(() => ruleModel.Title)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-light">Penalty</label>
+                <InputText @bind-Value="ruleModel.Penalty" class="form-control" />
+                <ValidationMessage For="@(() => ruleModel.Penalty)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-light">Description</label>
+                <InputTextArea @bind-Value="ruleModel.Description" class="form-control" rows="4" />
+            </div>
+
+            <div class="mt-4">
+                <NavLink href="/admin/rules" class="btn btn-secondary me-2">Cancel</NavLink>
+                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                    @(isProcessing ? "Saving..." : "Save Rule")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>

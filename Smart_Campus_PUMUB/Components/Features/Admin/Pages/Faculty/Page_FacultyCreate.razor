@@ -1,0 +1,32 @@
+@page "/admin/faculty/create"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Faculty
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="modal-dialog modal-md mt-5">
+    <div class="modal-content tech-card">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">Add New Faculty</h5>
+        </div>
+        <EditForm Model="facultyModel" OnValidSubmit="SaveFaculty" FormName="CreateFacultyForm">
+            <DataAnnotationsValidator />
+            <div class="modal-body">
+                <div class="col-12 mb-2">
+                    <label class="form-label text-light">Faculty Name</label>
+                    <InputText @bind-Value="facultyModel.FacultyName" class="form-control" placeholder="Enter Faculty Name (e.g., Engineering)" />
+                </div>
+                @if (!string.IsNullOrEmpty(statusMessage))
+                {
+                    <div class="small text-info mt-2">@statusMessage</div>
+                }
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <NavLink href="/admin/faculties" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
+                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                    @(isProcessing ? "Creating..." : "Create Faculty")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>

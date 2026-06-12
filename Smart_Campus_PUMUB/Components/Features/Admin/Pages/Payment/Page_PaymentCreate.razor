@@ -1,0 +1,62 @@
+@page "/admin/payment/create"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Payment
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="modal-dialog modal-md mt-5">
+    <div class="modal-content tech-card">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">Add New Payment</h5>
+        </div>
+        
+        <EditForm Model="createModel" OnValidSubmit="HandleCreate" FormName="CreatePaymentForm">
+            <div class="modal-body">
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Registration ID</label>
+                    <InputNumber @bind-Value="createModel.RegistrationId" class="form-control" />
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Amount Paid</label>
+                    <div class="input-group">
+                        <span class="input-group-text">MMK</span>
+                        <InputNumber @bind-Value="createModel.AmountPaid" class="form-control" step="0.01" />
+                    </div>
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Payment Method</label>
+                    <InputSelect @bind-Value="createModel.PaymentMethod" class="form-select">
+                        <option value="Cash">Cash</option>
+                        <option value="Bank Transfer">KBZ</option>
+                        <option value="Mobile Wallet">AYA</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Receipt Image</label>
+                    <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png" />
+                    @if (!string.IsNullOrEmpty(PreviewImageUrl))
+                    {
+                        <div class="mt-2 text-center">
+                            <img src="@PreviewImageUrl" class="rounded img-thumbnail" style="max-height: 150px; object-fit: cover;" />
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(statusMessage))
+                {
+                    <div class="small text-info mt-2">@statusMessage</div>
+                }
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <NavLink href="/admin/payments" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
+                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                    @(isProcessing ? "Creating..." : "Create Payment")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>

@@ -1,0 +1,212 @@
+@page "/admin/positions"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Position
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+@* 🎨 Tech-Themed Modern Table & Button Styles *@
+<style>
+    .custom-table {
+        background: rgba(20, 24, 33, 0.6);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .custom-table thead {
+        background: rgba(13, 110, 253, 0.1);
+        border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+    }
+    .custom-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        color: #0d6efd;
+        padding: 16px 20px;
+    }
+    .custom-table td {
+        padding: 16px 20px;
+        color: #e2e8f0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.2s ease;
+    }
+    .table-row-hover:hover {
+        background: rgba(255, 255, 255, 0.02);
+        box-shadow: inset 4px 0 0 #0d6efd;
+    }
+    .position-text {
+        font-size: 0.95rem;
+        color: #f1f5f9;
+    }
+    .btn-action-edit {
+        background: rgba(13, 110, 253, 0.1);
+        color: #39b5ff;
+        border: 1px solid rgba(13, 110, 253, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+    .btn-action-edit:hover {
+        background: #0d6efd;
+        color: #ffffff;
+        box-shadow: 0 0 12px rgba(13, 110, 253, 0.4);
+    }
+    .btn-action-delete {
+        background: rgba(220, 53, 69, 0.1);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+    .btn-action-delete:hover {
+        background: #dc3545;
+        color: #ffffff;
+        box-shadow: 0 0 12px rgba(220, 53, 69, 0.4);
+    }
+    .btn-add-modern {
+        background: linear-gradient(135deg, #0d6efd, #0052cc);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2);
+        transition: all 0.2s ease;
+    }
+    .btn-add-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+    }
+</style>
+
+<div class="tab-pane fade show active" id="v-pills-position">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1" style="color: #ffffff;">Position Directory</h3>
+        <p class="text-muted small mb-0">Manage university staff and faculty positions</p>
+    </div>
+
+    <div class="tech-card p-4">
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text search-icon-bg border-end-0" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 text-white" 
+                           style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);"
+                           placeholder="Search by Position Name..."
+                           @bind-value="SearchTerm" @bind-value:event="oninput">
+                </div>
+            </div>
+
+            <div class="col-md-7 text-end">
+                <NavLink href="/admin/position/create" class="btn btn-add-modern text-white d-inline-flex align-items-center">
+                    <i class="bi bi-plus-lg me-2"></i> Add Position
+                </NavLink>
+            </div>
+        </div>
+
+        @if (IsLoading)
+        {
+            <div class="text-center my-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="text-muted mt-3 small">Positions စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger border-0" style="background: rgba(220, 53, 69, 0.1); color: #ff6b6b;" role="alert">
+                <i class="bi bi-exclamation-octagon-fill me-2"></i> @ErrorMessage
+            </div>
+        }
+        else if (FilteredPositions == null || !FilteredPositions.Any())
+        {
+            <div class="text-center my-5 text-muted">
+                <i class="bi bi-folder-x display-4 text-secondary"></i>
+                <p class="mt-3 mb-0 small">ပြသရန် Position မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive custom-table">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">No.</th>
+                            <th style="width: 50%;">Position Name</th>
+                            <th style="width: 35%; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int count = 1;
+                        }
+                        @foreach (var position in FilteredPositions)
+                        {
+                            <tr class="table-row-hover">
+                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
+                                <td class="fw-semibold position-text">@position.PositionName</td>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <NavLink href="@($"/admin/position/edit/{position.PositionId}")"
+                                                 class="btn btn-action-edit d-inline-flex align-items-center">
+                                            <i class="bi bi-pencil me-1.5"></i> Edit
+                                        </NavLink>
+
+                                        <button class="btn btn-action-delete d-inline-flex align-items-center"
+                                                @onclick="() => OpenDeleteModal(position)">
+                                            <i class="bi bi-trash me-1.5"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            count++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* 🛠️ Custom Blazor Modal (Bootstrap Controlled by State) *@
+<div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1"
+     style="background: @(ShowModal ? "rgba(10, 14, 22, 0.85)" : "none"); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content tech-card" style="border: 1px solid rgba(220, 53, 69, 0.2);">
+
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger fw-bold d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteModal"></button>
+            </div>
+
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="bi bi-trash-fill text-danger display-3"></i>
+                </div>
+                <h4 class="fw-bold text-white">Delete Position?</h4>
+                <p class="text-light opacity-75">
+                    စာရင်းဖျက်ရန် သေချာပါသလား? <br />
+                    Position အမည်: <strong class="text-info">@SelectedPosition?.PositionName</strong>
+                </p>
+                <p class="text-muted small mb-0">This action cannot be undone.</p>
+            </div>
+
+            <div class="modal-footer border-0 justify-content-center pt-0">
+                <button type="button" class="btn btn-secondary px-4" style="border-radius: 6px;" @onclick="CloseDeleteModal" disabled="@IsProcessing">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger px-4" style="border-radius: 6px;" @onclick="DeletePosition" disabled="@IsProcessing">
+                    <i class="bi bi-trash me-2"></i>
+                    @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

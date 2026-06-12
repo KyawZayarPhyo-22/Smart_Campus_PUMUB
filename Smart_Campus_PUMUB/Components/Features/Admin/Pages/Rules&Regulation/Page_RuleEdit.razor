@@ -1,0 +1,46 @@
+@page "/admin/rule/edit/{id:int}"
+@rendermode InteractiveServer
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Rules
+@using Smart_Campus_PUMUB.WebApi.Models
+
+<div class="container-fluid py-4">
+    <div class="tech-card p-4">
+        <h4 class="text-white mb-4">Edit Rule</h4>
+
+        @if (isLoaded)
+        {
+            <EditForm Model="ruleModel" OnValidSubmit="UpdateRule" FormName="EditRuleForm">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label text-light">Rule Title</label>
+                    <InputText @bind-Value="ruleModel.Title" class="form-control" />
+                    <ValidationMessage For="@(() => ruleModel.Title)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-light">Penalty</label>
+                    <InputText @bind-Value="ruleModel.Penalty" class="form-control" />
+                    <ValidationMessage For="@(() => ruleModel.Penalty)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-light">Description</label>
+                    <InputTextArea @bind-Value="ruleModel.Description" class="form-control" rows="4" />
+                </div>
+
+                <div class="mt-4">
+                    <NavLink href="/admin/rules" class="btn btn-secondary me-2">Cancel</NavLink>
+                    <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                        @(isProcessing ? "Updating..." : "Save Changes")
+                    </button>
+                </div>
+            </EditForm>
+        }
+        else
+        {
+            <div class="text-light">Loading...</div>
+        }
+    </div>
+</div>

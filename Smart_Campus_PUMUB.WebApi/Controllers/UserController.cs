@@ -55,7 +55,7 @@ public class UserController : ControllerBase
             RoleId = 4, // 💡 မင်းရဲ့ Role Table သတ်မှတ်ချက်အရ 4 သည် 'Student' ဖြစ်သည် (Default Assigned)
             FullName = request.FullName,
             UserName = formattedUserName,
-            Password = hashedPass, 
+            Password = hashedPass,
             IsDelete = false,
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         };
@@ -110,17 +110,22 @@ public class UserController : ControllerBase
     {
         var lst = _db.Users
             .Where(x => x.IsDelete == false)
-            .OrderByDescending(u => u.UserId)
-            .ToList() 
-            .Select(u => new UserModel
+            // Join လုပ်ရန် .Join ကို သုံးပါ
+            .Join(_db.Roles,
+                  user => user.RoleId,
+                  role => role.RoleId,
+                  (user, role) => new { user, role })
+            .OrderByDescending(x => x.user.UserId)
+            .Select(x => new UserModel
             {
-                UserId = u.UserId,
-                RoleId = u.RoleId,
-                FullName = u.FullName,
-                UserName = u.UserName,
-                // ဟက်ရှ်လုပ်ထားသောကြောင့် Password က အရှည်ကြီး ဖြစ်နေမည်မို့ ပုံသေ ၈ လုံးပဲ ပြလိုက်ခြင်းက ပိုကောင်းပါသည်
+                UserId = x.user.UserId,
+                RoleId = x.user.RoleId,
+                FullName = x.user.FullName,
+                UserName = x.user.UserName,
+                // RoleName ကို Role table ထဲမှ ဆွဲထုတ်လိုက်ခြင်း
+                RoleName = x.role.RoleName,
                 Password = "********",
-                CreatedDateTime = u.CreatedDateTime
+                CreatedDateTime = x.user.CreatedDateTime
             })
             .ToList();
 
