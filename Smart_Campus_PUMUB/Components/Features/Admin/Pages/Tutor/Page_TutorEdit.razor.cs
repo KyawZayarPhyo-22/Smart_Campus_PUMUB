@@ -18,37 +18,58 @@ public partial class Page_TutorEdit
 
     private IBrowserFile? selectedFile;
     private bool isProcessing = false;
-    private bool IsLoading = true;
     private string statusMessage = "";
 
-    protected override async Task OnInitializedAsync()
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     // ၁။ Dropdown များအတွက် Data ဆွဲယူခြင်း
+    //     UserList = await HttpClientService.ExecuteAsync<List<UserModels>>("user", EnumHttpMethod.Get) ?? new();
+    //     PositionList = await HttpClientService.ExecuteAsync<List<PositionModel>>("position", EnumHttpMethod.Get) ?? new();
+    //     DepartmentList = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get) ?? new();
+
+    //     // ၂။ Edit လုပ်မည့် Tutor အချက်အလက်များ အရင်ဆွဲယူခြင်း
+    //     var existingTutor = await HttpClientService.ExecuteAsync<TutorModel>($"tutor/{Id}", EnumHttpMethod.Get);
+
+    //     if (existingTutor != null)
+    //     {
+    //         createModel = new TutorUpdateRequestModel
+    //         {
+    //             Tutor_Name = existingTutor.Tutor_Name,
+    //             Email = existingTutor.Email,
+    //             Phone = existingTutor.Phone,
+    //             About = existingTutor.About,
+    //             DepartmentId = existingTutor.Department_Id,
+    //             PositionId = existingTutor.Position_Id,
+    //             UserId = existingTutor.UserId
+    //         };
+    //     }
+    // }
+    protected override async Task OnParametersSetAsync()
     {
-        try
+        // Id တန်ဖိုး အမှန်တကယ် ရောက်ရှိလာမှသာ Data ဆွဲယူပါ
+        if (Id > 0)
         {
-            // ၁။ Dropdown များအတွက် Data ဆွဲယူခြင်း
             UserList = await HttpClientService.ExecuteAsync<List<UserModels>>("user", EnumHttpMethod.Get) ?? new();
             PositionList = await HttpClientService.ExecuteAsync<List<PositionModel>>("position", EnumHttpMethod.Get) ?? new();
             DepartmentList = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get) ?? new();
 
-            // ၂။ Edit လုပ်မည့် Tutor အချက်အလက်များ အရင်ဆွဲယူခြင်း
+            // API လမ်းကြောင်းကို "api/tutor/{Id}" ဟု အပြည့်အစုံ ရေးပေးပါ
             var existingTutor = await HttpClientService.ExecuteAsync<TutorModel>($"tutor/{Id}", EnumHttpMethod.Get);
-            
+
             if (existingTutor != null)
             {
                 createModel = new TutorUpdateRequestModel
                 {
-                    Tutor_Name = existingTutor.Tutor_Name,
+                    TutorName = existingTutor.TutorName,
                     Email = existingTutor.Email,
                     Phone = existingTutor.Phone,
                     About = existingTutor.About,
                     DepartmentId = existingTutor.Department_Id,
                     PositionId = existingTutor.Position_Id,
-                    UserId = existingTutor.User_Id
+                    UserId = existingTutor.UserId // existingTutor.User_Id ဟု သေချာစစ်ပါ
                 };
             }
         }
-        catch (Exception ex) { statusMessage = $"Error loading data: {ex.Message}"; }
-        finally { IsLoading = false; }
     }
 
     private void HandleFileSelected(InputFileChangeEventArgs e) => selectedFile = e.File;
@@ -62,7 +83,7 @@ public partial class Page_TutorEdit
         {
             // Edit လုပ်သည့်အခါ ပုံပါ/မပါ စစ်ဆေးပြီး Multipart သုံးခြင်း
             var content = new MultipartFormDataContent();
-            content.Add(new StringContent(createModel.Tutor_Name ?? ""), "Tutor_Name");
+            content.Add(new StringContent(createModel.TutorName ?? ""), "Tutor_Name");
             content.Add(new StringContent(createModel.Email ?? ""), "Email");
             content.Add(new StringContent(createModel.Phone ?? ""), "Phone");
             content.Add(new StringContent(createModel.About ?? ""), "About");

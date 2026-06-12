@@ -37,7 +37,7 @@ public partial class Page_TutorList
 
     private IEnumerable<TutorModel> FilteredTutors => string.IsNullOrWhiteSpace(SearchTerm)
         ? TutorList
-        : TutorList.Where(t => t.Tutor_Name != null && t.Tutor_Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+        : TutorList.Where(t => t.TutorName != null && t.TutorName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
 
     private void OpenDeleteModal(TutorModel tutor)
     {
@@ -51,7 +51,7 @@ public partial class Page_TutorList
         IsProcessing = true;
 
         var response = await HttpClientService.ExecuteAsync<TutorDeleteResponseModel>(
-            $"tutor/{SelectedTutor.Tutor_Id}", EnumHttpMethod.Delete);
+            $"tutor/{SelectedTutor.TutorId}", EnumHttpMethod.Delete);
 
         if (response?.IsSuccess == true)
         {

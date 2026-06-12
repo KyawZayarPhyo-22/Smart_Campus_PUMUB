@@ -16,7 +16,8 @@ public partial class Page_TutorCreate
     private List<PositionModel> PositionList = new();
     private List<DepartmentModel> DepartmentList = new();
     private List<UserModels> UserList = new();
-    
+    private List<RoleModels> roleModels = new();
+
     private IBrowserFile? selectedFile;
     private bool isProcessing = false;
     private string statusMessage = "";
@@ -38,17 +39,23 @@ public partial class Page_TutorCreate
         try
         {
             var content = new MultipartFormDataContent();
-            content.Add(new StringContent(createModel.Tutor_Name ?? ""), "Tutor_Name");
+
+            // Data များ Add လုပ်ခြင်း
+
+            content.Add(new StringContent(createModel.TutorName ?? ""), "TutorName"); // Model အသစ်အတိုင်း
+            content.Add(new StringContent(createModel.UserId.ToString()), "UserId");
+            content.Add(new StringContent(createModel.RoleId.ToString()), "RoleId");
+            content.Add(new StringContent(createModel.DepartmentId.ToString()), "DepartmentId");
+            content.Add(new StringContent(createModel.PositionId.ToString()), "PositionId");
             content.Add(new StringContent(createModel.Email ?? ""), "Email");
             content.Add(new StringContent(createModel.Phone ?? ""), "Phone");
             content.Add(new StringContent(createModel.About ?? ""), "About");
-            content.Add(new StringContent(createModel.Department_Id.ToString()), "Department_Id");
-            content.Add(new StringContent(createModel.Position_Id.ToString()), "Position_id");
-            content.Add(new StringContent(createModel.User_Id.ToString()), "User_Id");
 
+            // ဖိုင် Upload
             if (selectedFile != null)
             {
-                var fileContent = new StreamContent(selectedFile.OpenReadStream(1024 * 1024 * 5));
+                var stream = selectedFile.OpenReadStream(1024 * 1024 * 5); // 5MB limit
+                var fileContent = new StreamContent(stream);
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
                 content.Add(fileContent, "PhotoFile", selectedFile.Name);
             }
@@ -62,12 +69,12 @@ public partial class Page_TutorCreate
             }
             else
             {
-                statusMessage = "jijdj";
+                statusMessage = response?.Message ?? "သိမ်းဆည်းမှု မအောင်မြင်ပါ။";
             }
         }
-        catch (Exception )
+        catch (Exception ex)
         {
-            statusMessage = "hiiiii";
+            statusMessage = $"Error: {ex.Message}";
         }
         finally
         {

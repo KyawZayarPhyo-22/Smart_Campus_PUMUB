@@ -2,10 +2,11 @@ namespace Smart_Campus_PUMUB.WebApi.Models;
 
 public class TutorCreateRequestModel
 {
-    public int Department_Id { get; set; }
-    public int Position_Id { get; set; }
-    public int User_Id { get; set; }
-    public string? Tutor_Name { get; set; }
+    public int DepartmentId { get; set; }
+    public int PositionId { get; set; }
+    public int UserId { get; set; }
+    public int RoleId { get; set; }
+    public string? TutorName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
 
@@ -14,8 +15,10 @@ public class TutorCreateRequestModel
 }
 public class UserModels
 {
-    public int User_Id { get; set; }
+    public int UserId { get; set; }
+    public int RoleId { get; set; }
     public string? UserName { get; set; }
+    public string? RoleName { get; set; }
 }
 
 public class TutorCreateResponseModel
@@ -29,12 +32,18 @@ public class TutorUpdateRequestModel
     public int DepartmentId { get; set; }
     public int PositionId { get; set; }
     public int UserId { get; set; }
-    public string? Tutor_Name { get; set; }
+    public string? TutorName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? About { get; set; }
     public IFormFile? PhotoFile { get; set; }
 }
+public class RoleModels
+{
+    public int RoleId { get; set; }
+    public string? RoleName { get; set; }
+}
+
 
 public class TutorUpdateResponseModel
 {
@@ -51,11 +60,11 @@ public class TutorDeleteResponseModel
 
 public class TutorModel
 {
-    public int Tutor_Id { get; set; }
+    public int TutorId { get; set; }
     public int Department_Id { get; set; }
     public int Position_Id { get; set; }
-    public int User_Id { get; set; }
-    public string? Tutor_Name { get; set; }
+    public int UserId { get; set; }
+    public string? TutorName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? Profile { get; set; }
