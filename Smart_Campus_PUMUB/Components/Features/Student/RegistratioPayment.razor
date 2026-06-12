@@ -1,0 +1,277 @@
+﻿<h3>RegistratioPayment</h3>
+
+@code {
+
+}
+@page "/registerpayment"
+@using Smart_Campus_PUMUB.Components.Shared.Layout
+@using Smart_Campus_PUMUB.Database.AppDbContext
+@using Microsoft.EntityFrameworkCore
+@layout MainLayout
+@inject SmartCampusDbContext DbContext
+@inject NavigationManager NavManager
+@rendermode InteractiveServer
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<div class="payment-viewport">
+    <div class="payment-card animate-fade">
+        <div class="payment-header">
+            <div class="pay-icon"><i class="fas fa-wallet"></i></div>
+            <h2>ကျောင်းလခနှင့် စာမေးပွဲကြေး ပေးချေရန်</h2>
+            <p>Registration Connection Verified — ID: <strong>@TargetRegistrationId</strong></p>
+        </div>
+
+        <div class="payment-body">
+            <!-- Bank Detail Box -->
+            <div class="bank-info-box">
+                <h4><i class="fas fa-university"></i> ကျောင်းတော်ကြီး၏ ဘဏ်အကောင့်များ</h4>
+                <p>KBZ Pay / Wave Pay : <strong>09-777888999</strong></p>
+                <p>KBZ Bank Account : <strong>123-456-789012345</strong></p>
+                <span class="pay-alert">* ငွေလွှဲပြောင်းပြီးပါက အောက်တွင် ဘဏ်စလစ်ပုံ တင်ပေးရပါမည်။</span>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="pay-form-group">
+                <label>ပေးချေရမည့် ငွေပမာဏ (Kyats)</label>
+                <input type="number" class="pay-input" @bind="paymentModel.AmountPaid" placeholder="ငွေပမာဏ ရိုက်ထည့်ရန်" />
+            </div>
+
+            <div class="pay-form-group">
+                <label>ငွေပေးချေသည့် စနစ် (Payment Method)</label>
+                <select class="pay-input" @bind="paymentModel.PaymentMethod">
+                    <option value="KBZPay">KBZ Pay</option>
+                    <option value="WavePay">Wave Pay</option>
+                    <option value="KBZ Bank">KBZ Bank Transfer</option>
+                    <option value="Cash">Cash at University Office</option>
+                </select>
+            </div>
+
+            <div class="pay-form-group">
+                <label>ဘဏ်ပြေစာ/စလစ်ပုံ (Receipt Image URL/Path)</label>
+                <input type="text" class="pay-input" @bind="paymentModel.ReceiptImage" placeholder="ဥပမာ - receipts/slip001.png" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="pay-toast @(statusMessage.Contains("အောင်မြင်") ? "success" : "error")">
+                    @statusMessage
+                </div>
+            }
+
+            <button class="btn-submit-payment" @onclick="SubmitPaymentData" disabled="@isSavingPayment">
+                @if (isSavingPayment)
+                {
+                    <span>ခဏစောင့်ပါရှင်...</span>
+                }
+                else
+                {
+                    <span>ငွေသွင်းစလစ် အတည်ပြုမည်</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .payment-viewport {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: #f1f5f9;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .payment-card {
+        background: white;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+    }
+
+    .payment-header {
+        background: linear-gradient(135deg, #2C3E7A, #1e40af);
+        padding: 30px;
+        text-align: center;
+        color: white;
+    }
+
+    .pay-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: #38bdf8;
+    }
+
+    .payment-header h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .payment-header p {
+        font-size: 0.85rem;
+        color: #93c5fd;
+        margin-top: 6px;
+    }
+
+    .payment-body {
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .bank-info-box {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        padding: 16px;
+        border-radius: 14px;
+        font-size: 0.88rem;
+    }
+
+        .bank-info-box h4 {
+            margin: 0 0 8px 0;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .bank-info-box p {
+            margin: 4px 0;
+            color: #475569;
+        }
+
+    .pay-alert {
+        font-size: 0.75rem;
+        color: #ef4444;
+        font-weight: 600;
+        display: block;
+        margin-top: 8px;
+    }
+
+    .pay-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .pay-form-group label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+    .pay-input {
+        width: 100%;
+        height: 46px;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 0 16px;
+        font-size: 0.92rem;
+        outline: none;
+        background: #fff;
+    }
+
+        .pay-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+        }
+
+    .btn-submit-payment {
+        width: 100%;
+        height: 48px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 10px;
+    }
+
+        .btn-submit-payment:hover {
+            background: #1d4ed8;
+        }
+
+    .pay-toast {
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+        .pay-toast.success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .pay-toast.error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+</style>
+
+@code {
+    // 🌟 [URL QUERY INTERCEPTOR] - ပထမဖိုင်က လင့်ခ်ဖြင့် လှမ်းပို့လိုက်သော ID ကို အလိုအလျောက် ဖမ်းယူခြင်း စနစ်
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "id")]
+    public int TargetRegistrationId { get; set; }
+
+    private RegistrationPayment paymentModel = new RegistrationPayment()
+    {
+        AmountPaid = 5000, // Default minimum amount
+        PaymentMethod = "KBZPay",
+        ReceiptImage = "receipts/default_slip.png",
+        Status = "Pending"
+    };
+
+    private string statusMessage = "";
+    private bool isSavingPayment = false;
+
+    private async Task SubmitPaymentData()
+    {
+        if (TargetRegistrationId == 0)
+        {
+            statusMessage = "မှားယွင်းနေပါသည်။ ကျောင်းအပ်ဖောင် ID မရှိပါ ကိုကို။";
+            return;
+        }
+
+        try
+        {
+            isSavingPayment = true;
+            statusMessage = "";
+
+            // Mapping target parameters to payment entity fields
+            paymentModel.RegistrationId = TargetRegistrationId;
+            paymentModel.PaymentDate = DateTime.Now;
+            paymentModel.CreatedDateTime = DateTime.Now;
+
+            // 🌟 SAVE TRANSACTIONS TO DATABASE TABLE
+            DbContext.RegistrationPayments.Add(paymentModel);
+            await DbContext.SaveChangesAsync();
+
+            statusMessage = "🎉 ငွေသွင်းစလစ် တင်သွင်းမှု အောင်မြင်ပါပြီ ကိုကို။ ရုံးအဖွဲ့မှ အမြန်ဆုံး စစ်ဆေးပေးပါမည်။";
+
+            // ၃ စက္ကန့်အကြာတွင် Home သို့ ပြန်ပို့ပေးခြင်း
+            await Task.Delay(3000);
+            NavManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isSavingPayment = false;
+        }
+    }
+}

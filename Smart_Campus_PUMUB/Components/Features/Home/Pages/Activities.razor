@@ -1,4 +1,4 @@
-@page "/activities"
+@* @page "/activities"
 <!-- EVENTS -->
 <section id="events" style="background:var(--bg2);margin-top: 50px;">
     <div class="container">
@@ -181,4 +181,542 @@
             </div>
         </div>
     </div>
+</section> *@
+@page "/activities"
+@using Microsoft.EntityFrameworkCore
+@using Smart_Campus_PUMUB.Database.AppDbContext
+@inject SmartCampusDbContext DbContext
+@rendermode InteractiveServer
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<section id="events" style="background:var(--bg2); margin-top: 20px; padding-bottom: 80px;">
+    <div class="container">
+
+        <div class="section-header" data-aos="fade-up">
+            <div>
+                <div class="section-tag"><i class="fas fa-calendar-alt"></i> Upcoming Events</div>
+                <h2 class="section-title">News & <span>Activities</span></h2>
+            </div>
+        </div>
+
+        <div class="library-filter-right-wrapper" data-aos="fade-up">
+            <div class="material-inset-filter-bar">
+
+                <div class="compact-field text-field-size">
+                    <i class="fas fa-search field-icon-medium"></i>
+                    <input type="text" class="compact-filter-input-extended"
+                           placeholder="Search by title..."
+                           @bind="searchQuery" @bind:event="oninput" @onkeyup="ApplyFilters" />
+                </div>
+
+                <div class="compact-field date-field-size">
+                    <i class="fas fa-calendar-alt field-icon-medium"></i>
+                    <input type="date" class="compact-filter-input-extended-date"
+                           @bind="selectedFullDate" @bind:after="ApplyFilters" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchQuery) || selectedFullDate.HasValue)
+                {
+                    <button class="compact-reset-btn" @onclick="ResetFilters">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="events-grid">
+            @if (filteredRecentActivities == null)
+            {
+                <p class="status-msg-text"><em>Loading events and activities...</em></p>
+            }
+            else if (filteredRecentActivities.Count == 0)
+            {
+                <p class="status-msg-text">No upcoming events match your filters.</p>
+            }
+            else
+            {
+                @foreach (var activity in filteredRecentActivities)
+                {
+                    <div class="event-card" data-aos="fade-up">
+                        <div class="event-header" style="background: @(string.IsNullOrEmpty(activity.Image) ? "linear-gradient(135deg, #2563EB, #3B82F6)" : $"url('{activity.Image}') center/cover no-repeat"); position: relative;">
+                            <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.35); border-top-left-radius: 16px; border-top-right-radius: 16px; z-index: 1;"></div>
+                            <div style="position: relative; z-index: 2;">
+                                <div class="event-date-big">
+                                    @(activity.CreatedDateTime?.ToString("dd") ?? DateTime.Now.ToString("dd"))
+                                </div>
+                                <div class="event-month">
+                                    @(activity.CreatedDateTime?.ToString("MMMM yyyy") ?? DateTime.Now.ToString("MMMM yyyy"))
+                                </div>
+                                <span class="event-type-badge">Campus Event</span>
+                            </div>
+                        </div>
+
+                        <div class="event-body">
+                            <h3>@activity.ActivityTitle</h3>
+                            <div class="event-meta">
+                                <span><i class="fas fa-map-marker-alt"></i> @(activity.Location ?? "Main Campus")</span>
+
+                                <div class="single-line-desc-container">
+                                    <i class="fas fa-info-circle info-icon-fixed"></i>
+                                    <span class="ellipsis-text">@activity.Description</span>
+                                    <button class="material-more-btn" @onclick="() => OpenPopup(activity)">More</button>
+                                </div>
+
+                                <span><i class="fas fa-user"></i> Posted by: @(activity.CreatedBy ?? "Admin")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
 </section>
+
+@if (isPopupOpen && selectedActivity != null)
+{
+    <div class="material-popup-overlay" @onclick="ClosePopup">
+        <div class="material-popup-card" @onclick:stopPropagation>
+
+            <div class="material-popup-header">
+                <div>
+                    <span class="material-headline-label">Activity Details</span>
+                    <h2 class="material-title">@selectedActivity.ActivityTitle</h2>
+                </div>
+                <button class="material-icon-button" @onclick="ClosePopup">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(selectedActivity.Image))
+            {
+                <div class="material-popup-media">
+                    <img src="@selectedActivity.Image" alt="Activity Media" />
+                </div>
+            }
+
+            <div class="material-popup-content">
+                <div class="material-chips-row">
+                    <div class="material-suggested-chip">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>@(selectedActivity.Location ?? "Main Campus")</span>
+                    </div>
+                    <div class="material-suggested-chip">
+                        <i class="fas fa-calendar-day"></i>
+                        <span>@(selectedActivity.CreatedDateTime?.ToString("MMM dd, yyyy") ?? "Recent")</span>
+                    </div>
+                    <div class="material-suggested-chip">
+                        <i class="fas fa-user"></i>
+                        <span>By: @(selectedActivity.CreatedBy ?? "Admin")</span>
+                    </div>
+                </div>
+
+                <div class="material-body-supporting-text">
+                    <h3>Description</h3>
+                    <p>@selectedActivity.Description</p>
+                </div>
+            </div>
+
+            <div class="material-popup-actions">
+                <button class="material-text-button" @onclick="ClosePopup">Dismiss</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+<style>
+    #events, .material-popup-card {
+        font-family: 'Roboto', 'Inter', sans-serif !important;
+    }
+
+    /* 💡 Container ကို ညာဘက်အစွန် ကပ်ပေးထားခြင်း */
+    .library-filter-right-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+        margin-bottom: 30px; /* အောက်က Card တွေနဲ့ အကွာအဝေး ညှိတာပါရှင် */
+    }
+
+    /* 🌟 MATERIAL INSIDE SHADOW BAR (အောက်သို့ ချိုင့်ဝင်သွားသလို ခံစားရစေမယ့် အလှဆုံး ဒီဇိုင်းပါ ကိုကို) */
+    .material-inset-filter-bar {
+        background: var(--bg, #ededed); /* အနည်းငယ်မှောင်သော မျက်နှာပြင် */
+        border: 1px solid var(--border, #dbdbdb);
+        border-radius: 50px;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 480px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        /* 💡 အဓိက တောင်းဆိုထားတဲ့ Inside Shadow (Material Inset Effects) ပါ ကိုကို */
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    @@media (max-width: 768px) {
+        .library-filter-right-wrapper {
+            justify-content: center;
+        }
+
+        .material-inset-filter-bar {
+            border-radius: 16px;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 12px;
+            max-width: 100%;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); /* Responsive Inside Shadow */
+        }
+
+        .text-field-size, .date-field-size {
+            width: 100% !important;
+        }
+    }
+
+    .compact-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .text-field-size {
+        flex: 2;
+    }
+
+    .date-field-size {
+        flex: 1.2;
+    }
+
+    .field-icon-medium {
+        position: absolute;
+        left: 16px;
+        color: #8E918F;
+        z-index: 5;
+        font-size: 0.9rem;
+    }
+
+    /* Input Fields Inside Inset Fixes */
+    .compact-filter-input-extended, .compact-filter-input-extended-date {
+        width: 100%;
+        padding: 10px 14px 10px 42px !important;
+        border-radius: 30px !important;
+        border: 1px solid transparent !important;
+        background: var(--card-bg, #ffffff) !important; /* အဖြူရောင်ပေါ်လွင်စေရန် */
+        color: var(--text, #1C1B1F) !important;
+        font-size: 0.92rem;
+        height: 40px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* ခလုတ်လေးတွေ ပေါ်လွင်အောင် အပြင် Shadow အနည်းငယ် ထည့်ထားပါတယ် */
+        transition: all 0.2s ease;
+    }
+
+        .compact-filter-input-extended:focus, .compact-filter-input-extended-date:focus {
+            border-color: var(--secondary, #2563EB) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+            outline: none;
+        }
+
+    .compact-reset-btn {
+        background: #EF4444;
+        border: none;
+        color: #ffffff;
+        padding: 0 18px;
+        border-radius: 30px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        transition: all 0.2s;
+    }
+
+        .compact-reset-btn:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+    /* Description Single Line Ellipsis Row */
+    .single-line-desc-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 0.9rem;
+        color: var(--text2, #4B5563);
+        margin: 4px 0;
+    }
+
+    .info-icon-fixed {
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+
+    .ellipsis-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-grow: 1;
+    }
+
+    .material-more-btn {
+        background: none;
+        border: none;
+        color: var(--secondary, #2563EB);
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0 0 0 6px;
+        font-size: 0.88rem;
+        flex-shrink: 0;
+    }
+
+        .material-more-btn:hover {
+            color: var(--accent, #EC4899);
+            text-decoration: underline;
+        }
+
+    /* 🌟 MATERIAL DESIGN 3 POPUP OVERLAY SYSTEM */
+    .material-popup-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: rgba(0, 0, 0, 0.4) !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999999 !important;
+        backdrop-filter: blur(2px) !important;
+        padding: 24px;
+    }
+
+    .material-popup-card {
+        background: var(--card-bg, #ffffff);
+        border-radius: 28px;
+        width: 100%;
+        max-width: 560px;
+        max-height: 85vh;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: none;
+        animation: materialContainerOpen 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .material-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 24px 24px 16px 24px;
+    }
+
+    .material-headline-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--secondary, #2563EB);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .material-title {
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
+        color: var(--text, #1C1B1F);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .material-icon-button {
+        background: none;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--text2, #49454F);
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+        .material-icon-button:hover {
+            background-color: rgba(0,0,0,0.06);
+        }
+
+    .material-popup-media {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+        .material-popup-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .material-popup-content {
+        padding: 24px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .material-chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .material-suggested-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border, #79747E);
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: var(--text);
+        font-weight: 500;
+        background: transparent;
+    }
+
+        .material-suggested-chip i {
+            color: var(--secondary, #2563EB);
+        }
+
+    .material-body-supporting-text h3 {
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 10px;
+        color: var(--text);
+    }
+
+    .material-body-supporting-text p {
+        font-size: 0.95rem !important;
+        line-height: 1.6;
+        color: var(--text2, #49454F);
+        white-space: pre-wrap;
+        margin: 0;
+    }
+
+    .material-popup-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 16px 24px 24px 24px;
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .material-text-button {
+        background: none;
+        border: none;
+        padding: 10px 24px;
+        font-weight: 500;
+        font-size: 0.88rem;
+        color: var(--secondary, #2563EB);
+        cursor: pointer;
+        border-radius: 100px;
+        transition: background 0.2s;
+    }
+
+        .material-text-button:hover {
+            background-color: rgba(37, 99, 235, 0.08);
+        }
+
+    .status-msg-text {
+        font-size: 0.95rem;
+        padding: 15px;
+        color: var(--text2);
+    }
+
+    @("@") keyframes materialContainerOpen {
+        from {
+            transform: scale(0.92);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+
+@code {
+    private List<Activity> masterActivities;
+    private List<Activity> filteredRecentActivities;
+
+    private string searchQuery = "";
+    private DateTime? selectedFullDate;
+
+    private bool isPopupOpen = false;
+    private Activity selectedActivity;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            masterActivities = await DbContext.Activities
+                                             .Where(a => a.IsDelete != true)
+                                             .OrderByDescending(a => a.CreatedDateTime)
+                                             .ToListAsync();
+
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"EF Core Error: {ex.Message}");
+            masterActivities = new();
+            ApplyFilters();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        if (masterActivities == null) return;
+
+        var query = masterActivities.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            query = query.Where(a => a.ActivityTitle.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (selectedFullDate.HasValue)
+        {
+            query = query.Where(a => a.CreatedDateTime.HasValue &&
+                                     a.CreatedDateTime.Value.Date == selectedFullDate.Value.Date);
+        }
+
+        filteredRecentActivities = query.ToList();
+    }
+
+    private void ResetFilters()
+    {
+        searchQuery = "";
+        selectedFullDate = null;
+        ApplyFilters();
+    }
+
+    private void OpenPopup(Activity activity)
+    {
+        selectedActivity = activity;
+        isPopupOpen = true;
+        StateHasChanged();
+    }
+
+    private void ClosePopup()
+    {
+        isPopupOpen = false;
+        selectedActivity = null;
+        StateHasChanged();
+    }
+}

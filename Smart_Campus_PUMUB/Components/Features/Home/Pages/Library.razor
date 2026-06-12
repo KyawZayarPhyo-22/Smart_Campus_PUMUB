@@ -1,4 +1,4 @@
-@page "/Library"
+@* @page "/Library"
 <section id="library" style="background:var(--bg2);margin-top: 50px;">
     <div class="container">
         <div class="section-header" data-aos="fade-up">
@@ -108,4 +108,239 @@
             </div>
         </div>
     </div>
+</section> *@
+
+
+@page "/Library"
+@using Microsoft.EntityFrameworkCore
+@using Smart_Campus_PUMUB.Database.AppDbContext
+@inject SmartCampusDbContext DbContext
+@rendermode InteractiveServer
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<section id="library" style="background:var(--bg2); margin-top: 20px; padding-bottom: 80px;">
+    <div class="container">
+
+        <div class="section-header" data-aos="fade-up">
+            <div>
+                <div class="section-tag"><i class="fas fa-book"></i> Knowledge Hub</div>
+                <h2 class="section-title">University <span>Library</span></h2>
+                <p class="section-desc">Access over 50,000 books, journals, and digital resources across all engineering and technology disciplines.</p>
+            </div>
+        </div>
+
+        <div class="library-filter-right-wrapper" data-aos="fade-up">
+            <div class="material-inset-filter-bar">
+                <div class="compact-field">
+                    <i class="fas fa-search field-icon-medium"></i>
+                    <input type="text" class="compact-filter-input-extended"
+                           placeholder="Search books by name..."
+                           @bind="searchQuery" @bind:event="oninput" @onkeyup="ApplyFilter" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    <button class="compact-reset-btn" @onclick="ResetFilter">
+                        <i class="fas fa-undo"></i> Clear
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="library-grid" data-aos="fade-up">
+            @if (filteredBooks == null)
+            {
+                <p class="status-msg-text"><em>Loading digital library...</em></p>
+            }
+            else if (filteredBooks.Count == 0)
+            {
+                <p class="status-msg-text">No PDF resources match your search.</p>
+            }
+            else
+            {
+                @foreach (var book in filteredBooks)
+                {
+                    <div class="book-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div class="book-cover">
+                                @if (!string.IsNullOrEmpty(book.Image))
+                                {
+                                    <img src="@book.Image" alt="@book.BookName">
+                                }
+                                else
+                                {
+                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=280&q=80" alt="Default Book">
+                                }
+                            </div>
+                            <div class="book-body" style="padding-bottom: 8px;">
+                                <div class="book-category">@(book.Category != null ? book.Category.CategoryName : "General")</div>
+                                <h4 style="margin: 8px 0;">@book.BookName</h4>
+                                <p class="book-author">By: @(book.CreatedBy ?? "Unknown")</p>
+                            </div>
+                        </div>
+
+                        <div style="padding: 0 15px 15px 15px;">
+                            <a href="@book.Image" target="_blank" class="btn btn-primary"
+                               style="display: block; text-align: center; background: var(--secondary); color: white; border-radius: 8px; padding: 8px; text-decoration: none; font-size: 0.9rem; font-weight: bold; border: none; transition: background 0.3s;">
+                                <i class="fas fa-download" style="margin-right: 6px;"></i> Download PDF
+                            </a>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+    </div>
 </section>
+
+<style>
+    #library {
+        font-family: 'Roboto', 'Inter', sans-serif !important;
+    }
+
+    .library-filter-right-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 35px;
+        width: 100%;
+    }
+
+    /* 🌟 MATERIAL INSIDE SHADOW BAR (အောက်သို့ ချိုင့်ဝင်သွားသလို ခံစားရစေမယ့် အလှဆုံး ဒီဇိုင်းပါ ကိုကို) */
+    .material-inset-filter-bar {
+        background: var(--bg, #ededed); /* အနည်းငယ်မှောင်သော မျက်နှာပြင် */
+        border: 1px solid var(--border, #dbdbdb);
+        border-radius: 50px;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 340px; /* စာအုပ်ရှာရုံသီးသန့်မို့ Size ကို သေသပ်အောင် ထိန်းထားပါတယ်ရှင် */
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        /* 💡 အဓိက တောင်းဆိုထားတဲ့ Inside Shadow (Material Inset Effects) ပါ ကိုကို */
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    @@media (max-width: 768px) {
+        .library-filter-right-wrapper {
+            justify-content: center;
+        }
+
+        .material-inset-filter-bar {
+            border-radius: 12px;
+            padding: 10px;
+            max-width: 100%;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    .compact-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+    .field-icon-medium {
+        position: absolute;
+        left: 16px;
+        color: #8E918F;
+        z-index: 5;
+        font-size: 0.9rem;
+    }
+
+    /* Input Inside Inset Style */
+    .compact-filter-input-extended {
+        width: 100%;
+        padding: 10px 14px 10px 42px !important;
+        border-radius: 30px !important;
+        border: 1px solid transparent !important;
+        background: var(--card-bg, #ffffff) !important; /* အဖြူရောင်ထွက်ပေါ်လာစေရန် */
+        color: var(--text, #1C1B1F) !important;
+        font-size: 0.92rem;
+        height: 40px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+    }
+
+        .compact-filter-input-extended:focus {
+            border-color: var(--secondary, #2563EB) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+            outline: none;
+        }
+
+    .compact-reset-btn {
+        background: #EF4444;
+        border: none;
+        color: #ffffff;
+        padding: 0 18px;
+        border-radius: 30px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        transition: all 0.2s;
+    }
+
+        .compact-reset-btn:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+    .status-msg-text {
+        font-size: 0.95rem;
+        padding: 15px;
+        color: var(--text2);
+    }
+</style>
+
+@code {
+    private List<Book> masterBooks;
+    private List<Book> filteredBooks;
+    private string searchQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            masterBooks = await DbContext.Books
+                                   .Include(b => b.Category)
+                                   .Where(b => b.IsDelete != true)
+                                   .ToListAsync();
+
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"EF Core Error: {ex.Message}");
+            masterBooks = new List<Book>();
+            ApplyFilter();
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        if (masterBooks == null) return;
+
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredBooks = masterBooks;
+        }
+        else
+        {
+            filteredBooks = masterBooks
+                .Where(b => b.BookName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void ResetFilter()
+    {
+        searchQuery = "";
+        ApplyFilter();
+    }
+}
