@@ -1,10 +1,10 @@
-@page "/admin/tutors"
+@page "/admin/student"
 @layout AdminLayout
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
 <div class="mb-4">
-    <h3 class="fw-bold text-white">Tutor Directory</h3>
+    <h3 class="fw-bold text-white"><i class="bi bi-people me-2"></i>Student Databank</h3>
 </div>
 
 <div class="tech-card p-4">
@@ -12,16 +12,18 @@
         <div class="col-md-4">
             <div class="input-group">
                 <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control border-start-0" placeholder="Search by Name..." 
+                <input type="text" class="form-control border-start-0" placeholder="Search by Roll No..." 
                        @bind="SearchTerm" @bind:event="oninput" />
             </div>
         </div>
         <div class="col-md-8 text-end">
-            <NavLink href="/admin/tutor/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Tutor</NavLink>
+            <NavLink href="/admin/student/create" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Add New Student
+            </NavLink>
         </div>
     </div>
 
-    @if (IsLoading) { <div class="text-center text-white">Loading...</div> }
+    @if (IsLoading) { <div class="text-center text-white"><div class="spinner-border text-info"></div></div> }
     else
     {
         <div class="table-responsive">
@@ -29,29 +31,30 @@
                 <thead>
                     <tr>
                         <th>No.</th>
-                        <th>Profile</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
+                        <th>Roll No</th>
+                        <th>User Name</th>
+                        <th>Major</th>
+                        <th>Year</th>
+                        <th>Status</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @{ int count = 1; }
-                    @foreach (var tutor in FilteredTutors)
+                    @foreach (var s in FilteredStudents)
                     {
                         <tr>
                             <td>@count</td>
+                            <td><code class="text-info">@s.CurrentRollNo</code></td>
+                            <td>@s.UserName</td>
+                            <td>@s.CurrentMajor</td>
+                            <td>@s.CurrentClassYear</td>
                             <td>
-                                <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
-                                     class="rounded-circle" width="50" height="50" style="object-fit: cover;">
+                                <span class="badge @(s.Status == "Active" ? "bg-success" : "bg-warning")">@s.Status</span>
                             </td>
-                            <td>@tutor.TutorName</td>
-                            <td>@tutor.Email</td>
-                            <td>@tutor.Phone</td>
                             <td class="text-center">
-                                <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2">Edit</NavLink>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)">Delete</button>
+                                <NavLink href="@($"/admin/student/edit/{s.StudentId}")" class="btn btn-sm btn-outline-info me-2">Edit</NavLink>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(s)">Delete</button>
                             </td>
                         </tr>
                         count++;
@@ -69,10 +72,10 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content tech-card">
                 <div class="modal-header border-0"><h5 class="text-danger">Confirm Delete</h5></div>
-                <div class="modal-body text-center">Are you sure to delete @SelectedTutor?.TutorName?</div>
+                <div class="modal-body text-center">Are you sure to delete student <strong>@SelectedStudent?.CurrentRollNo</strong>?</div>
                 <div class="modal-footer border-0">
-                    <button class="btn btn-secondary" @onclick="() => ShowModal = false">Cancel</button>
-                    <button class="btn btn-danger" @onclick="DeleteTutor" disabled="@IsProcessing">Yes, Delete</button>
+                    <button class="btn btn-secondary" @onclick="CloseDeleteModal">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteStudent" disabled="@IsProcessing">Yes, Delete</button>
                 </div>
             </div>
         </div>
