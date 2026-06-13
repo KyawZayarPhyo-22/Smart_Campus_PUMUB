@@ -41,7 +41,7 @@ public partial class Page_FacultyList
             if (response != null)
             {
                 FacultyList = response;
-
+                    
             }
         }
         catch (Exception ex)
