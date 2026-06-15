@@ -3,7 +3,7 @@ using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 
-namespace Smart_Campus_PUMUB.Components.Admin.Pages.Student;
+namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student;
 
 public partial class Page_StudentEdit : ComponentBase
 {
