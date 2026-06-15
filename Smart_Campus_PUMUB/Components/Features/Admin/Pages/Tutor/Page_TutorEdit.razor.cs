@@ -17,6 +17,7 @@ public partial class Page_TutorEdit
     private List<UserModels> UserList = new();
 
     private IBrowserFile? selectedFile;
+    private bool IsLoading = true;
     private bool isProcessing = false;
     private string statusMessage = "";
 
@@ -46,6 +47,8 @@ public partial class Page_TutorEdit
     // }
     protected override async Task OnParametersSetAsync()
     {
+        IsLoading = true;
+
         // Id တန်ဖိုး အမှန်တကယ် ရောက်ရှိလာမှသာ Data ဆွဲယူပါ
         if (Id > 0)
         {
@@ -70,6 +73,8 @@ public partial class Page_TutorEdit
                 };
             }
         }
+
+        IsLoading = false;
     }
 
     private void HandleFileSelected(InputFileChangeEventArgs e) => selectedFile = e.File;

@@ -54,25 +54,64 @@ public partial class Page_FacultyList
     private void OpenDeleteModal(FacultyModel faculty) { SelectedFaculty = faculty; ShowModal = true; }
     private void CloseDeleteModal() { SelectedFaculty = null; ShowModal = false; }
 
+    //private async Task DeleteFaculty()
+    //{
+    //    if (SelectedFaculty == null) return;
+    //    IsProcessing = true;
+    //    try
+    //    {
+    //        var response = await HttpClientService.ExecuteAsync<FacultyDeleteResponseModel>($"faculty/{SelectedFaculty.FacultyId}", EnumHttpMethod.Delete);
+    //        if (response != null && response.IsSuccess)
+    //        {
+    //            await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+    //            CloseDeleteModal();
+    //            await LoadFaculties();
+    //        }
+    //        else
+    //        {
+    //            await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
+    //        }
+    //    }
+    //    catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
+    //    finally { IsProcessing = false; }
+    //}
+
     private async Task DeleteFaculty()
     {
+        // အကယ်၍ SelectedFaculty မရှိလျှင် ဘာမှမလုပ်ပါ
         if (SelectedFaculty == null) return;
+
+        // browser confirm box ကို ဖယ်ရှားလိုက်ပါပြီ
+
         IsProcessing = true;
         try
         {
-            var response = await HttpClientService.ExecuteAsync<FacultyDeleteResponseModel>($"faculty/{SelectedFaculty.FacultyId}", EnumHttpMethod.Delete);
+            // API သို့ Delete Request ပေးပို့ခြင်း
+            var response = await HttpClientService.ExecuteAsync<FacultyDeleteResponseModel>(
+                $"faculty/{SelectedFaculty.FacultyId}", EnumHttpMethod.Delete);
+
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+                // ဖျက်သိမ်းမှု အောင်မြင်ပါက Modal ကို ပိတ်ပြီး Data ကို Refresh လုပ်ပါ
                 CloseDeleteModal();
                 await LoadFaculties();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
+                // Error ဖြစ်ပါက Log ထုတ်ပြခြင်း
+                // သင့် UI ထဲတွင် Error message ပြလိုလျှင် ဤနေရာတွင် State ပြောင်းလဲပေးနိုင်ပါသည်
+                Console.WriteLine(response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
             }
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
-        finally { IsProcessing = false; }
+        catch (Exception ex)
+        {
+            // Exception တက်ပါက Log ထုတ်ပြခြင်း
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            // Processing ဖြစ်နေခြင်းကို ရပ်တန့်ပေးခြင်း
+            IsProcessing = false;
+        }
     }
 }
