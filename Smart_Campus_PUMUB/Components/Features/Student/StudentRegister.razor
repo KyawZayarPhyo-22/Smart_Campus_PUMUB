@@ -835,3 +835,18 @@
 </script>
 
 </html>
+
+
+@code {
+   
+    private string startYear = ""; 
+    private string endYear = "";
+    private StudentRegistration Reg  = new StudentRegistration();
+
+    private async Task SaveRegistration()
+    {
+        Reg.AcademicYearRange = $"{startYear}-{endYear}";
+       DbContext.StudentRegistrations.Add(Reg);
+        await DbContext.SaveChangesAsync();
+    }
+}
