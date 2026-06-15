@@ -1,0 +1,1204 @@
+@page "/Register"
+@using Smart_Campus_PUMUB.Components.Layout
+@layout StudentLayout
+<!DOCTYPE html>
+<html lang="my">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POLYTECHNIC UNIVERSITY (MAUBIN) — ပညာသင်ခွင့်လျောက်လွှာ</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+Myanmar:wght@400;500;700&family=Noto+Sans+Myanmar:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --primary: #2C3E7A;
+            --primary-light: #EEF1FB;
+            --accent: #5A4FCF;
+            --accent-light: #EEEDFE;
+            --text: #1a1a2e;
+            --text-muted: #5a5a72;
+            --border: #c8c8d8;
+            --border-light: #e8e8f0;
+            --bg: #f4f4f8;
+            --white: #ffffff;
+            --gold: #B8953A;
+            --gold-light: #FDF6E3;
+            --fee-color: #185FA5;
+            --success: #1D9E75;
+        }
+
+        body {
+            font-family: 'Noto Sans Myanmar', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .page {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 2px 16px rgba(44, 62, 122, 0.07);
+            page-break-after: always;
+        }
+
+        /* ── HEADER ── */
+        .uni-header {
+            text-align: center;
+            padding-bottom: 1.2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--primary);
+            position: relative;
+        }
+
+        .uni-header .gov-line {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .uni-header h1 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+        }
+
+        .uni-header h2 {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent);
+            margin-top: 3px;
+        }
+
+        .uni-header .form-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 10px;
+        }
+
+        .uni-header .form-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        /* ── PHOTO BOX ── */
+        /* .photo-box {
+    float: right;
+    width: 120px;
+    border: 1px solid var(--border);
+    padding: 10px;
+    text-align: center;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background: var(--primary-light);
+  }
+  .photo-area {
+    width: 96px; height: 120px;
+    border: 1.5px dashed var(--border);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 6px;
+    border-radius: 4px;
+    background: var(--white);
+    color: var(--text-muted);
+  }
+  .photo-area svg { width: 36px; height: 36px; opacity: 0.4; }
+  .photo-box p { font-size: 10px; color: var(--text-muted); line-height: 1.5; } */
+
+
+        /* ── PHOTO BOX ── */
+        .photo-box {
+            float: right;
+            width: 120px;
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: center;
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            background: var(--primary-light);
+            position: relative;
+            /* Adds layer depth control */
+            z-index: 10;
+            /* Forces it to stay on top of everything else */
+        }
+
+        .photo-area {
+            width: 96px;
+            height: 120px;
+            border: 1.5px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 6px;
+            border-radius: 4px;
+            background: var(--white);
+            color: var(--text-muted);
+            cursor: pointer;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .photo-area svg {
+            width: 36px;
+            height: 36px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .photo-box p {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            pointer-events: none;
+        }
+
+        /* ── SECTION LABEL ── */
+        .section-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 14px 0 10px;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent);
+        }
+
+        /* ── FORM FIELDS ── */
+        .form-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .form-grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .form-grid-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .form-grid-4 {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .field label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Input element formatting */
+        .field input.line,
+        .parent-block input.line {
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 5px 2px;
+            font-size: 13px;
+            color: var(--text);
+            background: transparent;
+            min-height: 26px;
+            width: 100%;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .field input.line:focus,
+        .parent-block input.line:focus {
+            outline: none;
+            border-bottom-color: var(--accent);
+            background-color: rgba(90, 79, 207, 0.02);
+        }
+
+        /* Inline template inputs */
+        .inline-input {
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text);
+            padding: 0 4px;
+            text-align: center;
+        }
+
+        .inline-input:focus {
+            outline: none;
+            border-bottom-color: var(--accent);
+        }
+
+        /* ── NATIONALITY PILLS ── */
+        .nat-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .nat-pill {
+            font-size: 11px;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 3px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            background: transparent;
+            transition: all 0.2s;
+        }
+
+        .nat-pill:hover,
+        .nat-pill.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        /* ── TABLE ── */
+        table.exam-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        table.exam-table th {
+            background: var(--primary-light);
+            padding: 7px 10px;
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--primary);
+            border: 1px solid var(--border-light);
+            text-align: left;
+        }
+
+        table.exam-table td {
+            padding: 2px 5px;
+            border: 1px solid var(--border-light);
+            height: 34px;
+        }
+
+        table.exam-table td input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 12px;
+            padding: 4px;
+        }
+
+        table.exam-table td input:focus {
+            outline: none;
+            background: rgba(90, 79, 207, 0.02);
+        }
+
+        /* ── DIVIDER ── */
+        hr.divider {
+            border: none;
+            border-top: 1px solid var(--border-light);
+            margin: 16px 0;
+        }
+
+        /* ── DECLARATION BOX ── */
+        .declaration-box {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            background: var(--primary-light);
+        }
+
+        .declaration-box .decl-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .rules-list {
+            list-style: none;
+        }
+
+        .rules-list li {
+            font-size: 12px;
+            color: var(--text);
+            line-height: 1.9;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            gap: 10px;
+        }
+
+        .rules-list li:last-child {
+            border-bottom: none;
+        }
+
+        .rules-list li .num {
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 20px;
+        }
+
+        .fee-highlight {
+            font-weight: 700;
+            color: var(--fee-color);
+        }
+
+        /* ── SIGNATURE ── */
+        .sig-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .sig-block {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .sig-line-input {
+            border: none;
+            border-bottom: 1px solid var(--border);
+            background: transparent;
+            width: 80%;
+            margin: 0 auto 6px;
+            text-align: center;
+            font-family: inherit;
+            padding: 4px;
+            font-size: 13px;
+        }
+
+        .sig-line-input:focus {
+            outline: none;
+            border-bottom-color: var(--accent);
+        }
+
+        .sig-line {
+            border-bottom: 1px solid var(--border);
+            height: 36px;
+            margin-bottom: 6px;
+        }
+
+        .sig-block p {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ── OFFICE BOX ── */
+        .office-box {
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 1rem;
+            background: #fafafa;
+        }
+
+        .office-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: right;
+            margin-bottom: 10px;
+        }
+
+        /* ── YEAR BADGE ── */
+        .year-tag {
+            display: inline-block;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 10px;
+            margin-bottom: 14px;
+        }
+
+        /* ── YEAR CARDS ── */
+        .year-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .year-card {
+            background: var(--primary-light);
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid var(--border-light);
+            transition: box-shadow 0.2s;
+        }
+
+        .year-card:hover {
+            box-shadow: 0 4px 16px rgba(44, 62, 122, 0.1);
+        }
+
+        .year-card .year-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .year-card .fee-row {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        /* ── REF PERSON ── */
+        .ref-person {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-light);
+        }
+
+        .ref-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        /* ── RULES PAGE HEADER ── */
+        .rules-header {
+            text-align: center;
+            padding-bottom: 1.2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .rules-header .gov-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .rules-header .dept-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .rules-header .title-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-top: 10px;
+            padding: 6px 16px;
+            border: 1.5px solid var(--gold);
+            border-radius: 6px;
+            display: inline-block;
+            background: var(--gold-light);
+        }
+
+        .address-area {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            min-height: 60px;
+            margin-top: 4px;
+            width: 100%;
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+            background: transparent;
+        }
+
+        .address-area:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: rgba(90, 79, 207, 0.02);
+        }
+
+        .two-col-parent {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .parent-block label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .parent-block .line {
+            border: none;
+            border-bottom: 1px solid var(--border);
+            display: block;
+            width: 100%;
+            min-height: 24px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .parent-block .sig-line {
+            border-bottom: 1px solid var(--border);
+            height: 32px;
+            margin-bottom: 8px;
+        }
+
+        .parent-block .block-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        @@media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .page {
+                box-shadow: none;
+                border: none;
+                margin: 0;
+                border-radius: 0;
+                page-break-after: always;
+            }
+
+            input::placeholder {
+                color: transparent;
+            }
+        }
+
+        @@media (max-width: 600px) {
+            body {
+                padding: 0.75rem;
+            }
+
+            .page {
+                padding: 1.25rem;
+            }
+
+            .form-grid-2,
+            .form-grid-3,
+            .form-grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .year-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .sig-row,
+            .two-col-parent {
+                grid-template-columns: 1fr;
+            }
+
+            .photo-box {
+                float: none;
+                margin: 0 auto 1rem;
+                display: block;
+            }
+        }
+    </style>
+</head>
+
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 1 — Main Application Form
+══════════════════════════════════════════════ -->
+<div class="page clearfix">
+
+        <div class="uni-header" style="text-align:left; border-bottom:none; padding-bottom:0; margin-bottom:0;">
+            <div class="gov-line">ပြည်ထောင်စုသမ္မတ မြန်မာနိုင်ငံတော်အစိုးရ — သိပ္ပံနှင့်နည်းပညာဝန်ကြီးဌာန</div>
+            <h1>POLYTECHNIC UNIVERSITY (MAUBIN)</h1>
+            <h2>FACULTY OF COMPUTING</h2>
+            <div class="form-title" style="margin-top:10px;">၂၀ <input type="text" class="inline-input"
+                    style="width: 50px;">
+                - ၂၀ <input type="text" class="inline-input" style="width: 50px;"> ပညာသင်နှစ်</div>
+            <div class="form-sub">ကျောင်းသား၊ ကျောင်းသူများ ပညာသင်ခွင့်လျှောက်လွှာ</div>
+        </div> -->
+    <div class="container">
+        <div class="row align-items-center">
+
+            <div class="col-12 col-md-9 order-1 order-md-1 text-center text-md-start mb-4 mb-md-0">
+                <div class="uni-header" style="border-bottom:none; padding-bottom:0; margin-bottom:0;">
+                    <div class="gov-line">ပြည်ထောင်စုသမ္မတ မြန်မာနိုင်ငံတော်အစိုးရ</div>
+                    <div class="gov-line">သိပ္ပံနှင့်နည်းပညာဝန်ကြီးဌာန</div>
+                    <h1>POLYTECHNIC UNIVERSITY (MAUBIN)</h1>
+                    <h2>FACULTY OF COMPUTING</h2>
+                    <div class="form-title" style="margin-top:10px;">
+                        ၂၀ <input type="text" class="inline-input" style="width: 50px;">
+                        - ၂၀ <input type="text" class="inline-input" style="width: 50px;"> ပညာသင်နှစ်
+                    </div>
+                    <div class="form-sub mt-2">ကျောင်းသား၊ ကျောင်းသူများ ပညာသင်ခွင့်လျှောက်လွှာ</div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-3 order-2 order-md-2 d-flex flex-column align-items-center align-items-md-end"
+                style="margin-top: 30px;">
+                <div class="photo-box text-center">
+                    <label class="photo-area" id="photoLabel">
+                        <input type="file" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                        <svg id="photoIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                            width="40" height="40">
+                            <circle cx="12" cy="8" r="4" />
+                            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                        </svg>
+                    </label>
+                    <p class="mt-2 mb-0">ဓါတ်ပုံ ၄ ပုံနှင့်<br>တင်သွင်းပါ</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <hr class="divider" style="clear:both; margin-top:72px;">
+
+    <div class="form-grid form-grid-3">
+        <div class="field"><label>သင်တန်းနှစ်</label><input type="text" class="line"></div>
+        <div class="field"><label>အထူးပြုဘာသာ</label><input type="text" class="line"></div>
+        <div class="field"><label>ခုံအမှတ်</label><input type="text" class="line"></div>
+    </div>
+    <div class="form-grid form-grid-2">
+        <div class="field"><label>တက္ကသိုလ်မှတ်ပုံတင်အမှတ်</label><input type="text" class="line"></div>
+        <div class="field"><label>တက္ကသိုလ်ဝင်ရောက်သည့်နှစ်</label><input type="date" class="line"></div>
+    </div>
+
+    <div class="">
+        <div class="section-label">၁။ ပညာဆည်းပူးဆက်လက်သင်ခွင့်တောင်းသူ ကျောင်းသား၊ ကျောင်းသူ</div>
+        <div class="form-grid form-grid-2">
+            <div class="field"><label>အမည် (မြန်မာစာဖြင့်)</label><input type="text" class="line"></div>
+            <div class="field"><label>အမည် (အင်္ဂလိပ်စာဖြင့်)</label><input type="text" class="line"></div>
+            <div class="field"><label>လူမျိုး</label><input type="text" class="line"></div>
+            <div class="field"><label>ကိုးကွယ်သည့်ဘာသာ</label><input type="text" class="line"></div>
+            <div class="field"><label>မွေးဖွားရာဇာတိ</label><input type="text" class="line"></div>
+            <div class="field"><label>မြို့နယ် / ပြည်နယ် / တိုင်း</label><input type="text" class="line"></div>
+            <div class="field"><label>မှတ်ပုံတင်အမှတ်</label><input type="text" class="line"></div>
+            <div class="field"><label>မွေးသက္ကရာဇ်</label><input type="date" class="line"
+                    placeholder="ရက် / လ / ခုနှစ်"></div>
+            <div class="field"><label>Email</label><input type="email" class="line"></div>
+            <div class="field"><label>သွေးအုပ်စု</label><input type="text" class="line"></div>
+            <div class="field"><label>ကိုဗစ်ကာကွယ်ရေးထိုးနှံမှု — ထိုး/မထိုး ပြီးစီးသည့်ရက်</label><input type="date"
+                    class="line">
+            </div>
+            <div class="field">
+                <label>နိုင်ငံသား အမျိုးအစား</label>
+                <div class="nat-row" style="margin-top: 12px;">
+                    <label class="nat-item">
+                        <input type="radio" name="nationality" value="foreign"> နိုင်ငံခြားသား
+                    </label>
+                    <label class="nat-item">
+                        <input type="radio" name="nationality" value="local" checked> တိုင်းရင်းသား
+                    </label>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="form-grid form-grid-3" style="margin-top: 50px;">
+        <div class="field"><label>တက္ကသိုလ်ဝင်တန်း ခုံအမှတ်</label><input type="text" class="line"></div>
+        <div class="field"><label>အောင်မြင်သည့် ခုနှစ်</label><input type="text" class="line"></div>
+        <div class="field"><label>စာစစ်ဌာန </label><input type="text" class="line"></div>
+
+
+    </div>
+
+    <!-- <hr class="divider"> -->
+
+    <div class="form-grid form-grid-2">
+        <div class="field">
+            <label>အဘ အုပ်ထိန်းသူ၏ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန (မြန်မာ)</label>
+            <input type="text" class="line" style="margin-top:4px;">
+        </div>
+        <div class="field">
+            <label>အမိ အုပ်ထိန်းသူ၏ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန (အင်္ဂလိပ်)</label>
+            <input type="text" class="line" style="margin-top:4px;">
+        </div>
+    </div>
+    <div class="form-grid form-grid-2">
+        <div class="field">
+            <label>အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (မြန်မာစာဖြင့်)</label>
+            <input type="text" class="line" style="margin-top:4px;">
+        </div>
+        <div class="field">
+            <label>အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (အင်္ဂလိပ်စာဖြင့်)()</label>
+            <input type="text" class="line" style="margin-top:4px;">
+        </div>
+    </div>
+</div>
+<!-- </div> -->
+<hr class="divider">
+<div class="page clearfix">
+    <div class="section-label">၂။ ဖြေဆိုသည့်စာမေးပွဲများ</div>
+    <table class="exam-table">
+        <thead>
+            <tr>
+                <th>ဖြေဆိုသည့်စာမေးပွဲများ</th>
+                <th>အဓိကဘာသာ</th>
+                <th>ခုံအမှတ်</th>
+                <th>ခုနှစ်</th>
+                <th>အောင် / ကျ</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+            </tr>
+            <tr>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+            </tr>
+            <tr>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+            </tr>
+            <tr>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="" style="margin-bottom: 50px;margin-top: 30px;">
+        <div class="section-label">အမိ</div>
+        <div class="form-grid form-grid-2">
+            <div class="field"><label>အမည် (မြန်မာစာဖြင့်)</label><input type="text" class="line"></div>
+            <div class="field"><label>အမည် (အင်္ဂလိပ်စာဖြင့်)</label><input type="text" class="line"></div>
+            <div class="field"><label>လူမျိုး</label><input type="text" class="line"></div>
+            <div class="field"><label>ကိုးကွယ်သည့်ဘာသာ</label><input type="text" class="line"></div>
+            <div class="field"><label>မွေးဖွားရာဇာတိ</label><input type="text" class="line"></div>
+            <div class="field"><label>မြို့နယ် / ပြည်နယ် / တိုင်း</label><input type="text" class="line"></div>
+            <div class="field"><label>မှတ်ပုံတင်အမှတ်</label><input type="text" class="line"></div>
+            <!-- <div class="field"><label>မွေးသက္ကရာဇ်</label><input type="date" class="line"
+                        placeholder="ရက် / လ / ခုနှစ်"></div> -->
+            <div class="field">
+                <label>နိုင်ငံသား အမျိုးအစား</label>
+                <div class="nat-row" style="margin-top: 12px;">
+                    <label class="nat-item">
+                        <input type="radio" name="nationality" value="foreign"> နိုင်ငံခြားသား
+                    </label>
+                    <label class="nat-item">
+                        <input type="radio" name="nationality" value="local" checked> တိုင်းရင်းသား
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr class="divider">
+
+    <div class="" style="margin-top: 30px;">
+        <div class="section-label">အဘ</div>
+        <div class="form-grid form-grid-2">
+            <div class="field"><label>အမည် (မြန်မာစာဖြင့်)</label><input type="text" class="line"></div>
+            <div class="field"><label>အမည် (အင်္ဂလိပ်စာဖြင့်)</label><input type="text" class="line"></div>
+            <div class="field"><label>လူမျိုး</label><input type="text" class="line"></div>
+            <div class="field"><label>ကိုးကွယ်သည့်ဘာသာ</label><input type="text" class="line"></div>
+            <div class="field"><label>မွေးဖွားရာဇာတိ</label><input type="text" class="line"></div>
+            <div class="field"><label>မြို့နယ် / ပြည်နယ် / တိုင်း</label><input type="text" class="line"></div>
+            <div class="field"><label>မှတ်ပုံတင်အမှတ်</label><input type="text" class="line"></div>
+           
+            <div class="field">
+                <label>နိုင်ငံသား အမျိုးအစား</label>
+                <div class="nat-row" style="margin-top: 12px;">
+                    <label class="nat-item">
+                        <input type="radio" name="nationality" value="foreign"> နိုင်ငံခြားသား
+                    </label>
+                    <label class="nat-item">
+                        <input type="radio" name="nationality" value="local" checked> တိုင်းရင်းသား
+                    </label>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <!-- here -->
+
+</div>
+<!-- </div> -->
+
+<!-- ══════════════════════════════════════════════
+     PAGE 2 — Reference & Declaration
+══════════════════════════════════════════════ -->
+<div class="page">
+    <!-- <div class="page-badge">Page 2 — သက်သေပုဂ္ဂိုလ် နှင့် ကိုယ်ပိုင်ဝန်ခံချက်</div> -->
+
+    <div class="section-label">၃။ ကျောင်းနေရန်အထောက်အပံ့ပြုမည့် ပုဂ္ဂိုလ်</div>
+
+    <div class="ref-person">
+        <!-- <div class="ref-title">(က) ပထမ သက်သေ</div> -->
+        <div class="form-grid form-grid-2">
+            <div class="field"><label>အမည်</label><input type="text" class="line"></div>
+            <div class="field"><label>ဆွေမျိုးတော်စပ်ပုံ</label><input type="text" class="line"></div>
+        </div>
+        <div class="form-grid form-grid-2">
+            <div class="field"><label>အလုပ်အကိုင်</label><input type="text" class="line"></div>
+            <div class="field"><label>ဖုန်းနံပါတ်</label><input type="tel" class="line"></div>
+        </div>
+        <div class="field"><label>ဆက်သွယ်ရန်လိပ်စာ</label><input type="text" class="line"></div>
+        <div class="form-grid" style="margin-top:20px;">
+            <div class="field">
+                <label>ပညာသင်ထောက်ပံ့ကြေးပေးရန်မေတ္တာရပ်ခံခြင်း ပြု/မပြု</label>
+                <div class="nat-row" style="margin-top: 12px;">
+                    <label class="nat-item">
+                        <input type="radio" name="prize" value="yes"> ပြု
+                    </label>
+                    <label class="nat-item">
+                        <input type="radio" name="prize" value="no" checked> မပြု
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="declaration-box">
+        <div class="decl-title">ကိုယ်ပိုင်ဝန်ခံချက်</div>
+        <ul class="rules-list">
+            <li><span class="num">၁</span>အထက်ဖော်ပြပါ အချက်များအားလုံး မှန်ကန်ပါသည်။</li>
+            <li><span class="num">၂</span>ဤတက္ကသိုလ်၌ ကိုယ်တိုင်ပညာသင်ခွင့် တောင်းသည်ကို မိဘ (သို့မဟုတ်)
+                အုပ်ထိန်းသူက သဘောတူကြောင်း ဖြစ်ပါသည်။</li>
+            <li><span class="num">၃</span>တက္ကသိုလ်ကျောင်းသားတစ်ဦးပီသစွာ တက္ကသိုလ် / ကောလိပ်က ချမှတ်သည့်
+                စည်းမျဉ်းစည်းကမ်းနှင့်အညီ လိုက်နာကျင့်သုံးနေထိုင်ပါမည်။</li>
+        </ul>
+    </div>
+    <!-- <div class="" style="margin-top: 30px; margin-bottom: 30px;" >
+            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">ရက်စွဲ၊ ၂၀ <input type="text" class="inline-input" style="width: 35px;"> ခုနှစ်၊<input type="text"
+                class="inline-input" style="width: 60px;"> လ၊ <input type="text"
+                    class="inline-input" style="width: 60px;"> ရက် &nbsp;&nbsp;&nbsp;
+    
+            </p>
+        </div> -->
+    <div style="
+        display:flex;
+        gap:8px;
+        align-items:baseline;
+        justify-content:flex-start;
+        margin-bottom:1rem;
+        font-size:13px;
+        width:100%;
+        flex-wrap:wrap;
+    ">
+        <span>ရက်စွဲ။</span>
+        <input type="date" class="inline-input" style="width:160px; max-width:100%;">
+    </div>
+    <div class="form-grid form-grid-2" ">
+            <div class=" field" style="margin-bottom:2.5rem;">
+        <label>ယခုဆက်သွယ်ရန်လိပ်စာ</label>
+        <textarea class="address-area" style="height: 120px;"></textarea>
+    </div>
+
+    <div class="" style="margin-top: 30px;">
+        <div class="sig-block">
+            <input type="text" class="sig-line-input" placeholder="(လက်မှတ်)">
+            <p>ပညာသင်ခွင့်လျောက်ထားသူ၏ လက်မှတ်</p>
+        </div>
+        <div class="sig-block" ">
+                    <input type=" text" class="sig-line-input" " >
+                    <p>တက္ကသိုလ်ရုံးမှစစ်ဆေးပြီး</p>
+                </div>
+               
+            </div>
+
+        </div>
+        <div class=" form-grid form-grid-2">
+            <div class="office-box">
+                <div class="office-title">တက္ကသိုလ်ရုံးအတွက်</div>
+                <!-- <div class="field"><label>အဓိကဘာသာ</label><input type="text" class="line"></div> -->
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom: 30px;"><input type="text"
+                        class="inline-input" style="width: 285px;">အဓိက</p>
+                <div class="field" style="margin-top:8px; text-align: center;"><label>သာမန်ဘာသာတွဲများ</label><input
+                        type="text" class="line">
+                </div>
+
+            </div>
+            <div class="" style="margin-top: 60px;">
+                <div class="field" style="margin-top:8px;text-align: center;"><label>ဖော်ပြပါဘာသာရပ်များဖြင့်
+                        ပညာသင်ခွင့်ပြုသည်။</label>
+                    <div class="">
+                        <input type="text" class="sig-line-input" placeholder="(လက်မှတ်)">
+                        <p style="font-size:11px; color:var(--text-muted); text-align:center;">ပါမောက္ခ /ဌာနမှူး</p>
+                    </div>
+                    <!-- <div style="margin-top:1rem; border-top:1px solid var(--border-light); padding-top:10px; text-align:center;">
+            
+        </div> -->
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider" style="margin-top:1.5rem;">
+
+        <div style="text-align:left;">
+            <p style="font-size:11px; color:var(--text-muted);">ငွေလက်ခံသည့်ဌာန <input type="text" class="inline-input"
+                    style="width: 180px;"> </p>
+            <p style="font-size:11px; color:var(--text-muted);margin-top: 10px;">ငွေသွင်းရန်လိုအပ်သည့်ငွေကြေးများကို
+                လက်ခံရရှိပြီးဖြစ်ပါသည်။</p>
+
+        </div>
+        <!-- <div class="" style="display: flex; justify-content: space-between;margin-top: 10px;">
+            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+            ရက်စွဲ၊ ၂၀ <input type="text" class="inline-input" style="width: 35px;"> ခုနှစ်၊<input type="text" class="inline-input" style="width: 35px;"> လ၊ <input type="text"
+                class="inline-input" style="width: 60px;"> ရက် &nbsp;&nbsp;&nbsp;
+            
+        </p>
+        <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">ငွေလက်ခံသူ <input type="text" class="inline-input" style="width: 130px;"></p>
+        </div> -->
+        <div style="
+        display:flex;
+        gap:8px;
+        align-items:baseline;
+        justify-content:flex-end;
+        margin-bottom:1rem;
+        font-size:13px;
+        width:100%;
+        flex-wrap:wrap;
+    ">
+            <span>ရက်စွဲ။</span>
+            <input type="date" class="inline-input" style="width:160px; max-width:100%;">
+        </div>
+
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════
+     PAGE 3 — First Year Application Letter
+══════════════════════════════════════════════ -->
+    <div class="page">
+        <div style="text-align:right; margin-bottom:1.5rem;">
+            <div class="page-badge">ပထမနှစ် — First Year Application Letter</div>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+            <div style="font-size:13px; margin-bottom:4px;">သို့</div>
+            <div style="font-size:14px; font-weight:700; color:var(--primary); margin-left: 30px;">ပါမောက္ခချုပ်
+            </div>
+            <div style="font-size:13px;margin-left: 30px;">POLYTECHNIC UNIVERSITY (MAUBIN)</div>
+        </div>
+
+        <div style="
+        display:flex;
+        gap:8px;
+        align-items:baseline;
+        justify-content:flex-end;
+        margin-bottom:1rem;
+        font-size:13px;
+        width:100%;
+        flex-wrap:wrap;
+    ">
+            <span>ရက်စွဲ။</span>
+            <input type="date" class="inline-input" style="width:160px; max-width:100%;">
+        </div>
+
+        <div
+            style="background:var(--primary-light); border-left:3px solid var(--primary); padding:10px 14px; border-radius:0 6px 6px 0; margin-bottom:1rem;">
+            <div style="font-size:12px; color:var(--text-muted);">အကြောင်းအရာ။</div>
+            <div style="font-size:14px; font-weight:700; color:var(--primary);">FACULTY OF COMPUTING တွင်
+                ပထမနှစ်သင်တန်း တက်ရောက်ခွင့်လျှောက်ထားခြင်း။</div>
+        </div>
+
+        <div style="font-size:13px; line-height:2.2; margin-bottom:1.5rem;">
+            <div style="display:inline-block; width:100%;">
+                <span style="margin-left: 50px;">ကျွန်တော် / ကျွန်မ</span>
+                <input type="text" class="inline-input" style="width: 150px;">
+                <span>သည် ၂၀၂၅ ခုနှစ်၊ မတ်လအတွင်း ကျင်းပသော တက္ကသိုလ်ဝင်တန်းစာမေးပွဲကို ခုံအမှတ်</span>
+                <input type="text" class="inline-input" style="width: 100px;">
+                <span>ဖြင့် ဖြေဆိုအောင်မြင်ပြီး FACULTY OF COMPUTING သို့ ဝင်ခွင့်အမှတ်စဉ် (</span>
+                <input type="text" class="inline-input" style="width: 50px;">
+                <span>) ဖြင့် ပထမနှစ်သင်တန်းသို့ ဝင်ခွင့်ရသူဖြစ်ပါသည်။</span>
+            </div>
+
+            <div class="" style="display:inline-block; width:100%;">
+                <p style="margin-top:10px;"><span style="margin-left: 50px;">၂၀<input type="text" class="inline-input"
+                            style="width: 30px;"> - ၂၀<input type="text" class="inline-input" style="width: 30px;">
+                    </span>ပညာသင်နှစ်အတွက် FACULTY OF COMPUTING တွင် ဖွင့်လှစ်မည့်
+                    ပထမနှစ်သင်တန်းသို့ တက်ရောက်ခွင့်ပြုပါရန် လျှောက်ထားအပ်ပါသည်။
+                </p>
+            </div>
+
+            <!-- <div style="display:inline-block; width:100%;"> -->
+            <div class="" style="display:inline-block; width:100%;">
+                <p style="margin-top:10px;"> <span style="margin-left: 50px;">FACULTY OF COMPUTING</span> တွင်
+                    ပညာသင်ကြားနေစဉ်ကာလအတွင်း ဤတက္ကသိုလ်မှ သတ်မှတ်ထားသည့် အောက်ပါဖော်ပြပါအချက်အလက်များကို
+                    သိရှိပြီးကြောင်းနှင့် လိုက်နာကျင့်သုံးမည်ဖြစ်ပါကြောင်း ဝန်ခံလက်မှတ်ရေးထိုးပါသည်-</p>
+            </div>
+
+        </div>
+
+        <div class="year-tag">B.C.Sc / B.C.Tech — ၄ နှစ် သင်တန်း</div>
+
+        <div class="declaration-box">
+            <div class="decl-title">ဝန်ခံချက်</div>
+            <ul class="rules-list">
+                <li><span class="num">၁</span>B.C.Sc./B.C.Tech. သင်တန်းမှာ(၄)နှစ် သင်တန်း ဖြစ်ပါသည်။</li>
+                <!-- <li><span class="num">၂</span>ပထမနှစ်သင်တန်းအတွက် သင်တန်းကြေးမှာ တစ်လလျှင် <span class="fee-highlight num">K 1,500/-</span> နှုန်း ဖြစ်ပါသည်။</li> -->
+                <li><span class="num">၂</span>ပထမနှစ်သင်တန်းအတွက် သင်တန်းကြေးမှာ တစ်လလျှင် K 1,500- နှုန်း
+                    ဖြစ်ပါသည်။</li>
+                <li><span class="num">၃</span>ကျောင်းသား / ကျောင်းသူ ကျောင်းပီသစွာ တက္ကသိုလ်ကချမှတ်သည့် စည်းမျဉ်း၊
+                    စည်းကမ်းများနှင့်အညီ လိုက်နာကျင့်သုံးနေထိုင်ပါမည်။</li>
+                <li><span class="num">၄</span>Credit System ကင်းသုံးသည်ကို သိရှိပါသည်။</li>
+                <li><span class="num">၅</span>မသမာသောနည်းလမ်းများဖြင့် စာမေးပွဲဖြေဆိုခြင်းတွေ့ရှိပါက
+                    ကျောင်းမှရာသက်ပန်
+                    ထုတ်ပယ်ခြင်းခံမည်ကို သိရှိပါသည်။</li>
+                <li><span class="num">၆</span>ကျောင်းမှထုတ်ပြန်ထားသော ပူးတွဲဖော်ပြပါ စည်းကမ်းချက်များကို ဖတ်ရှု
+                    လက်မှတ်ထိုးပြီး လိုက်နာပါမည်ဟု ကတိပြုပါသည်။</li>
+            </ul>
+        </div>
+
+        <div class="two-col-parent">
+            <div class="parent-block">
+                <div class="block-title">မိဘ / အုပ်ထိန်းသူ လက်မှတ်</div>
+                <input type="text" class="sig-line-input" style="width:100%; margin-bottom:12px;"
+                    placeholder="(လက်မှတ်)">
+                <label>အမည်</label><input type="text" class="line">
+                <label>မှတ်ပုံတင်အမှတ်</label><input type="text" class="line">
+                <label>ဖုန်းနံပါတ်</label><input type="tel" class="line">
+            </div>
+            <div class="parent-block">
+                <div class="block-title">ပညာသင်ခွင့်လျှောက်ထားသူ၏ လက်မှတ်</div>
+                <input type="text" class="sig-line-input" style="width:100%; margin-bottom:12px;"
+                    placeholder="(လက်မှတ်)">
+                <label>အမည်</label><input type="text" class="line">
+                <label>ယခင်နှစ်ခုံအမှတ်</label><input type="text" class="line">
+                <label>ဖုန်းနံပါတ်</label><input type="tel" class="line">
+            </div>
+
+
+        </div>
+        <div class="parent-block">
+            <label>ဆက်သွယ်ရန်လိပ်စာ</label><input type="text" class="inline-input" style="width: 100%;">
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+     PAGE 5 — Student Conduct Rules
+══════════════════════════════════════════════ -->
+    <div class="page">
+        <div class="rules-header">
+            <div class="gov-text">ပြည်ထောင်စုသမ္မတမြန်မာနိုင်ငံတော်အစိုးရ</div>
+            <div class="gov-text">သိပ္ပံနှင့်နည်းပညာဝန်ကြီးဌာန</div>
+            <div class="gov-text" style="margin-top:4px;">POLYTECHNIC UNIVERSITY (MAUBIN)
+            </div>
+            <div class="gov-text" style="margin-top:4px;">FACULTY OF COMPUTING
+            </div>
+            <div class="title-text">" ကျောင်းသား၊ ကျောင်းသူများ လိုက်နာရန် စည်းကမ်းချက်များ "</div>
+        </div>
+
+        <ul class="rules-list"">
+                <li style=" margin-bottom: 15px;"><span class="num">၁</span>Credit System ကျင့်သုံးသည်ကို သိရှိပါသည်။
+            </li>
+            <li style="margin-bottom: 15px;">
+                <span class="num">၂</span>
+                <span>ကျောင်းသား၊ ကျောင်းသူများသည် ကျောင်းဝင်းအတွင်း မြန်မာယဉ်ကျေးမှုနှင့် ဆီလျော်သည့်
+                    တူညီဝတ်စုံကိုသာ ဝတ်ဆင်ရန်နှင့် ဆံပင်အရောင် ဆိုးခြင်းမပြုရ။
+                    <br><strong style="margin-left: 30px;font-size: 11px;">ကျောင်းသား</strong> — ရှပ်အကျီအဖြူနှင့်
+                    စိမ်းပြာရင့်ရောင်ပုဆိုးအကွတ်။
+                    <br><strong style="margin-left: 30px;font-size: 11px;">ကျောင်းသူ</strong> — ရှပ်အကျီအဖြူနှင့်
+                    စိမ်းပြာရင့်ရောင်ပြောင်လုံချည်။
+                    <br><strong style="font-size:11px; ">မှတ်ချက် —
+                        သတ်မှတ်ထားသောကျောင်းဝတ်စုံမှလွဲ၍
+                        မည်သည့်ဝတ်စုံကိုမှ မဝတ်ဆင်ခွင့်မပြု။</strong>
+                </span>
+            </li>
+            <li style="margin-bottom: 15px;"><span class="num">၃</span>ကျောင်းပိုဝုဏ်အတွင်းတွင်ဖြစ်စေ၊
+                ပြင်ပတွင်ဖြစ်စေ ရာဇဝတ်နှင့်မလွတ်ကင်းသော
+                ကိစ္စများ ဖြစ်ပွားခြင်းနှင့် မည်သည့်လောင်းကစားမှ မပြုလုပ်ရ။ အမျိုးသမီးများ ဣဒ္ဒါပိုက်ခဲသည်
+                မည်သည့်နှောင့်ယှက်မှုများ မပြုလုပ်ရ။</li>
+            <li style="margin-bottom: 15px;"><span class="num">၄</span>ဆေးလိပ်သောက်ခြင်း၊ ကွမ်းစားခြင်းနှင့်
+                မူးယစ်ဆေးဝါး၊ အရက်သောက်စားခြင်း
+                မပြုရ။
+            </li>
+            <li style="margin-bottom: 15px;"><span class="num">၅</span>ကျောင်းနံရံများ၊ စာသင်ခန်းများနှင့်
+                ဆောင်ပြောသင်ပုန်းတို့တွင် သက်ဆိုင်ရာမှ
+                ခွင့်ပြုချက်မရှိ မည်သည့်စာရွက်စာတမ်းကိုမှ ကပ်ခြင်း၊ ရေးဆွဲခြင်း မပြုရ။</li>
+            <li style="margin-bottom: 15px;"><span class="num">၆</span>ကျောင်းသားများ ပညာသင်ကြားခြင်းကို အနှောင့်
+                အယှက်ဖြစ်စေမည့် မည်သည့်
+                ညမမြောများ
+                မပြုလုပ်ရ။</li>
+            <li style="margin-bottom: 15px;"><span class="num">၇</span>ကျောင်းအဆောက်အဦ အတွင်း
+                မည်သည့်ကော်ကစားခြင်းကိုမှ မပြုလုပ်ရ။</li>
+            <li style="margin-bottom: 15px;"><span class="num">၈</span>စာသင်ခန်းတွင်းမှ စားပွဲ၊ ကုလားထိုင်များအား
+                ခွင့်ပြုချက်မရှိ ပွဲ
+                စာသင်ခန်းပြင်ပသို့ ထုတ်ယူသုံးစွဲခြင်း မပြုလုပ်ရ။</li>
+            <li style="margin-bottom: 15px;"><span class="num">၉</span>ကျောင်းမှ အခါအားလျော်စွာ ထုတ်ပြန်သော
+                စည်းကမ်းချက်များကို
+                လိုက်နာခြင်းမရှိပါက
+                ကျောင်းစည်းမည်း၊ စည်းကမ်းများနှင့်အညီ အရေးယူခြင်းခံမည်။</li>
+        </ul>
+    </div>
+
+
+    <script>
+        function previewImage(input) {
+            const file = input.files[0];    
+            const label = document.getElementById('photoLabel');
+            const icon = document.getElementById('photoIcon');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    // Displays the selected image as the background
+                    label.style.backgroundImage = "url('" + e.target.result + "')";
+                    // Hides the grey icon smoothly
+                    if (icon) icon.style.opacity = '0';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+
+</html>

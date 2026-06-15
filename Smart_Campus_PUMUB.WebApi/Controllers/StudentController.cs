@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Smart_Campus_PUMUB.Database.AppDbContext; // မင်းရဲ့ AppDbContext တည်နေရာ
 using Smart_Campus_PUMUB.WebApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -23,6 +24,7 @@ public class StudentController : ControllerBase
     public IActionResult GetStudents()
     {
         var lst = _db.Students
+        .Include(x => x.User)
             .Where(x => x.IsDelete == false || x.IsDelete == null)
             .OrderByDescending(s => s.StudentId)
             .Select(s => new StudentModel
@@ -32,6 +34,7 @@ public class StudentController : ControllerBase
                 CurrentClassYear = s.CurrentClassYear,
                 CurrentMajor = s.CurrentMajor,
                 CurrentRollNo = s.CurrentRollNo,
+                UserName = s.User.UserName,
                 Status = s.Status ?? "Active"
             })
             .ToList();
@@ -166,6 +169,8 @@ public class StudentController : ControllerBase
         item.CurrentMajor = request.CurrentMajor;
         item.CurrentRollNo = request.CurrentRollNo?.ToUpper();
         item.Status = request.Status;
+
+        // item.UserName = request.User.UserName,
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
         int result = _db.SaveChanges();
