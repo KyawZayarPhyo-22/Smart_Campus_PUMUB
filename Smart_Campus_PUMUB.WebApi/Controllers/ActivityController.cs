@@ -38,44 +38,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return Ok(item);
         }
 
-        // [HttpPost]
-        // public async Task<IActionResult> CreateActivity([FromForm] ActivityCreateRequestModel request)
-        // {
-        //     string? imagePath = null;
 
-        //     if (request.ImageFile != null && request.ImageFile.Length > 0)
-        //     {
-        //         // 1. File နာမည်အသစ်ပေးခြင်း (Random name)
-        //         var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-
-        //         // 2. သိမ်းမည့် လမ်းကြောင်း (wwwroot/uploads)
-        //         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-        //         if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-        //         var filePath = Path.Combine(uploadsFolder, fileName);
-
-        //         // 3. File ကို Save လုပ်ခြင်း
-        //         using (var stream = new FileStream(filePath, FileMode.Create))
-        //         {
-        //             await request.ImageFile.CopyToAsync(stream);
-        //         }
-
-        //         // Database ထဲမှာ File Path (သို့) ဖိုင်နာမည်ကို သိမ်းပါ
-        //         imagePath = "/uploads/" + fileName;
-        //     }
-
-        //     _db.Activities.Add(new Activity
-        //     {
-        //         ActivityTitle = request.ActivityTitle,
-        //         Image = imagePath, // Path ကိုပဲ သိမ်းတာပါ
-        //         Description = request.Description,
-        //         Location = request.Location,
-        //         IsDelete = false
-        //     });
-
-        //     await _db.SaveChangesAsync();
-        //     return StatusCode(201, new { Message = "Saving Successful" });
-        // }
         [HttpPost]
         public async Task<IActionResult> CreateActivity([FromForm] ActivityCreateRequestModel request)
         {
@@ -83,19 +46,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             // Title တူရင်လည်း အောင်မြင်စွာ သိမ်းဆည်းနိုင်ပါပြီ။
 
             string? imagePath = null;
-            // if (request.ImageFile != null && request.ImageFile.Length > 0)
-            // {
-            //     var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-            //     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            //     if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-            //     var filePath = Path.Combine(uploadsFolder, fileName);
 
-            //     using (var stream = new FileStream(filePath, FileMode.Create))
-            //     {
-            //         await request.ImageFile.CopyToAsync(stream);
-            //     }
-            //     imagePath = "/uploads/" + fileName;
-            // }// သင်၏ CreateActivity ထဲတွင် ဤသို့ ပြင်ပါ
             if (request.ImageFile != null && request.ImageFile.Length > 0)
             {
                 var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
@@ -128,46 +79,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return StatusCode(201, new { IsSuccess = true, Message = "Saving Successful" });
         }
 
-        // [HttpPut("{id}")]
-        // public async Task<IActionResult> UpdateActivity(int id, [FromForm] ActivityUpdateRequestModel request)
-        // {
-        //     var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
-        //     if (item is null) return NotFound(new ActivityUpdateResponseModel { IsSuccess = false, Message = "Activity not found" });
-
-        //     // ပုံအသစ် တင်လာရင် File အသစ် သိမ်းမယ်
-        //     if (request.ImageFile != null && request.ImageFile.Length > 0)
-        //     {
-        //         var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-        //         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-        //         var filePath = Path.Combine(uploadsFolder, fileName);
-
-        //         using (var stream = new FileStream(filePath, FileMode.Create))
-        //         {
-        //             await request.ImageFile.CopyToAsync(stream);
-        //         }
-        //         item.Image = "/uploads/" + fileName;
-        //     }
-
-        //     item.ActivityTitle = request.ActivityTitle ?? item.ActivityTitle;
-        //     item.Description = request.Description ?? item.Description;
-        //     item.Location = request.Location ?? item.Location;
-
-        //     int result = await _db.SaveChangesAsync();
-
-        //     return Ok(new ActivityUpdateResponseModel
-        //     {
-        //         IsSuccess = result >= 0,
-        //         Message = "Activity Update Successfully",
-        //         Data = new ActivityModel
-        //         {
-        //             ActivityId = item.ActivityId,
-        //             ActivityTitle = item.ActivityTitle,
-        //             Image = item.Image,
-        //             Description = item.Description,
-        //             Location = item.Location
-        //         }
-        //     });
-        // }
+  
         [HttpPost("update/{id}")] // Route ကိုသီးသန့်ခွဲထားပါ
         public async Task<IActionResult> UpdateActivity(int id, [FromForm] ActivityUpdateRequestModel request)
         {
@@ -197,33 +109,6 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return Ok(new { IsSuccess = true, Message = "Activity Update Successfully" });
         }
 
-        // [HttpPut("{id}")]
-        // public IActionResult UpdateActivity(int id, ActivityUpdateRequestModel request)
-        // {
-        //     var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
-        //     if (item is null) return NotFound(new ActivityUpdateResponseModel { IsSuccess = false, Message = "Activity not found" });
-
-        //     item.ActivityTitle = request.ActivityTitle;
-        //     item.Image = request.Image;
-        //     item.Description = request.Description;
-        //     item.Location = request.Location;
-
-        //     int result = _db.SaveChanges();
-
-        //     return Ok(new ActivityUpdateResponseModel
-        //     {
-        //         IsSuccess = result > 0,
-        //         Message = result > 0 ? "Activity Update Successfully" : "Activity Update Failed",
-        //         Data = new ActivityModel
-        //         {
-        //             ActivityId = item.ActivityId,
-        //             ActivityTitle = item.ActivityTitle,
-        //             Image = item.Image,
-        //             Description = item.Description,
-        //             Location = item.Location
-        //         }
-        //     });
-        // }
 
         // DELETE /api/activities/{id}
         [HttpDelete("{id}")]

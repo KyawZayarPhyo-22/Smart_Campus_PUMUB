@@ -4,12 +4,7 @@ using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
-// builder.Services.AddDbContext<SmartCampusDbContext>(options =>
-//     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-// Add services to the container.
 
-// builder.Services.AddControllers();
-// 🛠️ ဒီနေရာလေးကို ရှာပြီး အောက်ပါအတိုင်း ပြင်ပေးပါ
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

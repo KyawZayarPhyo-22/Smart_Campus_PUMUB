@@ -50,22 +50,58 @@ public partial class Page_ActivityList
     private void OpenDeleteModal(ActivityModel activity) { SelectedActivity = activity; ShowModal = true; }
     private void CloseDeleteModal() { SelectedActivity = null; ShowModal = false; }
 
+    //private async Task DeleteActivity()
+    //{
+    //    if (SelectedActivity == null) return;
+    //    IsProcessing = true;
+    //    try
+    //    {
+    //        var response = await HttpClientService.ExecuteAsync<ActivityDeleteResponseModel>($"activity/{SelectedActivity.ActivityId}", EnumHttpMethod.Delete);
+    //        if (response != null && response.IsSuccess)
+    //        {
+    //            await JSRuntime.InvokeVoidAsync();
+    //            CloseDeleteModal();
+    //            await LoadActivities();
+    //        }
+    //        else { await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။"); }
+    //    }
+    //    catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
+    //    finally { IsProcessing = false; }
+    //}
+
     private async Task DeleteActivity()
     {
         if (SelectedActivity == null) return;
+
+        // Confirm box ကိုပြသပြီး အဖြေကို စစ်ဆေးခြင်း
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "ဒီ Activity ကို အမှန်တကယ် ဖျက်မှာလား?");
+
+        if (!confirmed) return; // အကယ်၍ Cancel ကိုနှိပ်လျှင် ဘာမှမလုပ်ဘဲ ထွက်သွားပါမည်
+
         IsProcessing = true;
         try
         {
-            var response = await HttpClientService.ExecuteAsync<ActivityDeleteResponseModel>($"activity/{SelectedActivity.ActivityId}", EnumHttpMethod.Delete);
+            var response = await HttpClientService.ExecuteAsync<ActivityDeleteResponseModel>(
+                $"activity/{SelectedActivity.ActivityId}", EnumHttpMethod.Delete);
+
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
                 CloseDeleteModal();
                 await LoadActivities();
             }
-            else { await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။"); }
+            else
+            {
+                // alert အစား အသုံးပြုသူသိစေရန် UI ပေါ်တွင် message ဖော်ပြခြင်း (သို့မဟုတ် လိုအပ်လျှင်သာ alert ထားနိုင်သည်)
+                Console.WriteLine(response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
+            }
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
-        finally { IsProcessing = false; }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 }
