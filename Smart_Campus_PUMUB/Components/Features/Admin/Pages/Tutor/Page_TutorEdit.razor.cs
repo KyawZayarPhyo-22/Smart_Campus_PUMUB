@@ -18,6 +18,7 @@ public partial class Page_TutorEdit
 
     private IBrowserFile? selectedFile;
     private bool isProcessing = false;
+    private bool IsLoading = false;
     private string statusMessage = "";
 
     // protected override async Task OnInitializedAsync()
@@ -49,25 +50,33 @@ public partial class Page_TutorEdit
         // Id တန်ဖိုး အမှန်တကယ် ရောက်ရှိလာမှသာ Data ဆွဲယူပါ
         if (Id > 0)
         {
-            UserList = await HttpClientService.ExecuteAsync<List<UserModels>>("user", EnumHttpMethod.Get) ?? new();
-            PositionList = await HttpClientService.ExecuteAsync<List<PositionModel>>("position", EnumHttpMethod.Get) ?? new();
-            DepartmentList = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get) ?? new();
-
-            // API လမ်းကြောင်းကို "api/tutor/{Id}" ဟု အပြည့်အစုံ ရေးပေးပါ
-            var existingTutor = await HttpClientService.ExecuteAsync<TutorModel>($"tutor/{Id}", EnumHttpMethod.Get);
-
-            if (existingTutor != null)
+            IsLoading = true;
+            try
             {
-                createModel = new TutorUpdateRequestModel
+                UserList = await HttpClientService.ExecuteAsync<List<UserModels>>("user", EnumHttpMethod.Get) ?? new();
+                PositionList = await HttpClientService.ExecuteAsync<List<PositionModel>>("position", EnumHttpMethod.Get) ?? new();
+                DepartmentList = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get) ?? new();
+
+                // API လမ်းကြောင်းကို "api/tutor/{Id}" ဟု အပြည့်အစုံ ရေးပေးပါ
+                var existingTutor = await HttpClientService.ExecuteAsync<TutorModel>($"tutor/{Id}", EnumHttpMethod.Get);
+
+                if (existingTutor != null)
                 {
-                    TutorName = existingTutor.TutorName,
-                    Email = existingTutor.Email,
-                    Phone = existingTutor.Phone,
-                    About = existingTutor.About,
-                    DepartmentId = existingTutor.Department_Id,
-                    PositionId = existingTutor.Position_Id,
-                    UserId = existingTutor.UserId // existingTutor.User_Id ဟု သေချာစစ်ပါ
-                };
+                    createModel = new TutorUpdateRequestModel
+                    {
+                        TutorName = existingTutor.TutorName,
+                        Email = existingTutor.Email,
+                        Phone = existingTutor.Phone,
+                        About = existingTutor.About,
+                        DepartmentId = existingTutor.Department_Id,
+                        PositionId = existingTutor.Position_Id,
+                        UserId = existingTutor.UserId
+                    };
+                }
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
     }

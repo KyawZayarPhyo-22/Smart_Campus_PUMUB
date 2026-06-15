@@ -140,7 +140,40 @@ public class RegistrationPaymentController : ControllerBase
             Message = result > 0 ? "ငွေသွင်းလွှာ တင်သွင်းခြင်း အောင်မြင်ပါသည်။" : "သိမ်းဆည်းမှု မအောင်မြင်ပါ။"
         });
     }
+    [HttpPatch("{id}/status")]
+    public IActionResult PatchPaymentStatus(int id, [FromBody] StudentRegistrationStatusPatchModel request)
+    {
+        // Payment Data ကို ID ဖြင့် ရှာဖွေခြင်း
+        var item = _db.RegistrationPayments
+            .FirstOrDefault(x => x.PaymentId == id && (x.IsDelete == false || x.IsDelete == null));
 
+        if (item is null)
+        {
+            return NotFound(new RegistrationPaymentResponseModel { IsSuccess = false, Message = "ငွေသွင်းမှတ်တမ်း ရှာမတွေ့ပါ။" });
+        }
+
+        // Status မှန်ကန်မှုရှိမရှိ စစ်ဆေးခြင်း
+        var allowedStatuses = new[] { "Pending", "Approved", "Rejected" };
+        if (!allowedStatuses.Contains(request.Status))
+        {
+            return BadRequest(new RegistrationPaymentResponseModel { IsSuccess = false, Message = "Status ပြောင်းလဲမှုပုံစံ မှားယွင်းနေပါသည်။" });
+        }
+
+        // Status အသစ်ကို အစားထိုးခြင်း
+        item.Status = request.Status;
+
+        // (မှတ်ချက် - ကိုကို့ Payment Table ထဲမှာ ModifiedBy, ModifiedDatetime ပါရင် အောက်က ၂ ကြောင်းကို ဖွင့်သုံးပါ)
+        // item.ModifiedBy = request.modified_by ?? "Admin";
+        // item.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+
+        int result = _db.SaveChanges();
+
+        return Ok(new RegistrationPaymentResponseModel
+        {
+            IsSuccess = result > 0,
+            Message = $"ငွေသွင်းမှတ်တမ်းကို {request.Status} အဖြစ် အောင်မြင်စွာ ပြောင်းလဲလိုက်ပါပြီ။"
+        });
+    }
     // 🎯 ၄။ PUT: api/registrationpayment/{id} (Update)
     [HttpPost("update/{id}")]
     public IActionResult UpdatePayment(int id, [FromForm] RegistrationPaymentUpdateRequestModel request)

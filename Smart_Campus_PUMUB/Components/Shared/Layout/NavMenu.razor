@@ -1,76 +1,9 @@
-﻿@* <!-- NAVBAR -->
-<nav id="navbar">
-  <div class="nav-container">
-    <a href="#hero" class="nav-brand">
-      <div class="nav-logo">PU</div>
-      <div class="nav-brand-text">
-        <span>Polytechnic University</span>
-        <span>Maubin · Est. 1999</span>
-      </div>
-    </a>
-    <ul class="nav-links" >
-      <li style="margin-bottom: -1rem;">
-        <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Home</NavLink>
-      </li>
-      <li style="margin-bottom: -1rem;">
-        <NavLink class="nav-link" href="/faculties" Match="NavLinkMatch.Prefix">Faculties</NavLink>
-      </li>
-      <li style="margin-bottom: -1rem;">
-        <NavLink class="nav-link" href="programs">Programs</NavLink>
-      </li>
-      <li style="margin-bottom: -1rem;">
-        <NavLink class="nav-link" href="library">Library</NavLink>
-      </li>
-      <li style="margin-bottom: -1rem;">
-        <NavLink class="nav-link" href="activities">Activities</NavLink>
-      </li>
-      <li style="margin-bottom: -1rem;">
-        <NavLink class="nav-link" href="AI">AI</NavLink>
-      </li>
-      <li style="margin-bottom: -1rem;">
-        <NavLink class="nav-link" href="contact">Contact</NavLink>
-      </li>
-    </ul>
-    <div class="nav-actions">
-      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
-        <i class="fas fa-moon" id="themeIcon"></i>
-      </button>
-      <a href="/login" class="btn-apply">Login</a>
-      <div class="hamburger" onclick="toggleMobile()">
-        <span></span><span></span><span></span>
-      </div>
-    </div>
-  </div>
-</nav>
-<div class="mobile-menu @(isMobileMenuOpen ? "open" : "")" id="mobileMenu">
-  <button class="mobile-close" @onclick="ToggleMobile"><i class="fas fa-times"></i></button>
-  <NavLink href="" Match="NavLinkMatch.All" @onclick="ToggleMobile">🏠 Home</NavLink>
-  <NavLink href="faculties" @onclick="ToggleMobile">🏛️ Faculties</NavLink>
-  <NavLink href="programs" @onclick="ToggleMobile">📚 Programs</NavLink>
-  <NavLink href="activities" @onclick="ToggleMobile">📅 Activities</NavLink>
-  <NavLink href="library" @onclick="ToggleMobile">📖 Library</NavLink>
-  <NavLink href="ai" @onclick="ToggleMobile">🤖 AI </NavLink>
-  <NavLink href="contact" @onclick="ToggleMobile">📞 Contact</NavLink>
-  <NavLink href="register" @onclick="ToggleMobile">👤 Register</NavLink>
-
-</div>
-
-@code
-{
-  // Menu ပွင့်နေ/ပိတ်နေ မှတ်ထားမယ့် Variable
-  private bool isMobileMenuOpen = false;
-
-  // Button နှိပ်တိုင်း၊ Link နှိပ်တိုင်း အဖွင့်အပိတ် လုပ်ပေးမယ့် Method
-  private void ToggleMobile()
-  {
-    isMobileMenuOpen = !isMobileMenuOpen;
-  }
-} *@
-
-@using Microsoft.AspNetCore.Components.Authorization
+﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Smart_Campus_PUMUB.Components.Features.Services
+@using Smart_Campus_PUMUB.WebApi.Models
 @inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager NavManager
+@inject NavigationManager NavManager    
+@* @inject HttpClientService HttpClientService *@
 @rendermode InteractiveServer
 
 <nav id="navbar">
@@ -88,18 +21,7 @@
             <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="programs">Programs</NavLink></li>
             <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="library">Library</NavLink></li>
             <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="activities">Activities</NavLink></li>
-            @* <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="AI">AI</NavLink></li> *@
             <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="contact">Contact</NavLink></li>
-
-            @* <AuthorizeView Roles="Student">
-                <Authorized>
-                    <li style="margin-bottom: -1rem; display: flex; align-items: center; padding-left: 8px;">
-                        <NavLink class="nav-link-btn-register" href="register">
-                            <i class="fas fa-user-plus" style="font-size: 0.82rem;"></i> Register
-                        </NavLink>
-                    </li>
-                </Authorized>
-            </AuthorizeView> *@
         </ul>
 
         <div class="nav-actions">
@@ -109,6 +31,59 @@
 
             <AuthorizeView>
                 <Authorized>
+                    
+                    <!-- 🌟 BIGGER & SMART NOTIFICATION BELL -->
+                    @if (isStudentRole)
+                    {
+                        <div class="user-profile-dropdown-wrapper" style="margin-right: 15px;">
+                            <button class="notification-bell-btn" @onclick="ToggleNotificationMenu">
+                                <i class="fas fa-bell"></i>
+                                <!-- 💡 ဖတ်ပြီးသွားရင် (!hasReadNotification) အစက်လေးတွေ ပျောက်သွားပါမည် -->
+                                @if (studentStatus != "None" && !hasReadNotification)
+                                {
+                                    <span class="notification-pulse @GetPulseClass()"></span>
+                                    <span class="notification-badge @GetStatusBadgeClass()"></span>
+                                }
+                            </button>
+
+                            @if (isNotificationMenuOpen)
+                            {
+                                <div class="profile-dropdown-menu notification-menu animate-fade-nav">
+                                    <div class="noti-header">
+                                        <h6 class="mb-0" style="font-weight: 800; color: #0f172a; font-size: 1.1rem;">
+                                            Notifications 
+                                            @if (!hasReadNotification)
+                                            {
+                                                <span class="badge bg-danger rounded-pill ms-1" style="font-size: 0.7rem; padding: 4px 6px;">1</span>
+                                            }
+                                        </h6>
+                                    </div>
+                                    <div class="notification-body">
+                                        
+                                        <!-- ✨ Larger Alert Card Design -->
+                                        <div class="noti-alert-card @GetAlertCardClass()">
+                                            <div class="noti-icon-wrapper @GetIconWrapperClass()">
+                                                <i class="@GetStatusIcon()"></i>
+                                            </div>
+                                            <div class="noti-content">
+                                                <div class="noti-title-row">
+                                                    <span class="noti-title">Registration Status</span>
+                                                    <span class="noti-time">System Alert</span>
+                                                </div>
+                                                <p class="noti-message">@GetStatusMessage()</p>
+                                                <div class="noti-status-label @GetBadgeTextClass()">
+                                                    Current Status: <strong>@studentStatus</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- PROFILE AVATAR -->
                     <div class="user-profile-dropdown-wrapper">
                         <button class="avatar-circle-btn" @onclick="ToggleProfileMenu">
                             @(GetAvatarInitial(context.User.Identity?.Name))
@@ -141,6 +116,7 @@
     </div>
 </nav>
 
+<!-- Mobile Menu -->
 <div class="mobile-menu @(isMobileMenuOpen ? "open" : "")" id="mobileMenu">
     <button class="mobile-close" @onclick="ToggleMobile"><i class="fas fa-times"></i></button>
     <NavLink href="" Match="NavLinkMatch.All" @onclick="ToggleMobile">🏠 Home</NavLink>
@@ -148,7 +124,6 @@
     <NavLink href="programs" @onclick="ToggleMobile">📚 Programs</NavLink>
     <NavLink href="activities" @onclick="ToggleMobile">📅 Activities</NavLink>
     <NavLink href="library" @onclick="ToggleMobile">📖 Library</NavLink>
-    <NavLink href="ai" @onclick="ToggleMobile">🤖 AI </NavLink>
     <NavLink href="contact" @onclick="ToggleMobile">📞 Contact</NavLink>
 
     <AuthorizeView Roles="Student">
@@ -171,155 +146,151 @@
 </div>
 
 <style>
-    .user-profile-dropdown-wrapper {
-        position: relative;
-        display: inline-block;
+    .user-profile-dropdown-wrapper { position: relative; display: inline-block; }
+
+    /* 🌟 NOTIFICATION BELL & ANIMATION STYLES */
+    .notification-bell-btn {
+        background: transparent; border: none; color: #475569; font-size: 1.35rem; position: relative; cursor: pointer; padding: 6px; border-radius: 50%; transition: all 0.2s ease;
     }
+    .notification-bell-btn:hover { color: #10b981; transform: scale(1.05); }
+    
+    .notification-badge { position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffffff; z-index: 2; }
+    .notification-pulse { position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; border-radius: 50%; z-index: 1; animation: pulse-ring 2s infinite; }
+    
+    @@keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
 
-    /* 🌟 REGISTER INSET INNER SHADOW BUTTON STYLE */
-    .nav-link-btn-register {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: #f1f5f9;
-        color: #10B981 !important; /* Beautiful Emerald Green */
-        font-weight: 650 !important;
-        font-size: 0.88rem !important;
-        padding: 6px 16px !important;
-        border-radius: 30px;
-        border: 1px solid #e2e8f0;
-        text-decoration: none !important;
-        /* ကိုကိုတောင်းဆိုထားတဲ့ Inner Shadow Layout အပိုင်းပါရှင် */
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0,0,0,0.02);
-        transition: all 0.2s ease;
+    /* STATUS COLORS (Bell Badges) */
+    .bg-pending { background: #f59e0b !important; }
+    .bg-approved { background: #10b981 !important; }
+    .bg-rejected { background: #ef4444 !important; }
+    
+    /* 🌟 BIGGER NOTIFICATION DROPDOWN MENU */
+    /* width ကို 420px အထိ တိုးပေးထားပါတယ် ကိုကို */
+    .notification-menu { width: 420px !important; right: -100px !important; padding: 0 !important; border-radius: 16px !important; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.12) !important; border: 1px solid #e2e8f0 !important; }
+    .noti-header { padding: 18px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    .notification-body { padding: 18px; background: #ffffff; }
+
+    /* 🌟 NOTIFICATION ALERT CARD STYLING */
+    /* padding တွေကို ပိုကျယ်အောင် ထပ်တိုးပေးထားပါတယ် */
+    .noti-alert-card {
+        display: flex; gap: 16px; padding: 20px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; transition: all 0.2s ease; position: relative; overflow: hidden;
     }
+    .noti-alert-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+    
+    /* Left Border Accent */
+    .noti-alert-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+    
+    /* Pending Card Theme */
+    .card-pending { background: #fffbeb; border-color: #fde68a; }
+    .card-pending::before { background: #f59e0b; }
+    
+    /* Approved Card Theme */
+    .card-approved { background: #ecfdf5; border-color: #a7f3d0; }
+    .card-approved::before { background: #10b981; }
+    
+    /* Rejected Card Theme */
+    .card-rejected { background: #fef2f2; border-color: #fecaca; }
+    .card-rejected::before { background: #ef4444; }
 
-        .nav-link-btn-register:hover {
-            background: #10B981;
-            color: #ffffff !important;
-            border-color: #10B981;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-            transform: translateY(-1px);
-        }
+    /* Icon Wrappers (Bigger Icon) */
+    .noti-icon-wrapper { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+    .icon-pending { background: #fef3c7; color: #d97706; }
+    .icon-approved { background: #d1fae5; color: #059669; }
+    .icon-rejected { background: #fee2e2; color: #dc2626; }
 
-    /* Mobile Register Button */
-    .mobile-register-link-btn {
-        background: rgba(16, 185, 129, 0.1) !important;
-        color: #10B981 !important;
-        font-weight: 600 !important;
-        border-radius: 12px;
-        margin: 8px 15px !important;
-        padding: 12px !important;
-        text-align: center;
-        border: 1px dashed #10B981;
-    }
+    /* Text & Content Elements (Larger Fonts) */
+    .noti-content { flex-grow: 1; }
+    .noti-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .noti-title { font-weight: 800; color: #0f172a; font-size: 1.05rem; }
+    .noti-time { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* Message Text Styling */
+    .noti-message { font-size: 0.92rem; color: #334155; line-height: 1.6; margin-bottom: 14px; font-weight: 500; text-align: justify; }
+    
+    /* Tiny Inner Status Badge */
+    .noti-status-label { font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; display: inline-block; }
+    .text-warning-emphasis { background: #fff8f1; color: #b45309; border: 1px solid #fed7aa; }
+    .text-success-emphasis { background: #f0fdf4; color: #047857; border: 1px solid #bbf7d0; }
+    .text-danger-emphasis { background: #fff5f5; color: #b91c1c; border: 1px solid #fecaca; }
 
-    .avatar-circle-btn {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #1E3A8A;
-        color: #ffffff;
-        border: 2px solid #ffffff;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-transform: uppercase;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
+    /* GENERAL AVATAR & DROPDOWN */
+    .avatar-circle-btn { width: 40px; height: 40px; border-radius: 50%; background: #1E3A8A; color: #ffffff; border: 2px solid #ffffff; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .profile-dropdown-menu { position: absolute; top: 55px; right: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; width: 200px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); z-index: 10000; padding: 6px 0; }
+    .dropdown-header { padding: 12px 16px; display: flex; flex-direction: column; }
+    .user-name { font-size: 0.92rem; font-weight: 600; color: #1e293b; }
+    .user-role { font-size: 0.75rem; color: #10B981; font-weight: 500; }
+    .dropdown-divider { margin: 4px 0; border: 0; border-top: 1px solid #f1f5f9; }
+    .dropdown-item-logout { width: 100%; padding: 10px 16px; background: transparent; border: none; text-align: left; font-size: 0.88rem; color: #ef4444; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .dropdown-item-logout:hover { background: #fef2f2; }
+    
+    .animate-fade-nav { animation: fastNavFade 0.15s ease-out; }
+    @@keyframes fastNavFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .profile-dropdown-menu {
-        position: absolute;
-        top: 50px;
-        right: 0;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        width: 200px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-        z-index: 10000;
-        padding: 6px 0;
-    }
-
-    .dropdown-header {
-        padding: 12px 16px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .user-name {
-        font-size: 0.92rem;
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .user-role {
-        font-size: 0.75rem;
-        color: #10B981;
-        font-weight: 500;
-    }
-
-    .dropdown-divider {
-        margin: 4px 0;
-        border: 0;
-        border-top: 1px solid #f1f5f9;
-    }
-
-    .dropdown-item-logout {
-        width: 100%;
-        padding: 10px 16px;
-        background: transparent;
-        border: none;
-        text-align: left;
-        font-size: 0.88rem;
-        color: #ef4444;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-        .dropdown-item-logout:hover {
-            background: #fef2f2;
-        }
-
-    .mobile-logout-btn {
-        width: 100%;
-        background: #ef4444;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 8px;
-        font-weight: 600;
-    }
-
-    .animate-fade-nav {
-        animation: fastNavFade 0.15s ease-out;
-    }
-
-    @@keyframes fastNavFade {
-        from {
-            opacity: 0;
-            transform: translateY(-5px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+    /* MOBILE NAV */
+    .mobile-register-link-btn { background: rgba(16, 185, 129, 0.1) !important; color: #10B981 !important; font-weight: 600 !important; border-radius: 12px; margin: 8px 15px !important; padding: 12px !important; text-align: center; border: 1px dashed #10B981; }
+    .mobile-logout-btn { width: 100%; background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; }
 </style>
 
 @code
 {
     private bool isMobileMenuOpen = false;
     private bool isProfileMenuOpen = false;
+    private bool isNotificationMenuOpen = false;
+    private bool isStudentRole = false;
+    private string studentStatus = "None"; 
+    
+    // 💡 ဖတ်ပြီးသွားရင် Alert ပျောက်သွားအောင် ထိန်းချုပ်မည့် Variable
+    private bool hasReadNotification = false; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true && user.IsInRole("Student"))
+        {
+            isStudentRole = true;
+            await CheckRegistrationStatus();
+        }
+    }
+
+    private async Task CheckRegistrationStatus()
+    {
+        try
+        {
+            // API လှမ်းခေါ်ရန် နေရာ
+            // var response = await HttpClientService.ExecuteAsync<StudentRegistrationModel>("StudentRegistrations/my-record", EnumHttpMethod.Get);
+            // if (response != null) { studentStatus = response.Status; }
+
+            // 🔥 (ယာယီ)
+            studentStatus = "Pending"; 
+        }
+        catch
+        {
+            studentStatus = "None";
+        }
+    }
 
     private void ToggleMobile() => isMobileMenuOpen = !isMobileMenuOpen;
-    private void ToggleProfileMenu() => isProfileMenuOpen = !isProfileMenuOpen;
+    
+    private void ToggleProfileMenu() 
+    { 
+        isProfileMenuOpen = !isProfileMenuOpen; 
+        isNotificationMenuOpen = false; 
+    }
+    
+    // 💡 Notification Box ကို ဖွင့်တဲ့အခါ အစက်လေးတွေ ပျောက်သွားအောင် လုပ်ဆောင်ခြင်း
+    private void ToggleNotificationMenu() 
+    { 
+        isNotificationMenuOpen = !isNotificationMenuOpen; 
+        isProfileMenuOpen = false; 
+
+        // ဖွင့်လိုက်တာနဲ့ Notification ဖတ်ပြီးသားအဖြစ် သတ်မှတ်လိုက်သည်
+        if (isNotificationMenuOpen && !hasReadNotification)
+        {
+            hasReadNotification = true;
+        }
+    }
 
     private string GetAvatarInitial(string? name)
     {
@@ -331,8 +302,31 @@
     {
         isProfileMenuOpen = false;
         isMobileMenuOpen = false;
+        isNotificationMenuOpen = false;
         var customAuth = (CustomAuthStateProvider)AuthStateProvider;
         await customAuth.UpdateAuthenticationState(null);
         NavManager.NavigateTo("/", true);
     }
+
+    // --- 🎨 Notification Colors, Badges & Animations ---
+    private string GetStatusBadgeClass() => studentStatus switch { "Pending" => "bg-pending", "Approved" => "bg-approved", "Rejected" => "bg-rejected", _ => "d-none" };
+    private string GetPulseClass() => studentStatus switch { "Pending" => "bg-pending", "Approved" => "bg-approved", "Rejected" => "bg-rejected", _ => "d-none" };
+
+    private string GetAlertCardClass() => studentStatus switch { "Pending" => "card-pending", "Approved" => "card-approved", "Rejected" => "card-rejected", _ => "" };
+    private string GetIconWrapperClass() => studentStatus switch { "Pending" => "icon-pending", "Approved" => "icon-approved", "Rejected" => "icon-rejected", _ => "" };
+    private string GetBadgeTextClass() => studentStatus switch { "Pending" => "text-warning-emphasis", "Approved" => "text-success-emphasis", "Rejected" => "text-danger-emphasis", _ => "" };
+
+    private string GetStatusIcon() => studentStatus switch { "Pending" => "fas fa-clock", "Approved" => "fas fa-check-circle", "Rejected" => "fas fa-exclamation-circle", _ => "fas fa-info-circle" };
+
+    // 🌟 အသေးစိတ် ရှင်းလင်းချက် စာသားများ (Myanmar Language)
+    private string GetStatusMessage() => studentStatus switch
+    {
+        "Pending" => "သင်၏ ကျောင်းအပ်ဖောင်နှင့် ငွေပေးချေမှုမှတ်တမ်းကို လက်ခံရရှိပါပြီ။ ကျောင်းစီမံခန့်ခွဲသူ (Admin) မှ အချက်အလက်များ မှန်ကန်မှုရှိ/မရှိ စစ်ဆေးပြီး အတည်ပြုပေးမည့်အချိန်ကို ခေတ္တစောင့်ဆိုင်းပေးပါရန် မေတ္တာရပ်ခံအပ်ပါသည်။",
+        
+        "Approved" => "ဂုဏ်ယူပါတယ်။ သင်၏ ကျောင်းအပ်ဖောင်ကို Admin မှ အောင်မြင်စွာ စစ်ဆေးပြီး အတည်ပြု (Approve) လက်ခံလိုက်ပြီ ဖြစ်ပါသည်။ ယခုအခါ သင်သည် ကျောင်းသားအဖြစ် အပြည့်အဝ စာရင်းသွင်းပြီးပါပြီ။",
+        
+        "Rejected" => "ဝမ်းနည်းပါသည်၊ သင်၏ ကျောင်းအပ်ဖောင်ကို Admin မှ ငြင်းပယ် (Reject) လိုက်ပါသည်။ အချက်အလက် သို့မဟုတ် ငွေသွင်းမှတ်တမ်း မှားယွင်းမှု တစ်စုံတစ်ရာ ရှိနိုင်ပါသဖြင့် ကျောင်းစီမံခန့်ခွဲမှုရုံးသို့ အမြန်ဆုံး ဆက်သွယ်မေးမြန်းပါ။",
+        
+        _ => "သင်သည် ကျောင်းအပ်ဖောင် တင်သွင်းထားခြင်း မရှိသေးပါ။ ကျေးဇူးပြု၍ ကျောင်းအပ်ဖောင်ကို ဖြည့်သွင်းပါ။"
+    };
 }

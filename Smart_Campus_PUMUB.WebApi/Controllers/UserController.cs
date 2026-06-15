@@ -73,6 +73,9 @@ public class UserController : ControllerBase
     // =========================================================================
     // 🎯 [NEW] အကောင့်ထဲသို့ Login ဝင်ရောက်ရန် API
     // =========================================================================
+    // =========================================================================
+    // 🎯 [FIXED BY KHIN KHIN] အကောင့်ထဲသို့ Login ဝင်ရောက်ရန် API
+    // =========================================================================
     [HttpPost("login")]
     public IActionResult Login(UserLoginRequestModel request)
     {
@@ -81,26 +84,47 @@ public class UserController : ControllerBase
             return BadRequest(new { message = "Username နှင့် Password ဖြည့်ရန် လိုအပ်သည်။" });
         }
 
-        var user = _db.Users.FirstOrDefault(x => x.UserName == request.UserName && x.IsDelete == false);
+        // 💡 [FIXED]: Role Table ကိုပါ တစ်ပါတည်း Join/Include လုပ်ပြီး RoleName ကို ယူထားပါတယ်ရှင်
+        var user = _db.Users
+                      .Where(x => x.UserName == request.UserName && x.IsDelete == false)
+                      .Join(_db.Roles,
+                            u => u.RoleId,
+                            r => r.RoleId,
+                            (u, r) => new { User = u, Role = r })
+                      .FirstOrDefault();
+
         if (user is null)
         {
             return Unauthorized(new { message = "Username သို့မဟုတ် Password မှားယွင်းနေပါသည်။" });
         }
 
-        // 🔒 Hashed Password ကို ကိုက်ညီမှု ရှိမရှိ စစ်ဆေးခြင်း
-        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+        bool isPasswordValid = false;
+
+        try
+        {
+            // 🌟 ၁။ BCrypt ပုံစံဖြင့် အရင်စစ်ဆေးခြင်း
+            isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.User.Password);
+        }
+        catch (BCrypt.Net.SaltParseException)
+        {
+            // 🌟 ၂။ DB ထဲတွင် Plain Text ဖြစ်နေပါက တိုက်ရိုက် စစ်ဆေးပေးမည့် Fallback စနစ်
+            isPasswordValid = (request.Password == user.User.Password);
+        }
+
         if (!isPasswordValid)
         {
             return Unauthorized(new { message = "Username သို့မဟုတ် Password မှားယွင်းနေပါသည်။" });
         }
 
-        return Ok(new
+        // 🌟 [FIXED]: Blazor ဘက်က UserModel နှင့် Property နာမည်များ ကွက်တိ ကိုက်ညီအောင် ပြန်ပေးလိုက်ခြင်း
+        return Ok(new UserModel
         {
-            isSuccess = true,
-            message = "Login ဝင်ရောက်ခြင်း အောင်မြင်ပါသည်။",
-            userId = user.UserId,
-            fullName = user.FullName,
-            roleId = user.RoleId
+            UserId = user.User.UserId,
+            RoleId = user.User.RoleId,
+            FullName = user.User.FullName,
+            UserName = user.User.UserName,
+            RoleName = user.Role.RoleName, // Blazor ဘက်သို့ RoleName ကိုပါ စနစ်တကျ ထည့်ပေးလိုက်ပါပြီ
+            Password = "********"
         });
     }
 
