@@ -651,17 +651,6 @@
 ══════════════════════════════════════════════ -->
 <div class="page clearfix">
 
-    <!-- <div class="photo-box">
-            <label class="photo-area" id="photoLabel">
-                <input type="file" accept="image/*" style="display: none;" onchange="previewImage(this)">
-                <svg id="photoIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                </svg>
-            </label>
-            <p>ဓါတ်ပုံ ၄ ပုံနှင့်<br>တင်သွင်းပါ</p>
-        </div>
-
         <div class="uni-header" style="text-align:left; border-bottom:none; padding-bottom:0; margin-bottom:0;">
             <div class="gov-line">ပြည်ထောင်စုသမ္မတ မြန်မာနိုင်ငံတော်အစိုးရ — သိပ္ပံနှင့်နည်းပညာဝန်ကြီးဌာန</div>
             <h1>POLYTECHNIC UNIVERSITY (MAUBIN)</h1>
@@ -861,8 +850,7 @@
             <div class="field"><label>မွေးဖွားရာဇာတိ</label><input type="text" class="line"></div>
             <div class="field"><label>မြို့နယ် / ပြည်နယ် / တိုင်း</label><input type="text" class="line"></div>
             <div class="field"><label>မှတ်ပုံတင်အမှတ်</label><input type="text" class="line"></div>
-            <!-- <div class="field"><label>မွေးသက္ကရာဇ်</label><input type="date" class="line"
-                        placeholder="ရက် / လ / ခုနှစ်"></div> -->
+           
             <div class="field">
                 <label>နိုင်ငံသား အမျိုးအစား</label>
                 <div class="nat-row" style="margin-top: 12px;">
@@ -1196,7 +1184,7 @@
 
     <script>
         function previewImage(input) {
-            const file = input.files[0];
+            const file = input.files[0];    
             const label = document.getElementById('photoLabel');
             const icon = document.getElementById('photoIcon');
 

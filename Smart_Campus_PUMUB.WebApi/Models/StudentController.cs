@@ -10,6 +10,8 @@ public class StudentCreateRequestModel
 
 public class StudentUpdateRequestModel
 {
+    public int UserId { get; set; }
+    public string? UserName { get; set; }
     public string CurrentClassYear { get; set; } = null!;
     public string CurrentMajor { get; set; } = null!;
     public string? CurrentRollNo { get; set; }
@@ -27,6 +29,8 @@ public class StudentModel
 {
     public int StudentId { get; set; }
     public int UserId { get; set; }
+
+    public string? UserName{get;set;}
     public string CurrentClassYear { get; set; } = null!;
     public string CurrentMajor { get; set; } = null!;
     public string? CurrentRollNo { get; set; }

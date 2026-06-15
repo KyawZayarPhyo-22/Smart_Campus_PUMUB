@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -104,7 +105,7 @@ public class TutorController : ControllerBase
 
     // ၃။ POST: Tutor Profile အသစ်ထည့်ရန် (ဓာတ်ပုံဖိုင် Upload Logic ပါဝင်သည်)
     [HttpPost]
-    public IActionResult CreateTutor([FromBody] TutorCreateRequestModel request) // File ပါ၍ [FromForm] သုံးရပါမည်
+    public IActionResult CreateTutor([FromForm] TutorCreateRequestModel request) // File ပါ၍ [FromForm] သုံးရပါမည်
     {
         // --- Validation စစ်ဆေးခြင်း ---
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Phone))
@@ -113,12 +114,19 @@ public class TutorController : ControllerBase
         }
 
         // User Role စစ်ဆေးခြင်း (Tutor ဟုတ်မဟုတ်)
-        var userAccount = _db.Users.FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
-        if (userAccount is null || userAccount.RoleId != 3) // မင်းရဲ့ Tutor Role ID ပြောင်းလဲနိုင်သည်
+        // Controller ၏ Constructor တွင် _db ကို သုံးသကဲ့သို့ 
+        // User ကို ရှာသည့်နေရာတွင် အောက်ပါအတိုင်း ပြင်ရေးကြည့်ပါ
+        Console.WriteLine($"Received UserId: {request.UserId}");
+        var userAccount = _db.Users.AsNoTracking() // Cache မဖြစ်စေရန်
+                                   .FirstOrDefault(x => x.UserId == request.UserId);  // မင်းရဲ့ Tutor Role ID ပြောင်းလဲနိုင်သည်
+        if (userAccount == null)
         {
-            return BadRequest(new TutorCreateResponseModel { IsSuccess = false, Message = "ဤ User ID သည် ဆရာ/မ (Tutor) Role မဟုတ်သဖြင့် Profile ဆောက်ခွင့်မရှိပါ။" });
+            return BadRequest(new { Message = $"User အကောင့် မရှိပါ။ လက်ခံရရှိသော ID: {request.UserId}" });
         }
-
+        if (userAccount.RoleId != 3)
+        {
+            return BadRequest(new { Message = $"ဤ User ၏ RoleId သည် {userAccount.RoleId} ဖြစ်နေသည်။ မျှော်လင့်ထားသည်မှာ 3 ဖြစ်သည်။" });
+        }
         // Email / Phone Format Validations
         if (!Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$") || !Regex.IsMatch(request.Phone, @"^09\d{9}$"))
         {
@@ -193,7 +201,7 @@ public class TutorController : ControllerBase
     }
 
     // ၄။ PUT: Tutor Profile ပြင်ရန် (ဓာတ်ပုံပါ လဲလှယ်နိုင်သည်)
-    [HttpPut("{id}")]
+    [HttpPost("{id}")]
     public IActionResult UpdateTutor(int id, [FromForm] TutorUpdateRequestModel request)
     {
         var item = _db.Tutors.FirstOrDefault(x => x.TutorId == id && x.IsDelete == false);
@@ -230,7 +238,7 @@ public class TutorController : ControllerBase
         item.DepartmentId = request.DepartmentId;
         item.PositionId = request.PositionId;
         item.UserId = request.UserId;
-        item.TutorName = request.TutorName;
+        item.TutorName = request.Tutor_Name;
         item.Email = request.Email;
         item.Phone = request.Phone;
         item.About = request.About;
@@ -277,9 +285,9 @@ public class TutorController : ControllerBase
         }
 
         // --- (ခ) စာသားအချက်အလက်များ ပါလာလျှင် ပြင်မည် ---
-        if (!string.IsNullOrEmpty(request.TutorName))
+        if (!string.IsNullOrEmpty(request.Tutor_Name))
         {
-            item.TutorName = request.TutorName;
+            item.TutorName = request.Tutor_Name;
             updateCount++;
         }
 

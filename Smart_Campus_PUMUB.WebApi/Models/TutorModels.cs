@@ -24,7 +24,7 @@ public class TutorUpdateRequestModel
     public int DepartmentId { get; set; }
     public int PositionId { get; set; }
     public int UserId { get; set; }
-    public string? TutorName { get; set; }
+    public string? Tutor_Name { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? About { get; set; }
