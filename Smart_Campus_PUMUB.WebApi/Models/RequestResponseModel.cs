@@ -137,6 +137,8 @@ public class DepartmentModel
     public int DepartmentId { get; set; }
     public int FacultyId { get; set; }
     public string? DepartmentName { get; set; }
+
+    public string? FacultyName { get; set; }
 }
 
 // ==========================================
@@ -183,6 +185,7 @@ public class BookModel
     public int CategoryId { get; set; }
     public string? BookName { get; set; }
     public string? Image { get; set; }
+
 }
 
 // ==========================================
@@ -228,6 +231,7 @@ public class SubjectResponseModel : ActionResponseModel
 public class SubjectModel
 {
     public int SubjectId { get; set; }
+    public string? SemesterName { get; set; }
     public int SemesterId { get; set; }
     public string? SubjectName { get; set; }
     public string? SubjectCode { get; set; }

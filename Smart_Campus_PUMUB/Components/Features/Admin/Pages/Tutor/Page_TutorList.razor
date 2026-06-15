@@ -1,0 +1,81 @@
+@page "/admin/tutors"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Tutor
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="mb-4">
+    <h3 class="fw-bold text-white">Tutor Directory</h3>
+</div>
+
+<div class="tech-card p-4">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-start-0" placeholder="Search by Name..." 
+                       @bind="SearchTerm" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="col-md-8 text-end">
+            <NavLink href="/admin/tutor/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Tutor</NavLink>
+        </div>
+    </div>
+
+    @if (IsLoading) { <div class="text-center text-white">Loading...</div> }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-tech align-middle text-white">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Profile</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int count = 1; }
+                    @foreach (var tutor in FilteredTutors)
+                    {
+                        <tr>
+                            <td>@count</td>
+                            <td>
+                                <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
+                                     class="rounded-circle" width="50" height="50" style="object-fit: cover;">
+                            </td>
+                            <td>@tutor.TutorName</td>
+                            <td>@tutor.Email</td>
+                            <td>@tutor.Phone</td>
+                            <td class="text-center">
+                                <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2">Edit</NavLink>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)">Delete</button>
+                            </td>
+                        </tr>
+                        count++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@* Modal *@
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+                <div class="modal-header border-0"><h5 class="text-danger">Confirm Delete</h5></div>
+                <div class="modal-body text-center">Are you sure to delete @SelectedTutor?.TutorName?</div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary" @onclick="() => ShowModal = false">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteTutor" disabled="@IsProcessing">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

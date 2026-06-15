@@ -1,0 +1,55 @@
+@page "/admin/subject/create"
+@layout AdminLayout
+@using Smart_Campus_PUMUB.WebApi.Models
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Subject
+@rendermode InteractiveServer
+
+<div class="page-header">
+    <h3><i class="bi bi-plus-lg me-2 text-info"></i>ဘာသာရပ် အသစ်ထည့်ရန်</h3>
+</div>
+
+<div class="tech-card">
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @ErrorMessage
+        </div>
+    }
+    <EditForm Model="subject" OnValidSubmit="SaveSubject" FormName="CreateSubjectForm">
+        <DataAnnotationsValidator />
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Semester ရွေးချယ်ရန်</label>
+                <InputSelect @bind-Value="subject.SemesterId" class="form-select">
+                    <option value="0">-- Semester တစ်ခုကို ရွေးပါ --</option>
+                    @foreach (var sem in SemesterList)
+                    {
+                        <option value="@sem.SemesterId">@sem.SemesterName</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => subject.SemesterId)" class="text-danger" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Subject Name</label>
+                <InputText @bind-Value="subject.SubjectName" class="form-control"
+                           placeholder="ဥပမာ - Engineering Mathematics I" />
+                <ValidationMessage For="@(() => subject.SubjectName)" class="text-danger" />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Subject Code</label>
+                <InputText @bind-Value="subject.SubjectCode" class="form-control" placeholder="ဥပမာ - MATH-101" />
+                <ValidationMessage For="@(() => subject.SubjectCode)" class="text-danger" />
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-info text-dark fw-semibold" disabled="@IsProcessing">
+                @(IsProcessing ? "သိမ်းဆည်းနေသည်..." : "သိမ်းဆည်းရန်")
+            </button>
+            <NavLink href="/admin/subjects" class="btn btn-secondary">နောက်သို့</NavLink>
+        </div>
+    </EditForm>
+</div>

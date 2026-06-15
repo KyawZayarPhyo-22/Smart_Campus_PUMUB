@@ -1,0 +1,32 @@
+@page "/admin/category/create"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Category
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="modal-dialog modal-md mt-5">
+    <div class="modal-content tech-card">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">Add New Category</h5>
+        </div>
+        <EditForm Model="categoryModel" OnValidSubmit="SaveCategory" FormName="CreateCategoryForm">
+            <DataAnnotationsValidator />
+            <div class="modal-body">
+                <div class="col-12 mb-2">
+                    <label class="form-label text-light">Category Name</label>
+                    <InputText @bind-Value="categoryModel.CategoryName" class="form-control" placeholder="Enter Category Name (e.g., Programming, Hardware)" />
+                </div>
+                @if (!string.IsNullOrEmpty(statusMessage))
+                {
+                    <div class="small text-info mt-2">@statusMessage</div>
+                }
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <NavLink href="/admin/categories" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
+                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                    @(isProcessing ? "Creating..." : "Create Category")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>

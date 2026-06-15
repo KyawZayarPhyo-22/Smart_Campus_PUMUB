@@ -1,0 +1,56 @@
+@page "/admin/user/create"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.User
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+@* Center ချိန်ရန် Container *@
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    
+    <div style="width: 100%; max-width: 600px;">
+        <div class="mb-4 text-center">
+            <h3 class="fw-bold text-white"><i class="bi bi-person-plus me-2"></i>Add New User</h3>
+        </div>
+
+        <div class="tech-card p-4">
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="alert @(IsSuccess ? "alert-success" : "alert-danger") p-2 mb-3">@statusMessage</div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label text-light">Full Name</label>
+                <input type="text" class="form-control text-white" style="background: rgba(20, 24, 33, 0.6);" @bind="Request.FullName" placeholder="Enter full name" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-light">Username</label>
+                <input type="text" class="form-control text-white" style="background: rgba(20, 24, 33, 0.6);" 
+                       @bind="Request.UserName" @bind:event="oninput" @onblur="FormatUsername" placeholder="Enter username" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-light">Password</label>
+                <input type="password" class="form-control text-white" style="background: rgba(20, 24, 33, 0.6);" @bind="Request.Password" placeholder="******" />
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label text-light">Role</label>
+                <select class="form-select text-white" style="background: rgba(20, 24, 33, 0.6);" @bind="Request.RoleId">
+                    <option value="0">Select a role...</option>
+                    @foreach (var role in RoleList)
+                    {
+                        <option value="@role.RoleId">@role.RoleName</option>
+                    }
+                </select>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary w-100" @onclick="CreateUser" disabled="@IsProcessing">
+                    @(IsProcessing ? "Saving..." : "Save User")
+                </button>
+                <NavLink href="/admin/users" class="btn btn-outline-secondary w-100">Cancel</NavLink>
+            </div>
+        </div>
+    </div>
+</div>

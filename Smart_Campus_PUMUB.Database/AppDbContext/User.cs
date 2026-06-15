@@ -34,6 +34,7 @@ public partial class User
 
     public string? CreatedBy { get; set; }
 
+    [NotMapped]
     public int? PasswordLength { get; set; }
 
     [Column(TypeName = "datetime")]

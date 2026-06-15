@@ -1,4 +1,4 @@
-@using Microsoft.AspNetCore.Mvc.RazorPages
+@* @using Microsoft.AspNetCore.Mvc.RazorPages
 @page "/faculties"
 
 <!-- FACULTIES -->
@@ -114,4 +114,557 @@
       </div>
     </div>
   </div>
+</section> *@
+
+@* @page "/faculties"
+@using Microsoft.EntityFrameworkCore
+@using Smart_Campus_PUMUB.Database.AppDbContext
+@inject SmartCampusDbContext DbContext
+@rendermode InteractiveServer
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<section id="faculties" style="background:var(--bg2); margin-top:20px; padding-bottom: 80px;">
+    <div class="container">
+
+        <div class="section-header" data-aos="fade-up">
+            <div>
+                <div class="section-tag"><i class="fas fa-building"></i> Academic Excellence</div>
+                <h2 class="section-title">Our <span>Departments</span></h2>
+                <p class="section-desc">World-class engineering and technology departments led by distinguished academics and industry experts.</p>
+            </div>
+            <a href="#programs" class="view-all">View All Programs <i class="fas fa-arrow-right"></i></a>
+        </div>
+
+        <div class="library-filter-right-wrapper" data-aos="fade-up">
+            <div class="material-inset-filter-bar">
+                <div class="compact-field">
+                    <i class="fas fa-search field-icon-medium"></i>
+                    <input type="text" class="compact-filter-input-extended"
+                           placeholder="Search departments by name..."
+                           @bind="searchQuery" @bind:event="oninput" @onkeyup="ApplyFilter" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    <button class="compact-reset-btn" @onclick="ResetFilter">
+                        <i class="fas fa-undo"></i> Clear
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="faculties-grid" data-aos="fade-up">
+            @if (filteredFaculties == null)
+            {
+                <p class="status-msg-text"><em>Loading academic departments...</em></p>
+            }
+            else if (filteredFaculties.Count == 0)
+            {
+                <p class="status-msg-text">No departments match your search.</p>
+            }
+            else
+            {
+                @foreach (var faculty in filteredFaculties)
+                {
+                    <div class="faculty-card" data-aos="fade-up">
+                        <div class="faculty-img">
+                            <img src="@GetDefaultFacultyImage(faculty.FacultyName)" alt="@faculty.FacultyName">
+                            <div class="faculty-overlay"></div>
+                            <div class="faculty-icon">
+                                <i class="@GetFacultyIcon(faculty.FacultyName)"></i>
+                            </div>
+                        </div>
+                        <div class="faculty-body">
+                            <h3>@faculty.FacultyName</h3>
+
+                            <div class="single-line-desc-container">
+                                <i class="fas fa-info-circle info-icon-fixed"></i>
+                                <span class="ellipsis-text" title="@GetDepartmentsString(faculty.Departments)">
+                                    Departments: @GetDepartmentsString(faculty.Departments)
+                                </span>
+                            </div>
+
+                            <div class="faculty-meta">
+                                <span class="faculty-students">
+                                    <i class="fas fa-graduation-cap"></i> @(faculty.Departments?.Count ?? 0) Specializations
+                                </span>
+                                <a href="#programs" class="btn-sm">Learn More</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+    </div>
 </section>
+
+<style>
+    #faculties {
+        font-family: 'Roboto', 'Inter', sans-serif !important;
+    }
+
+    .library-filter-right-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 35px;
+        width: 100%;
+    }
+
+    .material-inset-filter-bar {
+        background: var(--bg, #ededed);
+        border: 1px solid var(--border, #dbdbdb);
+        border-radius: 50px;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 340px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    @@media (max-width: 768px) {
+        .library-filter-right-wrapper {
+            justify-content: center;
+        }
+
+        .material-inset-filter-bar {
+            border-radius: 12px;
+            padding: 10px;
+            max-width: 100%;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    .compact-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+    .field-icon-medium {
+        position: absolute;
+        left: 16px;
+        color: #8E918F;
+        z-index: 5;
+        font-size: 0.9rem;
+    }
+
+    .compact-filter-input-extended {
+        width: 100%;
+        padding: 10px 14px 10px 42px !important;
+        border-radius: 30px !important;
+        border: 1px solid transparent !important;
+        background: var(--card-bg, #ffffff) !important;
+        color: var(--text, #1C1B1F) !important;
+        font-size: 0.92rem;
+        height: 40px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+    }
+
+        .compact-filter-input-extended:focus {
+            border-color: var(--secondary, #2563EB) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+            outline: none;
+        }
+
+    .compact-reset-btn {
+        background: #EF4444;
+        border: none;
+        color: #ffffff;
+        padding: 0 18px;
+        border-radius: 30px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        transition: all 0.2s;
+    }
+
+        .compact-reset-btn:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+    .single-line-desc-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 0.9rem;
+        color: var(--text2, #4B5563);
+        margin: 8px 0;
+    }
+
+    .info-icon-fixed {
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+
+    .ellipsis-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-grow: 1;
+    }
+
+    .status-msg-text {
+        font-size: 0.95rem;
+        padding: 15px;
+        color: var(--text2);
+    }
+</style>
+
+@code {
+    // 💡 Page Name နဲ့ DB Model Name မမှားစေဖို့ Namespace အပြည့် ထည့်ရေးပေးလိုက်ပါတယ် ကိုကို
+    private List<Smart_Campus_PUMUB.Database.AppDbContext.Faculty> masterFaculties;
+    private List<Smart_Campus_PUMUB.Database.AppDbContext.Faculty> filteredFaculties;
+    private string searchQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            masterFaculties = await DbContext.Faculties
+                                   .Include(f => f.Departments.Where(d => d.IsDelete != true))
+                                   .Where(f => f.IsDelete != true)
+                                   .ToListAsync();
+
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"EF Core Error (Faculties): {ex.Message}");
+            masterFaculties = new List<Smart_Campus_PUMUB.Database.AppDbContext.Faculty>();
+            ApplyFilter();
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        if (masterFaculties == null) return;
+
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredFaculties = masterFaculties;
+        }
+        else
+        {
+            filteredFaculties = masterFaculties
+                .Where(f => f.FacultyName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void ResetFilter()
+    {
+        searchQuery = "";
+        ApplyFilter();
+    }
+
+    private string GetDepartmentsString(ICollection<Department> departments)
+    {
+        if (departments == null || departments.Count == 0) return "General Specializations";
+        return string.Join(", ", departments.Select(d => d.DepartmentName));
+    }
+
+    private string GetFacultyIcon(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "fas fa-university";
+        name = name.ToLower();
+        if (name.Contains("civil")) return "fas fa-drafting-compass";
+        if (name.Contains("mechanical")) return "fas fa-cog";
+        if (name.Contains("electrical")) return "fas fa-bolt";
+        if (name.Contains("electronic")) return "fas fa-microchip";
+        if (name.Contains("information") || name.Contains("it")) return "fas fa-laptop-code";
+        if (name.Contains("chemical")) return "fas fa-flask";
+        return "fas fa-graduation-cap";
+    }
+
+    private string GetDefaultFacultyImage(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&q=80";
+        name = name.ToLower();
+        if (name.Contains("civil")) return "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80";
+        if (name.Contains("mechanical")) return "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=600&q=80";
+        if (name.Contains("electrical")) return "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=600&q=80";
+        if (name.Contains("electronic")) return "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80";
+        if (name.Contains("information") || name.Contains("it")) return "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&q=80";
+        if (name.Contains("chemical")) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80";
+        return "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&q=80";
+    }
+} *@
+
+
+
+@page "/faculties"
+@inherits Smart_Campus_PUMUB.Components.Pages.Faculty
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@rendermode InteractiveServer
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<section id="faculties" style="background:var(--bg2); margin-top:20px; padding-bottom: 80px;">
+    <div class="container">
+
+        <div class="section-header" data-aos="fade-up">
+            <div>
+                <div class="section-tag"><i class="fas fa-building"></i> Academic Excellence</div>
+                <h2 class="section-title">Our <span>Faculties</span></h2>
+                <p class="section-desc">World-class engineering and technology faculties led by distinguished academics and industry experts.</p>
+            </div>
+            <a href="#programs" class="view-all">View All Programs <i class="fas fa-arrow-right"></i></a>
+        </div>
+
+        <div class="library-filter-right-wrapper" data-aos="fade-up">
+            <div class="material-inset-filter-bar">
+                <div class="compact-field">
+                    <i class="fas fa-search field-icon-medium"></i>
+                    <input type="text" class="compact-filter-input-extended"
+                           placeholder="Search faculties by name..."
+                           @bind="searchQuery" @bind:event="oninput" @onkeyup="ApplyFilter" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    <button class="compact-reset-btn" @onclick="ResetFilter">
+                        <i class="fas fa-undo"></i> Clear
+                    </button>
+                }
+            </div>
+        </div>
+
+        
+        <div class="faculties-grid" data-aos="fade-up">
+            @* 🌟 [FIXED BY KHIN KHIN]: API ကနေ ဒေတာမကျလာခင် Modern Neon Shimmer Skeleton ကတ်ပြားလေးတွေ အရင်ပြထားမည့်စနစ် *@
+            @if (filteredFaculties == null || masterFaculties == null || !masterFaculties.Any())
+            {
+                @for (int i = 0; i < 3; i++) // 💡 ကတ်ပြား ၃ ကတ်စာ Skeleton Loading အပြိုင်ပွင့်နေပါမည်
+                {
+                    <div class="skeleton-faculty-card">
+                        <div class="skeleton-img-glow">
+                            <div class="skeleton-shimmer-line"></div>
+                        </div>
+                        <div class="skeleton-body-glow">
+                            <div class="skeleton-title-line">
+                                <div class="skeleton-shimmer-line"></div>
+                            </div>
+                            <div class="skeleton-meta-line">
+                                <div class="skeleton-shimmer-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else if (filteredFaculties.Count == 0)
+            {
+                <p class="status-msg-text">No faculties match your search.</p>
+            }
+            else
+            {
+                @foreach (var faculty in filteredFaculties)
+                {
+                    <div class="faculty-card" data-aos="fade-up">
+                        <div class="faculty-img">
+                            <img src="@GetDefaultFacultyImage(faculty.FacultyName)" alt="@faculty.FacultyName">
+                            <div class="faculty-overlay"></div>
+                            <div class="faculty-icon">
+                                <i class="@GetFacultyIcon(faculty.FacultyName)"></i>
+                            </div>
+                        </div>
+                        <div class="faculty-body">
+                            <h3>@faculty.FacultyName</h3>
+
+                            <div class="faculty-meta" style="margin-top: 20px;">
+                                <span class="faculty-students">
+                                    <i class="fas fa-graduation-cap"></i> Academic Portal Verified
+                                </span>
+                                @* <a href="#programs" class="btn-sm">Learn More</a> *@
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        
+
+    </div>
+</section>
+
+<style>
+    #faculties {
+        font-family: 'Roboto', 'Inter', sans-serif !important;
+    }
+
+    .library-filter-right-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 35px;
+        width: 100%;
+    }
+
+    /* 🌟 MODERN NEON SKELETON ANIMATION BY KHIN KHIN */
+    .skeleton-faculty-card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+    }
+
+    .skeleton-img-glow {
+        height: 220px;
+        background: rgba(15, 23, 42, 0.6);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skeleton-body-glow {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .skeleton-title-line {
+        height: 24px;
+        width: 75%;
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skeleton-meta-line {
+        height: 16px;
+        width: 50%;
+        background: rgba(51, 65, 85, 0.3);
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* ✨ ULTRA-FAST SHIMMER EFFECT (အလင်းတန်း ဖြတ်ပြေးသည့် စနစ်) */
+    .skeleton-shimmer-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient( 90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100% );
+        animation: khin-shimmer-engine 1.5s infinite linear;
+    }
+
+    @@keyframes khin-shimmer-engine {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    .material-inset-filter-bar {
+        background: var(--bg, #ededed);
+        border: 1px solid var(--border, #dbdbdb);
+        border-radius: 50px;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 340px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    @@media (max-width: 768px) {
+        .library-filter-right-wrapper {
+            justify-content: center;
+        }
+
+        .material-inset-filter-bar {
+            border-radius: 12px;
+            padding: 10px;
+            max-width: 100%;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    .compact-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+    .field-icon-medium {
+        position: absolute;
+        left: 16px;
+        color: #8E918F;
+        z-index: 5;
+        font-size: 0.9rem;
+    }
+
+    .compact-filter-input-extended {
+        width: 100%;
+        padding: 10px 14px 10px 42px !important;
+        border-radius: 30px !important;
+        border: 1px solid transparent !important;
+        background: var(--card-bg, #ffffff) !important;
+        color: var(--text, #1C1B1F) !important;
+        font-size: 0.92rem;
+        height: 40px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+    }
+
+        .compact-filter-input-extended:focus {
+            border-color: var(--secondary, #2563EB) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+            outline: none;
+        }
+
+    .compact-reset-btn {
+        background: #EF4444;
+        border: none;
+        color: #ffffff;
+        padding: 0 18px;
+        border-radius: 30px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        transition: all 0.2s;
+    }
+
+        .compact-reset-btn:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+    .status-msg-text {
+        font-size: 0.95rem;
+        padding: 15px;
+        color: var(--text2);
+    }
+</style>

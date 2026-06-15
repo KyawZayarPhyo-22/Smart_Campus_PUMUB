@@ -1,0 +1,162 @@
+@page "/admin/faculties"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Faculty
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<style>
+    .custom-table {
+        background: rgba(20, 24, 33, 0.6);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .custom-table thead {
+        background: rgba(13, 110, 253, 0.1);
+        border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+    }
+    .custom-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #0d6efd;
+        padding: 16px 20px;
+    }
+    .custom-table td {
+        padding: 16px 20px;
+        color: #e2e8f0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .table-row-hover:hover {
+        background: rgba(255, 255, 255, 0.02);
+        box-shadow: inset 4px 0 0 #0d6efd;
+    }
+    .btn-action-edit {
+        background: rgba(13, 110, 253, 0.1);
+        color: #39b5ff;
+        border: 1px solid rgba(13, 110, 253, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+    .btn-action-edit:hover {
+        background: #0d6efd;
+        color: #ffffff;
+    }
+    .btn-action-delete {
+        background: rgba(220, 53, 69, 0.1);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+    .btn-action-delete:hover {
+        background: #dc3545;
+        color: #ffffff;
+    }
+</style>
+
+<div class="tab-pane fade show active" id="v-pills-faculty">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-1" style="color: #ffffff;">Faculty Directory</h3>
+    </div>
+
+    <div class="tech-card p-4">
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 text-white" 
+                           placeholder="Search by Faculty Name..."
+                           @bind-value="SearchTerm" @bind-value:event="oninput">
+                </div>
+            </div>
+
+            <div class="col-md-7 text-end">
+                <NavLink href="/admin/faculty/create" class="btn btn-primary nav-link d-inline-block text-white">
+                    <span class="sidebar-text"><i class="bi bi-plus-lg me-1"></i> Add Faculty</span>
+                </NavLink>
+            </div>
+        </div>
+
+        @if (IsLoading)
+        {
+            <div class="text-center my-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="text-muted mt-2">Faculty စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">@ErrorMessage</div>
+        }
+        else if (FilteredFaculties == null || !FilteredFaculties.Any())
+        {
+            <div class="text-center my-5 text-muted">
+                <i class="bi bi-folder-x display-4"></i>
+                <p class="mt-2">ပြသရန် Faculty မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive custom-table">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">No.</th>
+                            <th style="width: 50%;">Faculty Name</th>
+                            <th style="width: 35%; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ int count = 1; }
+                        @foreach (var faculty in FilteredFaculties)
+                        {
+                            <tr class="table-row-hover">
+                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
+                                <td class="fw-semibold">@faculty.FacultyName</td>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <NavLink href="@($"/admin/faculty/edit/{faculty.FacultyId}")" class="btn btn-action-edit d-inline-flex align-items-center">
+                                            <i class="bi bi-pencil me-1.5"></i> Edit
+                                        </NavLink>
+                                        <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(faculty)">
+                                            <i class="bi bi-trash me-1.5"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            count++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* Blazor Controlled Delete Modal *@
+<div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1" style="background: @(ShowModal ? "rgba(10, 14, 22, 0.85)" : "none"); backdrop-filter: blur(4px);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content tech-card" style="border: 1px solid rgba(220, 53, 69, 0.2);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger fw-bold d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteModal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-trash-fill text-danger display-3 mb-3"></i>
+                <h4 class="fw-bold text-white">Delete Faculty?</h4>
+                <p class="text-light opacity-75">စာရင်းဖျက်ရန် သေချာပါသလား? <br /> Faculty အမည်: <strong class="text-info">@SelectedFaculty?.FacultyName</strong></p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pt-0">
+                <button type="button" class="btn btn-secondary px-4" @onclick="CloseDeleteModal" disabled="@IsProcessing">Cancel</button>
+                <button type="button" class="btn btn-danger px-4" @onclick="DeleteFaculty" disabled="@IsProcessing">
+                    @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

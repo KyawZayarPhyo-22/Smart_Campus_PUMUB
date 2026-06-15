@@ -1,10 +1,14 @@
 @page "/activities"
-@using Microsoft.EntityFrameworkCore
-@using Smart_Campus_PUMUB.Database.AppDbContext
-@inject SmartCampusDbContext DbContext
+@inherits Smart_Campus_PUMUB.Components.Pages.ActivityBase
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@rendermode InteractiveServer
 
-<section id="events" style="background:var(--bg2);margin-top: 50px;">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<section id="events" style="background:var(--bg2); margin-top: 20px; padding-bottom: 80px;">
     <div class="container">
+
         <div class="section-header" data-aos="fade-up">
             <div>
                 <div class="section-tag"><i class="fas fa-calendar-alt"></i> Upcoming Events</div>
@@ -12,29 +16,59 @@
             </div>
         </div>
 
+        @* 🌟 MATERIAL INSET FILTER BAR SYSTEM 🌟 *@
+        <div class="library-filter-right-wrapper" data-aos="fade-up">
+            <div class="material-inset-filter-bar">
+
+                <div class="compact-field text-field-size" style="width: 100%;">
+                    <i class="fas fa-search field-icon-medium"></i>
+                    <input type="text" class="compact-filter-input-extended"
+                           placeholder="Search by title..."
+                           @bind="searchQuery" @bind:event="oninput" @onkeyup="ApplyFilters" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    <button class="compact-reset-btn" @onclick="ResetFilters">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                }
+            </div>
+        </div>
+
+        @* 🌟 DYNAMIC ACTIVITIES DISPLAY MATRIX 🌟 *@
         <div class="events-grid">
-            @if (recentActivities == null)
+            @if (filteredRecentActivities == null || masterActivities == null || !masterActivities.Any())
             {
-                <p><em>Loading events and activities...</em></p>
+                @for (int i = 0; i < 3; i++) // 💡 API ဒေတာမကျလာခင် Modern Neon Shimmer Loading အရင်ပြသရန်
+                {
+                    <div class="skeleton-faculty-card">
+                        <div class="skeleton-img-glow">
+                            <div class="skeleton-shimmer-line"></div>
+                        </div>
+                        <div class="skeleton-body-glow">
+                            <div class="skeleton-title-line">
+                                <div class="skeleton-shimmer-line"></div>
+                            </div>
+                            <div class="skeleton-meta-line">
+                                <div class="skeleton-shimmer-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
             }
-            else if (recentActivities.Count == 0)
+            else if (filteredRecentActivities.Count == 0)
             {
-                <p>No upcoming events available.</p>
+                <p class="status-msg-text">No upcoming events match your filters.</p>
             }
             else
             {
-                @foreach (var activity in recentActivities)
+                @foreach (var activity in filteredRecentActivities)
                 {
-                    <div class="event-card" data-aos="fade-up" data-aos-delay="0">
-                        <div class="event-header" style="background: @(string.IsNullOrEmpty(activity.Image) ? "linear-gradient(135deg, #2563EB, #3B82F6)" : $"url('{activity.Image}') center/cover no-repeat"); position: relative;">
-                            <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); border-top-left-radius: 16px; border-top-right-radius: 16px; z-index: 1;"></div>
-                            <div style="position: relative; z-index: 2;">
-                                <div class="event-date-big">
-                                    @(activity.CreatedDateTime?.ToString("dd") ?? DateTime.Now.ToString("dd"))
-                                </div>
-                                <div class="event-month">
-                                    @(activity.CreatedDateTime?.ToString("MMMM yyyy") ?? DateTime.Now.ToString("MMMM yyyy"))
-                                </div>
+                    <div class="event-card" data-aos="fade-up">
+                        <div class="event-header" style="background: @(string.IsNullOrEmpty(activity.Image) ? "linear-gradient(135deg, #2563EB, #3B82F6)" : $"url('https://localhost:7297/{activity.Image}') center/cover no-repeat"); position: relative; height: 200px;">
+                            <div style="position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.45); border-top-left-radius: 16px; border-top-right-radius: 16px; z-index: 1;"></div>
+                            <div style="position: relative; z-index: 2; padding: 20px;">
                                 <span class="event-type-badge">Campus Event</span>
                             </div>
                         </div>
@@ -43,14 +77,14 @@
                             <h3>@activity.ActivityTitle</h3>
                             <div class="event-meta">
                                 <span><i class="fas fa-map-marker-alt"></i> @(activity.Location ?? "Main Campus")</span>
-                                <span><i class="fas fa-info-circle"></i> @activity.Description</span>
-                                <span><i class="fas fa-user"></i> Posted by: @(activity.CreatedBy ?? "Admin")</span>
-                            </div>
-                            <div class="countdown" data-target="@(activity.CreatedDateTime?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))">
-                                <div class="cd-unit"><span class="cd-num" id="cd-d-@activity.ActivityId">00</span><span class="cd-label">Days</span></div>
-                                <div class="cd-unit"><span class="cd-num" id="cd-h-@activity.ActivityId">00</span><span class="cd-label">Hours</span></div>
-                                <div class="cd-unit"><span class="cd-num" id="cd-m-@activity.ActivityId">00</span><span class="cd-label">Mins</span></div>
-                                <div class="cd-unit"><span class="cd-num" id="cd-s-@activity.ActivityId">00</span><span class="cd-label">Secs</span></div>
+
+                                <div class="single-line-desc-container">
+                                    <i class="fas fa-info-circle info-icon-fixed"></i>
+                                    <span class="ellipsis-text">@activity.Description</span>
+                                    <button class="material-more-btn" @onclick="() => OpenPopup(activity)">More</button>
+                                </div>
+
+                                <span><i class="fas fa-graduation-cap"></i> Verified Academic Activity</span>
                             </div>
                         </div>
                     </div>
@@ -60,102 +94,425 @@
     </div>
 </section>
 
-<section id="news">
-    <div class="container">
-        <div class="section-header" data-aos="fade-up">
-            <div>
-                <div class="section-tag"><i class="fas fa-newspaper"></i> Latest Updates</div>
-                <h2 class="section-title">News & <span>Announcements</span></h2>
+@* 🌟 MATERIAL DESIGN 3 DETAILS POPUP SYSTEM 🌟 *@
+@if (isPopupOpen && selectedActivity != null)
+{
+    <div class="material-popup-overlay" @onclick="ClosePopup">
+        <div class="material-popup-card" @onclick:stopPropagation>
+
+            <div class="material-popup-header">
+                <div>
+                    <span class="material-headline-label">Activity Details</span>
+                    <h2 class="material-title">@selectedActivity.ActivityTitle</h2>
+                </div>
+                <button class="material-icon-button" @onclick="ClosePopup">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <a href="#" class="view-all">All News <i class="fas fa-arrow-right"></i></a>
-        </div><div class="news-grid" data-aos="fade-up">
-        <div>
-            @if (mainNewsActivities == null)
-            {
-                <p><em>Loading updates...</em></p>
-            }
-            else if (mainNewsActivities.Count == 0)
-            {
-                <p>No additional updates found.</p>
-            }
-            else
-            {
-                @foreach (var newsAct in mainNewsActivities)
-                {
-                    <div class="news-card" style="margin-bottom:24px;">
-                        <div class="news-card-img">
-                            <img src="@(string.IsNullOrEmpty(newsAct.Image) ? "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&q=80" : newsAct.Image)" alt="News Image">
-                        </div>
-                        <div class="news-card-body">
-                            <span class="news-badge badge-research">Announcement</span>
-                            <div class="news-date"><i class="fas fa-calendar"></i> @(newsAct.CreatedDateTime?.ToString("MMMM dd, yyyy") ?? "Recent")</div>
-                            <h3>@newsAct.ActivityTitle</h3>
-                            <p>@newsAct.Description</p>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
 
-        <div class="news-sidebar">
-            @if (sidebarNewsActivities == null)
+            @if (!string.IsNullOrEmpty(selectedActivity.Image))
             {
-                <p><em>Loading sidebar updates...</em></p>
+                <div class="material-popup-media">
+                    <img src="@($"https://localhost:7297/{selectedActivity.Image}")" alt="Activity Media" />
+                </div>
             }
-            else if (sidebarNewsActivities.Count == 0)
-            {
-                <p>No extra updates.</p>
-            }
-            else
-            {
-                @foreach (var sideAct in sidebarNewsActivities)
-                {
-                    <div class="news-sidebar-item">
-                        <img class="news-thumb" src="@(string.IsNullOrEmpty(sideAct.Image) ? "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=200&q=80" : sideAct.Image)" alt="Thumb">
-                        <div>
-                            <span class="news-badge badge-research" style="font-size:0.65rem;padding:3px 8px;">Update</span>
-                            <h4>@sideAct.ActivityTitle</h4>
-                            <span>@(sideAct.CreatedDateTime?.ToString("MMM dd, yyyy") ?? "")</span>
-                        </div>
+
+            <div class="material-popup-content">
+                <div class="material-chips-row">
+                    <div class="material-suggested-chip">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>@(selectedActivity.Location ?? "Main Campus")</span>
                     </div>
-                }
-            }
+                    <div class="material-suggested-chip">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Status: Active</span>
+                    </div>
+                </div>
+
+                <div class="material-body-supporting-text">
+                    <h3>Description</h3>
+                    <p>@selectedActivity.Description</p>
+                </div>
+            </div>
+
+            <div class="material-popup-actions">
+                <button class="material-text-button" @onclick="ClosePopup">Dismiss</button>
+            </div>
         </div>
     </div>
-</div>
-</section>
+}
 
-@code {
-    // List အားလုံးကို ကိုကို့ရဲ့ Activity Model နဲ့ပဲ ကြေညာလိုက်ပါတယ်ရှင်
-    private List<Activity> recentActivities;
-    private List<Activity> mainNewsActivities;
-    private List<Activity> sidebarNewsActivities;
+<style>
+    #events, .material-popup-card {
+        font-family: 'Roboto', 'Inter', sans-serif !important;
+    }
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            // Database ထဲက အော်တို ဖျက်မထားတဲ့ Activity အားလုံးကို အသစ်ဆုံးအတိုင်း စီပြီး ဆွဲထုတ်လိုက်ပါတယ်
-            var allActivities = await DbContext.Activities
-                                             .Where(a => a.IsDelete != true)
-                                             .OrderByDescending(a => a.CreatedDateTime)
-                                             .ToListAsync();
+    .library-filter-right-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+        margin-bottom: 30px;
+    }
 
-            // ၁။ အသစ်ဆုံး (၃) ခုကို အပေါ်က Events card မှာ ပြမယ် ကိုကို
-            recentActivities = allActivities.Take(3).ToList();
+    .material-inset-filter-bar {
+        background: var(--bg, #ededed);
+        border: 1px solid var(--border, #dbdbdb);
+        border-radius: 50px;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 480px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
 
-            // ၂။ နောက်ထပ် ကျန်တဲ့ (၂) ခုကို News card ကြီးမှာ ပြမယ်
-            mainNewsActivities = allActivities.Skip(3).Take(2).ToList();
-
-            // ၃။ အဲဒီနောက်ပိုင်းက ကျန်တဲ့ (၅) ခုကိုတော့ News Sidebar သေးသေးလေးမှာ ပြပေးပါမယ်
-            sidebarNewsActivities = allActivities.Skip(5).Take(5).ToList();
+    @@media (max-width: 768px) {
+        .library-filter-right-wrapper {
+            justify-content: center;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"EF Core Error: {ex.Message}");
-            recentActivities = new List<Activity>();
-            mainNewsActivities = new List<Activity>();
-            sidebarNewsActivities = new List<Activity>();
+
+        .material-inset-filter-bar {
+            border-radius: 16px;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 12px;
+            max-width: 100%;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     }
-}
+
+    .compact-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .field-icon-medium {
+        position: absolute;
+        left: 16px;
+        color: #8E918F;
+        z-index: 5;
+        font-size: 0.9rem;
+    }
+
+    .compact-filter-input-extended {
+        width: 100%;
+        padding: 10px 14px 10px 42px !important;
+        border-radius: 30px !important;
+        border: 1px solid transparent !important;
+        background: var(--card-bg, #ffffff) !important;
+        color: var(--text, #1C1B1F) !important;
+        font-size: 0.92rem;
+        height: 40px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+    }
+
+        .compact-filter-input-extended:focus {
+            border-color: var(--secondary, #2563EB) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+            outline: none;
+        }
+
+    .compact-reset-btn {
+        background: #EF4444;
+        border: none;
+        color: #ffffff;
+        padding: 0 18px;
+        border-radius: 30px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        transition: all 0.2s;
+    }
+
+        .compact-reset-btn:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+    .single-line-desc-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 0.9rem;
+        color: var(--text2, #4B5563);
+        margin: 4px 0;
+    }
+
+    .info-icon-fixed {
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+
+    .ellipsis-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-grow: 1;
+    }
+
+    .material-more-btn {
+        background: none;
+        border: none;
+        color: var(--secondary, #2563EB);
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0 0 0 6px;
+        font-size: 0.88rem;
+        flex-shrink: 0;
+    }
+
+        .material-more-btn:hover {
+            color: var(--accent, #EC4899);
+            text-decoration: underline;
+        }
+
+    /* 🌟 POPUP CARD GLASSMORPHISM DESIGN SYSTEM */
+    .material-popup-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: rgba(0, 0, 0, 0.4) !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999999 !important;
+        backdrop-filter: blur(2px) !important;
+        padding: 24px;
+    }
+
+    .material-popup-card {
+        background: var(--card-bg, #ffffff);
+        border-radius: 28px;
+        width: 100%;
+        max-width: 560px;
+        max-height: 85vh;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: none;
+        animation: materialContainerOpen 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .material-popup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 24px 24px 16px 24px;
+    }
+
+    .material-headline-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--secondary, #2563EB);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .material-title {
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
+        color: var(--text, #1C1B1F);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .material-icon-button {
+        background: none;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: var(--text2, #49454F);
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+        .material-icon-button:hover {
+            background-color: rgba(0,0,0,0.06);
+        }
+
+    .material-popup-media {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+        .material-popup-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .material-popup-content {
+        padding: 24px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .material-chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .material-suggested-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border, #79747E);
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: var(--text);
+        font-weight: 500;
+        background: transparent;
+    }
+
+        .material-suggested-chip i {
+            color: var(--secondary, #2563EB);
+        }
+
+    .material-body-supporting-text h3 {
+        font-size: 1rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 10px;
+        color: var(--text);
+    }
+
+    .material-body-supporting-text p {
+        font-size: 0.95rem !important;
+        line-height: 1.6;
+        color: var(--text2, #49454F);
+        white-space: pre-wrap;
+        margin: 0;
+    }
+
+    .material-popup-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 16px 24px 24px 24px;
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .material-text-button {
+        background: none;
+        border: none;
+        padding: 10px 24px;
+        font-weight: 500;
+        font-size: 0.88rem;
+        color: var(--secondary, #2563EB);
+        cursor: pointer;
+        border-radius: 100px;
+        transition: background 0.2s;
+    }
+
+        .material-text-button:hover {
+            background-color: rgba(37, 99, 235, 0.08);
+        }
+
+    .status-msg-text {
+        font-size: 0.95rem;
+        padding: 15px;
+        color: var(--text2);
+    }
+
+    /* 🌟 MODERN NEON SKELETON ANIMATION */
+    .skeleton-faculty-card {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        height: 350px;
+        position: relative;
+    }
+
+    .skeleton-img-glow {
+        height: 200px;
+        background: rgba(15, 23, 42, 0.6);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skeleton-body-glow {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .skeleton-title-line {
+        height: 24px;
+        width: 75%;
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skeleton-meta-line {
+        height: 16px;
+        width: 50%;
+        background: rgba(51, 65, 85, 0.3);
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .skeleton-shimmer-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient( 90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100% );
+        animation: khin-shimmer-engine 1.5s infinite linear;
+    }
+
+    /* 💡 Blazor Razor Rendering Compiler Escape */
+    @@keyframes khin-shimmer-engine {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    @@keyframes materialContainerOpen {
+        from {
+            transform: scale(0.92);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>

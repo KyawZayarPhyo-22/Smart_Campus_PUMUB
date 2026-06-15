@@ -1,0 +1,56 @@
+@page "/admin/student/create"
+@layout AdminLayout
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <NavLink href="/admin/student" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></NavLink>
+        <h3>Add New Student</h3>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+        <EditForm Model="createModel" OnValidSubmit="SaveStudent" FormName="CreateStudentForm">
+            <DataAnnotationsValidator />
+            <div class="tech-card p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">User Account <span class="text-danger">*</span></label>
+                        <InputSelect @bind-Value="createModel.UserId" class="form-select">
+                            <option value="0">-- Select User --</option>
+                            @foreach (var user in UserList) { <option value="@user.UserId">@user.UserName</option> }
+                        </InputSelect>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label">Roll Number</label>
+                        <InputText @bind-Value="createModel.CurrentRollNo" class="form-control" placeholder="e.g., MUB-1098" />
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label">Year <span class="text-danger">*</span></label>
+                        <InputSelect @bind-Value="createModel.CurrentClassYear" class="form-select">
+                            <option value="">-- Select Year --</option>
+                            <option value="First Year">First Year</option>
+                            <option value="Second Year">Second Year</option>
+                            <option value="Third Year">Third Year</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Major <span class="text-danger">*</span></label>
+                        <InputText @bind-Value="createModel.CurrentMajor" class="form-control" placeholder="Major Name" />
+                    </div>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(statusMessage)) { <div class="alert alert-info mt-3">@statusMessage</div> }
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <NavLink href="/admin/student" class="btn btn-secondary">Cancel</NavLink>
+                    <button type="submit" class="btn btn-info" disabled="@isProcessing">
+                        @(isProcessing ? "Saving..." : "Create Student")
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>

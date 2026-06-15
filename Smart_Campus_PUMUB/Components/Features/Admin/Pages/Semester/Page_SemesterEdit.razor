@@ -1,0 +1,43 @@
+@page "/admin/semester/edit/{id:int}"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Semester
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="modal-dialog modal-md mt-5">
+    <div class="modal-content tech-card">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">Edit Semester Info</h5>
+        </div>
+        @if (IsLoading)
+        {
+            <div class="modal-body text-center my-4"><div class="spinner-border text-primary"></div></div>
+        }
+        else
+        {
+            <EditForm Model="semesterModel" OnValidSubmit="UpdateSemester" FormName="EditSemesterForm">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="col-12 mb-3">
+                        <label class="form-label text-light">Semester ID</label>
+                        <input type="text" class="form-control" value="@Id" disabled />
+                    </div>
+                    <div class="col-12 mb-2">
+                        <label class="form-label text-light">Semester Name</label>
+                        <InputText @bind-Value="semesterModel.SemesterName" class="form-control" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="small text-info mt-2">@statusMessage</div>
+                    }
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <NavLink href="/admin/semesters" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
+                    <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                        @(isProcessing ? "Saving..." : "Save Changes")
+                    </button>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>

@@ -1,4 +1,4 @@
-﻿<!-- NAVBAR -->
+﻿@* <!-- NAVBAR -->
 <nav id="navbar">
   <div class="nav-container">
     <a href="#hero" class="nav-brand">
@@ -35,7 +35,7 @@
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
         <i class="fas fa-moon" id="themeIcon"></i>
       </button>
-      <a href="/register" class="btn-apply">Apply Now</a>
+      <a href="/login" class="btn-apply">Login</a>
       <div class="hamburger" onclick="toggleMobile()">
         <span></span><span></span><span></span>
       </div>
@@ -65,4 +65,274 @@
   {
     isMobileMenuOpen = !isMobileMenuOpen;
   }
+} *@
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Smart_Campus_PUMUB.Components.Features.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@rendermode InteractiveServer
+
+<nav id="navbar">
+    <div class="nav-container">
+        <a href="#hero" class="nav-brand">
+            <div class="nav-logo">PU</div>
+            <div class="nav-brand-text">
+                <span>Polytechnic University</span>
+                <span>Maubin · Est. 1999</span>
+            </div>
+        </a>
+        <ul class="nav-links">
+            <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink></li>
+            <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="faculties" Match="NavLinkMatch.Prefix">Faculties</NavLink></li>
+            <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="programs">Programs</NavLink></li>
+            <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="library">Library</NavLink></li>
+            <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="activities">Activities</NavLink></li>
+            @* <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="AI">AI</NavLink></li> *@
+            <li style="margin-bottom: -1rem;"><NavLink class="nav-link" href="contact">Contact</NavLink></li>
+
+            @* <AuthorizeView Roles="Student">
+                <Authorized>
+                    <li style="margin-bottom: -1rem; display: flex; align-items: center; padding-left: 8px;">
+                        <NavLink class="nav-link-btn-register" href="register">
+                            <i class="fas fa-user-plus" style="font-size: 0.82rem;"></i> Register
+                        </NavLink>
+                    </li>
+                </Authorized>
+            </AuthorizeView> *@
+        </ul>
+
+        <div class="nav-actions">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+
+            <AuthorizeView>
+                <Authorized>
+                    <div class="user-profile-dropdown-wrapper">
+                        <button class="avatar-circle-btn" @onclick="ToggleProfileMenu">
+                            @(GetAvatarInitial(context.User.Identity?.Name))
+                        </button>
+
+                        @if (isProfileMenuOpen)
+                        {
+                            <div class="profile-dropdown-menu animate-fade-nav">
+                                <div class="dropdown-header">
+                                    <span class="user-name">@context.User.Identity?.Name</span>
+                                    <span class="user-role">Access Granted</span>
+                                </div>
+                                <hr class="dropdown-divider" />
+                                <button class="dropdown-item-logout" @onclick="HandleLogout">
+                                    <i class="fas fa-sign-out-alt"></i> Log Out
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login" class="btn-apply">Login</a>
+                </NotAuthorized>
+            </AuthorizeView>
+
+            <div class="hamburger" @onclick="ToggleMobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="mobile-menu @(isMobileMenuOpen ? "open" : "")" id="mobileMenu">
+    <button class="mobile-close" @onclick="ToggleMobile"><i class="fas fa-times"></i></button>
+    <NavLink href="" Match="NavLinkMatch.All" @onclick="ToggleMobile">🏠 Home</NavLink>
+    <NavLink href="faculties" @onclick="ToggleMobile">🏛️ Faculties</NavLink>
+    <NavLink href="programs" @onclick="ToggleMobile">📚 Programs</NavLink>
+    <NavLink href="activities" @onclick="ToggleMobile">📅 Activities</NavLink>
+    <NavLink href="library" @onclick="ToggleMobile">📖 Library</NavLink>
+    <NavLink href="ai" @onclick="ToggleMobile">🤖 AI </NavLink>
+    <NavLink href="contact" @onclick="ToggleMobile">📞 Contact</NavLink>
+
+    <AuthorizeView Roles="Student">
+        <Authorized>
+            <NavLink href="register" class="mobile-register-link-btn" @onclick="ToggleMobile">👤 Register Now</NavLink>
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView>
+        <Authorized>
+            <div style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 15px;">
+                <span style="display:block; font-size:0.9rem; color:#94a3b8; margin-bottom:8px;">Signed in as: @context.User.Identity?.Name</span>
+                <button class="mobile-logout-btn" @onclick="HandleLogout">🚪 Log Out</button>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <NavLink href="login" @onclick="ToggleMobile">👤 Login</NavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<style>
+    .user-profile-dropdown-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* 🌟 REGISTER INSET INNER SHADOW BUTTON STYLE */
+    .nav-link-btn-register {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        color: #10B981 !important; /* Beautiful Emerald Green */
+        font-weight: 650 !important;
+        font-size: 0.88rem !important;
+        padding: 6px 16px !important;
+        border-radius: 30px;
+        border: 1px solid #e2e8f0;
+        text-decoration: none !important;
+        /* ကိုကိုတောင်းဆိုထားတဲ့ Inner Shadow Layout အပိုင်းပါရှင် */
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+    }
+
+        .nav-link-btn-register:hover {
+            background: #10B981;
+            color: #ffffff !important;
+            border-color: #10B981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            transform: translateY(-1px);
+        }
+
+    /* Mobile Register Button */
+    .mobile-register-link-btn {
+        background: rgba(16, 185, 129, 0.1) !important;
+        color: #10B981 !important;
+        font-weight: 600 !important;
+        border-radius: 12px;
+        margin: 8px 15px !important;
+        padding: 12px !important;
+        text-align: center;
+        border: 1px dashed #10B981;
+    }
+
+    .avatar-circle-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #1E3A8A;
+        color: #ffffff;
+        border: 2px solid #ffffff;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .profile-dropdown-menu {
+        position: absolute;
+        top: 50px;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        width: 200px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        z-index: 10000;
+        padding: 6px 0;
+    }
+
+    .dropdown-header {
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-name {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .user-role {
+        font-size: 0.75rem;
+        color: #10B981;
+        font-weight: 500;
+    }
+
+    .dropdown-divider {
+        margin: 4px 0;
+        border: 0;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .dropdown-item-logout {
+        width: 100%;
+        padding: 10px 16px;
+        background: transparent;
+        border: none;
+        text-align: left;
+        font-size: 0.88rem;
+        color: #ef4444;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .dropdown-item-logout:hover {
+            background: #fef2f2;
+        }
+
+    .mobile-logout-btn {
+        width: 100%;
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .animate-fade-nav {
+        animation: fastNavFade 0.15s ease-out;
+    }
+
+    @@keyframes fastNavFade {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+@code
+{
+    private bool isMobileMenuOpen = false;
+    private bool isProfileMenuOpen = false;
+
+    private void ToggleMobile() => isMobileMenuOpen = !isMobileMenuOpen;
+    private void ToggleProfileMenu() => isProfileMenuOpen = !isProfileMenuOpen;
+
+    private string GetAvatarInitial(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "U";
+        return name.Substring(0, 1);
+    }
+
+    private async Task HandleLogout()
+    {
+        isProfileMenuOpen = false;
+        isMobileMenuOpen = false;
+        var customAuth = (CustomAuthStateProvider)AuthStateProvider;
+        await customAuth.UpdateAuthenticationState(null);
+        NavManager.NavigateTo("/", true);
+    }
 }

@@ -19,6 +19,7 @@
 
         // Added missing properties used by the controller:
         public string? Image { get; set; }
+        public IFormFile? ImageFile { get; set; }
         public string? Description { get; set; }
         public string? Location { get; set; }
     }

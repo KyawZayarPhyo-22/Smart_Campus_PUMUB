@@ -22,6 +22,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetFaculties()
         {
             var lst = _db.Faculties
+                         .AsNoTracking()
                          .Include(x => x.Departments)
                          .ThenInclude(d => d.Tutors)// Faculty အောက်မှာ Department တွေပါဝင်စေရန်
                          .ThenInclude(t => t.Position)// Department အောက်မှာ Tutor တွေပါဝင်စေရန်

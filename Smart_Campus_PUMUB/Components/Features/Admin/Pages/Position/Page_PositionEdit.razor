@@ -1,0 +1,62 @@
+@page "/admin/position/edit/{id:int}"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Position
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="tab-pane fade show active" id="editPositionContainer" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content tech-card">
+
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    Edit Position Info
+                </h5>
+            </div>
+
+            @if (IsLoading)
+            {
+                <div class="modal-body text-center my-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="text-muted mt-2">Position အချက်အလက်များကို ရယူနေပါသည်...</div>
+                </div>
+            }
+            else
+            {
+                <EditForm Model="positionModel" OnValidSubmit="UpdatePosition" FormName="EditPositionForm">
+                    <DataAnnotationsValidator />
+
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12 mb-2">
+                                <label class="form-label text-light">Position ID</label>
+                                <input type="text" class="form-control" value="@Id" disabled />
+                            </div>
+                            
+                            <div class="col-12 mb-2">
+                                <label class="form-label text-light">Position Name</label>
+                                <InputText @bind-Value="positionModel.PositionName" class="form-control" placeholder="Enter Position Name" />
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(statusMessage))
+                        {
+                            <div class="small text-info mt-2">@statusMessage</div>
+                        }
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <NavLink href="/admin/positions" class="nav-link me-3">
+                            <span class="sidebar-text text-muted">Cancel</span>
+                        </NavLink>
+
+                        <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                            @(isProcessing ? "Saving..." : "Save Changes")
+                        </button>
+                    </div>
+                </EditForm>
+            }
+
+        </div>
+    </div>
+</div>

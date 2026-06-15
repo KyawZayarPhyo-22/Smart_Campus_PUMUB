@@ -1,0 +1,57 @@
+@page "/admin/subject/edit/{SubjectId:int}"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Subject
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="mb-4">
+    <h3 class="fw-bold text-white">Edit Subject</h3>
+</div>
+
+<div class="tech-card p-4">
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @ErrorMessage
+        </div>
+    }
+    @if (subject == null)
+    {
+        <div class="text-center text-muted">Loading...</div>
+    }
+    else
+    {
+        <EditForm Model="subject" OnValidSubmit="UpdateSubject">
+            <DataAnnotationsValidator />
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label text-light">Semester</label>
+                    <InputSelect @bind-Value="subject.SemesterId" class="form-select bg-dark text-white border-secondary">
+                        @foreach (var sem in SemesterList)
+                        {
+                            <option value="@sem.SemesterId">@sem.SemesterName</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label text-light">Subject Name</label>
+                    <InputText @bind-Value="subject.SubjectName" class="form-control bg-dark text-white border-secondary" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label text-light">Subject Code</label>
+                    <InputText @bind-Value="subject.SubjectCode" class="form-control bg-dark text-white border-secondary" />
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary px-4" disabled="@IsProcessing">
+                    @(IsProcessing ? "Updating..." : "Save Changes")
+                </button>
+                <NavLink href="/admin/subjects" class="btn btn-secondary px-4">Cancel</NavLink>
+            </div>
+        </EditForm>
+    }
+</div>

@@ -1,0 +1,78 @@
+@page "/admin/tutor/create"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Tutor
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Forms
+@rendermode InteractiveServer
+
+<div class="tech-card p-4">
+    <h3 class="fw-bold mb-4">Add New Tutor</h3>
+
+    <EditForm Model="createModel" OnValidSubmit="SaveTutor" FormName="CreateTutorForm">
+        <DataAnnotationsValidator />
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Tutor Name</label>
+                <InputText class="form-control" @bind-Value="createModel.TutorName" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Email</label>
+                <InputText type="email" class="form-control" @bind-Value="createModel.Email" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Phone</label>
+                <InputText class="form-control" @bind-Value="createModel.Phone" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Position</label>
+                <InputSelect class="form-select" @bind-Value="createModel.PositionId">
+                    <option value="0">Select Position</option>
+                    @foreach (var pos in PositionList)
+                    {
+                        <option value="@pos.PositionId">@pos.PositionName</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Assign User</label>
+                <InputSelect class="form-select" @bind-Value="createModel.UserId">
+                    <option value="0">Select User</option>
+                    @foreach (UserModels user in UserList.DistinctBy(u => u.RoleName))
+                    {
+                        <option value="@user.UserId">
+                            @user.RoleName</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Department</label>
+                    <InputSelect class="form-select" @bind-Value="createModel.DepartmentId">
+                        <option value="0">Select Department</option>
+                        @foreach (var dept in DepartmentList)
+                        {
+                            <option value="@dept.DepartmentId">@dept.DepartmentName
+                            </option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Profile Image</label>
+                    <InputFile class="form-control" OnChange="HandleFileSelected" accept=".jpg,.jpeg,.png" />
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label">About</label>
+                    <InputTextArea class="form-control" rows="3" @bind-Value="createModel.About"></InputTextArea>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="alert alert-info">@statusMessage</div>
+            }
+
+            <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                @(isProcessing ? "Saving..." : "Create Tutor")
+            </button>
+        </EditForm>
+    </div>

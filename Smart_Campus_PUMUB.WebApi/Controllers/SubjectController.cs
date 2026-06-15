@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Smart_Campus_PUMUB.Database.AppDbContext; 
+using Microsoft.EntityFrameworkCore;
+using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace NLADotNetInternshipTraining.WebApi.Controllers;
 
 [ApiController]
-[Route("api/subjects")]
+[Route("api/[controller]")]
 public class SubjectController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -16,15 +17,23 @@ public class SubjectController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetSubjects()
+    public IActionResult GetAll()
     {
-        var lst = _db.Subjects
-                     .Where(x => x.IsDelete == false || x.IsDelete == null)
-                     .OrderByDescending(x => x.SubjectId)
-                     .ToList();
-        return Ok(lst);
+        // .Include(s => s.Semester) သုံးပြီး Semester Name ကိုပါ ဆွဲထုတ်ပါ
+        var subjects = _db.Subjects
+                               .Include(s => s.Semester)
+                               .OrderByDescending(s => s.SubjectId)
+                               .Where(x => x.IsDelete == false)
+                               .Select(s => new SubjectModel
+                               {
+                                   SubjectId = s.SubjectId,
+                                   SubjectName = s.SubjectName,
+                                   SubjectCode = s.SubjectCode,
+                                   SemesterId = s.SemesterId,
+                                   SemesterName = s.Semester.SemesterName // ဒီမှာ နာမည်ကို ထည့်ပေးပါ
+                               }).ToList();
+        return Ok(subjects);
     }
-
     [HttpGet("{id}")]
     public IActionResult GetSubject(int id)
     {
