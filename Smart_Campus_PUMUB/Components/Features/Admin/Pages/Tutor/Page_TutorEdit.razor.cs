@@ -19,7 +19,6 @@ public partial class Page_TutorEdit
     private IBrowserFile? selectedFile;
     private bool IsLoading = true;
     private bool isProcessing = false;
-    private bool IsLoading = false;
     private string statusMessage = "";
 
     // protected override async Task OnInitializedAsync()
