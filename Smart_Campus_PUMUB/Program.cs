@@ -1,9 +1,14 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Smart_Campus_PUMUB.Components;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services; // 💡 HttpClientService ရှိမည့် Namespace အား လှမ်းခေါ်ခြင်း
+using Smart_Campus_PUMUB.Components;
 using Smart_Campus_PUMUB.Components.Features.Services;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using System.Globalization;
+
+var cultureInfo = new CultureInfo("en-GB"); // en-GB က dd-MM-yyyy ကို သုံးပါတယ်
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options =>

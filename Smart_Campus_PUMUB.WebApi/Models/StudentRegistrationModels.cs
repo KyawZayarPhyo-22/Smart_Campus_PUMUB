@@ -60,7 +60,9 @@ public class StudentRegistrationCreateRequestModel
     // 📷 Images Upload Fields
     public IFormFile? StudentImageFile { get; set; }
     public IFormFile? SignatureImageFile { get; set; }
+
 }
+
 
 public class StudentRegistrationUpdateRequestModel : StudentRegistrationCreateRequestModel
 {
