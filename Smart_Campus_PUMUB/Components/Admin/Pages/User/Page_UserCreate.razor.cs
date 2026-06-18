@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
+using System.Diagnostics.Eventing.Reader;
 using System.Text.RegularExpressions; // Regex အတွက်
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.User;
@@ -37,60 +38,108 @@ public partial class Page_UserCreate
 
     private async Task CreateUser()
     {
-        // ၁။ Username Validation
+        // 1. Username Validation
         if (string.IsNullOrWhiteSpace(Request.UserName))
         {
             statusMessage = "Username ဖြည့်ရန် လိုအပ်ပါသည်။";
-            IsSuccess = false; return;
+            IsSuccess = false;
+            return;
         }
 
-        // ၂။ Password Validation (အနည်းဆုံး 8 လုံး)
-        if (string.IsNullOrEmpty(Request.Password) || Request.Password.Length < 8)
+        // 2. Password Validation (custom rules)
+        if (!IsValidPassword(Request.Password, out string passwordError))
         {
-            statusMessage = "Password အနည်းဆုံး 8 လုံးရှိရပါမည်။";
-            IsSuccess = false; return;
+            statusMessage = passwordError;
+            IsSuccess = false;
+            return;
         }
 
-        // ၃။ Role Validation
+        // 3. Role Validation
         if (Request.RoleId == 0)
         {
             statusMessage = "Role ကို ရွေးချယ်ပေးရန် လိုအပ်ပါသည်။";
-            IsSuccess = false; return;
+            IsSuccess = false;
+            return;
         }
 
         IsProcessing = true;
+        //statusMessage = "User ဖန်တီးနေပါသည်...";
+
         try
         {
-            var response = await HttpClientService.ExecuteAsync<UserCreateResponseModel>("user", EnumHttpMethod.Post, Request);
+            var response = await HttpClientService.ExecuteAsync<UserCreateResponseModel>(
+                "user",
+                EnumHttpMethod.Post,
+                Request
+            );
 
             if (response != null && response.IsSuccess)
             {
                 statusMessage = "User အသစ် ဖန်တီးခြင်း အောင်မြင်ပါသည်။";
                 IsSuccess = true;
-                await Task.Delay(1500);
+
+                await Task.Delay(1200);
                 Navigation.NavigateTo("/admin/users");
             }
             else
             {
-                statusMessage = response?.Message ?? "User ဖန်တီး၍ မရပါ။ (Username ရှိနှင့်ပြီးသား ဖြစ်နိုင်ပါသည်။)";
+                statusMessage = response?.Message ?? "User ဖန်တီး၍ မရပါ။ Username ရှိပြီးသား ဖြစ်နိုင်ပါသည်။";
                 IsSuccess = false;
             }
         }
         catch (Exception ex)
         {
-            if (!ex.Message.Contains("400") || !ex.Message.Contains("Bad Request"))
+            var msg = ex.Message.ToLower();
+
+            if (msg.Contains("400") || msg.Contains("bad request"))
             {
-                statusMessage = "Username ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။ ကျေးဇူးပြု၍ အခြားတစ်ခု ပြောင်းသုံးပါ။";
+                statusMessage = "ထည့်သွင်းထားသော data မှားယွင်းနေပါသည်။ Username သို့မဟုတ် Password စစ်ဆေးပါ။";
+            }
+            else if (msg.Contains("timeout"))
+            {
+                statusMessage = "Server response နှေးနေပါသည်။ နောက်မှ ပြန်ကြိုးစားပါ။";
             }
             else
             {
-                statusMessage = "စနစ်တွင် အမှားတစ်ခုခု ဖြစ်ပေါ်နေပါသည်။ နောက်မှ ပြန်ကြိုးစားပါ။";
+                statusMessage = "စနစ်အတွင်း အမှားတစ်ခု ဖြစ်ပေါ်နေပါသည်။";
             }
+
             IsSuccess = false;
         }
         finally
         {
             IsProcessing = false;
         }
+    }
+
+    private bool IsValidPassword(string password, out string errorMessage)
+    {
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Password ဖြည့်ရန် လိုအပ်ပါသည်။";
+            return false;
+        }
+
+        if (password.Length < 8)
+        {
+            errorMessage = "Password အနည်းဆုံး 8 လုံးရှိရပါမည်။";
+            return false;
+        }
+
+        if (!password.Any(char.IsUpper))
+        {
+            errorMessage = "Password တွင် အနည်းဆုံး Capital letter (A-Z) ပါရပါမည်။";
+            return false;
+        }
+
+        if (!password.Any(ch => "!@#$%^&*()_+-=[]{}|;:',.<>?/".Contains(ch)))
+        {
+            errorMessage = "Password တွင် အနည်းဆုံး Special character (!@#$%) ပါရပါမည်။";
+            return false;
+        }
+
+        return true;
     }
 }

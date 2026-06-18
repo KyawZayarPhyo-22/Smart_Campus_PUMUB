@@ -27,6 +27,7 @@ public partial class Page_TutorCreate
         UserList = await HttpClientService.ExecuteAsync<List<UserModels>>("user", EnumHttpMethod.Get) ?? new();
         PositionList = await HttpClientService.ExecuteAsync<List<PositionModel>>("position", EnumHttpMethod.Get) ?? new();
         DepartmentList = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get) ?? new();
+        roleModels = await HttpClientService.ExecuteAsync<List<RoleModels>>("role", EnumHttpMethod.Get) ?? new();
     }
 
     private void HandleFileSelected(InputFileChangeEventArgs e) => selectedFile = e.File;
@@ -64,7 +65,7 @@ public partial class Page_TutorCreate
 
             if (response?.IsSuccess == true)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Success!");
+                //await JSRuntime.InvokeVoidAsync("alert", "Success!");
                 Nav.NavigateTo("/admin/tutors");
             }
             else

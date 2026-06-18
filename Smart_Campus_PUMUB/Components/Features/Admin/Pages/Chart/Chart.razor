@@ -1,7 +1,24 @@
 @page "/admin/dashboard"
 @layout AdminLayout
+@implements IDisposable
 @inject IJSRuntime JS
-
+@rendermode InteractiveServer
+@using Newtonsoft.Json
+@inject IHttpClientFactory ClientFactory
+@inject Smart_Campus_PUMUB.BlazorServer.Frontend.Services.HttpClientService HttpClientService
+<style>
+    .stat-icon {
+        display: flex;
+        align-items: center;
+        /* ဒေါင်လိုက် အလယ် */
+        justify-content: center;
+        /* အလျားလိုက် အလယ် */
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        /* ပိုလှအောင် ထောင့်လေးဝိုင်းပေးပါ */
+    }
+</style>
 <!-- Page Header -->
 <div class="page-header">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -9,16 +26,16 @@
             <h3><i class="bi bi-speedometer2 me-2 text-info"></i>Command Center</h3>
             <p>System Overview, Charts, and Live Telemetry.</p>
         </div>
-        <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2">
+        @* <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2">
             <i class="bi bi-circle-fill me-1" style="font-size:0.5rem;"></i> System Online
-        </span>
+        </span> *@
     </div>
 </div>
 
 <!-- KPI Stat Cards -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-        <div class="stat-card" style="--card-accent:#22d3ee;">
+        @* <div class="stat-card" style="--card-accent:#22d3ee;">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <div class="stat-icon" style="background:rgba(34,211,238,0.12);">
                     <i class="bi bi-people-fill text-info"></i>
@@ -29,6 +46,21 @@
             </div>
             <div class="stat-value text-info">4,520</div>
             <div class="stat-label mt-1">Active Students</div>
+        </div> *@
+        <div class="stat-card" style="--card-accent:#22d3ee;">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="stat-icon" style="background:rgba(34,211,238,0.12);">
+                    <i class="bi bi-people-fill text-info"></i>
+                </div>
+
+                <span class="badge @(percentage >= 0 ? "bg-info" : "bg-danger") bg-opacity-25 text-info border border-info border-opacity-25 stat-change">
+                    <i class="bi @(percentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                    @($"{percentage:+0;-0;0}%")
+                </span>
+            </div>
+
+            <div class="stat-value text-info">@activeStudentCount.ToString("N0")</div>
+            <div class="stat-label mt-1">Active Students</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
@@ -37,12 +69,15 @@
                 <div class="stat-icon" style="background:rgba(139,92,246,0.12);">
                     <i class="bi bi-person-workspace" style="color:#8b5cf6;"></i>
                 </div>
+
                 <span class="badge border stat-change"
-                    style="background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3)!important;">
-                    <i class="bi bi-arrow-up-short"></i>+5%
+                      style="background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3)!important;">
+                    <i class="bi @(tutorPercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                    @($"{tutorPercentage:+0;-0;0}%")
                 </span>
             </div>
-            <div class="stat-value" style="color:#8b5cf6;">315</div>
+
+            <div class="stat-value" style="color:#8b5cf6;">@totalTutorCount</div>
             <div class="stat-label mt-1">Total Tutors</div>
         </div>
     </div>
@@ -52,17 +87,17 @@
                 <div class="stat-icon" style="background:rgba(16,185,129,0.12);">
                     <i class="bi bi-book-fill text-success"></i>
                 </div>
-                <span
-                    class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 stat-change">
-                    <i class="bi bi-arrow-up-short"></i>+8%
+                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 stat-change">
+                    <i class="bi @(bookPercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
+                    @($"{bookPercentage:+0;-0;0}%")
                 </span>
             </div>
-            <div class="stat-value text-success">1,240</div>
+            <div class="stat-value text-success">@bookCount.ToString("N0")</div>
             <div class="stat-label mt-1">Library PDF Files</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="stat-card" style="--card-accent:#ef4444;">
+        @* <div class="stat-card" style="--card-accent:#ef4444;">
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <div class="stat-icon" style="background:rgba(239,68,68,0.12);">
                     <i class="bi bi-megaphone-fill text-danger"></i>
@@ -74,8 +109,19 @@
             </div>
             <div class="stat-value text-danger">2</div>
             <div class="stat-label mt-1">Active Alerts</div>
+        </div> *@ <div class="stat-card" style="--card-accent:#ef4444;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="stat-icon" style="background:rgba(239,68,68,0.12);">
+                <i class="bi bi-megaphone-fill text-danger"></i>
+            </div>
+            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 stat-change">
+                <i class="bi bi-exclamation-circle"></i> Total
+            </span>
         </div>
+        <div class="stat-value text-danger">@activeAlertCount</div>
+        <div class="stat-label mt-1">Activity</div>
     </div>
+</div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -83,12 +129,12 @@
      ═══════════════════════════════════════════════════════════════════ -->
 <div class="row g-3 mb-4">
 
-    <!-- Pie / Donut — Students by Major -->
+    <!-- Pie / Donut — Role Distribution -->
     <div class="col-12 col-lg-5">
         <div class="tech-card h-100">
             <div class="tech-card-header">
                 <h6 class="tech-card-title">
-                    <i class="bi bi-pie-chart-fill me-2 text-info"></i>Students by Major
+                    <i class="bi bi-pie-chart-fill me-2 text-info"></i>Role Distribution
                 </h6>
                 <span class="badge bg-info text-dark">2026</span>
             </div>
@@ -118,7 +164,7 @@
 <div class="row g-3">
     <!-- Recent Activity -->
     <div class="col-12 col-md-6">
-        <div class="tech-card h-100">
+        @* <div class="tech-card h-100">
             <div class="tech-card-header">
                 <h6 class="tech-card-title">
                     <i class="bi bi-clock-history me-2 text-info"></i>Recent Activity
@@ -128,7 +174,7 @@
                 <li class="d-flex align-items-center gap-3 py-2 border-bottom"
                     style="border-color:var(--border)!important;">
                     <span class="stat-icon flex-shrink-0"
-                        style="width:36px;height:36px;background:rgba(34,211,238,0.1);font-size:0.9rem;">
+                          style="width:36px;height:36px;background:rgba(34,211,238,0.1);font-size:0.9rem;">
                         <i class="bi bi-person-plus text-info"></i>
                     </span>
                     <div class="flex-grow-1 min-w-0">
@@ -140,7 +186,7 @@
                 <li class="d-flex align-items-center gap-3 py-2 border-bottom"
                     style="border-color:var(--border)!important;">
                     <span class="stat-icon flex-shrink-0"
-                        style="width:36px;height:36px;background:rgba(16,185,129,0.1);font-size:0.9rem;">
+                          style="width:36px;height:36px;background:rgba(16,185,129,0.1);font-size:0.9rem;">
                         <i class="bi bi-book text-success"></i>
                     </span>
                     <div class="flex-grow-1 min-w-0">
@@ -152,7 +198,7 @@
                 <li class="d-flex align-items-center gap-3 py-2 border-bottom"
                     style="border-color:var(--border)!important;">
                     <span class="stat-icon flex-shrink-0"
-                        style="width:36px;height:36px;background:rgba(239,68,68,0.1);font-size:0.9rem;">
+                          style="width:36px;height:36px;background:rgba(239,68,68,0.1);font-size:0.9rem;">
                         <i class="bi bi-megaphone text-danger"></i>
                     </span>
                     <div class="flex-grow-1 min-w-0">
@@ -163,7 +209,7 @@
                 </li>
                 <li class="d-flex align-items-center gap-3 py-2">
                     <span class="stat-icon flex-shrink-0"
-                        style="width:36px;height:36px;background:rgba(139,92,246,0.1);font-size:0.9rem;">
+                          style="width:36px;height:36px;background:rgba(139,92,246,0.1);font-size:0.9rem;">
                         <i class="bi bi-calendar-event" style="color:#8b5cf6;"></i>
                     </span>
                     <div class="flex-grow-1 min-w-0">
@@ -172,6 +218,72 @@
                     </div>
                     <small class="text-muted flex-shrink-0">5h ago</small>
                 </li>
+            </ul>
+        </div> *@
+        <div class="tech-card h-100">
+            <div class="tech-card-header">
+                <h6 class="tech-card-title">
+                    <i class="bi bi-clock-history me-2 text-info"></i>Recent Activity
+                </h6>
+            </div>
+            @* <ul class="list-unstyled mb-0">
+                @if (recentActivities != null && recentActivities.Any())
+                {
+                    @foreach (var activity in recentActivities)
+                    {
+                        <li class="d-flex align-items-center gap-3 py-2 border-bottom"
+                            style="border-color:var(--border)!important;">
+                            <span class="stat-icon flex-shrink-0"
+                                  style="width:36px;height:36px;background:rgba(34,211,238,0.1);font-size:0.9rem;">
+                                <i class="bi @activity.Icon text-info"></i>
+                            </span>
+                            <div class="flex-grow-1 min-w-0">
+                                <p class="mb-0 fw-semibold small">@activity.Title</p>
+                                <p class="mb-0 text-muted" style="font-size:0.75rem;">@activity.Description</p>
+                            </div>
+                            <small class="text-muted flex-shrink-0">@activity.TimeAgo</small>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li class="p-3 text-center text-muted small">No recent activity found.</li>
+                }
+            </ul> *@
+            <ul class="list-unstyled mb-0">
+                @foreach (var activity in recentActivities)
+                {
+                    <li class="d-flex align-items-center gap-3 py-2 border-bottom"
+                        @onclick="() => activity.IsExpanded = !activity.IsExpanded" style="cursor: pointer;">
+
+                        <span class="stat-icon flex-shrink-0"
+                              style="width:36px;height:36px;background:rgba(34,211,238,0.1);">
+                            @* <i class="bi @(!string.IsNullOrEmpty(activity.Icon) ? activity.Icon : "bi-bell")
+                        text-info"></i> *@
+                            <i class="bi @activity.Icon @GetIconColor(activity.ActivityTitle)"></i>
+                            @* <i class="bi @activity.Icon text-info"></i> *@
+                        </span>
+
+                        <div class="flex-grow-1 min-w-0">
+                            <p class="mb-0 fw-semibold small">@activity.ActivityTitle</p>
+
+                            @if (activity.IsExpanded)
+                            {
+                                <p class="mb-0 text-muted" style="font-size:0.75rem; white-space: normal;">
+                                    @activity.Description
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="mb-0 text-muted"
+                                   style="font-size:0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
+                                    @activity.Description
+                                </p>
+                            }
+                        </div>
+                        <small class="text-muted flex-shrink-0">@GetTimeAgo(activity.CreatedDateTime)</small>
+                    </li>
+                }
             </ul>
         </div>
     </div>
@@ -187,30 +299,44 @@
             <div class="row g-2">
                 <div class="col-6">
                     <div class="p-3 rounded-2 text-center"
-                        style="background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.15);">
-                        <div class="fw-bold fs-4 text-info">8</div>
+                         style="background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.15);">
+                        <div class="fw-bold fs-4 text-info">@summary.Faculties</div>
                         <div class="text-muted small">Faculties</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-2 text-center"
-                        style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.15);">
-                        <div class="fw-bold fs-4" style="color:#8b5cf6;">24</div>
+                         style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.15);">
+                        <div class="fw-bold fs-4" style="color:#8b5cf6;">@summary.Departments</div>
                         <div class="text-muted small">Departments</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-2 text-center"
-                        style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);">
-                        <div class="fw-bold fs-4 text-success">120</div>
+                         style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);">
+                        <div class="fw-bold fs-4 text-success">@summary.Subjects</div>
                         <div class="text-muted small">Subjects</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-2 text-center"
-                        style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);">
-                        <div class="fw-bold fs-4 text-warning">6</div>
+                         style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);">
+                        <div class="fw-bold fs-4 text-warning">@summary.Semesters</div>
                         <div class="text-muted small">Semesters</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-2 text-center"
+                         style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);">
+                        <div class="fw-bold fs-4 text-warning">@summary.Positions</div>
+                        <div class="text-muted small">Positions</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-2 text-center"
+                         style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);">
+                        <div class="fw-bold fs-4 text-warning">@summary.Rules</div>
+                        <div class="text-muted small">Rules</div>
                     </div>
                 </div>
             </div>
@@ -218,13 +344,303 @@
     </div>
 </div>
 
-@code
+@* @code
 {
+    private readonly List<RoleDistributionChartPoint> RoleDistributionData = new();
+    private Timer? _timer;
+    protected override void OnInitialized()
+    {
+        // Component စတင်ချိန်တွင် Timer ကို စတင်ပါ
+        _timer = new Timer(TimerCallback, null, 0, 5000);
+    }
+
+    private async void TimerCallback(object? state)
+    {
+        await LoadRoleDistributionAsync();
+
+        // UI ကို Update လုပ်ရန်အတွက်
+        await InvokeAsync(StateHasChanged);
+
+        // Chart ကို ပြန်ဆွဲရန် JS ကို ခေါ်ပါ
+        await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+    }
+    public void Dispose()
+    {
+        _timer?.Dispose(); // Page ပိတ်သွားလျှင် Timer ကို ဖျက်ပစ်ပါ
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Highcharts is div-based so there are no canvas race conditions.
-        // We call initCharts() every time this component renders so charts
-        // always appear correctly after Blazor SPA navigation.
-        await JS.InvokeVoidAsync("initCharts");
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+            }
+            catch
+            {
+                await Task.Delay(250);
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+            }
+        }
+    }
+
+    private async Task LoadRoleDistributionAsync()
+    {
+        RoleDistributionData.Clear();
+
+        try
+        {
+            var apiData = await HttpClientService.ExecuteAsync<List<RoleDistributionChartPoint>>(
+                "user/count/by-role",
+                // Console တွင် Data ပါမပါ ကြည့်ပါ
+                Smart_Campus_PUMUB.BlazorServer.Frontend.Services.EnumHttpMethod.Get);
+            Console.WriteLine($"API Data Count: {apiData?.Count}");
+
+            if (apiData is not null && apiData.Any(point => point.y > 0))
+            {
+                RoleDistributionData.AddRange(apiData);
+                return;
+            }
+        }
+        catch
+        {
+            // Keep the dashboard renderable when the API is offline.
+        }
+
+        RoleDistributionData.AddRange(GetDefaultRoleDistribution());
+    }
+
+    private static List<RoleDistributionChartPoint> GetDefaultRoleDistribution()
+    {
+        return new()
+        {
+            new RoleDistributionChartPoint { name = "Admin", y = 10, color = "#22d3ee" },
+            new RoleDistributionChartPoint { name = "Student", y = 70, color = "#10b981" },
+            new RoleDistributionChartPoint { name = "Tutor", y = 20, color = "#8b5cf6" }
+        };
+    }
+
+    private sealed class RoleDistributionChartPoint
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("name")]
+        public string name { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("y")]
+        public double y { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("color")]
+        public string color { get; set; } = string.Empty;
+    }
+} *@
+@code
+{
+    private readonly List<RoleDistributionChartPoint> RoleDistributionData = new();
+    private Timer? _timer;
+    private List<ActivityItem> recentActivities = new();
+    private bool _isRendered = false; // JS Interop အတွက် အရေးကြီးသည်
+
+    private int activeStudentCount = 0;
+    private int previousStudentCount = 2;
+    private double percentage = 0;
+    private int totalTutorCount = 0;
+    private int previousTutorCount = 4;
+    private double tutorPercentage = 0;
+    private int bookCount = 0;
+    private int previousBookCount = 1100;
+    private double bookPercentage = 0;
+    private int activeAlertCount = 0;
+    private SystemSummary summary = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _timer = new Timer(TimerCallback, null, 0, 60000);
+            var client = ClientFactory.CreateClient("SmartCampusApi");
+            // Data များကို တစ်ပြိုင်နက်တည်း Fetch လုပ်ခြင်းက ပိုမြန်သည်
+            var task1 = client.GetFromJsonAsync<StudentCountResponse>("student/count/active");
+            var task2 = client.GetFromJsonAsync<TutorCountResponse>("tutor/count/active");
+            var task3 = client.GetFromJsonAsync<BookCountResponse>("book/count/active");
+            var task4 = client.GetFromJsonAsync<ActivityCountResponse>("activity/count/active");
+            summary = await client.GetFromJsonAsync<SystemSummary>("Home/summary");
+            @* await Task.WhenAll(task1, task2, task3, task4); *@
+
+            activeStudentCount = task1.Result?.Count ?? 0;
+            totalTutorCount = task2.Result?.Count ?? 0;
+            bookCount = task3.Result?.Count ?? 0;
+            activeAlertCount = task4.Result?.Count ?? 0;
+
+            // Calculations
+            percentage = previousStudentCount > 0 ? ((double)(activeStudentCount - previousStudentCount) / previousStudentCount) *
+    100 : 0;
+            tutorPercentage = previousTutorCount > 0 ? ((double)(totalTutorCount - previousTutorCount) / previousTutorCount) * 100 :
+    0;
+            bookPercentage = previousBookCount > 0 ? ((double)(bookCount - previousBookCount) / previousBookCount) * 100 : 0;
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        // Component စတင်ချိန်တွင် Timer ကို စတင်ပါ
+
+    }
+
+    private async void TimerCallback(object? state)
+    {
+        @* await LoadRoleDistributionAsync();
+
+        // UI ကို Update လုပ်ရန်
+        await InvokeAsync(StateHasChanged);
+
+        // Chart ကို ပြန်ဆွဲရန် (Render ဖြစ်ပြီးမှသာ ခေါ်ပါ)
+        if (_isRendered)
+        {
+            await InvokeAsync(async () =>
+            {
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+            });
+        } *@
+        try
+        {
+            await LoadActivities();
+            await LoadRoleDistributionAsync();
+            await InvokeAsync(StateHasChanged);
+            if (_isRendered)
+            {
+                await InvokeAsync(async () => await JS.InvokeVoidAsync("initCharts", RoleDistributionData));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Timer Error: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isRendered = true; // JS အဆင်သင့်ဖြစ်ပြီဟု သတ်မှတ်လိုက်သည်
+            try
+            {
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+            }
+            catch
+            {
+                await Task.Delay(250);
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+            }
+        }
+    }
+
+    private async Task LoadRoleDistributionAsync()
+    {
+        try
+        {
+            var apiData = await HttpClientService.ExecuteAsync<List<RoleDistributionChartPoint>>(
+                "user/count/by-role",
+                Smart_Campus_PUMUB.BlazorServer.Frontend.Services.EnumHttpMethod.Get);
+
+            if (apiData is not null && apiData.Any())
+            {
+                RoleDistributionData.Clear();
+                RoleDistributionData.AddRange(apiData);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+
+        // Error တက်လျှင် Default data သုံးရန်
+        if (!RoleDistributionData.Any())
+        {
+            RoleDistributionData.Clear();
+            RoleDistributionData.AddRange(GetDefaultRoleDistribution());
+        }
+    }
+
+    private static List<RoleDistributionChartPoint> GetDefaultRoleDistribution()
+    {
+        return new()
+        {
+            new RoleDistributionChartPoint { name = "Admin", y = 10, color = "#22d3ee" },
+            new RoleDistributionChartPoint { name = "Student", y = 70, color = "#10b981" },
+            new RoleDistributionChartPoint { name = "Tutor", y = 20, color = "#8b5cf6" }
+        };
+    }
+    private async Task LoadActivities()
+    {
+        var data = await HttpClientService.ExecuteAsync<List<ActivityItem>>(
+            "activity/recent",
+            Smart_Campus_PUMUB.BlazorServer.Frontend.Services.EnumHttpMethod.Get);
+        if (data != null) recentActivities = data;
+    }
+    public class StudentCountResponse { public int Count { get; set; } }
+    public class RoleData { public string Name { get; set; } public int Y { get; set; } }
+    public class TutorCountResponse { public int Count { get; set; } }
+    public class BookCountResponse { public int Count { get; set; } }
+    public class ActivityCountResponse { public int Count { get; set; } }
+    public class ActivityItem
+    {
+        public string ActivityTitle { get; set; } = ""; public string Description { get; set; } = "";
+        public
+   string Icon
+        { get; set; } = ""; [JsonIgnore] public string TimeAgo { get; set; } = ""; public DateTime CreatedDateTime
+        {
+            get; set;
+        }// UI
+
+        
+        public bool IsExpanded { get; set; } = false; // DateTime နဲ့
+
+    }
+    private sealed class RoleDistributionChartPoint
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("name")]
+        public string name { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("y")]
+        public double y { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("color")]
+        public string color { get; set; } = string.Empty;
+    }
+    private string GetTimeAgo(DateTime createdAt)
+    {
+        var timeSpan = DateTime.UtcNow - createdAt;
+        if (timeSpan.TotalMinutes < 1) return "Just now";
+        if (timeSpan.TotalMinutes < 60) return $"{(int)timeSpan.TotalMinutes}m ago";
+        if (timeSpan.TotalHours < 24) return $"{(int)timeSpan.TotalHours}h ago";
+        return createdAt.ToString("MMM dd");
+    }
+    private string GetIconColor(string title)
+    {
+        title = title.ToLower();
+        return title switch
+        {
+            _ when title.Contains("book") => "text-primary", // Book အတွက် အပြာ
+            _ when title.Contains("tutor") => "text-success", // Tutor အတွက် အစိမ်း
+            _ when title.Contains("student") => "text-warning",
+            _ when title.Contains("role") => "text-danger",// Student အတွက် အဝါ
+            _ => "text-info" // ကျန်တာတွေအတွက် မီးခိုးရောင်
+        };
+
+    }
+    public class SystemSummary
+    {
+        public int Faculties { get; set; }
+        public int Departments { get; set; }
+        public int Subjects { get; set; }
+        public int Semesters { get; set; }
+        public int Positions { get; set; }
+        public int Rules { get; set; }
     }
 }

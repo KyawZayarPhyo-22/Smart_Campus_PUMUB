@@ -24,6 +24,8 @@ public partial class Page_PositionList
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
 
+    private string statusMessage;
+
     // Delete Modal Controls
     private bool ShowModal { get; set; } = false;
     private PositionModel? SelectedPosition { get; set; }
@@ -85,27 +87,29 @@ public partial class Page_PositionList
         if (SelectedPosition == null) return;
 
         IsProcessing = true;
+        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+
         try
         {
             var response = await HttpClientService.ExecuteAsync<PositionDeleteResponseModel>(
-                $"position/{SelectedPosition.PositionId}", 
+                $"position/{SelectedPosition.PositionId}",
                 EnumHttpMethod.Delete
             );
 
-            if (response != null && response.IsSuccess)
+            if (response?.IsSuccess == true)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+                statusMessage = response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
                 CloseDeleteModal();
-                await LoadPositions(); // 🔄 စာရင်းအသစ် ချက်ချင်းပြန်တင်ခြင်း
+                await LoadPositions(); // refresh list
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါတကား။");
+                statusMessage = response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။";
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            statusMessage = $"Error: {ex.Message}";
         }
         finally
         {

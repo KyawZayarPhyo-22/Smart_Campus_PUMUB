@@ -131,26 +131,51 @@
 </div>
 
 @* Delete Confirmation Modal *@
-<div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1" style="background: @(ShowModal ? "rgba(10, 14, 22, 0.85)" : "none"); backdrop-filter: blur(4px);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content tech-card" style="border: 1px solid rgba(220, 53, 69, 0.2);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title text-danger fw-bold d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteModal"></button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <i class="bi bi-trash-fill text-danger display-3 mb-3"></i>
-                <h4 class="fw-bold text-white">Delete Semester?</h4>
-                <p class="text-light opacity-75">စာရင်းဖျက်ရန် သေချာပါသလား? <br /> Semester အမည်: <strong class="text-info">@SelectedSemester?.SemesterName</strong></p>
-            </div>
-            <div class="modal-footer border-0 justify-content-center pt-0">
-                <button type="button" class="btn btn-secondary px-4" @onclick="CloseDeleteModal" disabled="@IsProcessing">Cancel</button>
-                <button type="button" class="btn btn-danger px-4" @onclick="DeleteSemester" disabled="@IsProcessing">
-                    @(IsProcessing ? "Deleting..." : "Yes, Delete")
-                </button>
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+
+                <div class="modal-header border-0">
+                    <h5 class="text-danger">Confirm Delete</h5>
+                </div>
+
+                <div class="modal-body text-center">
+
+                    Are you sure to delete
+                    <strong>@SelectedSemester?.SemesterName</strong>?
+
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="mt-3 p-3 rounded"
+                             style="background: @(IsSuccess ? "rgba(25,135,84,0.15)" : "rgba(220,53,69,0.15)");
+                            border: 1px solid @(IsSuccess ? "#198754" : "#dc3545");">
+
+                            <span style="color: @(IsSuccess ? "#75b798" : "#ea868f"); font-size: 0.9rem;">
+                                <i class="bi @(IsSuccess ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+                                @statusMessage
+                            </span>
+                        </div>
+                    }
+
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary"
+                            @onclick="CloseDeleteModal"
+                            disabled="@IsProcessing">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-danger"
+                            @onclick="DeleteSemester"
+                            disabled="@(IsProcessing || IsSuccess)">
+                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+}

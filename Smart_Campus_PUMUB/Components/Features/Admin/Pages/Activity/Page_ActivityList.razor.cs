@@ -11,6 +11,8 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.Activity;
 
 public partial class Page_ActivityList
 {
+    private bool confirmed;
+
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
 
@@ -19,6 +21,9 @@ public partial class Page_ActivityList
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+
+    //private string statusMessage;
+
     private bool ShowModal { get; set; } = false;
     private ActivityModel? SelectedActivity { get; set; }
 
@@ -47,57 +52,64 @@ public partial class Page_ActivityList
         finally { IsLoading = false; }
     }
 
-    private void OpenDeleteModal(ActivityModel activity) { SelectedActivity = activity; ShowModal = true; }
-    private void CloseDeleteModal() { SelectedActivity = null; ShowModal = false; }
+    private string statusMessage = string.Empty;
+    private bool IsSuccess = false;
 
-    //private async Task DeleteActivity()
-    //{
-    //    if (SelectedActivity == null) return;
-    //    IsProcessing = true;
-    //    try
-    //    {
-    //        var response = await HttpClientService.ExecuteAsync<ActivityDeleteResponseModel>($"activity/{SelectedActivity.ActivityId}", EnumHttpMethod.Delete);
-    //        if (response != null && response.IsSuccess)
-    //        {
-    //            await JSRuntime.InvokeVoidAsync();
-    //            CloseDeleteModal();
-    //            await LoadActivities();
-    //        }
-    //        else { await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။"); }
-    //    }
-    //    catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
-    //    finally { IsProcessing = false; }
-    //}
+    private void OpenDeleteModal(ActivityModel activity)
+    {
+        SelectedActivity = activity;
+        ShowModal = true;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
+
+    private void CloseDeleteModal()
+    {
+        SelectedActivity = null;
+        ShowModal = false;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
 
     private async Task DeleteActivity()
     {
         if (SelectedActivity == null) return;
 
-        // Confirm box ကိုပြသပြီး အဖြေကို စစ်ဆေးခြင်း
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "ဒီ Activity ကို အမှန်တကယ် ဖျက်မှာလား?");
-
-        if (!confirmed) return; // အကယ်၍ Cancel ကိုနှိပ်လျှင် ဘာမှမလုပ်ဘဲ ထွက်သွားပါမည်
-
         IsProcessing = true;
+
+        // UI reset + loading message
+        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        IsSuccess = false;
+
         try
         {
             var response = await HttpClientService.ExecuteAsync<ActivityDeleteResponseModel>(
-                $"activity/{SelectedActivity.ActivityId}", EnumHttpMethod.Delete);
+                $"activity/{SelectedActivity.ActivityId}",
+                EnumHttpMethod.Delete
+            );
 
-            if (response != null && response.IsSuccess)
+            if (response?.IsSuccess == true)
             {
-                CloseDeleteModal();
+                IsSuccess = true;
+                statusMessage = response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+
                 await LoadActivities();
+
+                await Task.Delay(800); // show success message briefly
+                CloseDeleteModal();
             }
             else
             {
-                // alert အစား အသုံးပြုသူသိစေရန် UI ပေါ်တွင် message ဖော်ပြခြင်း (သို့မဟုတ် လိုအပ်လျှင်သာ alert ထားနိုင်သည်)
-                Console.WriteLine(response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
+                IsSuccess = false;
+                statusMessage = response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            IsSuccess = false;
+            statusMessage = $"Error: {ex.Message}";
         }
         finally
         {

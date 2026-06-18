@@ -150,26 +150,37 @@
         </div>
 
         @* Delete Modal (Department ပုံစံအတိုင်း ပြင်ထားသည်) *@
-        <div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1"
-             style="background: @(ShowModal ? "rgba(10, 14, 22, 0.85)" : "none"); backdrop-filter: blur(4px);">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content tech-card" style="border: 1px solid rgba(220, 53, 69, 0.2);">
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm
-                            Delete</h5>
-                        </div>
-                        <div class="modal-body text-center py-4">
-                            <i class="bi bi-person-x-fill text-danger display-3 mb-3"></i>
-                            <h4 class="fw-bold text-white">Delete User?</h4>
-                            <p class="text-light opacity-75">ဒီ User ကို ဖျက်ရန် သေချာပါသလား?<br /> Name: <strong
-                                class="text-info">@SelectedUser?.FullName</strong></p>
-                            </div>
-                            <div class="modal-footer border-0 justify-content-center pt-0">
-                                <button class="btn btn-secondary px-4" @onclick="CloseDeleteModal">Cancel</button>
-                                <button class="btn btn-danger px-4" @onclick="DeleteUser" disabled="@IsProcessing">
-                                    @(IsProcessing ? "Deleting..." : "Yes, Delete")
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+
+                <div class="modal-header border-0">
+                    <h5 class="text-danger">Confirm Delete</h5>
                 </div>
+
+                <div class="modal-body text-center">
+
+                    Are you sure to delete <strong>@SelectedUser?.FullName</strong>?
+
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary"
+                            @onclick="CloseDeleteModal"
+                            disabled="@IsProcessing">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-danger"
+                            @onclick="DeleteUser"
+                            disabled="@IsProcessing">
+                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}

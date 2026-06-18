@@ -89,20 +89,38 @@
 </div>
 
 @* Delete Modal *@
-<div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1" style="background: rgba(10, 14, 22, 0.85); backdrop-filter: blur(4px);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content tech-card" style="border: 1px solid rgba(220, 53, 69, 0.2);">
-            <div class="modal-body text-center py-4">
-                <i class="bi bi-trash-fill text-danger display-3 mb-3"></i>
-                <h4 class="fw-bold text-white">Delete Book?</h4>
-                <p class="text-light opacity-75">ဒီစာအုပ်ကို ဖျက်ရန် သေချာပါသလား? <br /> <strong class="text-info">@SelectedBook?.BookName</strong></p>
-            </div>
-            <div class="modal-footer border-0 justify-content-center pt-0">
-                <button class="btn btn-secondary px-4" @onclick="CloseDeleteModal">Cancel</button>
-                <button class="btn btn-danger px-4" @onclick="DeleteBook" disabled="@IsProcessing">
-                    @(IsProcessing ? "Deleting..." : "Yes, Delete")
-                </button>
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+
+                <div class="modal-header border-0">
+                    <h5 class="text-danger">Confirm Delete</h5>
+                </div>
+
+                <div class="modal-body text-center">
+
+                    Are you sure to delete <strong>@SelectedBook?.BookName</strong>?
+
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary"
+                            @onclick="CloseDeleteModal"
+                            disabled="@IsProcessing">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-danger"
+                            @onclick="DeleteBook"
+                            disabled="@IsProcessing">
+                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+}
+

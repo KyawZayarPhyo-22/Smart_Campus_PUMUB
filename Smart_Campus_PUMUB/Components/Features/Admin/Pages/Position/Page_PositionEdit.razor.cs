@@ -70,10 +70,9 @@ public partial class Page_PositionEdit
                 positionModel
             );
 
-            if (response != null && response.IsSuccess)
+            if (response?.IsSuccess == true)
             {
                 statusMessage = response.Message ?? "Position ပြင်ဆင်မှု အောင်မြင်ပါသည်။";
-                await JSRuntime.InvokeVoidAsync("alert", statusMessage);
                 NavigationManager.NavigateTo("/admin/positions");
             }
             else
@@ -83,10 +82,9 @@ public partial class Page_PositionEdit
         }
         catch (Exception ex)
         {
-            // ✨ API က BadRequest (400) ပြန်လာပြီး ပြင်လိုက်တဲ့နာမည်က တခြား Position နာမည်နဲ့ သွားတူနေတဲ့ အခြေအနေကို ဖမ်းယူခြင်း
             if (ex.Message.Contains("BadRequest") || ex.Message.Contains("400"))
             {
-                statusMessage = "Position အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။";
+                statusMessage = "Position အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်ပါသည်။";
             }
             else
             {

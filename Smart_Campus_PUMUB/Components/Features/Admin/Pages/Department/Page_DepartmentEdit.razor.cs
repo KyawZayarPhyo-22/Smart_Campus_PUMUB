@@ -56,7 +56,7 @@ public partial class Page_DepartmentEdit : ComponentBase
 
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "ပြင်ဆင်ခြင်း အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", "ပြင်ဆင်ခြင်း အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/departments");
             }
             else

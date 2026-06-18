@@ -31,7 +31,7 @@ public partial class Page_CategoryCreate
             var response = await HttpClientService.ExecuteAsync<CategoryCreateResponseModel>("category", EnumHttpMethod.Post, categoryModel);
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Category ဖန်တီးမှု အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Category ဖန်တီးမှု အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/categories");
             }
             else { statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။"; }

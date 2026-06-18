@@ -24,46 +24,57 @@ public partial class Page_RoleCreate
     private string statusMessage = "";
     private bool isProcessing = false;
 
-    //  Return Type ကို Task အဖြစ် ပြောင်းလဲထားခြင်းကြောင့် 'Suitable Type' Error မတက်တော့ပါ
-    // private async Task SaveRole()
-    // {
-    //     if (string.IsNullOrWhiteSpace(roleModel.RoleName))
-    //     {
-    //         statusMessage = "Role Name ဖြည့်စွက်ရန် လိုအပ်ပါသည်။";
-    //         return;
-    //     }
 
-    //     isProcessing = true;
-    //     statusMessage = "သိမ်းဆည်းနေပါသည်...";
 
-    //     try
-    //     {
-    //         var response = await HttpClientService.ExecuteAsync<RoleCreateResponseModel>(
-    //             "role",
-    //             EnumHttpMethod.Post,
-    //             roleModel
-    //         );
+    //private async Task SaveRole()
+    //{
+    //    if (string.IsNullOrWhiteSpace(roleModel.RoleName))
+    //    {
+    //        statusMessage = "Role Name ဖြည့်စွက်ရန် လိုအပ်ပါသည်။";
+    //        return;
+    //    }
 
-    //         if (response != null && response.IsSuccess)
-    //         {
-    //             statusMessage = response.Message ?? "Role ဖန်တီးမှု အောင်မြင်ပါသည်။";
-    //             await JSRuntime.InvokeVoidAsync("alert", statusMessage);
-    //             NavigationManager.NavigateTo("/admin/roles");
-    //         }
-    //         else
-    //         {
-    //             statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။";
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         statusMessage = $"Error: {ex.Message}";
-    //     }
-    //     finally
-    //     {
-    //         isProcessing = false;
-    //     }
-    // }
+    //    isProcessing = true;
+    //    statusMessage = "သိမ်းဆည်းနေပါသည်...";
+
+    //    try
+    //    {
+    //        var response = await HttpClientService.ExecuteAsync<RoleCreateResponseModel>(
+    //            "role",
+    //            EnumHttpMethod.Post,
+    //            roleModel
+    //        );
+
+    //        if (response != null && response.IsSuccess)
+    //        {
+    //            statusMessage = response.Message ?? "Role ဖန်တီးမှု အောင်မြင်ပါသည်။";
+    //            await JSRuntime.InvokeVoidAsync("alert", statusMessage);
+    //            NavigationManager.NavigateTo("/admin/roles");
+    //        }
+    //        else
+    //        {
+    //            statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။";
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        // ✨ API က BadRequest (400) ပြန်လာပြီး နာမည်တူနေတဲ့ အခြေအနေကို အမိအရ ဖမ်းယူခြင်း
+    //        if (ex.Message.Contains("BadRequest") || ex.Message.Contains("400"))
+    //        {
+    //            // 💡 မင်း အလိုအပ်ဆုံး မြန်မာစာသားကို တိုက်ရိုက် သတ်မှတ်ပေးလိုက်ပါပြီ
+    //            statusMessage = "Role အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။";
+    //        }
+    //        else
+    //        {
+    //            // အခြား Network ပြတ်တောက်မှု သို့မဟုတ် Server Error များအတွက်သာ စနစ် Error ပြပါမည်
+    //            statusMessage = $"Error: {ex.Message}";
+    //        }
+    //    }
+    //    finally
+    //    {
+    //        isProcessing = false;
+    //    }
+    //}
 
     private async Task SaveRole()
     {
@@ -87,7 +98,6 @@ public partial class Page_RoleCreate
             if (response != null && response.IsSuccess)
             {
                 statusMessage = response.Message ?? "Role ဖန်တီးမှု အောင်မြင်ပါသည်။";
-                await JSRuntime.InvokeVoidAsync("alert", statusMessage);
                 NavigationManager.NavigateTo("/admin/roles");
             }
             else
@@ -97,15 +107,12 @@ public partial class Page_RoleCreate
         }
         catch (Exception ex)
         {
-            // ✨ API က BadRequest (400) ပြန်လာပြီး နာမည်တူနေတဲ့ အခြေအနေကို အမိအရ ဖမ်းယူခြင်း
             if (ex.Message.Contains("BadRequest") || ex.Message.Contains("400"))
             {
-                // 💡 မင်း အလိုအပ်ဆုံး မြန်မာစာသားကို တိုက်ရိုက် သတ်မှတ်ပေးလိုက်ပါပြီ
                 statusMessage = "Role အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။";
             }
             else
             {
-                // အခြား Network ပြတ်တောက်မှု သို့မဟုတ် Server Error များအတွက်သာ စနစ် Error ပြပါမည်
                 statusMessage = $"Error: {ex.Message}";
             }
         }

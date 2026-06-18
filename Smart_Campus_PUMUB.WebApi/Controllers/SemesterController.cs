@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
 
@@ -48,7 +49,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             _db.Semesters.Add(new Semester { SemesterName = request.SemesterName, IsDelete = false });
             int result = _db.SaveChanges();
-
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = "New Semester added",
+                Description = $"{request.SemesterName} was added to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
             return StatusCode(201, new SemesterCreateResponseModel { IsSuccess = result > 0, Message = result > 0 ? "သိမ်းဆည်းမှု အောင်မြင်ပါသည်။" : "သိမ်းဆည်းမှု မအောင်မြင်ပါ။" });
         }
 
@@ -67,6 +74,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             item.SemesterName = request.SemesterName;
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = "Semester Updated",
+                Description = $"{request.SemesterName} was updated to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return Ok(new SemesterUpdateResponseModel
             {
@@ -80,17 +94,46 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteSemester(int id)
         {
-            var item = _db.Semesters.FirstOrDefault(x => x.SemesterId == id && x.IsDelete == false);
-            if (item is null) return NotFound(new SemesterDeleteResponseModel { IsSuccess = false, Message = "Semester ကို ရှာမတွေ့ပါ။" });
+            var item = _db.Semesters
+                .FirstOrDefault(x => x.SemesterId == id && x.IsDelete == false);
 
-            // Soft Delete
+            if (item is null)
+            {
+                return NotFound(new SemesterDeleteResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "Semester ကို ရှာမတွေ့ပါ။"
+                });
+            }
+
+            bool hasRelatedData = _db.Subjects.Any(x => x.SemesterId == id && x.IsDelete == false );
+
+            if (hasRelatedData)
+            {
+                return BadRequest(new SemesterDeleteResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "ဤ Semester ကို Subject များအသုံးပြုထားသောကြောင့် ဖျက်၍ မရပါ။"
+                });
+            }
+
             item.IsDelete = true;
             int result = _db.SaveChanges();
+
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = "Semester deleted",
+                Description = $"{item.SemesterName} was deleted to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return Ok(new SemesterDeleteResponseModel
             {
                 IsSuccess = result > 0,
-                Message = result > 0 ? "ဖျက်ဆီးမှု အောင်မြင်ပါသည်။" : "ဖျက်ဆီးမှု မအောင်မြင်ပါ။"
+                Message = result > 0
+                    ? "Semester ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။"
+                    : "ဖျက်ခြင်း မအောင်မြင်ပါ။"
             });
         }
     }

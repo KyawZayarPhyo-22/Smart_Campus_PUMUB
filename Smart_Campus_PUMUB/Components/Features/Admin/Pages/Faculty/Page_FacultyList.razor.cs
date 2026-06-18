@@ -19,6 +19,10 @@ public partial class Page_FacultyList
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+
+    private string statusMessage;
+
+    public bool IsSuccess { get; private set; }
     private bool ShowModal { get; set; } = false;
     private FacultyModel? SelectedFaculty { get; set; }
 
@@ -51,8 +55,7 @@ public partial class Page_FacultyList
         finally { IsLoading = false; }
     }
 
-    private void OpenDeleteModal(FacultyModel faculty) { SelectedFaculty = faculty; ShowModal = true; }
-    private void CloseDeleteModal() { SelectedFaculty = null; ShowModal = false; }
+
 
     //private async Task DeleteFaculty()
     //{
@@ -78,40 +81,60 @@ public partial class Page_FacultyList
 
     private async Task DeleteFaculty()
     {
-        // အကယ်၍ SelectedFaculty မရှိလျှင် ဘာမှမလုပ်ပါ
         if (SelectedFaculty == null) return;
 
-        // browser confirm box ကို ဖယ်ရှားလိုက်ပါပြီ
-
         IsProcessing = true;
+        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        IsSuccess = false;
+
         try
         {
-            // API သို့ Delete Request ပေးပို့ခြင်း
             var response = await HttpClientService.ExecuteAsync<FacultyDeleteResponseModel>(
-                $"faculty/{SelectedFaculty.FacultyId}", EnumHttpMethod.Delete);
+                $"faculty/{SelectedFaculty.FacultyId}",
+                EnumHttpMethod.Delete
+            );
 
             if (response != null && response.IsSuccess)
             {
-                // ဖျက်သိမ်းမှု အောင်မြင်ပါက Modal ကို ပိတ်ပြီး Data ကို Refresh လုပ်ပါ
+                statusMessage = "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                IsSuccess = true;
+
+                await Task.Delay(1500); // User မြင်အောင် ခဏစောင့်ပေးခြင်း
                 CloseDeleteModal();
                 await LoadFaculties();
             }
             else
             {
-                // Error ဖြစ်ပါက Log ထုတ်ပြခြင်း
-                // သင့် UI ထဲတွင် Error message ပြလိုလျှင် ဤနေရာတွင် State ပြောင်းလဲပေးနိုင်ပါသည်
-                Console.WriteLine(response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
+                statusMessage = "ဤ Faculty ကို အခြားနေရာတွင် အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+                IsSuccess = false;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // Exception တက်ပါက Log ထုတ်ပြခြင်း
-            Console.WriteLine($"Error: {ex.Message}");
+            statusMessage = "ဤ Faculty ကို အခြားနေရာတွင် အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+            IsSuccess = false;
         }
         finally
         {
-            // Processing ဖြစ်နေခြင်းကို ရပ်တန့်ပေးခြင်း
             IsProcessing = false;
         }
     }
+
+    private void OpenDeleteModal(FacultyModel faculty)
+    {
+        SelectedFaculty = faculty;
+        ShowModal = true;
+        statusMessage = "";
+        IsSuccess = false;
+    }
+    private void CloseDeleteModal()
+    {
+        SelectedFaculty = null;
+        ShowModal = false;
+        statusMessage = "";
+        IsSuccess = false;
+    }
+
+
+
 }

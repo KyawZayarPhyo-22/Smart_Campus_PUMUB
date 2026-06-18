@@ -48,6 +48,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             _db.Positions.Add(new Position { PositionName = request.PositionName, IsDelete = false });
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = "New Position added",
+                Description = $"{request.PositionName} was added to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return StatusCode(201, new PositionCreateResponseModel { IsSuccess = result > 0, Message = result > 0 ? "သိမ်းဆည်းမှု အောင်မြင်ပါသည်။" : "သိမ်းဆည်းမှု မအောင်မြင်ပါ။" });
         }
@@ -67,6 +74,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             item.PositionName = request.PositionName;
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = " Position updated",
+                Description = $"{request.PositionName} was updated to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return Ok(new PositionUpdateResponseModel
             {
@@ -86,6 +100,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             // Soft Delete အလုပ်လုပ်ပုံ
             item.IsDelete = true;
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = " Position deleted",
+                Description = $"{item.PositionName} was deleted to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return Ok(new PositionDeleteResponseModel
             {

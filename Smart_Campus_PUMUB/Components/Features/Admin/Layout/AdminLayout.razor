@@ -63,52 +63,52 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
         crossorigin="anonymous"></script>
-<script src="js/admin.js"></script>
+<script src="js/admin.js?v=role-chart-20260616"></script>
 
 <!-- Sidebar toggle wiring — inline so it always runs after DOM is ready,
      bypassing Blazor's event interception on layout components. -->
 <script>
     (function () {
-        function wireSidebarToggle() {
-            var btn  = document.getElementById('sidebarToggleBtn');
-            var icon = document.getElementById('sidebarBrandIcon');
+    function wireSidebarToggle() {
+    var btn  = document.getElementById('sidebarToggleBtn');
+    var icon = document.getElementById('sidebarBrandIcon');
 
-            if (!btn) {
-                // Blazor may not have painted the layout yet — retry once
-                setTimeout(wireSidebarToggle, 150);
-                return;
-            }
+    if (!btn) {
+    // Blazor may not have painted the layout yet — retry once
+    setTimeout(wireSidebarToggle, 150);
+    return;
+    }
 
-            function doToggle() {
-                var sidebar = document.getElementById('desktopSidebar');
-                if (!sidebar) return;
-                sidebar.classList.toggle('collapsed');
-                var collapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('adminSidebarCollapsed', collapsed ? '1' : '0');
-            }
+    function doToggle() {
+    var sidebar = document.getElementById('desktopSidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('collapsed');
+    var collapsed = sidebar.classList.contains('collapsed');
+    localStorage.setItem('adminSidebarCollapsed', collapsed ? '1' : '0');
+    }
 
-            // Remove any old listeners first (safe guard for hot-reload)
-            btn.replaceWith(btn.cloneNode(true));
-            var freshBtn = document.getElementById('sidebarToggleBtn');
-            freshBtn.addEventListener('click', doToggle);
+    // Remove any old listeners first (safe guard for hot-reload)
+    btn.replaceWith(btn.cloneNode(true));
+    var freshBtn = document.getElementById('sidebarToggleBtn');
+    freshBtn.addEventListener('click', doToggle);
 
-            if (icon) {
-                icon.replaceWith(icon.cloneNode(true));
-                var freshIcon = document.getElementById('sidebarBrandIcon');
-                freshIcon.addEventListener('click', doToggle);
-            }
+    if (icon) {
+    icon.replaceWith(icon.cloneNode(true));
+    var freshIcon = document.getElementById('sidebarBrandIcon');
+    freshIcon.addEventListener('click', doToggle);
+    }
 
-            // Restore persisted sidebar state
-            var sidebar = document.getElementById('desktopSidebar');
-            if (sidebar && localStorage.getItem('adminSidebarCollapsed') === '1') {
-                sidebar.classList.add('collapsed');
-            }
-        }
+    // Restore persisted sidebar state
+    var sidebar = document.getElementById('desktopSidebar');
+    if (sidebar && localStorage.getItem('adminSidebarCollapsed') === '1') {
+    sidebar.classList.add('collapsed');
+    }
+    }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', wireSidebarToggle);
-        } else {
-            wireSidebarToggle();
-        }
+    if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireSidebarToggle);
+    } else {
+    wireSidebarToggle();
+    }
     })();
 </script>

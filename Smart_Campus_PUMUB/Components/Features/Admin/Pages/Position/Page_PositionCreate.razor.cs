@@ -39,15 +39,14 @@ public partial class Page_PositionCreate
         try
         {
             var response = await HttpClientService.ExecuteAsync<PositionCreateResponseModel>(
-                "position", // မင်းရဲ့ API Position Route အတိုင်း လိုအပ်သလို ပြောင်းလဲပေးနိုင်ပါတယ်
+                "position",
                 EnumHttpMethod.Post,
                 positionModel
             );
 
-            if (response != null && response.IsSuccess)
+            if (response?.IsSuccess == true)
             {
                 statusMessage = response.Message ?? "Position ဖန်တီးမှု အောင်မြင်ပါသည်။";
-                await JSRuntime.InvokeVoidAsync("alert", statusMessage);
                 NavigationManager.NavigateTo("/admin/positions");
             }
             else
@@ -57,15 +56,12 @@ public partial class Page_PositionCreate
         }
         catch (Exception ex)
         {
-            // ✨ API က BadRequest (400) ပြန်လာပြီး နာမည်တူရှိနေတဲ့ အခြေအနေကို ဖမ်းယူခြင်း
             if (ex.Message.Contains("BadRequest") || ex.Message.Contains("400"))
             {
-                // 💡 မင်းအလိုချင်ဆုံး မြန်မာစာသားကို တိုက်ရိုက်ပြောင်းလဲပေးလိုက်ပါတယ်
                 statusMessage = "Position အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။";
             }
             else
             {
-                // အခြား Network သို့မဟုတ် စနစ် Error များအတွက်သာ ပြသပါမည်
                 statusMessage = $"Error: {ex.Message}";
             }
         }

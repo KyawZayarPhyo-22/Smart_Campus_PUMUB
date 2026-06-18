@@ -3,6 +3,7 @@ namespace Smart_Campus_PUMUB.WebApi.Models;
 public class StudentCreateRequestModel
 {
     public int UserId { get; set; }
+    public string Name { get; set; }
     public string CurrentClassYear { get; set; } = null!;
     public string CurrentMajor { get; set; } = null!;
     public string? CurrentRollNo { get; set; } // ဥပမာ - MUB-1098

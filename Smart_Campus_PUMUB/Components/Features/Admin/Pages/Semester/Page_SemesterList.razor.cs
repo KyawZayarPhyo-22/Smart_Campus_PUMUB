@@ -11,6 +11,8 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.Semester;
 
 public partial class Page_SemesterList
 {
+    private string statusMessage;
+
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
 
@@ -25,6 +27,8 @@ public partial class Page_SemesterList
     private IEnumerable<SemesterModel> FilteredSemesters => string.IsNullOrWhiteSpace(SearchTerm)
         ? SemesterList
         : SemesterList.Where(s => s.SemesterName != null && s.SemesterName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    public bool IsSuccess { get; private set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -47,25 +51,65 @@ public partial class Page_SemesterList
         finally { IsLoading = false; }
     }
 
-    private void OpenDeleteModal(SemesterModel semester) { SelectedSemester = semester; ShowModal = true; }
-    private void CloseDeleteModal() { SelectedSemester = null; ShowModal = false; }
+    private void OpenDeleteModal(SemesterModel semester)
+    {
+        SelectedSemester = semester;
+        ShowModal = true;
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
 
+    private void CloseDeleteModal()
+    {
+        SelectedSemester = null;
+        ShowModal = false;
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
     private async Task DeleteSemester()
     {
         if (SelectedSemester == null) return;
+
         IsProcessing = true;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+
         try
         {
-            var response = await HttpClientService.ExecuteAsync<SemesterDeleteResponseModel>($"semester/{SelectedSemester.SemesterId}", EnumHttpMethod.Delete);
+            var response = await HttpClientService.ExecuteAsync<SemesterDeleteResponseModel>(
+                $"semester/{SelectedSemester.SemesterId}",
+                EnumHttpMethod.Delete
+            );
+
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
-                CloseDeleteModal();
+                IsSuccess = true;
+                statusMessage = response.Message ?? "Deleted successfully.";
+
                 await LoadSemesters();
+
+                await Task.Delay(800);
+                CloseDeleteModal();
             }
-            else { await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။"); }
+            else
+            {
+                IsSuccess = false;
+
+                // 🔥 same as Role style (simple fallback message)
+                statusMessage = response?.Message
+                    ?? "ဒီ Semester ကို အသုံးပြုထားသော Data များရှိနေသောကြောင့် ဖျက်၍ မရပါ။";
+            }
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
-        finally { IsProcessing = false; }
+        catch
+        {
+            IsSuccess = false;
+
+            statusMessage = "Server သို့ ချိတ်ဆက်ရာတွင် အမှားဖြစ်နေပါသည်။";
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 }

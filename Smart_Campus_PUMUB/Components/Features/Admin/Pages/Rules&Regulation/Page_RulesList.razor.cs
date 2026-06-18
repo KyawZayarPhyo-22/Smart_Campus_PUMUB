@@ -49,26 +49,80 @@ public partial class Page_RulesList
         finally { IsLoading = false; }
     }
 
-    private void OpenDeleteModal(RuleModel rule) { SelectedRule = rule; ShowModal = true; }
-    private void CloseDeleteModal() { SelectedRule = null; ShowModal = false; }
+    private string statusMessage = string.Empty;
+    private bool IsSuccess = false;
+
+    private void OpenDeleteModal(RuleModel rule)
+    {
+        SelectedRule = rule;
+        ShowModal = true;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
+
+    private void CloseDeleteModal()
+    {
+        SelectedRule = null;
+        ShowModal = false;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
 
     private async Task DeleteRule()
     {
         if (SelectedRule == null) return;
+
         IsProcessing = true;
+
+        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        IsSuccess = false;
+
         try
         {
-            // Delete API Call (ID ကို ထည့်ပို့ပေးရန်)
-            var response = await HttpClientService.ExecuteAsync<ActionResponseModel>($"rules/{SelectedRule.RuleId}", EnumHttpMethod.Delete);
-            if (response != null && response.IsSuccess)
+            var response = await HttpClientService.ExecuteAsync<ActionResponseModel>(
+                $"rules/{SelectedRule.RuleId}",
+                EnumHttpMethod.Delete
+            );
+
+            if (response?.IsSuccess == true)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+                IsSuccess = true;
+                statusMessage = response.Message ?? "Rule ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။";
+
+                await LoadRules();
+
+                await Task.Delay(800);
                 CloseDeleteModal();
-                await LoadRules(); // Data ပြန်ခေါ်ခြင်း
             }
-            else { await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။"); }
+            else
+            {
+                IsSuccess = false;
+                statusMessage = response?.Message ?? "Rule ကို ဖျက်၍ မရပါ။";
+            }
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
-        finally { IsProcessing = false; }
+        catch (Exception ex)
+        {
+            IsSuccess = false;
+            statusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
+    private string ShortDescription(string? text, int limit = 40)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return "";
+
+        text = text.Trim();
+
+        if (text.Length <= limit)
+            return text;
+
+        return text.Substring(0, limit) + "...";
     }
 }

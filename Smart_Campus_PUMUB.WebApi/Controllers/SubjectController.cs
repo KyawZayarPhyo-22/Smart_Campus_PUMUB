@@ -84,6 +84,14 @@ public class SubjectController : ControllerBase
         });
 
         int result = _db.SaveChanges();
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "Subject Added",
+            Description = $"Subject '{request.SubjectName}' was added from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
         return StatusCode(201, new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Saving Successful" : "Saving Failed" });
     }
 
@@ -128,6 +136,14 @@ public class SubjectController : ControllerBase
         item.ModifiedBy = request.ModifiedBy;
 
         int result = _db.SaveChanges();
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "Subject Updated",
+            Description = $"Subject '{request.SubjectName}' was Updated from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
         return Ok(new SubjectResponseModel
         {
             IsSuccess = result > 0,
@@ -149,6 +165,14 @@ public class SubjectController : ControllerBase
 
         item.IsDelete = true; // Soft Delete Role
         int result = _db.SaveChanges();
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "Subject Deleted",
+            Description = $"Subject '{item.SubjectName}' was Deleted from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
         return Ok(new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Delete Successfully" : "Delete Failed" });
     }
 }

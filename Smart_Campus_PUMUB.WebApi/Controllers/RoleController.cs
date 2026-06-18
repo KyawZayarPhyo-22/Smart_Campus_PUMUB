@@ -20,11 +20,24 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpGet]
         public IActionResult GetRoles()
         {
-            // Deleted ဖြစ်မနေတဲ့ Data တွေကိုပဲ ယူပါ
             var lst = _db.Roles
-                         .Where(r => r.IsDelete == false)
-                         .OrderByDescending(r => r.RoleId)
-                         .ToList();
+                .Where(r => r.IsDelete == false)
+                .Select(r => new
+                {
+                    r.RoleId,
+                    r.RoleName,
+                    Users = r.Users
+                        .Where(u => u.IsDelete == false)
+                        .Select(u => new
+                        {
+                            u.UserId,
+                            u.FullName,
+                            u.UserName
+                        })
+                        .ToList()
+                })
+                .OrderByDescending(r => r.RoleId)
+                .ToList();
 
             return Ok(lst);
         }
@@ -61,6 +74,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 RoleName = request.RoleName
             });
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = "New Role Registered",
+                Description = $"{request.RoleName} was added to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return StatusCode(201, new RoleCreateResponseModel
             {
@@ -97,7 +117,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             item.RoleName = request.RoleName;
 
             int result = _db.SaveChanges();
-
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = " Role updated",
+                Description = $"{request.RoleName} was updated to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
             return Ok(new RoleUpdateResponseModel
             {
                 IsSuccess = result > 0,
@@ -109,11 +135,10 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 }
             });
         }
-
         [HttpDelete("{id}")]
         public IActionResult DeleteRole(int id)
         {
-            // ဖျက်ပြီးသား မဟုတ်တဲ့ Item တွေကိုပဲ ရှာဖွေပါ
+            // Role ရှိမရှိ စစ်ဆေး
             var item = _db.Roles.FirstOrDefault(x => x.RoleId == id && x.IsDelete == false);
 
             if (item is null)
@@ -121,19 +146,40 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 return NotFound(new RoleDeleteResponseModel
                 {
                     IsSuccess = false,
-                    Message = "Role not found or already deleted"
+                    Message = "Role ကို ရှာမတွေ့ပါ။"
                 });
             }
 
-            // Soft Delete Logic: Row ကို မဖျက်ဘဲ Status ကိုပဲ ပြောင်းလိုက်တာပါ
+            // ဒီ Role ကို အသုံးပြုနေတဲ့ User ရှိမရှိ စစ်ဆေး
+            bool hasUsers = _db.Users.Any(x => x.RoleId == id && x.IsDelete == false);
+
+            if (hasUsers)
+            {
+                return BadRequest(new RoleDeleteResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "ဤ Role ကို User များက အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။"
+                });
+            }
+
+            // Soft Delete
             item.IsDelete = true;
 
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = " Role deleted",
+                Description = $"{item.RoleName} was delete to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return Ok(new RoleDeleteResponseModel
             {
                 IsSuccess = result > 0,
-                Message = result > 0 ? "Delete Successfully " : "Delete Failed"
+                Message = result > 0
+                    ? "Role ဖျက်ခြင်း အောင်မြင်ပါသည်။"
+                    : "Role ဖျက်ခြင်း မအောင်မြင်ပါ။"
             });
         }
     }
