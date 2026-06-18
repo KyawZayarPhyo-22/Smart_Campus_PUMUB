@@ -226,7 +226,7 @@ window.addEventListener('scroll', () => {
 
 // 1. Select the paragraph
 const paragraph = document.querySelector('.faculty-body p');
-    
+
 // 2. Split the text into an array of words
 const words = paragraph.innerText.split(' ');
 
