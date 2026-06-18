@@ -151,7 +151,6 @@ public partial class StudentRegistration
     [StringLength(20)]
     [Unicode(false)]
     public string? PastExamRollNo { get; set; }
-
     [Column("past_exam_year")]
     public int? PastExamYear { get; set; }
 

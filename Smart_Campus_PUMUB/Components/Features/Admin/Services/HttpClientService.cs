@@ -45,7 +45,9 @@ public class HttpClientService
             return JsonConvert.DeserializeObject<T>(resJson)!;
         }
 
-        throw new Exception($"API Error: {responseMessage.StatusCode}");
+        // 💡 တကယ့် validation error message ကို ဖတ်ယူပြီး ပြပေးမည်
+        var errorBody = await responseMessage.Content.ReadAsStringAsync();
+        throw new Exception($"API Error: {responseMessage.StatusCode} — {errorBody}");
     }
     public async Task<T> ExecuteMultipartAsync<T>(string url, MultipartFormDataContent content)
     {

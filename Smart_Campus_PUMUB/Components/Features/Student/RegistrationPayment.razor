@@ -1,0 +1,508 @@
+﻿@page "/student/payment"
+@layout MainLayout
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@* @attribute [Authorize] *@
+@rendermode InteractiveServer
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    .payment-viewport {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .payment-card {
+        background: white;
+        width: 100%;
+        max-width: 900px;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .animate-fade {
+        animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .payment-header {
+        background: linear-gradient(135deg, #2563EB, #1d4ed8);
+        padding: 30px;
+        text-align: center;
+        color: white;
+    }
+
+        .payment-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+        .payment-header p {
+            font-size: 0.85rem;
+            color: #bfdbfe;
+            margin-top: 8px;
+        }
+
+    .payment-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        padding: 30px 40px;
+    }
+
+    @@media (max-width: 768px) {
+        .payment-grid {
+            grid-template-columns: 1fr;
+            gap: 30px;
+            padding: 20px;
+        }
+    }
+
+    .invoice-section, .form-section {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 10px 0;
+        border-bottom: 2px solid #2563EB;
+        padding-bottom: 10px;
+        display: inline-block;
+        width: fit-content;
+    }
+
+    .receipt-box {
+        background: #fdfdfd;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 25px 20px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        flex: 1;
+    }
+
+    .fee-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .fee-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #475569;
+    }
+
+    .fee-total {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 2px dashed #94a3b8;
+    }
+
+    .bank-info-box {
+        background: #f0f9ff;
+        border: 1px dashed #7dd3fc;
+        padding: 18px;
+        border-radius: 14px;
+        font-size: 0.88rem;
+    }
+
+        .bank-info-box h4 {
+            margin: 0 0 10px 0;
+            color: #0369a1;
+            font-weight: 800;
+            font-size: 1rem;
+        }
+
+        .bank-info-box p {
+            margin: 6px 0;
+            color: #0c4a6e;
+            font-weight: 500;
+        }
+
+    .pay-alert {
+        font-size: 0.75rem;
+        color: #dc2626;
+        font-weight: 600;
+        display: block;
+        margin-top: 10px;
+        background: #fef2f2;
+        padding: 8px;
+        border-radius: 6px;
+    }
+
+    .pay-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+        .pay-form-group label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+    .pay-input {
+        width: 100%;
+        height: 48px;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 0 16px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        outline: none;
+        background: #fff;
+        color: #0f172a;
+        transition: all 0.2s ease;
+    }
+
+        .pay-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
+        }
+
+        .pay-input:disabled {
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: not-allowed;
+            border-color: #cbd5e1;
+        }
+
+    .btn-primary {
+        width: 100%;
+        height: 52px;
+        background: #2563EB;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: auto;
+    }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+    /* Modal CSS */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        max-width: 400px;
+        width: 90%;
+        animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-icon {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+    }
+
+        .modal-icon.error {
+            color: #ef4444;
+        }
+
+        .modal-icon.success {
+            color: #10b981;
+        }
+
+    .modal-content h3 {
+        margin: 0 0 10px 0;
+        color: #0f172a;
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .modal-content p {
+        color: #475569;
+        margin-bottom: 24px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .btn-modal {
+        background: #2563EB;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.2s;
+        width: 100%;
+    }
+
+        .btn-modal:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-modal.success {
+            background: #10b981;
+        }
+
+            .btn-modal.success:hover {
+                background: #059669;
+            }
+
+    @@keyframes popIn {
+        0% {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
+
+<div class="payment-viewport" style="margin-top: 80px;">
+
+    @if (IsLoading)
+    {
+        <div style="text-align:center; padding: 50px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #2563EB;"></i>
+            <p style="margin-top:10px; color:#475569;">အချက်အလက်များ ရှာဖွေနေပါသည်...</p>
+        </div>
+    }
+    else
+    {
+        <div class="payment-card animate-fade">
+            <div class="payment-header">
+                <h2><i class="fas fa-credit-card me-2"></i> ကျောင်းလခနှင့် စာမေးပွဲကြေး ပေးချေရန်</h2>
+                <p>Complete Your Registration Payment</p>
+            </div>
+
+            <div style="padding: 20px 40px 0 40px;">
+                @if (PaymentModel.RegistrationId > 0)
+                {
+                    <div style="background: #f0f9ff; padding: 12px 16px; border-radius: 10px; border: 1px solid #0ea5e9; color: #0369a1; font-size: 0.85rem; display: flex; align-items: center;">
+                        <i class="fas fa-user-check me-2" style="font-size: 1.2rem;"></i>
+                        <div>
+                            <strong>Registration Linked: ID @PaymentModel.RegistrationId</strong><br>
+                            <small style="opacity: 0.8;">သင်၏ ကျောင်းအပ်မှတ်တမ်းအမှတ် ချိတ်ဆက်ပြီးပါပြီ။</small>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div style="background: #fef2f2; padding: 12px 16px; border-radius: 10px; border: 1px solid #ef4444; color: #991b1b; font-size: 0.85rem; display: flex; align-items: center;">
+                        <i class="fas fa-exclamation-triangle me-2" style="font-size: 1.2rem;"></i>
+                        <div>
+                            <strong>Registration ID Not Found!</strong><br>
+                            <small>ကျေးဇူးပြု၍ <a href="/Register" style="color: #dc2626; text-decoration: underline; font-weight: bold;">ကျောင်းအပ်ဖောင် (Register Form)</a> ကို အရင်ဖြည့်စွက်ပေးပါ။</small>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="payment-grid">
+                <div class="invoice-section">
+                    <h3 class="section-title">ကျောင်းသား အချက်အလက်များ</h3>
+
+                    <div class="receipt-box">
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                            <div class="pay-form-group">
+                                <label>အမည် (Student Name) <span style="color:red;">*</span></label>
+                                <input type="text" class="pay-input" @bind="InputStudentName" placeholder="ဥပမာ - ကိုအောင်မင်း" disabled="@(PaymentModel.RegistrationId <= 0)" />
+                            </div>
+
+                            <div class="pay-form-group">
+                                <label>ခုံအမှတ် (Roll No)</label>
+                                <input type="text" class="pay-input" @bind="InputRollNo" placeholder="ဥပမာ - ၁၂၃၄" disabled="@(PaymentModel.RegistrationId <= 0)" />
+                            </div>
+
+                            <div class="pay-form-group">
+                                <label>အတန်း (Semester) <span style="color:red;">*</span></label>
+                                <select class="pay-input" @bind="InputAcademicYear" disabled="@(PaymentModel.RegistrationId <= 0)">
+                                    <option value="">-- သင်တန်းနှစ် ရွေးချယ်ပါ --</option>
+                                    @if (SemesterList != null && SemesterList.Any())
+                                    {
+                                        @foreach (var sem in SemesterList)
+                                        {
+                                            <option value="@sem.SemesterName">@sem.SemesterName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 20px 0;" />
+
+                        <div class="fee-list">
+                            <div class="fee-item">
+                                <span>မှတ်ပုံတင်ကြေး</span>
+                                <span>၂၀၀၀ Ks</span>
+                            </div>
+                            <div class="fee-item">
+                                <span>ကျောင်းဝင်ကြေး</span>
+                                <span>၂၀၀၀ Ks</span>
+                            </div>
+                            <div class="fee-item">
+                                <span>အားကစားကြေး</span>
+                                <span>၂၀၀၀ Ks</span>
+                            </div>
+                            <div class="fee-item">
+                                <span>ဓာတ်ခွဲခန်းကြေး</span>
+                                <span>၆၀၀၀ Ks</span>
+                            </div>
+                            <div class="fee-item">
+                                <span>စာမေးပွဲဝင်ကြေး</span>
+                                <span>၅၀၀၀ Ks</span>
+                            </div>
+                            <div class="fee-item">
+                                <span>စာကြည့်တိုက်ကြေး</span>
+                                <span>၅၀၀၀ Ks</span>
+                            </div>
+                            <div class="fee-item">
+                                <span>ကျောင်းလခ (@(string.IsNullOrEmpty(InputAcademicYear) ? "-" : InputAcademicYear))</span>
+                                <span>၃၀၀၀၀ Ks</span>
+                            </div>
+                        </div>
+
+                        <div class="fee-total">
+                            <span>စုစုပေါင်း ပေးချေရန်</span>
+                            <span style="color: #2563EB;">@PaymentModel.AmountPaid.ToString("N0") Ks</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">ငွေသွင်းရန် အချက်အလက်များ</h3>
+
+                    <div class="bank-info-box">
+                        <h4><i class="fas fa-university me-2"></i> ကျောင်းတော်ကြီး၏ ဘဏ်အကောင့်များ</h4>
+                        <p>KBZ Pay / Wave Pay : <strong>09-777888999</strong></p>
+                        <p>KBZ Bank Account : <strong>123-456-789012345</strong></p>
+                        <span class="pay-alert"><i class="fas fa-info-circle me-1"></i> ငွေလွှဲပြောင်းပြီးပါက အောက်တွင် ဘဏ်စလစ်ပုံ တင်ပေးရပါမည်။</span>
+                    </div>
+
+                    <div class="pay-form-group">
+                        <label>ပေးချေရမည့် ငွေပမာဏ (Kyats)</label>
+                        <input type="text" class="pay-input" value="@PaymentModel.AmountPaid.ToString("N0")" disabled />
+                    </div>
+
+                    <div class="pay-form-group">
+                        <label>ငွေပေးချေသည့် စနစ် (Payment Method)</label>
+                        <select class="pay-input" @bind="PaymentModel.PaymentMethod" disabled="@(PaymentModel.RegistrationId <= 0)">
+                            <option value="KBZPay">KBZ Pay</option>
+                            <option value="WavePay">Wave Pay</option>
+                            <option value="KBZ Bank">KBZ Bank Transfer</option>
+                        </select>
+                    </div>
+
+                    <div class="pay-form-group">
+                        <label>ဘဏ်ပြေစာ/စလစ်ပုံ (Receipt Image) <span style="color:red;">*</span></label>
+                        <InputFile accept="image/*" class="pay-input" style="padding-top: 10px;" OnChange="OnReceiptSelected" disabled="@(PaymentModel.RegistrationId <= 0)" />
+
+                        @if (!string.IsNullOrEmpty(PreviewReceiptUrl))
+                        {
+                            <div style="margin-top:10px; border:1px solid #e2e8f0; padding:5px; border-radius:8px; text-align:center;">
+                                <img src="@PreviewReceiptUrl" style="max-height:120px; object-fit:contain;" />
+                            </div>
+                        }
+                    </div>
+
+                    <button class="btn-primary" @onclick="SubmitPaymentData" disabled="@(IsSavingPayment || PaymentModel.RegistrationId <= 0)">
+                        @if (IsSavingPayment)
+                        {
+                            <span>တင်သွင်းနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                        }
+                        else
+                        {
+                            <span><i class="fas fa-check-circle me-1"></i> ငွေသွင်းစလစ် အတည်ပြုမည်</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+@if (ShowModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            @if (IsSuccessModal)
+            {
+                <i class="fas fa-check-circle modal-icon success"></i>
+                <h3>အောင်မြင်ပါသည်</h3>
+            }
+            else
+            {
+                <i class="fas fa-exclamation-circle modal-icon error"></i>
+                <h3>အသိပေးချက်</h3>
+            }
+
+            <p>@ModalMessage</p>
+            <button class="btn-modal @(IsSuccessModal ? "success" : "")" @onclick="CloseModal">အိုကေ</button>
+        </div>
+    </div>
+}

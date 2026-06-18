@@ -86,7 +86,6 @@
             transform: translateY(-2px);
         }
 
-        /* 💡 Disabled Button Style ထပ်မံဖြည့်စွက်ထားပါသည် */
         .btn-action:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -100,15 +99,19 @@
     <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Student Databank</h4>
 </div>
 
+<!-- 🔹 Filter Section -->
 <div class="material-card p-3 mb-4">
     <div class="row g-3 align-items-center">
+        <!-- Search Input -->
         <div class="col-md-4">
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
                 <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchTerm" @bind:event="oninput" />
             </div>
         </div>
-        <div class="col-md-4">
+
+        <!-- Level Dropdown -->
+        <div class="col-md-3">
             <select class="form-select material-input" @bind="SelectedLevel">
                 <option value="All">All Academic Levels</option>
                 @foreach (var level in StudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
@@ -117,12 +120,32 @@
                 }
             </select>
         </div>
-        <div class="col-md-4">
-            <input type="date" class="form-control material-input" @bind="SelectedDate" />
+
+        <!-- 💡 From Date & To Date Range Picker -->
+        <div class="col-md-5">
+            <div class="d-flex align-items-center gap-2">
+                <div class="flex-grow-1 position-relative">
+                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #1e1e2d; padding: 0 4px;">From</span>
+                    <input type="date" class="form-control material-input w-100" @bind="FromDate" />
+                </div>
+                <span class="text-muted fw-bold">~</span>
+                <div class="flex-grow-1 position-relative">
+                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #1e1e2d; padding: 0 4px;">To</span>
+                    <input type="date" class="form-control material-input w-100" @bind="ToDate" />
+                </div>
+                <!-- 💡 Clear Dates Button (နှိပ်လိုက်လျှင် ToDate ကို ဒီနေ့ရက်စွဲသို့ ပြန်ပြောင်းပေးမည်) -->
+                @if (FromDate != null || ToDate?.Date != DateTime.Today.Date)
+                {
+                    <button class="btn btn-sm btn-outline-danger border-0" title="Reset Filters" @onclick="() => { FromDate = null; ToDate = DateTime.Today; }">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                }
+            </div>
         </div>
     </div>
 </div>
 
+<!-- 🔹 Table Section -->
 <div class="material-card table-container mb-5">
     <div class="table-responsive">
         <table class="table custom-table align-middle">
@@ -200,6 +223,7 @@
     </div>
 </div>
 
+<!-- 🔹 View Modal Section -->
 @if (ShowDetailModal && SelectedDetail != null)
 {
     var payment = SelectedDetail.RegistrationPayments?.FirstOrDefault();
@@ -316,6 +340,7 @@
     </div>
 }
 
+<!-- 🔹 Confirmation Custom Modal Section -->
 @if (ShowConfirmModal)
 {
     <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1060;">

@@ -1,0 +1,400 @@
+@page "/admin/reports"
+@layout AdminLayout
+@rendermode InteractiveServer
+
+<style>
+    .material-card {
+        background-color: #1e1e2d;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .material-input {
+        background-color: #2b2b40;
+        border: 1px solid #323248;
+        color: #e4e6ef;
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+        .material-input:focus {
+            background-color: #323248;
+            border-color: #696cff;
+            box-shadow: 0 0 0 0.25rem rgba(105, 108, 255, 0.25);
+            color: #ffffff;
+            outline: none;
+        }
+
+    .table-container {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .custom-table {
+        margin-bottom: 0;
+        background-color: transparent;
+        color: #cdcdde;
+    }
+
+        .custom-table thead th {
+            background-color: #1a1a27;
+            color: #a1a5b7;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 1.2rem 1rem;
+            border-bottom: 2px solid #2b2b40;
+        }
+
+        .custom-table tbody tr {
+            border-bottom: 1px solid #2b2b40;
+            transition: all 0.2s ease;
+        }
+
+            .custom-table tbody tr:hover {
+                background-color: rgba(255, 255, 255, 0.03);
+            }
+
+        .custom-table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border: none;
+        }
+
+    .nav-tabs-custom .nav-link {
+        color: #a1a5b7;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+        .nav-tabs-custom .nav-link.active {
+            color: #696cff;
+            background: transparent;
+            border-bottom: 3px solid #696cff;
+        }
+
+    .btn-action {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.5rem 1.2rem;
+        transition: all 0.3s;
+    }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+
+        .printable-area, .printable-area * {
+            visibility: visible;
+        }
+
+        .printable-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .material-card {
+            box-shadow: none;
+            border: none;
+        }
+
+        .custom-table th {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+        }
+
+        .custom-table td {
+            color: #000 !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2 no-print">
+    <div class="d-flex align-items-center">
+        <div class="bg-primary rounded p-2 me-3 shadow-sm">
+            <i class="bi bi-file-earmark-bar-graph fs-5 text-white"></i>
+        </div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">System Reports</h4>
+    </div>
+
+    <div>
+        <button class="btn btn-secondary btn-action me-2" @onclick="PrintReport">
+            <i class="bi bi-printer me-1"></i> Print
+        </button>
+        <button class="btn btn-success btn-action" @onclick="@(ActiveTab == 1 ? ExportAdmissionToExcel : ExportPaymentToExcel)">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
+        </button>
+    </div>
+</div>
+
+<div class="material-card mb-4 no-print">
+    <ul class="nav nav-tabs nav-tabs-custom border-0 d-flex">
+        <li class="nav-item">
+            <a class="nav-link @(ActiveTab == 1 ? "active" : "")" @onclick="() => ActiveTab = 1">
+                <i class="bi bi-person-check me-2"></i> Admission Report
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(ActiveTab == 2 ? "active" : "")" @onclick="() => ActiveTab = 2">
+                <i class="bi bi-wallet2 me-2"></i> Payment Report
+            </a>
+        </li>
+    </ul>
+</div>
+
+@if (ActiveTab == 1)
+{
+    <div class="material-card p-4 mb-4 no-print">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Date Range Filter</label>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" class="form-control material-input" @bind="AdmFromDate" />
+                    <span class="text-muted fw-bold">~</span>
+                    <input type="date" class="form-control material-input" @bind="AdmToDate" />
+                    @if (AdmFromDate != null || AdmToDate?.Date != DateTime.Today.Date)
+                    {
+                        <button class="btn btn-sm btn-outline-danger border-0 px-3 py-2" style="border-radius: 8px;" @onclick="() => { AdmFromDate = null; AdmToDate = DateTime.Today; }"><i class="bi bi-x-lg"></i></button>
+                    }
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Academic Year</label>
+                <select class="form-select material-input" @bind="AdmSelectedYear">
+                    <option value="All">All Years</option>
+                    @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                    {
+                        <option value="@lvl">@lvl</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Major</label>
+                <select class="form-select material-input" @bind="AdmSelectedMajor">
+                    <option value="All">All Majors</option>
+                    @foreach (var maj in RawStudentList.Select(s => s.Major).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                    {
+                        <option value="@maj">@maj</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Status</label>
+                <select class="form-select material-input" @bind="AdmSelectedStatus">
+                    <option value="All">All</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="material-card table-container printable-area mb-5">
+        <div class="p-3 border-bottom border-secondary text-center" style="background-color: #1a1a27;">
+            <h5 class="text-white mb-1 fw-bold fs-6">Student Admission Report</h5>
+            <span class="text-info" style="font-size: 0.8rem;">All Registration Records</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table custom-table align-middle">
+                <thead>
+                    <tr>
+                        <th class="text-center">No.</th>
+                        <th>Admission Date</th>
+                        <th>Roll No</th>
+                        <th>Name</th>
+                        <th>Major</th>
+                        <th>Academic Year</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (IsLoading)
+                    {
+                        <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+                    }
+                    else
+                    {
+                        int count = 1;
+                        @foreach (var s in AdmissionReportData)
+                        {
+                            var currentStatus = string.IsNullOrEmpty(s.Status) ? "Pending" : s.Status;
+                            <tr style="font-size: 0.9rem;">
+                                <td class="text-center text-muted fw-bold">@count</td>
+                                <td><i class="bi bi-calendar-check me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
+                                <td class="fw-bold text-info">@s.RollNo</td>
+                                <td class="text-white fw-bold">@s.StudentNameMm</td>
+                                <td>@s.Major</td>
+                                <td><span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-2 py-1" style="border-radius: 6px;">@s.AcademicYearLevel</span></td>
+                                <td class="text-center">
+                                    <span class="badge px-2 py-1 @(currentStatus == "Approved" ? "bg-success" : currentStatus == "Rejected" ? "bg-danger" : "bg-warning text-dark")" style="border-radius: 6px;">
+                                        @currentStatus
+                                    </span>
+                                </td>
+                            </tr>
+                            count++;
+                        }
+
+                        <tr style="background-color: #1a1a27; font-size: 0.9rem;">
+                            <td colspan="7" class="text-center py-3">
+                                <span class="me-4 text-info"><i class="bi bi-people me-1"></i> Total Registrations: <strong>@TotalRegistrations</strong></span>
+                                <span class="me-4 text-success"><i class="bi bi-check-circle me-1"></i> Approved: <strong>@TotalApprovedReg</strong></span>
+                                <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Rejected: <strong>@TotalRejectedReg</strong></span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@if (ActiveTab == 2)
+{
+    <div class="material-card p-4 mb-4 no-print">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Date Range Filter</label>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" class="form-control material-input" @bind="PayFromDate" />
+                    <span class="text-muted fw-bold">~</span>
+                    <input type="date" class="form-control material-input" @bind="PayToDate" />
+                    @if (PayFromDate != null || PayToDate?.Date != DateTime.Today.Date)
+                    {
+                        <button class="btn btn-sm btn-outline-danger border-0 px-3 py-2" style="border-radius: 8px;" @onclick="() => { PayFromDate = null; PayToDate = DateTime.Today; }"><i class="bi bi-x-lg"></i></button>
+                    }
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Academic Year</label>
+                <select class="form-select material-input" @bind="PaySelectedYear">
+                    <option value="All">All Years</option>
+                    @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                    {
+                        <option value="@lvl">@lvl</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Payment Method</label>
+                <select class="form-select material-input" @bind="PaySelectedMethod">
+                    <option value="All">All Methods</option>
+                    <option value="KBZPay">KBZPay</option>
+                    <option value="WavePay">WavePay</option>
+                    <option value="Cash">Cash</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="text-muted small mb-2 fw-bold text-uppercase">Status</label>
+                <select class="form-select material-input" @bind="PaySelectedStatus">
+                    <option value="All">All</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="material-card table-container printable-area mb-5">
+        <div class="p-3 border-bottom border-secondary text-center" style="background-color: #1a1a27;">
+            <h5 class="text-white mb-1 fw-bold fs-6">Payment Transaction Report</h5>
+            <span class="text-success" style="font-size: 0.8rem;">Finance & Revenue Records</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table custom-table align-middle">
+                <thead>
+                    <tr>
+                        <th class="text-center">No.</th>
+                        <th>Date</th>
+                        <th>Roll No</th>
+                        <th>Name</th>
+                        <th>Method</th>
+                        <th class="text-end">Amount Paid</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (IsLoading)
+                    {
+                        <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+                    }
+                    else
+                    {
+                        int count = 1;
+                        decimal totalAmount = 0;
+                        @foreach (var p in PaymentReportData)
+                        {
+                            totalAmount += p.AmountPaid;
+                            <tr style="font-size: 0.9rem;">
+                                <td class="text-center text-muted fw-bold">@count</td>
+                                <td><i class="bi bi-calendar-event me-2 text-muted"></i>@p.PaymentDate.ToString("dd-MM-yyyy")</td>
+                                <td class="fw-bold text-info">@p.RollNo</td>
+                                <td class="text-white fw-bold">
+                                    @p.StudentName
+                                    <span class="d-block text-muted fw-normal mt-1" style="font-size: 0.8rem;">@p.Major | @p.AcademicYear</span>
+                                </td>
+                                <td>@p.PaymentMethod</td>
+                                <td class="text-end text-success fw-bold">@p.AmountPaid.ToString("N0") <span class="text-muted fw-normal" style="font-size: 0.8rem;">MMK</span></td>
+                                <td class="text-center">
+                                    <span class="badge px-2 py-1 @(p.Status == "Approved" ? "bg-success" : p.Status == "Rejected" ? "bg-danger" : "bg-warning text-dark")" style="border-radius: 6px;">
+                                        @p.Status
+                                    </span>
+                                </td>
+                            </tr>
+                            count++;
+                        }
+
+                        <tr style="background-color: #1a1a27; font-size: 0.9rem;">
+                            <td colspan="4" class="py-3 ps-4">
+                                <span class="me-4 text-info"><i class="bi bi-wallet2 me-1"></i> Total: <strong>@TotalPayments</strong></span>
+                                <span class="me-4 text-success"><i class="bi bi-check-circle me-1"></i> Approved: <strong>@TotalApprovedPay</strong></span>
+                                <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Rejected: <strong>@TotalRejectedPay</strong></span>
+                            </td>
+                            <td colspan="3" class="text-end py-3 pe-4">
+                                <span class="text-white fw-bold text-uppercase me-2" style="font-size: 0.8rem; letter-spacing: 1px;">Total Revenue:</span>
+                                <span class="text-success fw-bold fs-5">@totalAmount.ToString("N0") <span class="text-muted" style="font-size: 0.8rem;">MMK</span></span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<script>
+    window.downloadFileFromBase64 = function(filename, contentType, content) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = `data:${contentType};base64,${content}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    window.printReportWindow = function() {
+        window.print();
+    }
+</script>

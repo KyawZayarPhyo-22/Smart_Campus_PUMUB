@@ -47,6 +47,8 @@ builder.Services.AddDbContext<SmartCampusDbContext>(opt => opt.UseSqlServer(buil
 builder.Services.AddAuthenticationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddCascadingAuthenticationState();
+//builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.RegistrationState>();
+builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationState>();
 
 var app = builder.Build();
 app.UseCors("AllowBlazorServer");

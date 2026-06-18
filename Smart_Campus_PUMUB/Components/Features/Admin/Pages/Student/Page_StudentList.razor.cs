@@ -15,15 +15,18 @@ public partial class Page_StudentList : ComponentBase
 
     private List<StudentRegistrationDataModel> StudentList { get; set; } = new();
 
+    // Filter Variables
     private string SearchTerm { get; set; } = "";
     private string SelectedLevel { get; set; } = "All";
-    private DateTime SelectedDate { get; set; } = DateTime.Today;
+
+    // 💡 စဝင်ဝင်ချင်း ToDate ကို ဒီနေ့ရက်စွဲ အဖြစ်ထားပေးမည်။
+    private DateTime? FromDate { get; set; }
+    private DateTime? ToDate { get; set; } = DateTime.Today;
 
     private bool ShowDetailModal { get; set; } = false;
     private StudentRegistrationFullModel? SelectedDetail { get; set; }
     private bool IsLoading { get; set; } = true;
 
-    // Confirm Modal Variables
     private bool ShowConfirmModal { get; set; } = false;
     private string ConfirmAction { get; set; } = "";
     private string ConfirmMessage { get; set; } = "";
@@ -41,7 +44,21 @@ public partial class Page_StudentList : ComponentBase
             if (SelectedLevel != "All")
                 data = data.Where(s => string.Equals(s.AcademicYearLevel, SelectedLevel, StringComparison.OrdinalIgnoreCase));
 
-            data = data.Where(s => s.CreatedDatetime.Date == SelectedDate.Date);
+            // 💡 1. From ရော To ရော ရွေးထားလျှင် (Range Filter)
+            if (FromDate.HasValue && ToDate.HasValue)
+            {
+                data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date && s.CreatedDatetime.Date <= ToDate.Value.Date);
+            }
+            // 💡 2. From တစ်ခုတည်း ရွေးထားလျှင် (From နောက်ပိုင်း အကုန်)
+            else if (FromDate.HasValue && !ToDate.HasValue)
+            {
+                data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date);
+            }
+            // 💡 3. From မရွေးဘဲ To တစ်ခုတည်း ရွေးထားလျှင် (ToDate ထဲက ရက်စွဲ တစ်ရက်တည်းစာ ကွက်တိရှာမည်)
+            else if (!FromDate.HasValue && ToDate.HasValue)
+            {
+                data = data.Where(s => s.CreatedDatetime.Date == ToDate.Value.Date);
+            }
 
             return data.OrderBy(s => s.AcademicYearLevel).ToList();
         }
@@ -83,7 +100,6 @@ public partial class Page_StudentList : ComponentBase
         _ => "bg-secondary"
     };
 
-    // 💡 Confirm Box ခေါ်မည့် Method
     private void PromptConfirm(string action)
     {
         ConfirmAction = action;
@@ -93,14 +109,12 @@ public partial class Page_StudentList : ComponentBase
         ShowConfirmModal = true;
     }
 
-    // 💡 Confirm Box ပိတ်မည့် Method
     private void CancelConfirm()
     {
         ShowConfirmModal = false;
         ConfirmAction = "";
     }
 
-    // 💡 သေချာပြီဆိုမှ Update လုပ်မည့် Method
     private async Task ExecuteConfirm()
     {
         ShowConfirmModal = false;

@@ -1,852 +1,829 @@
 @page "/Register"
-@using Smart_Campus_PUMUB.Components.Shared.Layout
-@using Smart_Campus_PUMUB.Database.AppDbContext
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.EntityFrameworkCore
-@inject AuthenticationStateProvider AuthStateProvider
-@inject SmartCampusDbContext DbContext
-@inject NavigationManager NavManager
-@rendermode InteractiveServer
 @layout MainLayout
-<!DOCTYPE html>
-<html lang="my">
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@rendermode InteractiveServer
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POLYTECHNIC UNIVERSITY (MAUBIN) — ပညာသင်ခွင့်လျောက်လွှာ</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Myanmar:wght@400;500;700&family=Noto+Sans+Myanmar:wght@400;500;700&display=swap"
-          rel="stylesheet">
-    <style>
-            *,
-            *::before,
-            *::after {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-            :root {
-                --primary: #2C3E7A;
-                --primary-light: #EEF1FB;
-                --accent: #5A4FCF;
-                --accent-light: #EEEDFE;
-                --text: #1a1a2e;
-                --text-muted: #5a5a72;
-                --border: #c8c8d8;
-                --border-light: #e8e8f0;
-                --bg: #f4f4f8;
-                --white: #ffffff;
-                --gold: #B8953A;
-                --gold-light: #FDF6E3;
-                --fee-color: #185FA5;
-                --success: #1D9E75;
-            }
+    .modern-form-card {
+        background: #ffffff;
+        width: 100%;
+        min-width: 1000px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        padding: 40px 150px;
+        margin-bottom: 50px;
+    }
 
-            body {
-                font-family: 'Noto Sans Myanmar', sans-serif;
-                background: var(--bg);
-                color: var(--text);
-                min-height: 100vh;
-            }
+    .form-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 40px;
+    }
 
-            .page {
-                background: var(--white);
-                border: 1px solid var(--border);
-                border-radius: 10px;
-                padding: 2.5rem;
-                margin-bottom: 2rem;
-                max-width: 900px;
-                margin-left: auto;
-                margin-right: auto;
-                box-shadow: 0 2px 16px rgba(44, 62, 122, 0.07);
-                page-break-after: always;
-            }
+        .form-header i {
+            color: #2563EB;
+            font-size: 1.5rem;
+        }
 
-            /* ── HEADER ── */
-            .uni-header {
-                text-align: center;
-                padding-bottom: 1.2rem;
-                margin-bottom: 1.5rem;
-                border-bottom: 2px solid var(--primary);
-                position: relative;
-            }
+        .form-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
 
-                .uni-header .gov-line {
-                    font-size: 12px;
-                    color: var(--text-muted);
-                    letter-spacing: 0.5px;
-                    margin-bottom: 4px;
-                }
+    .stepper-wrapper {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 50px;
+        position: relative;
+    }
 
-                .uni-header h1 {
-                    font-size: 17px;
-                    font-weight: 700;
-                    color: var(--primary);
-                    letter-spacing: 0.5px;
-                }
+        .stepper-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
 
-                .uni-header h2 {
-                    font-size: 14px;
-                    font-weight: 500;
-                    color: var(--accent);
-                    margin-top: 3px;
-                }
+    .stepper-progress {
+        position: absolute;
+        top: 18px;
+        left: 5%;
+        height: 2px;
+        background: #2563EB;
+        z-index: 2;
+        transition: width 0.3s ease;
+    }
 
-                .uni-header .form-title {
-                    font-size: 15px;
-                    font-weight: 700;
-                    color: var(--text);
-                    margin-top: 10px;
-                }
+    .step-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        z-index: 3;
+        width: 120px;
+    }
 
-                .uni-header .form-sub {
-                    font-size: 13px;
-                    color: var(--text-muted);
-                    margin-top: 3px;
-                }
+    .step-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #94a3b8;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
 
-            /* ── PHOTO BOX ── */
-            .photo-box {
-                float: right;
-                width: 120px;
-                border: 1px solid var(--border);
-                padding: 10px;
-                text-align: center;
-                margin-left: 1.5rem;
-                margin-bottom: 1rem;
-                border-radius: 8px;
-                background: var(--primary-light);
-                position: relative;
-                z-index: 10;
-            }
+    .step-block.active .step-circle {
+        background: #2563EB;
+        border-color: #2563EB;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
+    }
 
-            .photo-area {
-                width: 96px;
-                height: 120px;
-                border: 1.5px dashed var(--border);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto 6px;
-                border-radius: 4px;
-                background: var(--white);
-                color: var(--text-muted);
-                cursor: pointer;
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-            }
+    .step-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        text-align: center;
+    }
 
-                .photo-area svg {
-                    width: 36px;
-                    height: 36px;
-                    opacity: 0.4;
-                    pointer-events: none;
-                }
+    .step-block.active .step-label {
+        color: #2563EB;
+    }
 
-            .photo-box p {
-                font-size: 10px;
-                color: var(--text-muted);
-                line-height: 1.5;
-                pointer-events: none;
-            }
+    .photo-upload-wrapper {
+        grid-column: span 2;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 24px;
+    }
 
-            /* ── SECTION LABEL ── */
-            .section-label {
-                font-size: 13px;
-                font-weight: 700;
-                color: var(--primary);
-                margin: 14px 0 10px;
-                padding-left: 10px;
-                border-left: 3px solid var(--accent);
-            }
+    .photo-box {
+        width: 130px;
+        height: 160px;
+        border: 2px dashed #94a3b8;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8fafc;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
 
-            /* ── FORM FIELDS ── */
-            .form-grid {
-                display: grid;
-                gap: 10px;
-                margin-bottom: 12px;
-            }
+        .photo-box:hover {
+            border-color: #2563EB;
+            background-color: #f0f9ff;
+        }
 
-            .form-grid-2 {
-                grid-template-columns: 1fr 1fr;
-            }
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-            .form-grid-3 {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
+        .photo-box i {
+            font-size: 2rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
 
-            .form-grid-4 {
-                grid-template-columns: 1fr 1fr 1fr 1fr;
-            }
+    .photo-text {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-align: center;
+        padding: 0 8px;
+        line-height: 1.4;
+    }
 
-            .field {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
+    .input-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        animation: fadeIn 0.4s ease-in-out;
+    }
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
 
-                .field label {
-                    font-size: 11px;
-                    color: var(--text-muted);
-                    font-weight: 500;
-                }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-                /* Input element formatting */
-                .field input.line,
-                .parent-block input.line {
-                    border: none;
-                    border-bottom: 1px solid var(--border);
-                    padding: 5px 2px;
-                    font-size: 13px;
-                    color: var(--text);
-                    background: transparent;
-                    min-height: 26px;
-                    width: 100%;
-                    font-family: inherit;
-                    transition: border-color 0.2s;
-                }
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
 
-                    .field input.line:focus,
-                    .parent-block input.line:focus {
-                        outline: none;
-                        border-bottom-color: var(--accent);
-                        background-color: rgba(90, 79, 207, 0.02);
-                    }
+        .input-group.full-width {
+            grid-column: span 2;
+        }
 
-            /* Inline template inputs */
-            .inline-input {
-                border: none;
-                border-bottom: 1px solid var(--border);
-                background: transparent;
-                font-size: 13px;
-                font-family: inherit;
-                color: var(--text);
-                padding: 0 4px;
-                text-align: center;
-            }
+    .input-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #334155;
+    }
 
-                .inline-input:focus {
-                    outline: none;
-                    border-bottom-color: var(--accent);
-                }
+    .modern-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        color: #0f172a;
+        font-family: inherit;
+        background: #ffffff;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
 
-            /* ── NATIONALITY PILLS ── */
-            .nat-row {
-                display: flex;
-                gap: 14px;
-                flex-wrap: wrap;
-                margin-top: 4px;
-            }
+        .modern-input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
 
-            .nat-item {
-                font-size: 12px;
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                cursor: pointer;
-                color: var(--text);
-            }
+        .modern-input::placeholder {
+            color: #94a3b8;
+        }
 
-            /* ── TABLE ── */
-            table.exam-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 12px;
-                margin-top: 8px;
-            }
+    select.modern-input {
+        cursor: pointer;
+    }
 
-                table.exam-table th {
-                    background: var(--primary-light);
-                    padding: 7px 10px;
-                    font-weight: 700;
-                    font-size: 11px;
-                    color: var(--primary);
-                    border: 1px solid var(--border-light);
-                    text-align: left;
-                }
+    textarea.modern-input {
+        resize: vertical;
+        min-height: 80px;
+    }
 
-                table.exam-table td {
-                    padding: 2px 5px;
-                    border: 1px solid var(--border-light);
-                    height: 34px;
-                }
+    .radio-group {
+        display: flex;
+        gap: 20px;
+        margin-top: 5px;
+    }
 
-                    table.exam-table td input {
-                        width: 100%;
-                        height: 100%;
-                        border: none;
-                        background: transparent;
-                        font-family: inherit;
-                        font-size: 12px;
-                        padding: 4px;
-                    }
+    .radio-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: #475569;
+        cursor: pointer;
+    }
 
-                        table.exam-table td input:focus {
-                            outline: none;
-                            background: rgba(90, 79, 207, 0.02);
-                        }
+    .table-responsive {
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        margin-top: 10px;
+    }
 
-            /* ── DIVIDER ── */
-            hr.divider {
-                border: none;
-                border-top: 1px solid var(--border-light);
-                margin: 16px 0;
-            }
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
 
-            /* ── DECLARATION BOX ── */
-            .declaration-box {
-                border: 1px solid var(--border-light);
-                border-radius: 8px;
-                padding: 14px 16px;
-                margin: 14px 0;
-                background: var(--primary-light);
-            }
+        .modern-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
 
-                .declaration-box .decl-title {
-                    font-size: 12px;
-                    font-weight: 700;
-                    color: var(--primary);
-                    margin-bottom: 8px;
-                }
+        .modern-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
 
-            .rules-list {
-                list-style: none;
-            }
-
-                .rules-list li {
-                    font-size: 12px;
-                    color: var(--text);
-                    line-height: 1.9;
-                    padding: 4px 0;
-                    border-bottom: 1px solid var(--border-light);
-                    display: flex;
-                    gap: 10px;
-                }
-
-                    .rules-list li:last-child {
-                        border-bottom: none;
-                    }
-
-                    .rules-list li .num {
-                        font-weight: 700;
-                        color: var(--accent);
-                        min-width: 20px;
-                    }
-
-            .fee-highlight {
-                font-weight: 700;
-                color: var(--fee-color);
-            }
-
-            /* ── SIGNATURE ── */
-            .sig-row {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 2rem;
-                margin-top: 2rem;
-            }
-
-            .sig-block {
-                text-align: center;
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-            }
-
-            .sig-line-input {
-                border: none;
-                border-bottom: 1px solid var(--border);
-                background: transparent;
-                width: 80%;
-                margin: 0 auto 6px;
-                text-align: center;
-                font-family: inherit;
-                padding: 4px;
-                font-size: 13px;
-            }
-
-                .sig-line-input:focus {
-                    outline: none;
-                    border-bottom-color: var(--accent);
-                }
-
-            .sig-block p {
-                font-size: 11px;
-                color: var(--text-muted);
-            }
-
-            /* ── OFFICE BOX ── */
-            .office-box {
-                border: 1px dashed var(--border);
-                border-radius: 8px;
-                padding: 14px;
-                margin-top: 1rem;
-                background: #fafafa;
-            }
-
-            .office-title {
-                font-size: 11px;
-                font-weight: 700;
-                color: var(--text-muted);
-                text-align: right;
-                margin-bottom: 10px;
-            }
-
-            /* ── YEAR BADGE ── */
-            .year-tag {
-                display: inline-block;
-                background: var(--accent-light);
-                color: var(--accent);
-                font-size: 12px;
-                padding: 4px 12px;
-                border-radius: 20px;
-                font-weight: 700;
-                margin-bottom: 8px;
-            }
-
-            .page-badge {
-                display: inline-block;
-                background: var(--primary-light);
-                color: var(--primary);
-                border: 1px solid var(--border-light);
+            .modern-table td .modern-input {
+                padding: 8px 12px;
                 border-radius: 6px;
-                font-size: 11px;
-                font-weight: 700;
-                padding: 3px 10px;
-                margin-bottom: 14px;
             }
 
-            .address-area {
-                border: 1px solid var(--border);
-                border-radius: 6px;
-                padding: 10px;
-                min-height: 60px;
-                margin-top: 4px;
-                width: 100%;
-                font-family: inherit;
-                font-size: 13px;
-                resize: vertical;
-                background: transparent;
+    .form-footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-next, .btn-submit {
+        background: #2563EB;
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+    }
+
+        .btn-next:hover, .btn-submit:hover {
+            background: #0284c7;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+    .btn-prev {
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        padding: 12px 28px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        margin-right: auto;
+        transition: background 0.2s;
+    }
+
+        .btn-prev:hover {
+            background: #e2e8f0;
+        }
+
+    /* Modal CSS */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        max-width: 400px;
+        width: 90%;
+        animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-icon {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+    }
+
+        .modal-icon.error {
+            color: #ef4444;
+        }
+
+        .modal-icon.success {
+            color: #10b981;
+        }
+
+    .modal-content h3 {
+        margin: 0 0 10px 0;
+        color: #0f172a;
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .modal-content p {
+        color: #475569;
+        margin-bottom: 24px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .btn-modal {
+        background: #2563EB;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.2s;
+        width: 100%;
+    }
+
+        .btn-modal:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-modal.success {
+            background: #10b981;
+        }
+
+            .btn-modal.success:hover {
+                background: #059669;
             }
 
-                .address-area:focus {
-                    outline: none;
-                    border-color: var(--accent);
-                    background-color: rgba(90, 79, 207, 0.02);
-                }
+    @@keyframes popIn {
+        0% {
+            transform: scale(0.9);
+            opacity: 0;
+        }
 
-            .two-col-parent {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 2rem;
-                margin-top: 1.5rem;
-            }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
 
-            .parent-block label {
-                font-size: 11px;
-                color: var(--text-muted);
-            }
+<div class="modern-form-card" style="margin-top: 80px;">
+    <div class="form-header">
+        <i class="fas fa-file-alt"></i>
+        <h2>Online Registration Form</h2>
+    </div>
 
-            .parent-block .line {
-                border: none;
-                border-bottom: 1px solid var(--border);
-                display: block;
-                width: 100%;
-                min-height: 24px;
-                margin-bottom: 8px;
-                font-size: 12px;
-            }
+    <div class="stepper-wrapper">
+        <div class="stepper-progress" style="width: @((CurrentStep - 1) * 33.33)%"></div>
+        <div class="step-block @(CurrentStep >= 1 ? "active" : "")"><div class="step-circle">1</div><div class="step-label">Personal Info</div></div>
+        <div class="step-block @(CurrentStep >= 2 ? "active" : "")"><div class="step-circle">2</div><div class="step-label">Academic Info</div></div>
+        <div class="step-block @(CurrentStep >= 3 ? "active" : "")"><div class="step-circle">3</div><div class="step-label">Family Info</div></div>
+        <div class="step-block @(CurrentStep >= 4 ? "active" : "")"><div class="step-circle">4</div><div class="step-label">Submit</div></div>
+    </div>
 
-            .parent-block .block-title {
-                font-size: 12px;
-                font-weight: 700;
-                color: var(--primary);
-                margin-bottom: 10px;
-            }
+    @if (CurrentStep == 1)
+    {
+        <div class="input-grid">
+            <div class="photo-upload-wrapper">
+                <label for="photoUpload" class="photo-box">
+                    @if (!string.IsNullOrEmpty(PreviewImageUrl))
+                    {
+                        <img src="@PreviewImageUrl" alt="Student Photo" />
+                    }
+                    else
+                    {
+                        <i class="far fa-user"></i>
+                        <span class="photo-text">ပတ်စပို့စ်အရွယ်<br>ဓာတ်ပုံ</span>
+                    }
+                </label>
+                <InputFile id="photoUpload" OnChange="OnPhotoSelected" accept="image/*" style="display: none;" />
+            </div>
 
-            .clearfix::after {
-                content: "";
-                display: table;
-                clear: both;
-            }
+            <!-- 💡 User ID ကို ဖောင်တွင် မပြတော့ဘဲ နောက်ကွယ်မှ Auto ခေါ်ယူရန် ပြန်ဖျောက်ထားပါသည် 💡 -->
+            <input type="hidden" @bind="RegModel.UserId" />
 
-            @@media print {
-                body {
-                    background: white;
-                    padding: 0;
-                }
-
-                .page {
-                    box-shadow: none;
-                    border: none;
-                    margin: 0;
-                    border-radius: 0;
-                    page-break-after: always;
-                }
-
-                input::placeholder {
-                    color: transparent;
-                }
-
-                .submit-action-footer-container, .validation-summary-alert {
-                    display: none !important;
-                }
-            }
-
-            @@media (max-width: 600px) {
-                body {
-                    padding: 0.75rem;
-                }
-
-                .page {
-                    padding: 1.25rem;
-                }
-
-                .form-grid-2, .form-grid-3, .form-grid-4 {
-                    grid-template-columns: 1fr;
-                }
-
-                .sig-row, .two-col-parent {
-                    grid-template-columns: 1fr;
-                }
-
-                .photo-box {
-                    float: none;
-                    margin: 0 auto 1rem;
-                    display: block;
-                }
-            }
-    </style>
-</head>
-
-<body>
-
-    <div class="page clearfix" style="margin-top:150px">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-12 col-md-9 order-1 order-md-1 text-center text-md-start mb-4 mb-md-0">
-                    <div class="uni-header" style="border-bottom:none; padding-bottom:0; margin-bottom:0;">
-                        <div class="gov-line">ပြည်ထောင်စုသမ္မတ မြန်မာနိုင်ငံတော်အစိုးရ</div>
-                        <div class="gov-line">သိပ္ပံနှင့်နည်းပညာဝန်ကြီးဌာန</div>
-                        <h1>POLYTECHNIC UNIVERSITY (MAUBIN)</h1>
-                        <h2>FACULTY OF COMPUTING</h2>
-                        <div class="form-title" style="margin-top:10px;">
-                            ၂၀ <input type="text" class="inline-input" style="width: 50px;" @bind="regModel.AcademicYearRange"> ပညာသင်နှစ်
+            <!-- User ID Status Display -->
+            <div class="input-group" style="grid-column: span 2;">
+                @if (RegModel.UserId.HasValue && RegModel.UserId > 0)
+                {
+                    <div style="background: #f0f9ff; padding: 12px 16px; border-radius: 10px; border: 1px solid #0ea5e9; color: #0369a1; font-size: 0.85rem; display: flex; align-items: center;">
+                        <i class="fas fa-user-check me-2"></i>
+                        <div>
+                            <strong>User ID auto-filled:</strong> @RegModel.UserId<br>
+                            <small style="opacity: 0.8;">Logged in user ID automatically loaded</small>
                         </div>
-                        <div class="form-sub mt-2">ကျောင်းသား၊ ကျောင်းသူများ ပညာသင်ခွင့်လျှောက်လွှာ</div>
                     </div>
-                </div>
-
-                <div class="col-12 col-md-3 order-2 order-md-2 d-flex flex-column align-items-center align-items-md-end" style="margin-top: 30px;">
-                    <div class="photo-box text-center">
-                        <label class="photo-area" id="photoLabel">
-                            <input type="file" accept="image/*" style="display: none;" onchange="previewImage(this)">
-                            <svg id="photoIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40">
-                                <circle cx="12" cy="8" r="4" />
-                                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                            </svg>
-                        </label>
-                        <p class="mt-2 mb-0">ဓါတ်ပုံ ၄ ပုံနှင့်<br>တင်သွင်းပါ</p>
+                }
+                else
+                {
+                    <div style="background: #fef2f2; padding: 12px 16px; border-radius: 10px; border: 1px solid #ef4444; color: #991b1b; font-size: 0.85rem; display: flex; align-items: center;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <div>
+                            <strong>User ID not found</strong><br>
+                            <small>Please <a href="/login" style="color: #dc2626; text-decoration: underline;">login</a> first to access registration form.</small>
+                        </div>
                     </div>
-                </div>
+                }
             </div>
-        </div>
-        <hr class="divider" style="clear:both; margin-top:72px;">
 
-        <div class="form-grid form-grid-3">
-            <div class="field"><label>သင်တန်းနှစ်</label><input type="text" class="line" @bind="regModel.AcademicYearLevel"></div>
-            <div class="field"><label>အထူးပြုဘာသာ</label><input type="text" class="line" @bind="regModel.Major"></div>
-            <div class="field"><label>ခုံအမှတ်</label><input type="text" class="line" @bind="regModel.RollNo"></div>
-        </div>
-        <div class="form-grid form-grid-2">
-            <div class="field"><label>တက္ကသိုလ်မှတ်ပုံတင်အမှတ်</label><input type="text" class="line" @bind="regModel.UniversityRegNo"></div>
-            <div class="field"><label>တက္ကသိုလ်ဝင်ရောက်သည့်နှစ် (ခုနှစ်)</label><input type="number" class="line" @bind="regModel.AdmissionYear"></div>
-        </div>
+            <div class="input-group">
+                <label class="input-label">အမည် (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="ကိုအောင်မင်း" @bind="RegModel.student_name_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required disabled="@(!(RegModel.UserId.HasValue && RegModel.UserId > 0))">
+            </div>
 
-        <div>
-            <div class="section-label">၁။ ပညာဆည်းပူးဆက်လက်သင်ခွင့်တောင်းသူ ကျောင်းသား၊ ကျောင်းသူ</div>
-            <div class="form-grid form-grid-2">
-                <div class="field"><label>အမည် (မြန်မာစာဖြင့်)</label><input type="text" class="line" @bind="regModel.StudentNameMm"></div>
-                <div class="field"><label>အမည် (အင်္ဂလိပ်စာဖြင့်)</label><input type="text" class="line" @bind="regModel.StudentNameEn"></div>
-                <div class="field"><label>လူမျိုး</label><input type="text" class="line" @bind="regModel.Ethnicity"></div>
-                <div class="field"><label>ကိုးကွယ်သည့်ဘာသာ</label><input type="text" class="line" @bind="regModel.Religion"></div>
-                <div class="field"><label>မွေးဖွားရာဇာတိ</label><input type="text" class="line" @bind="regModel.Pob"></div>
-                <div class="field"><label>မြို့နယ် / ပြည်နယ် / တိုင်း</label><input type="text" class="line" @bind="regModel.BirthPlaceRegion"></div>
-                <div class="field"><label>မှတ်ပုံတင်အမှတ်</label><input type="text" class="line" @bind="regModel.StudentNrcNo"></div>
-                <div class="field"><label>မွေးသက္ကရာဇ်</label><input type="date" class="line" @bind="dobBridge"></div>
-                <div class="field"><label>Email</label><input type="email" class="line" @bind="regModel.Email"></div>
-                <div class="field"><label>သွေးအုပ်စု</label><input type="text" class="line" @bind="regModel.BloodType"></div>
-                <div class="field"><label>ကိုဗစ်ကာကွယ်ရေးထိုးနှံမှု — ထိုး/မထိုး ပြီးစီးသည့်ရက်</label><input type="text" class="line" @bind="regModel.CovidVaccineStatus"></div>
-                <div class="field">
-                    <label>နိုင်ငံသား အမျိုးအစား</label>
-                    <div class="nat-row" style="margin-top: 12px;">
-                        <label class="nat-item">
-                            <input type="radio" name="nationality" value="နိုင်ငံခြားသား" checked="@(regModel.NationalityStatus == "နိုင်ငံခြားသား")" @onclick='() => regModel.NationalityStatus = "နိုင်ငံခြားသား"'> နိုင်ငံခြားသား
-                        </label>
-                        <label class="nat-item">
-                            <input type="radio" name="nationality" value="တိုင်းရင်းသား" checked="@(regModel.NationalityStatus == "တိုင်းရင်းသား")" @onclick='() => regModel.NationalityStatus = "တိုင်းရင်းသား"'> တိုင်းရင်းသား
-                        </label>
-                    </div>
+            <div class="input-group">
+                <label class="input-label">အမည် (အင်္ဂလိပ်စာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="Ko Aung Min" @bind="RegModel.student_name_en" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')" disabled="@(!(RegModel.UserId.HasValue && RegModel.UserId > 0))">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မှတ်ပုံတင် (NRC) <span style="color:red;">*</span></label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnNrcStateChanged" required>
+                        <option value="">တိုင်း</option>
+                        @for (int i = 1; i <= 14; i++)
+                        {
+                            <option value="@i" selected="@(RegModel.nrc_state == i.ToString())">@i</option>
+                        }
+                    </select>
+                    <span style="font-weight:bold; color:#334155;">/</span>
+                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="RegModel.nrc_township" required>
+                        <option value="">မြို့နယ်</option>
+                        @foreach (var town in CurrentTownshipList)
+                        {
+                            <option value="@town">@town</option>
+                        }
+                    </select>
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="NrcType">
+                        <option value="(နိုင်)">(နိုင်)</option>
+                        <option value="(ဧည့်)">(ဧည့်)</option>
+                        <option value="(ပြု)">(ပြု)</option>
+                        <option value="(စ)">(စ)</option>
+                        <option value="(သီ)">(သီ)</option>
+                        <option value="(သ)">(သ)</option>
+                    </select>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="RegModel.nrc_number" maxlength="6" required>
                 </div>
             </div>
-        </div>
-        <div class="form-grid form-grid-3" style="margin-top: 50px;">
-            <div class="field"><label>တက္ကသိုလ်ဝင်တန်း ခုံအမှတ်</label><input type="text" class="line" @bind="regModel.MatricRollNo"></div>
-            <div class="field"><label>အောင်မြင်သည့် ခုနှစ်</label><input type="number" class="line" @bind="regModel.MatricPassedYear"></div>
-            <div class="field"><label>စာစစ်ဌာန </label><input type="text" class="line" @bind="regModel.ExamCenter"></div>
-        </div>
 
-        <div class="form-grid form-grid-2">
-            <div class="field"><label>အဘ အုပ်ထိန်းသူ၏ အလုပ်အကိုင်၊ ရာထူး၊ ဌาန (မြန်မာ)</label><input type="text" class="line" style="margin-top:4px;" @bind="regModel.FatherOccupation"></div>
-            <div class="field"><label>အမိ အုပ်ထိန်းသူ၏ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန (အင်္ဂလိပ်)</label><input type="text" class="line" style="margin-top:4px;" @bind="regModel.MotherOccupation"></div>
-        </div>
-        <div class="form-grid form-grid-2">
-            <div class="field"><label>အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (မြန်မာစာဖြင့်)</label><input type="text" class="line" style="margin-top:4px;" @bind="regModel.PermanentAddressMm"></div>
-            <div class="field"><label>အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (အင်္ဂလိပ်စာဖြင့်)</label><input type="text" class="line" style="margin-top:4px;" @bind="regModel.PermanentAddressEn"></div>
-        </div>
-    </div>
-
-    <hr class="divider">
-
-    <div class="page clearfix">
-        <div class="section-label">၂။ ဖြေဆိုသည့်စာမေးပွဲများ</div>
-        <table class="exam-table">
-            <thead>
-                <tr>
-                    <th>ဖြေဆိုသည့်စာမေးပွဲများ</th>
-                    <th>အဓိကဘာသာ</th>
-                    <th>ခုံအမှတ်</th>
-                    <th>ခုနှစ်</th>
-                    <th>အောင် / ကျ</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="text" @bind="regModel.PastExamMajor"></td>
-                    <td><input type="text" value="Computing" readonly></td>
-                    <td><input type="text" @bind="regModel.PastExamRollNo"></td>
-                    <td><input type="number" @bind="regModel.PastExamYear"></td>
-                    <td><input type="text" @bind="regModel.PastExamStatus"></td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="" style="margin-bottom: 50px;margin-top: 30px;">
-            <div class="section-label">အမိ</div>
-            <div class="form-grid form-grid-2">
-                <div class="field"><label>အမည် (မြန်မာစာဖြင့်)</label><input type="text" class="line" @bind="regModel.MotherName"></div>
-                <div class="field"><label>ဆွေမျိုးတော်စပ်ပုံ</label><input type="text" class="line" @bind="regModel.GenderRelation"></div>
+            <div class="input-group">
+                <label class="input-label">မွေးသက္ကရာဇ် <span style="color:red;">*</span></label>
+                <input type="date" class="modern-input" @bind="DobDate" required>
             </div>
-        </div>
-        <hr class="divider">
 
-        <div class="" style="margin-top: 30px;">
-            <div class="section-label">အဘ</div>
-            <div class="form-grid form-grid-2">
-                <div class="field"><label>အမည် (မြန်မာစာဖြင့်)</label><input type="text" class="line" @bind="regModel.FatherName"></div>
-                <div class="field"><label>ယခင်နှစ်ခုံအမှတ်</label><input type="text" class="line" @bind="regModel.PreviousYearRollNo"></div>
+            <div class="input-group">
+                <label class="input-label">ကျား / မ</label>
+                <select class="modern-input" @bind="RegModel.gender_relation">
+                    <option value="ကျား">ကျား</option>
+                    <option value="မ">မ</option>
+                </select>
             </div>
-        </div>
-    </div>
+            <div class="input-group">
+                <label class="input-label">သွေးအုပ်စု</label>
+                <select class="modern-input" @bind="RegModel.blood_type">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="AB">AB</option>
+                    <option value="O">O</option>
+                </select>
+            </div>
 
-    <div class="page">
-        <div class="section-label">၃။ ကျောင်းနေရန်အထောက်အပံ့ပြုမည့် ပုဂ္ဂိုလ်</div>
-        <div class="ref-person">
-            <div class="form-grid form-grid-2">
-                <div class="field"><label>အမည်</label><input type="text" class="line" @bind="regModel.GuardianName"></div>
-                <div class="field"><label>ဆွေမျိုးတော်စပ်ပုံ</label><input type="text" class="line" @bind="regModel.GuardianRelationship"></div>
-            </div>
-            <div class="form-grid form-grid-2">
-                <div class="field"><label>အလုပ်အကိုင်</label><input type="text" class="line" @bind="regModel.GuardianOccupation"></div>
-                <div class="field"><label>ဆက်သွယ်ရန်လိပ်စာနှင့် ဖုန်းနံပါတ်</label><input type="text" class="line" @bind="regModel.GuardianAddressPhone"></div>
-            </div>
-            <div class="form-grid" style="margin-top:20px;">
-                <div class="field">
-                    <label>ပညာသင်ထောက်ပံ့ကြေးပေးရန်မေတ္တာရပ်ခံခြင်း ပြု/မပြု</label>
-                    <div class="nat-row" style="margin-top: 12px;">
-                        <label class="nat-item">
-                            <input type="radio" name="prize" checked="@(regModel.StipendRequested == true)" @onclick="() => regModel.StipendRequested = true"> ပြု
-                        </label>
-                        <label class="nat-item">
-                            <input type="radio" name="prize" checked="@(regModel.StipendRequested != true)" @onclick="() => regModel.StipendRequested = false"> မပြု
-                        </label>
-                    </div>
+            <div class="input-group">
+                <label class="input-label">လူမျိုး နှင့် ကိုးကွယ်သည့်ဘာသာ</label>
+                <div style="display: flex; gap:10px;">
+                    <input type="text" class="modern-input" placeholder="လူမျိုး" @bind="RegModel.ethnicity">
+                    <input type="text" class="modern-input" placeholder="ဘာသာ" @bind="RegModel.religion">
                 </div>
             </div>
-        </div>
-
-        <div class="declaration-box">
-            <div class="decl-title">ကိုယ်ပိုင်ဝန်ခံချက်</div>
-            <ul class="rules-list">
-                <li><span class="num">၁</span>အထက်ဖော်ပြပါ အချက်များအားလုံး မှန်ကန်ပါသည်။</li>
-                <li><span class="num">၂</span>ဤတက္ကသိုလ်၌ ကိုယ်တိုင်ပညာသင်ခွင့် တောင်းသည်ကို မိဘ (သို့မဟုတ်) အုပ်ထိန်းသူက သဘောတူကြောင်း ဖြစ်ပါသည်။</li>
-                <li><span class="num">၃</span>တက္ကသိုလ်ကျောင်းသားတစ်ဦးပီသစွာ တက္ကသိုလ် / ကောလိပ်က ချမှတ်သည့် စည်းမျဉ်းစည်းကမ်းနှင့်အညီ လိုက်နာကျင့်သုံးနေထိုင်ပါမည်။</li>
-            </ul>
-        </div>
-
-        <div style="display:flex; gap:8px; align-items:baseline; justify-content:flex-start; margin-bottom:1rem; font-size:13px; width:100%; flex-wrap:wrap;">
-            <span>ရက်စွဲ။</span>
-            <input type="date" class="inline-input" style="width:160px; max-width:100%;" @bind="dateTimeBridge">
-        </div>
-
-        <div class="form-grid form-grid-2">
-            <div class="field" style="margin-bottom:2.5rem;">
-                <label>ယခုဆက်သွယ်ရန်လိပ်စာ</label>
-                <textarea class="address-area" style="height: 120px;" @bind="regModel.CurrentAddress"></textarea>
+            <div class="input-group">
+                <label class="input-label">နိုင်ငံသား အမျိုးအစား</label>
+                <div class="radio-group" style="padding: 10px 0;">
+                    <label class="radio-item"><input type="radio" name="nationality" checked="@(RegModel.nationality_status == "တိုင်းရင်းသား")" @onchange='() => RegModel.nationality_status = "တိုင်းရင်းသား"'> တိုင်းရင်းသား</label>
+                    <label class="radio-item"><input type="radio" name="nationality" checked="@(RegModel.nationality_status == "နိုင်ငံခြားသား")" @onchange='() => RegModel.nationality_status = "နိုင်ငံခြားသား"'> နိုင်ငံခြားသား</label>
+                </div>
             </div>
-            <div class="sig-block" style="margin-bottom:2.5rem;">
-                <input type="text" class="sig-line-input" placeholder="(အမည်ရိုက်ရန်)" @bind="regModel.AppStudentName">
-                <p>ပညာသင်ခွင့်လျောက်ထားသူ၏ လက်မှတ်</p>
+
+            <div class="input-group">
+                <label class="input-label">မွေးဖွားရာ ဇာတိမြို့နယ်</label>
+                <input type="text" class="modern-input" placeholder="မွေးဖွားရာဇာတိမြို့" @bind="RegModel.pob">
+            </div>
+            <div class="input-group">
+                <label class="input-label">မွေးဖွားရာ တိုင်းဒေသကြီး/ပြည်နယ်</label>
+                <input type="text" class="modern-input" placeholder="ဥပမာ - ရန်ကုန်တိုင်း" @bind="RegModel.birth_place_region">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ဖုန်းနံပါတ် (09XXXXXXXXX) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="09765432100" @bind="RegModel.app_student_phone" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Email</label>
+                <input type="email" class="modern-input" placeholder="student@example.com" @bind="RegModel.email">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ကိုဗစ်ကာကွယ်ရေးထိုးနှံမှုပြီးစီးသည့်ရက်</label>
+                <input type="date" class="modern-input" @bind="CovidDate">
             </div>
         </div>
 
-        <div class="ref-person" style="background:#fff7ed; border-color:#fed7aa;">
-            <div class="form-grid form-grid-3">
-                <div class="field"><label>အုပ်ထိန်းသူအမည်</label><input type="text" class="line" @bind="regModel.AppGuardianName"></div>
-                <div class="field"><label>မှတ်ပုံတင်အမှတ်</label><input type="text" class="line" @bind="regModel.AppGuardianNrc"></div>
-                <div class="field"><label>ဖုန်းနံပါတ်</label><input type="text" class="line" @bind="regModel.AppGuardianPhone"></div>
-            </div>
-            <div class="field" style="margin-top:6px;"><label>နေရပ်လိပ်စာ</label><input type="text" class="line" @bind="regModel.AppGuardianAddress"></div>
-        </div>
-    </div>
-
-    @if (!string.IsNullOrEmpty(validationMessage))
-    {
-        <div class="validation-summary-alert" style="max-width: 900px; margin: 10px auto; padding: 12px 20px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 12px; color: #991b1b; font-size: 0.88rem; font-weight: 500; display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-triangle-exclamation"></i>
-            <span>@validationMessage</span>
+        <div class="form-footer">
+            <button class="btn-next" @onclick="NextStep">Next: Academic Info <i class="fas fa-arrow-right"></i></button>
         </div>
     }
 
-    <div class="submit-action-footer-container" style="max-width: 900px; margin: 20px auto 50px auto; padding: 0 20px; text-align: right;">
-        @if (isSubmittingForm)
-        {
-            <button class="btn-m3-submit-form" disabled style="background: #94a3b8; color: #cbd5e1; border: none; padding: 14px 36px; font-size: 1rem; font-weight: 700; border-radius: 50px; cursor: not-allowed; display: inline-flex; align-items: center; gap: 10px;">
-                <i class="fas fa-spinner fa-spin"></i> အချက်အလက်များ သိမ်းဆည်းနေပါသည်...
+    @if (CurrentStep == 2)
+    {
+        <div class="input-grid">
+            <div class="input-group full-width">
+                <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
+                <textarea class="modern-input" placeholder="နေရပ်လိပ်စာ အပြည့်အစုံ ရေးရန်..." @bind="RegModel.permanent_address_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F0-9\s.,/-]/g, '')" required></textarea>
+            </div>
+            <div class="input-group full-width">
+                <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (အင်္ဂလိပ်စာဖြင့်)</label>
+                <textarea class="modern-input" placeholder="Full permanent address..." @bind="RegModel.permanent_address_en" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\s.,/-]/g, '')"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ပညာသင်နှစ် (Academic Year Range) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="ဥပမာ - 2023-2024" @bind="RegModel.academic_year_range" required>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">သင်တန်းနှစ် (Semester) <span style="color:red;">*</span></label>
+                <select class="modern-input" @bind="RegModel.academic_year_level" required>
+                    <option value="">-- သင်တန်းနှစ် ရွေးချယ်ပါ --</option>
+                    @if (SemesterList != null && SemesterList.Any())
+                    {
+                        @foreach (var sem in SemesterList)
+                        {
+                            <option value="@sem.SemesterName">@sem.SemesterName</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အထူးပြုဘာသာ</label>
+                <input type="text" class="modern-input" placeholder="e.g. Computing" @bind="RegModel.major">
+            </div>
+            <div class="input-group">
+                <label class="input-label">ခုံအမှတ်</label>
+                <input type="text" class="modern-input" placeholder="ခုံအမှတ် ရိုတ်ထည့်ပါ" @bind="RegModel.roll_no">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်မှတ်ပုံတင်အမှတ်</label>
+                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် ရိုက်ထည့်ပါ" @bind="RegModel.university_reg_no">
+            </div>
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်ဝင်ရောက်သည့်နှစ် (ခုနှစ်)</label>
+                <input type="number" class="modern-input" placeholder="e.g. 2024" @bind="RegModel.admission_year">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အောင်မြင်သည့် ခုနှစ်</label>
+                <input type="number" class="modern-input" placeholder="e.g. 2022" @bind="RegModel.matric_passed_year">
+            </div>
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်ဝင်တန်း ခုံအမှတ်</label>
+                <input type="text" class="modern-input" placeholder="e.g. အမ-၁၂၃၄" @bind="RegModel.matric_roll_no">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">စာစစ်ဌာန</label>
+                <input type="text" class="modern-input" placeholder="စာစစ်ဌာန အမည်" @bind="RegModel.exam_center">
+            </div>
+        </div>
+
+        <div class="form-footer">
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-next" @onclick="NextStep">Next: Family Info <i class="fas fa-arrow-right"></i></button>
+        </div>
+    }
+
+    @if (CurrentStep == 3)
+    {
+        <div class="input-grid">
+            <div class="input-group full-width" style="border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 10px;">
+                <label class="input-label">၂။ ဖြေဆိုသည့်စာမေးပွဲများ</label>
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>ဖြေဆိုသည့်စာမေးပွဲများ</th>
+                                <th>အဓိကဘာသာ</th>
+                                <th>ခုံအမှတ်</th>
+                                <th>ခုနှစ်</th>
+                                <th>အောင် / ကျ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" class="modern-input" value="တက္ကသိုလ်ဝင်တန်း" readonly></td>
+                                <td><input type="text" class="modern-input" @bind="RegModel.past_exam_major"></td>
+                                <td><input type="text" class="modern-input" @bind="RegModel.past_exam_roll_no"></td>
+                                <td><input type="number" class="modern-input" @bind="RegModel.past_exam_year"></td>
+                                <td><input type="text" class="modern-input" @bind="RegModel.past_exam_status"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အဘ အမည် (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="အဘ အမည်" @bind="RegModel.father_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အဘ မှတ်ပုံတင်အမှတ် (NRC)</label>
+                <input type="text" class="modern-input" placeholder="၉/မကန(နိုင်)၁၂၃၄၅၆" @bind="RegModel.app_guardian_nrc">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အဘ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="RegModel.father_occupation">
+            </div>
+            <div class="input-group"></div>
+
+            <div class="input-group">
+                <label class="input-label">အမိ အမည် (မြန်မာစာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="အမိ အမည်" @bind="RegModel.mother_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')">
+            </div>
+            <div class="input-group"></div>
+
+            <div class="input-group">
+                <label class="input-label">အမိ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="RegModel.mother_occupation">
+            </div>
+            <div class="input-group"></div>
+
+            <div class="input-group full-width" style="border-top: 1px dashed #e2e8f0; padding-top: 20px; margin-top: 10px;">
+                <label class="input-label" style="font-size: 1rem;">၃။ ကျောင်းနေရန်အထောက်အပံ့ပြုမည့် ပုဂ္ဂိုလ်</label>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အမည် <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="အုပ်ထိန်းသူ အမည်" @bind="RegModel.guardian_name" required>
+            </div>
+            <div class="input-group">
+                <label class="input-label">ဆွေမျိုးတော်စပ်ပုံ</label>
+                <input type="text" class="modern-input" placeholder="e.g. ဦးလေး / အဒေါ်" @bind="RegModel.guardian_relationship">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အလုပ်အကိုင်</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="RegModel.guardian_occupation">
+            </div>
+            <div class="input-group">
+                <label class="input-label">ဆက်သွယ်ရန်လိပ်စာနှင့် ဖုန်းနံပါတ် <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="လိပ်စာ နှင့် ဖုန်း" @bind="RegModel.guardian_address_phone" required>
+            </div>
+        </div>
+
+        <div class="form-footer">
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-next" @onclick="NextStep">Next: Submit <i class="fas fa-arrow-right"></i></button>
+        </div>
+    }
+
+    @if (CurrentStep == 4)
+    {
+        <div class="input-grid">
+            <div class="input-group full-width">
+                <label class="input-label">ပညာသင်ထောက်ပံ့ကြေးပေးရန်မေတ္တာရပ်ခံခြင်း</label>
+                <div class="radio-group" style="padding: 10px 0;">
+                    <label class="radio-item"><input type="radio" name="prize" checked="@(RegModel.stipend_requested == true)" @onchange="@(() => RegModel.stipend_requested = true)"> ပြုမည်</label>
+                    <label class="radio-item"><input type="radio" name="prize" checked="@(RegModel.stipend_requested == false)" @onchange="@(() => RegModel.stipend_requested = false)"> မပြုပါ</label>
+                </div>
+            </div>
+
+            <div class="input-group full-width">
+                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin: 0 0 15px 0; color: #0f172a;">ကိုယ်ပိုင်ဝန်ခံချက်</h4>
+                    <ul style="font-size: 0.9rem; color: #475569; padding-left: 20px; margin: 0; line-height: 1.8;">
+                        <li>၁။ အထက်ဖော်ပြပါ အချက်များအားလုံး မှန်ကန်ပါသည်။</li>
+                        <li>၂။ ဤတက္ကသိုလ်၌ ကိုယ်တိုင်ပညာသင်ခွင့် တောင်းသည်ကို မိဘ (သို့မဟုတ်) အုပ်ထိန်းသူက သဘောတူကြောင်း ဖြစ်ပါသည်။</li>
+                        <li>၃။ တက္ကသိုလ်ကျောင်းသားတစ်ဦးပီသစွာ တက္ကသိုလ် / ကောလိပ်က ချမှတ်သည့် စည်းမျဉ်းစည်းကမ်းနှင့်အညီ လိုက်နာကျင့်သုံးနေထိုင်ပါမည်။</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ပညာသင်ခွင့်လျောက်ထားသူ၏ လက်မှတ် (အမည်ရိုက်ရန်)</label>
+                <input type="text" class="modern-input" placeholder="အမည် အပြည့်အစုံ ရိုက်ထည့်ပါ" @bind="RegModel.app_student_name">
+            </div>
+            <div class="input-group">
+                <label class="input-label">ဖုန်းနံပါတ် (ကျောင်းသား)</label>
+                <input type="text" class="modern-input" placeholder="ဥပမာ - 09765432100" @bind="RegModel.app_student_phone" maxlength="11">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ရက်စွဲ (Auto System Date)</label>
+                <input type="date" class="modern-input" disabled @bind="SignDate">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အုပ်ထိန်းသူအမည်</label>
+                <input type="text" class="modern-input" placeholder="အုပ်ထိန်းသူအမည် အပြည့်အစုံ ရိုက်ထည့်ပါ" @bind="RegModel.app_guardian_name">
+            </div>
+            <div class="input-group">
+                <label class="input-label">မှတ်ပုံတင်အမှတ် (အုပ်ထိန်းသူ)</label>
+                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် အပြည့်အစုံ ရိုက်ထည့်ပါ" @bind="RegModel.app_guardian_nrc">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ဖုန်းနံပါတ် (အုပ်ထိန်းသူ)</label>
+                <input type="text" class="modern-input" placeholder="ဖုန်းနံပါတ် အပြည့်အစုံ ရိုက်ထည့်ပါ" @bind="RegModel.app_guardian_phone">
+            </div>
+            <div class="input-group">
+            </div>
+
+            <div class="input-group full-width">
+                <label class="input-label">ယခုဆက်သွယ်ရန်လိပ်စာ</label>
+                <textarea class="modern-input" placeholder="ယခုလက်ရှိ နေထိုင်သောလိပ်စာ..." @bind="RegModel.current_address"></textarea>
+            </div>
+        </div>
+
+        <div class="form-footer">
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-submit" style="background: #10b981;" disabled="@IsSubmitting" @onclick="SubmitRegistrationForm">
+                @if (IsSubmitting)
+                {
+                    <span>Submitting... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                }
+                else
+                {
+                    <span>ငွေပေးချေမှုစနစ်သို့ သွားရန် <i class="fas fa-credit-card"></i></span>
+                }
             </button>
-        }
-        else
-        {
-            <button type="button" class="btn-m3-submit-form" @onclick="HandleFormSubmission" style="background: linear-gradient(135deg, #1D9E75, #10b981); color: white; border: none; padding: 14px 36px; font-size: 1rem; font-weight: 700; border-radius: 50px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);">
-                <span>ငွေပေးချေမှုစနစ်သို့ သွားရန်</span>
-                <i class="fas fa-credit-card"></i>
-            </button>
-        }
+        </div>
+    }
+</div>
+
+@if (ShowModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            @if (IsSuccessModal)
+            {
+                <i class="fas fa-check-circle modal-icon success"></i>
+                <h3>အောင်မြင်ပါသည်</h3>
+            }
+            else
+            {
+                <i class="fas fa-exclamation-circle modal-icon error"></i>
+                <h3>အသိပေးချက်</h3>
+            }
+
+            <p>@ModalMessage</p>
+            <button class="btn-modal @(IsSuccessModal ? "success" : "")" @onclick="CloseModal">အိုကေ</button>
+        </div>
     </div>
-
-</body>
-
-@code {
-    // 🌟 DATABASE ထဲသို့ တိုက်ရိုက်ဝင်မည့် StudentRegistration Instance Carrier
-    private StudentRegistration regModel = new StudentRegistration()
-    {
-        AcademicYearRange = "2025-2026",
-        NationalityStatus = "တိုင်းရင်းသား",
-        StipendRequested = false,
-        Status = "Pending"
-    };
-
-    private DateTime? dateTimeBridge = DateTime.Now;
-
-    // 🌟 [RESOLVED CS1061] DateOnly နှင့် DateTime ကြား အလိုအလျောက် ပြောင်းလဲပေးသည့် တံတား
-    private DateTime dobBridge
-    {
-        get => regModel.Dob.ToDateTime(TimeOnly.MinValue);
-        set => regModel.Dob = DateOnly.FromDateTime(value);
-    }
-
-    private string validationMessage = "";
-    private bool isSubmittingForm = false;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity?.IsAuthenticated == true)
-        {
-            regModel.CreatedBy = user.Identity.Name;
-
-            // 🌟 [RESOLVED CS1061] Email မရှိသောကြောင့် ဝင်ရောက်စွက်ဖက်ခြင်း မပြုတော့ဘဲ UserId သီးသန့်ကိုသာ ချိတ်ဆက်ပါသည်
-            var sysUser = await DbContext.Users.FirstOrDefaultAsync(u => u.UserName == user.Identity.Name);
-            if (sysUser != null)
-            {
-                regModel.UserId = sysUser.UserId;
-            }
-        }
-    }
-
-    private async Task HandleFormSubmission()
-    {
-        if (isSubmittingForm) return;
-
-        // 💡 ကိုကို့ဖောင်ထဲက အမည် (မြန်မာ) နှင့် မှတ်ပုံတင် ထည့်သွင်းထားခြင်း ရှိမရှိ စစ်ဆေးခြင်း
-        if (string.IsNullOrWhiteSpace(regModel.StudentNameMm) || string.IsNullOrWhiteSpace(regModel.StudentNrcNo))
-        {
-            validationMessage = "ကျောင်းသားအမည် (မြန်မာ) နှင့် မှတ်ပုံတင်အမှတ်များကို မဖြစ်မနေ ထည့်သွင်းပေးရပါမည် ကိုကို။";
-            return;
-        }
-
-        try
-        {
-            isSubmittingForm = true;
-            validationMessage = "";
-
-            if (dateTimeBridge.HasValue)
-            {
-                regModel.ApplicationDate = dateTimeBridge.Value;
-            }
-            regModel.CreatedDatetime = DateTime.Now;
-
-            // 🚀 DATABASE TRANSMISSION (Entity Framework ဒေတာသိမ်းဆည်းခြင်း စနစ်)
-            DbContext.StudentRegistrations.Add(regModel);
-            await DbContext.SaveChangesAsync();
-
-            // 🚀 SUCCESS REDIRECTION (ငွေသွင်းမျက်နှာပြင် ဒုတိယဖိုင်ဆီသို့ ID သယ်ဆောင်ပြီး လမ်းကြောင်းချိတ်ဆက်ခြင်း)
-            NavManager.NavigateTo($"/registerpayment?id={regModel.RegistrationId}", true);
-        }
-        catch (Exception ex)
-        {
-            validationMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            isSubmittingForm = false;
-        }
-    }
-}
-
-<script>
-    function previewImage(input) {
-        const file = input.files[0];
-        const label = document.getElementById('photoLabel');
-        const icon = document.getElementById('photoIcon');
-
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                label.style.backgroundImage = "url('" + e.target.result + "')";
-                if (icon) icon.style.opacity = '0';
-            }
-            reader.readAsDataURL(file);
-        }
-    }
-</script>
-
-</html>
-
-
-@code {
-   
-    private string startYear = ""; 
-    private string endYear = "";
-    private StudentRegistration Reg  = new StudentRegistration();
-
-    private async Task SaveRegistration()
-    {
-        Reg.AcademicYearRange = $"{startYear}-{endYear}";
-       DbContext.StudentRegistrations.Add(Reg);
-        await DbContext.SaveChangesAsync();
-    }
 }

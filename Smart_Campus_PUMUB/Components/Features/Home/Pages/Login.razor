@@ -514,7 +514,8 @@
                 await customAuth.UpdateAuthenticationState(new UserSession
                 {
                     Username = user.UserName,
-                    Role = user.Role.RoleName
+                    Role = user.Role.RoleName,
+                    UserId = user.UserId
                 });
 
                 string roleName = user.Role.RoleName.ToLower();
