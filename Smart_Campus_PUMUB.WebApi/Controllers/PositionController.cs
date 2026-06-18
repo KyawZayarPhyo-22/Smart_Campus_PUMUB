@@ -94,11 +94,35 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeletePosition(int id)
         {
+            // Position ရှိမရှိ စစ်ဆေး
             var item = _db.Positions.FirstOrDefault(x => x.PositionId == id && x.IsDelete == false);
-            if (item is null) return NotFound(new PositionDeleteResponseModel { IsSuccess = false, Message = "ရာထူးကို ရှာမတွေ့ပါ။" });
+
+            if (item is null)
+            {
+                return NotFound(new PositionDeleteResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "ရာထူးကို ရှာမတွေ့ပါ။"
+                });
+            }
+
+            // ဒီ Position ကို အသုံးပြုနေတဲ့ သူ (Employee/User) ရှိမရှိ စစ်ဆေး
+            // Database Table အမည်ကို လိုအပ်သလို ပြင်သုံးပေးပါ (ဥပမာ - _db.Employees သို့မဟုတ် _db.Users)
+            // x.Tutors ထဲမှာ ကိုကိုစစ်ချင်တဲ့ id ပါသလားဆိုတာကို .Any() နဲ့ ထပ်စစ်ပေးတာပါ
+            bool hasUsers = _db.Tutors.Any(x => x.TutorId == id);
+
+            if (hasUsers)
+            {
+                return BadRequest(new PositionDeleteResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "ဤရာထူးကို အသုံးပြုနေသူများ ရှိနေသောကြောင့် ဖျက်၍ မရပါ။"
+                });
+            }
 
             // Soft Delete အလုပ်လုပ်ပုံ
             item.IsDelete = true;
+
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
@@ -111,7 +135,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return Ok(new PositionDeleteResponseModel
             {
                 IsSuccess = result > 0,
-                Message = result > 0 ? "ဖျက်ဆီးမှု အောင်မြင်ပါသည်။" : "ဖျက်ဆီးမှု မအောင်မြင်ပါ။"
+                Message = result > 0 ? "ရာထူးဖျက်ခြင်း အောင်မြင်ပါသည်။" : "ရာထူးဖျက်ခြင်း မအောင်မြင်ပါ။"
             });
         }
     }

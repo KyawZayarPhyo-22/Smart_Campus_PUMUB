@@ -25,6 +25,7 @@ public partial class Page_PositionList
     private bool IsProcessing { get; set; } = false;
 
     private string statusMessage;
+    private bool IsSuccess;
 
     // Delete Modal Controls
     private bool ShowModal { get; set; } = false;
@@ -84,10 +85,11 @@ public partial class Page_PositionList
     // 🚀 DELETE Method ဖြင့် သက်ဆိုင်ရာ Position ID အား ဖျက်ချခြင်း
     private async Task DeletePosition()
     {
+        // ရွေးချယ်ထားတဲ့ Position မရှိရင် အလုပ်မလုပ်အောင် တားထားပါမယ်
         if (SelectedPosition == null) return;
 
         IsProcessing = true;
-        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = "ရာထူးကို ဖျက်သိမ်းနေပါသည်...";
 
         try
         {
@@ -96,24 +98,32 @@ public partial class Page_PositionList
                 EnumHttpMethod.Delete
             );
 
+            // API ကနေ IsSuccess = true ပြန်လာတဲ့အခါ
             if (response?.IsSuccess == true)
             {
-                statusMessage = response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                statusMessage = response.Message ?? "ရာထူး ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                SelectedPosition = null; // ဖျက်ပြီးသွားရင် ရွေးထားတာကို အလွတ်ပြန်ထားပေးတာက ပိုကောင်းပါတယ်
                 CloseDeleteModal();
-                await LoadPositions(); // refresh list
+                await LoadPositions(); // List ကို အသစ်ပြန်ခေါ်ပါမယ်
             }
             else
             {
-                statusMessage = response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။";
+                // API ကနေ BadRequest နဲ့ ပို့လိုက်တဲ့ Validation Message တွေ ဒီနေရာမှာ ပေါ်လာပါလိမ့်မယ်
+                statusMessage = response?.Message ?? "ရာထူး ဖျက်သိမ်း၍ မရပါ။ (အသုံးပြုနေသူများ ရှိနိုင်ပါသည်)";
             }
         }
         catch (Exception ex)
         {
-            statusMessage = $"Error: {ex.Message}";
+            // Network အခက်အခဲ ဒါမှမဟုတ် တခြား Error တွေအတွက်
+            statusMessage = $"စနစ်ချို့ယွင်းမှု ဖြစ်ပွားနေပါသည်။ Error: {ex.Message}";
         }
         finally
         {
             IsProcessing = false;
+
+            // မှတ်ချက် - အကယ်၍ Blazor ကို အသုံးပြုထားတာဆိုရင် UI ချက်ချင်း Update ဖြစ်သွားအောင် 
+            // အောက်က StateHasChanged(); ကို ဖွင့်သုံးပေးဖို့ လိုနိုင်ပါတယ်နော်။
+            // StateHasChanged(); 
         }
     }
 }
