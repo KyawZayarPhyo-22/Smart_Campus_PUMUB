@@ -64,6 +64,7 @@ public partial class Page_StudentList : ComponentBase
 
     private bool ShowDetailModal { get; set; } = false;
     private StudentRegistrationFullModel? SelectedDetail { get; set; }
+    private int ModalCurrentStep { get; set; } = 1;
     private bool IsLoading { get; set; } = true;
 
     private bool ShowConfirmModal { get; set; } = false;
@@ -102,7 +103,7 @@ public partial class Page_StudentList : ComponentBase
             data = data.Where(s => s.CreatedDatetime.Date == ToDate.Value.Date);
         }
 
-        return data.OrderBy(s => s.AcademicYearLevel).ToList();
+        return data.OrderByDescending(s => s.RegistrationId).ToList();
     }
 
     private IEnumerable<StudentRegistrationDataModel> FilteredStudents
@@ -152,6 +153,7 @@ public partial class Page_StudentList : ComponentBase
     private async Task OpenViewModal(int id)
     {
         SelectedDetail = await HttpClientService.ExecuteAsync<StudentRegistrationFullModel>($"StudentRegistrations/{id}", EnumHttpMethod.Get);
+        ModalCurrentStep = 1;
         ShowDetailModal = true;
     }
 
@@ -270,4 +272,40 @@ public class StudentRegistrationFullModel : StudentRegistrationDataModel
     public string? AppGuardianNrc { get; set; }
     public string? AppGuardianPhone { get; set; }
     public string? AppGuardianAddress { get; set; }
+
+    // Additional fields for complete 4-step registration view alignment
+    public int? UserId { get; set; }
+    public string? AdmissionSerialNo { get; set; }
+    public string? AcademicYearRange { get; set; }
+    public string? UniversityRegNo { get; set; }
+    public int? AdmissionYear { get; set; }
+    public string? GenderRelation { get; set; }
+    public string? Ethnicity { get; set; }
+    public string? Religion { get; set; }
+    public string? Pob { get; set; }
+    public string? BirthPlaceRegion { get; set; }
+    public string? NationalityStatus { get; set; }
+    public DateTime? Dob { get; set; }
+    public string? Email { get; set; }
+    public string? BloodType { get; set; }
+    public string? CovidVaccineStatus { get; set; }
+    public string? CurrentAddress { get; set; }
+    public string? PermanentAddressEn { get; set; }
+    public string? MatricRollNo { get; set; }
+    public int? MatricPassedYear { get; set; }
+    public string? ExamCenter { get; set; }
+    public string? FatherOccupation { get; set; }
+    public string? MotherOccupation { get; set; }
+    public string? PastExamMajor { get; set; }
+    public string? PastExamRollNo { get; set; }
+    public int? PastExamYear { get; set; }
+    public string? PastExamStatus { get; set; }
+    public string? PreviousYearRollNo { get; set; }
+    public string? GuardianName { get; set; }
+    public string? GuardianRelationship { get; set; }
+    public string? GuardianOccupation { get; set; }
+    public string? GuardianAddressPhone { get; set; }
+    public string? AppStudentName { get; set; }
+    public string? AppStudentPhone { get; set; }
+    public bool? StipendRequested { get; set; }
 }

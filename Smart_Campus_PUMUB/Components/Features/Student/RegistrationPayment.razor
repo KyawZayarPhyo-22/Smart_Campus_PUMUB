@@ -1,4 +1,4 @@
-﻿@page "/student/payment"
+@page "/student/payment"
 @layout MainLayout
 @using Smart_Campus_PUMUB.WebApi.Models
 @using Microsoft.AspNetCore.Components.Authorization
@@ -370,17 +370,17 @@
                         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
                             <div class="pay-form-group">
                                 <label>အမည် (Student Name) <span style="color:red;">*</span></label>
-                                <input type="text" class="pay-input" @bind="InputStudentName" placeholder="ဥပမာ - ကိုအောင်မင်း" disabled="@(PaymentModel.RegistrationId <= 0)" />
+                                <input type="text" class="pay-input" @bind="InputStudentName" placeholder="ဥပမာ - ကိုအောင်မင်း" disabled />
                             </div>
 
                             <div class="pay-form-group">
                                 <label>ခုံအမှတ် (Roll No)</label>
-                                <input type="text" class="pay-input" @bind="InputRollNo" placeholder="ဥပမာ - ၁၂၃၄" disabled="@(PaymentModel.RegistrationId <= 0)" />
+                                <input type="text" class="pay-input" @bind="InputRollNo" placeholder="ဥပမာ - ၁၂၃၄" disabled />
                             </div>
 
                             <div class="pay-form-group">
                                 <label>အတန်း (Semester) <span style="color:red;">*</span></label>
-                                <select class="pay-input" @bind="InputAcademicYear" disabled="@(PaymentModel.RegistrationId <= 0)">
+                                <select class="pay-input" @bind="InputAcademicYear" disabled>
                                     <option value="">-- သင်တန်းနှစ် ရွေးချယ်ပါ --</option>
                                     @if (SemesterList != null && SemesterList.Any())
                                     {

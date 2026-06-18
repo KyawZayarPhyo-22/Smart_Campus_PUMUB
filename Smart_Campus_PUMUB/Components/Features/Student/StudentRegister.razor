@@ -536,8 +536,24 @@
             <div class="input-group">
                 <label class="input-label">လူမျိုး နှင့် ကိုးကွယ်သည့်ဘာသာ</label>
                 <div style="display: flex; gap:10px;">
-                    <input type="text" class="modern-input" placeholder="လူမျိုး" @bind="RegModel.ethnicity">
-                    <input type="text" class="modern-input" placeholder="ဘာသာ" @bind="RegModel.religion">
+                    <select class="modern-input" @bind="RegModel.ethnicity">
+                        <option value="">-- လူမျိုး ရွေးပါ --</option>
+                        <option value="ဗမာ">ဗမာ</option>
+                        <option value="ကချင်">ကချင်</option>
+                        <option value="ကယား">ကယား</option>
+                        <option value="ကရင်">ကရင်</option>
+                        <option value="ချင်း">ချင်း</option>
+                        <option value="မွန်">မွန်</option>
+                        <option value="ရခိုင်">ရခိုင်</option>
+                        <option value="ရှမ်း">ရှမ်း</option>
+                    </select>
+                    <select class="modern-input" @bind="RegModel.religion">
+                        <option value="">-- ဘာသာ ရွေးပါ --</option>
+                        <option value="ဗုဒ္ဓဘာသာ">ဗုဒ္ဓဘာသာ</option>
+                        <option value="ခရစ်ယာန်ဘာသာ">ခရစ်ယာန်ဘာသာ</option>
+                        <option value="အစ္စလာမ်ဘာသာ">အစ္စလာမ်ဘာသာ</option>
+                        <option value="ဟိန္ဒူဘာသာ">ဟိန္ဒူဘာသာ</option>
+                    </select>
                 </div>
             </div>
             <div class="input-group">
@@ -610,7 +626,21 @@
 
             <div class="input-group">
                 <label class="input-label">အထူးပြုဘာသာ</label>
-                <input type="text" class="modern-input" placeholder="e.g. Computing" @bind="RegModel.major">
+                <select class="modern-input" @bind="RegModel.major">
+                    <option value="">-- အထူးပြုဘာသာ ရွေးချယ်ပါ --</option>
+                    <optgroup label="Computer University (ကွန်ပျူတာတက္ကသိုလ်)">
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Computer Technology">Computer Technology</option>
+                        <option value="Information Technology">Information Technology</option>
+                    </optgroup>
+                    <optgroup label="GTC / Polytechnic (နည်းပညာတက္ကသိုလ်)">
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Electronic Engineering">Electronic Engineering</option>
+                        <option value="Electrical Power Engineering">Electrical Power Engineering</option>
+                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                        <option value="Information Technology Engineering">Information Technology Engineering</option>
+                    </optgroup>
+                </select>
             </div>
             <div class="input-group">
                 <label class="input-label">ခုံအမှတ်</label>
@@ -665,10 +695,21 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td><input type="text" class="modern-input" value="တက္ကသိုလ်ဝင်တန်း" readonly></td>
+                                <td>
+                                    <select class="modern-input" @bind="PastExamSemester">
+                                        <option value="">-- ရွေးချယ်ပါ --</option>
+                                        @if (SemesterList != null && SemesterList.Any())
+                                        {
+                                            @foreach (var sem in SemesterList)
+                                            {
+                                                <option value="@sem.SemesterName">@sem.SemesterName</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
                                 <td><input type="text" class="modern-input" @bind="RegModel.past_exam_major"></td>
                                 <td><input type="text" class="modern-input" @bind="RegModel.past_exam_roll_no"></td>
-                                <td><input type="number" class="modern-input" @bind="RegModel.past_exam_year"></td>
+                                <td><input type="date" class="modern-input" @bind="PastExamDate"></td>
                                 <td><input type="text" class="modern-input" @bind="RegModel.past_exam_status"></td>
                             </tr>
                         </tbody>
@@ -684,22 +725,22 @@
             <div class="input-group">
                 <label class="input-label">အဘ မှတ်ပုံတင်အမှတ် (NRC)</label>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnGuardianNrcStateChanged">
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnFatherNrcStateChanged">
                         <option value="">တိုင်း</option>
                         @for (int i = 1; i <= 14; i++)
                         {
-                            <option value="@i" selected="@(GuardianNrcState == i.ToString())">@i</option>
+                            <option value="@i" selected="@(FatherNrcState == i.ToString())">@i</option>
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
-                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="GuardianNrcTownship">
+                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="FatherNrcTownship">
                         <option value="">မြို့နယ်</option>
-                        @foreach (var town in GuardianTownshipList)
+                        @foreach (var town in FatherTownshipList)
                         {
                             <option value="@town">@town</option>
                         }
                     </select>
-                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="GuardianNrcType">
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="FatherNrcType">
                         <option value="(နိုင်)">(နိုင်)</option>
                         <option value="(ဧည့်)">(ဧည့်)</option>
                         <option value="(ပြု)">(ပြု)</option>
@@ -707,7 +748,7 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="GuardianNrcNumber" maxlength="6">
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="FatherNrcNumber" maxlength="6">
                 </div>
             </div>
 
@@ -721,13 +762,10 @@
                 <label class="input-label">အမိ အမည် (မြန်မာစာဖြင့်)</label>
                 <input type="text" class="modern-input" placeholder="အမိ အမည်" @bind="RegModel.mother_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')">
             </div>
-            <div class="input-group"></div>
-
             <div class="input-group">
                 <label class="input-label">အမိ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
                 <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="RegModel.mother_occupation">
             </div>
-            <div class="input-group"></div>
 
             <div class="input-group full-width" style="border-top: 1px dashed #e2e8f0; padding-top: 20px; margin-top: 10px;">
                 <label class="input-label" style="font-size: 1rem;">၃။ ကျောင်းနေရန်အထောက်အပံ့ပြုမည့် ပုဂ္ဂိုလ်</label>

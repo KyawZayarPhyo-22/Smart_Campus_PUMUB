@@ -23,7 +23,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             stipend_requested = false,
             gender_relation = "Male",
             blood_type = "O",
-            academic_year_range = "2023-2024",
+            academic_year_range = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}",
             admission_year = DateTime.Now.Year
         };
 
@@ -49,6 +49,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public IBrowserFile? SelectedPhotoFile { get; set; }
         public byte[]? SelectedPhotoBytes { get; set; }
         public List<SemesterModel> SemesterList { get; set; } = new();
+        public string PastExamSemester { get; set; } = "";
+        public DateTime? PastExamDate { get; set; }
 
         public string NrcType { get; set; } = "(နိုင်)";
         public List<string> CurrentTownshipList { get; set; } = new();
@@ -58,6 +60,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public string GuardianNrcType { get; set; } = "(နိုင်)";
         public string? GuardianNrcNumber { get; set; }
         public List<string> GuardianTownshipList { get; set; } = new();
+
+        public string? FatherNrcState { get; set; }
+        public string? FatherNrcTownship { get; set; }
+        public string FatherNrcType { get; set; } = "(နိုင်)";
+        public string? FatherNrcNumber { get; set; }
+        public List<string> FatherTownshipList { get; set; } = new();
 
         private readonly Dictionary<string, List<string>> NrcTownshipsByState = new()
         {
@@ -160,6 +168,17 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 GuardianTownshipList = new List<string>();
         }
 
+        public void OnFatherNrcStateChanged(ChangeEventArgs e)
+        {
+            FatherNrcState = e.Value?.ToString();
+            FatherNrcTownship = "";
+
+            if (!string.IsNullOrEmpty(FatherNrcState) && NrcTownshipsByState.ContainsKey(FatherNrcState))
+                FatherTownshipList = NrcTownshipsByState[FatherNrcState];
+            else
+                FatherTownshipList = new List<string>();
+        }
+
         private async Task OnPhotoSelected(InputFileChangeEventArgs e)
         {
             SelectedPhotoFile = e.File;
@@ -204,6 +223,19 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     ShowError("ကျေးဇူးပြု၍ မရှိမဖြစ်လိုအပ်သော အချက်အလက်များ (*) ကို အပြည့်အစုံ ဖြည့်စွက်ပါ။");
                     return;
                 }
+
+                // Auto-fill Step 3 matriculation table fields from Step 2
+                RegModel.past_exam_major = RegModel.major;
+                RegModel.past_exam_roll_no = RegModel.roll_no;
+                if (!string.IsNullOrEmpty(RegModel.academic_year_range))
+                {
+                    var parts = RegModel.academic_year_range.Split('-');
+                    if (parts.Length > 0 && int.TryParse(parts[0], out int yr))
+                    {
+                        RegModel.past_exam_year = yr;
+                        PastExamDate = new DateTime(yr, 1, 1);
+                    }
+                }
             }
             else if (CurrentStep == 3)
             {
@@ -224,6 +256,24 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     RegModel.app_guardian_name = RegModel.guardian_name;
                     RegModel.app_guardian_phone = RegModel.guardian_address_phone;
                     RegModel.current_address = RegModel.permanent_address_mm;
+
+                    // Automatically copy Father's NRC to Guardian's NRC variables if they are empty
+                    if (string.IsNullOrEmpty(GuardianNrcState))
+                    {
+                        GuardianNrcState = FatherNrcState;
+                        GuardianNrcTownship = FatherNrcTownship;
+                        GuardianNrcType = FatherNrcType;
+                        GuardianNrcNumber = FatherNrcNumber;
+                        if (!string.IsNullOrEmpty(GuardianNrcState) && NrcTownshipsByState.ContainsKey(GuardianNrcState))
+                        {
+                            GuardianTownshipList = NrcTownshipsByState[GuardianNrcState];
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(GuardianNrcState) && !string.IsNullOrEmpty(GuardianNrcTownship) && !string.IsNullOrEmpty(GuardianNrcNumber))
+                    {
+                        RegModel.app_guardian_nrc = $"{GuardianNrcState}/{GuardianNrcTownship}{GuardianNrcType}{GuardianNrcNumber}";
+                    }
                 }
                 CurrentStep++;
             }
@@ -266,6 +316,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             RegModel.dob = DobDate ?? DateTime.Now;
             RegModel.covid_vaccine_status = CovidDate?.ToString("dd-MM-yyyy") ?? "-";
 
+            if (PastExamDate.HasValue)
+            {
+                RegModel.past_exam_year = PastExamDate.Value.Year;
+            }
+            RegModel.previous_year_roll_no = PastExamSemester;
+
             if (!string.IsNullOrEmpty(RegModel.nrc_state) && !string.IsNullOrEmpty(RegModel.nrc_township) && !string.IsNullOrEmpty(RegModel.nrc_number))
                 RegModel.student_nrc_no = $"{RegModel.nrc_state}/{RegModel.nrc_township}{NrcType}{RegModel.nrc_number}";
             else
@@ -273,7 +329,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
             if (!string.IsNullOrEmpty(GuardianNrcState) && !string.IsNullOrEmpty(GuardianNrcTownship) && !string.IsNullOrEmpty(GuardianNrcNumber))
                 RegModel.app_guardian_nrc = $"{GuardianNrcState}/{GuardianNrcTownship}{GuardianNrcType}{GuardianNrcNumber}";
-            else
+            else if (string.IsNullOrEmpty(RegModel.app_guardian_nrc))
                 RegModel.app_guardian_nrc = "-";
 
             RegModel.student_name_mm ??= "-";
