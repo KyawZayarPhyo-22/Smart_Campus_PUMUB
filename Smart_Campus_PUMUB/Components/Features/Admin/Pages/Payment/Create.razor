@@ -1,51 +1,103 @@
 @page "/admin/fee/create"
 @layout AdminLayout
 
-<div class="tab-pane fade show active" id="addFeeContainer" tabindex="-1">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content tech-card">
+<!-- Page Header -->
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <NavLink href="/admin/fees" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </NavLink>
+        <div>
+            <h3><i class="bi bi-cash-coin me-2 text-info"></i>Add Fee Structure</h3>
+            <p>Define the monthly fee amount for a class year.</p>
+        </div>
+    </div>
+</div>
 
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">
-                    Add New Payment Fee
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="tech-card">
+
+            <div class="mb-4 pb-3 border-bottom" style="border-color: var(--border) !important;">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-plus-circle me-2 text-info"></i>Fee Details
                 </h5>
+                <p class="text-muted small mb-0 mt-1">
+                    Fields marked with <span class="text-danger">*</span> are required.
+                </p>
             </div>
 
-            <div class="modal-body">
-                <div class="row g-3">
+            <div class="row g-3">
 
-                    <div class="col-12 mb-2">
-                        <label class="form-label text-light">Class Year</label>
-                        <input type="text" class="form-control"
-                            placeholder="Enter Class Year (e.g., First Year, Senior)">
-                    </div>
-
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label text-light">Monthly Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" step="0.01" placeholder="0.00">
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label text-light">Status</label>
-                        <select class="form-select">
-                            <option value="Active" selected>Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                    </div>
-
+                <!-- Class Year -->
+                <div class="col-12">
+                    <label class="form-label">
+                        Class Year <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="">-- Select Class Year --</option>
+                        <option value="First Year">First Year</option>
+                        <option value="Second Year">Second Year</option>
+                        <option value="Third Year">Third Year</option>
+                        <option value="Fourth Year">Fourth Year</option>
+                        <option value="Fifth Year">Fifth Year</option>
+                    </select>
+                    <div class="form-text">Select the academic year this fee applies to (max 50 characters).</div>
                 </div>
+
+                <!-- Monthly Amount -->
+                <div class="col-12 col-sm-7">
+                    <label class="form-label">
+                        Monthly Amount <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold">
+                            <i class="bi bi-currency-dollar"></i>
+                        </span>
+                        <input type="number"
+                               class="form-control"
+                               step="0.01"
+                               min="0"
+                               placeholder="0.00" />
+                        <span class="input-group-text text-muted" style="font-size:0.8rem;">/ month</span>
+                    </div>
+                    <div class="form-text">Enter the decimal fee amount (e.g., 500.00). Stored as DECIMAL(10,2).</div>
+                </div>
+
+                <!-- Status -->
+                <div class="col-12 col-sm-5">
+                    <label class="form-label">
+                        Status <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="Active" selected>Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                    <div class="form-text">Default: Active.</div>
+                </div>
+
+                <!-- Info note -->
+                <div class="col-12">
+                    <div class="alert py-2 px-3 mb-0"
+                         style="background:rgba(34,211,238,0.07);border:1px solid rgba(34,211,238,0.2);border-radius:0.5rem;">
+                        <i class="bi bi-info-circle me-2 text-info"></i>
+                        <small class="text-muted">
+                            <strong class="text-info">Tip:</strong> Each class year should have one <strong>Active</strong> fee structure.
+                            Set old records to <em>Inactive</em> before creating a new one for the same year.
+                        </small>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="modal-footer border-0 pt-0">
-                <NavLink href="/admin/fees" class="nav-link me-3">
-                    <span class="sidebar-text text-muted">Cancel</span>
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top"
+                 style="border-color: var(--border) !important;">
+                <NavLink href="/admin/fees" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
                 </NavLink>
-
-                <button type="button" class="btn btn-primary">
-                    Create Fee
+                <button type="button" class="btn btn-info text-dark fw-semibold">
+                    <i class="bi bi-save me-1"></i>Create Fee Structure
                 </button>
             </div>
 

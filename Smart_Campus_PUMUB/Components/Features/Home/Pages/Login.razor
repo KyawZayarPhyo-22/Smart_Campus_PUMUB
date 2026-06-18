@@ -1,0 +1,296 @@
+﻿@page "/login"
+@layout EmptyLayout
+@* @using Microsoft.EntityFrameworkCore *@
+@* @using Smart_Campus_PUMUB.Database.AppDbContext *@
+@* @using Smart_Campus_PUMUB.Components.Features.Services *@
+@using Smart_Campus_PUMUB.Components.Shared.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@* @inject SmartCampusDbContext DbContext *@
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+@* <div class="split-viewport-wrapper">
+    <div class="split-main-card">
+
+        <div class="split-left-panel">
+            <div class="left-panel-overlay"></div>
+            <div class="left-panel-content">
+                <span class="welcome-text">Welcome to hell</span>
+                <div class="nav-brand">
+                     <div class="brand-emblem-sphere" style="width: 54px;
+    height: 54px;
+    color: aliceblue;
+
+    backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;">
+        <div class="logo"
+          style="background-color: white;border-radius: 50%; width: 60px;height: 60px;align-items: center;">
+          <img src="/puu.png" alt="img" style="width: 60px;height: 60px">
+        </div>
+      </div>
+      <div class="nav-brand-text">
+        <span>Polytechnic University</span>
+        <span>Maubin · Est. 1999</span>
+      </div>
+                </div>
+                <h2 class="brand-title">Smart Campus</h2>
+                <p class="brand-description">
+                    A premier knowledge gateway dedicated to advancing technologies and empowering future innovations.
+                </p>
+                <div class="brand-meta-tags">
+                    <span>CREATOR MODE</span>
+                    <span>·</span>
+                    <span>DESIGNER MODE</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="split-right-panel">
+            <div class="right-panel-content">
+                <h3 class="form-main-headline">Sign In to Account</h3>
+                <p class="form-sub-headline">Please enter your campus credentials below.</p>
+
+                <div class="m3-form-engine">
+                    <div class="modern-field-container">
+                        <label class="modern-field-label">Username Identity</label>
+                        <div class="modern-input-capsule">
+                            <i class="fas fa-user-shield field-icon-accent"></i>
+                            <input type="text" class="bootstrap-destroyer-input"
+                                placeholder="Enter your account username" @bind="username" @bind:event="oninput"
+                                @onkeydown="HandleKeyDown" />
+                        </div>
+                    </div>
+
+                    <div class="modern-field-container">
+                        <label class="modern-field-label">Security Credentials</label>
+                        <div class="modern-input-capsule">
+                            <i class="fas fa-key field-icon-accent"></i>
+                            <input type="@PasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
+                                placeholder="Enter secure password" @bind="password" @bind:event="oninput"
+                                @onkeydown="HandleKeyDown" />
+
+                            <button type="button" class="field-eye-toggler-btn" @onclick="TogglePasswordVisibility"
+                                tabindex="-1">
+                                <i class="fas @(isPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="luxury-error-banner alert-bounce">
+                            <div class="error-accent-edge"></div>
+                            <i class="fas fa-circle-exclamation"></i>
+                            <span>@errorMessage</span>
+                        </div>
+                    }
+
+                    <div class="action-button-layer">
+                        @if (isLoggingIn)
+                        {
+                            <button class="modern-action-btn-processing" disabled>
+                                <div class="btn-spinner-loader"></div> Authenticating user session...
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="modern-action-btn" @onclick="HandleLogin">
+                                <span>Sign In Portal</span>
+                                <i class="fas fa-arrow-right-long arrow-slide-motion"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="split-right-footer">
+                    <p>&copy; @DateTime.Now.Year PUMUB Subsystem. All Rights Reserved.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div> *@
+
+
+
+<div class="split-viewport-wrapper">
+    <div class="split-main-card">
+
+        <div class="split-left-panel" style="display: flex;flex-direction: column;justify-content: center;background-color: #f8fafc;gap: 20px">
+            <div class="left-panel-overlay" ></div>
+            <div class="left-panel-content" style=" height: 100%;display: flex;flex-direction: column;margin-top: 20px">
+                <div class=""><span class="welcome-text" style="font-size: 24px;font-weight: 800;color: white">Welcome to</span></div>
+                <div class="nav-brand">
+                    
+                        <div class="logo"
+                            style="background-color: white;border-radius: 80%; width: 120px;height: 120px;align-items: center;">
+                            <img src="/puu.png" alt="img" style="width: 120px;height: 120px">
+                        </div>
+
+                </div>
+                <div class="nav-brand-text" style="margin-top: 20px;">
+                    <span style="font-size: 24px;color: white">Polytechnic University</span>
+                    
+                </div>
+                <p class="brand-description">
+                    A premier knowledge gateway dedicated to advancing technologies and empowering future innovations.
+                </p>
+
+            </div>
+        </div>
+
+        <div class="split-right-panel">
+            <div class="right-panel-content">
+                <h3 class="form-main-headline">Sign In to Account</h3>
+                <p class="form-sub-headline">Please enter your campus credentials below.</p>
+
+                <div class="m3-form-engine">
+                    <div class="modern-field-container">
+                        <label class="modern-field-label">Username </label>
+                        <div class="modern-input-capsule">
+                            <i class="fas fa-user-shield field-icon-accent"></i>
+                            <input type="text" class="bootstrap-destroyer-input"
+                                placeholder="Enter your account username" />
+                        </div>
+                    </div>
+
+                    <div class="modern-field-container">
+                        <label class="modern-field-label">Password</label>
+                        <div class="modern-input-capsule">
+                            <i class="fas fa-key field-icon-accent"></i>
+                            <input type="password" class="bootstrap-destroyer-input password-padding-fix"
+                                placeholder="Enter secure password" />
+
+                            <button type="button" class="field-eye-toggler-btn" tabindex="-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="luxury-error-banner alert-bounce" style="display: none;">
+                        <div class="error-accent-edge"></div>
+                        <i class="fas fa-circle-exclamation"></i>
+                        <span>Error message goes here</span>
+                    </div>
+
+                    <div class="action-button-layer" style="display: flex;gap: 15px;">
+                        <button type="button" class="modern-action-btn1">
+                            <a href="/" style="text-decoration: none;color: #5A4FCF;">Home Page</a>
+                        </button>
+                        <button type="button" class="modern-action-btn" style="backgroud: #5A4FCF">
+                            <span>Sign In</span>
+                        </button>
+
+                    </div>
+                </div>
+
+               
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+
+@* @code
+{
+    private string username = "";
+    private string password = "";
+    private string errorMessage = "";
+    private bool isLoggingIn = false;
+
+    // PASSWORD VISIBILITY ENGINE STATE
+    private bool isPasswordRenderedText = false;
+    private string PasswordInputType => isPasswordRenderedText ? "text" : "password";
+
+    private void TogglePasswordVisibility()
+    {
+        isPasswordRenderedText = !isPasswordRenderedText;
+    }
+
+    private async Task HandleLogin()
+    {
+        if (isLoggingIn) return;
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Please enter your username and security key.";
+            return;
+        }
+
+        try
+        {
+            isLoggingIn = true;
+            errorMessage = "";
+
+             var user = await DbContext.Users 
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.UserName == username && u.IsDelete != true);
+
+            if (user != null && user.Password == password)
+            {
+                var customAuth = (CustomAuthStateProvider)AuthStateProvider;
+                await customAuth.UpdateAuthenticationState(new UserSession
+                {
+                    Username = user.UserName,
+                    Role = user.Role.RoleName
+                });
+
+                string roleName = user.Role.RoleName.ToLower();
+
+                if (roleName.Contains("admin")) NavManager.NavigateTo("/admin/dashboard", true);
+                else if (roleName.Contains("tutor")) NavManager.NavigateTo("/", true);
+                else if (roleName.Contains("student")) NavManager.NavigateTo("/", true);
+                else NavManager.NavigateTo("/", true);
+            }
+            else
+            {
+                errorMessage = "Invalid login credentials. Please re-check.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Database Connection Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoggingIn = false;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleLogin();
+    }
+} *@
+
+@code
+{
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // LocalStorage ထဲက isLoggedIn ရဲ့ တန်ဖိုးကို လှမ်းဖတ်မယ်
+            var loginStatus = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "isLoggedIn");
+
+            // တန်ဖိုးက null မဟုတ်ရုံတင်မကဘဲ စာသားက "true" ဖြစ်မှ သွားခိုင်းပါမယ်
+            if (!string.IsNullOrEmpty(loginStatus) && loginStatus == "true")
+            {
+                NavigationManager.NavigateTo("/");
+            }
+        }
+    }
+}

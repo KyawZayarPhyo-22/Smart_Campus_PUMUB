@@ -1,0 +1,279 @@
+@page "/rules"
+@using System.ComponentModel.DataAnnotations
+<style>
+    /* Rule Card Container */
+    .rule-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        margin-bottom: 20px;
+        border-left: 5px solid #e11d48;
+        /* Red accent for attention */
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .rule-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Header Section */
+    .rule-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .rule-badge {
+        background-color: #ffe4e6;
+        color: #e11d48;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .rule-title {
+        margin: 0;
+        font-size: 1.25rem;
+        color: #1f2937;
+        font-weight: 600;
+    }
+
+    /* Body & Penalty Section */
+    .rule-description {
+        margin: 0;
+        color: #4b5563;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .rule-penalty {
+        background-color: #fffbeb;
+        color: #b45309;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid #fde68a;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Footer Section */
+    .rule-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        padding-top: 16px;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .rule-meta {
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+
+    .rule-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-edit {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+
+    .btn-edit:hover {
+        background-color: #e5e7eb;
+    }
+
+    .btn-delete {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .btn-delete:hover {
+        background-color: #fca5a5;
+    }
+
+    /* --- Grid System for Rule Cards --- */
+    .rules-grid {
+        display: grid;
+        /* Card တစ်ခုကို အနည်းဆုံး 300px ကျယ်စေပြီး နေရာလွတ်ရှိသလောက် အလိုအလျောက် အတန်းစီပေးပါမည် */
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        /* Card တစ်ခုနှင့်တစ်ခု ကြားအကွာအဝေး */
+        margin-top: 30px;
+    }
+
+    /* Card များ စာလုံးအနည်းအများပေါ်မူတည်ပြီး အမြင့်မညီတာမျိုးမဖြစ်အောင် ပြင်ပေးခြင်း */
+    .rule-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        /* သင့်ရဲ့ လက်ရှိ rule-card CSS အဟောင်းတွေကို ဒီမှာ ဆက်ထားပါ... */
+    }
+
+    /* Footer ကို အောက်ဆုံးမှာ အမြဲကပ်နေစေရန် */
+    .rule-body {
+        flex-grow: 1;
+    }
+</style>
+
+
+<section id="events" style="background:var(--bg2);margin-top: 50px;">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <div class="section-tag"><i class="fas fa-calendar-alt"></i>Rules</div>
+                <h2 class="section-title">Rules & <span>Regulations</span></h2>
+               
+            </div>
+        </div>
+        <div class="" style="display: flex;justify-content: space-between;margin-bottom: 40px;">
+            <div class="programs-tabs">
+
+
+            </div>
+            <div class="">
+                <div class="input-group rounded-pill shadow-sm bg-white"
+                    style="max-width: 400px; border: 1px solid #e0e0e0; overflow: hidden;">
+
+                    <input type="text" class="form-control border-0 shadow-none px-4" placeholder="Search"
+                        aria-label="Search" style="background-color: transparent;">
+
+                    <button class="btn border-0 shadow-none px-4" type="button"
+                        style="color: #5A4FCF; background-color: transparent;">
+                        <i class="fas fa-search" style="font-size: 1.2rem; font-weight: bold;"></i>
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="rules-grid">
+
+            <div class="rule-card">
+                <div class="rule-header">
+                    <span class="rule-badge">Rule #1</span>
+                    <h3 class="rule-title">Late Submission of Assignments</h3>
+                </div>
+                <div class="rule-body">
+                    <p class="rule-description">
+                        All assignments must be submitted to the portal before the designated deadline. Extensions are
+                        only
+                        granted with prior approval from the department head.
+                    </p>
+                    <div class="rule-penalty">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Penalty:</strong> <span>10% mark deduction per day late.</span>
+                    </div>
+                </div>
+                <div class="rule-footer">
+                    <span class="rule-meta">Last updated: 24 Oct 2024</span>
+                </div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-header">
+                    <span class="rule-badge">Rule #2</span>
+                    <h3 class="rule-title">Dress Code Policy</h3>
+                </div>
+                <div class="rule-body">
+                    <p class="rule-description">
+                        Students are required to wear the official university uniform on designated days. Casual wear
+                        must be appropriate and decent on non-uniform days.
+                    </p>
+                    <div class="rule-penalty">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Penalty:</strong> <span>Denied entry to classrooms.</span>
+                    </div>
+                </div>
+                <div class="rule-footer">
+                    <span class="rule-meta">Last updated: 20 Oct 2024</span>
+                </div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-header">
+                    <span class="rule-badge">Rule #3</span>
+                    <h3 class="rule-title">Campus Parking</h3>
+                </div>
+                <div class="rule-body">
+                    <p class="rule-description">
+                        Vehicles must be parked only in designated student parking zones. Displaying a valid parking
+                        sticker is mandatory at all times.
+                    </p>
+                    <div class="rule-penalty">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Penalty:</strong> <span>Vehicle clamped & fine applied.</span>
+                    </div>
+                </div>
+                <div class="rule-footer">
+                    <span class="rule-meta">Last updated: 15 Oct 2024</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="d-flex justify-content-end mt-5 mb-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0">
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1 px-3" href="#" style="color: #495057;">
+                            <i class="fas fa-chevron-left fa-sm"></i> Prev
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#" style="color: #495057;">
+                            1
+                        </a>
+                    </li>
+
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#"
+                            style="background-color: #5A4FCF; border-color: #5A4FCF; color: white;">
+                            2
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#" style="color: #495057;">
+                            3
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#" style="color: #495057;">
+                            4
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1 px-3" href="#" style="color: #495057;">
+                            Next <i class="fas fa-chevron-right fa-sm"></i>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>

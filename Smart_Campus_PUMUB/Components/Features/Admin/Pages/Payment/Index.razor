@@ -1,117 +1,223 @@
 @page "/admin/fees"
 @layout AdminLayout
 
-<div class="tab-pane fade show active" id="v-pills-fees">
-    <div class="mb-4">
-        <h3 class="fw-bold mb-1">Payment Fees Directory</h3>
-    </div>
-
-    <div class="tech-card">
-        <div class="row g-3 mb-4">
-            <div class="col-md-5">
-                <div class="input-group">
-                    <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control border-start-0"
-                        placeholder="Search by Fee ID or Class Year...">
-                </div>
-            </div>
-
-            <div class="col-md-7 text-end">
-                <NavLink href="/admin/fee/create" class="btn btn-primary nav-link d-inline-block text-white">
-                    <span class="sidebar-text"><i class="bi bi-plus-lg me-1"></i> Add Payment Fee</span>
-                </NavLink>
-            </div>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h3><i class="bi bi-cash-coin me-2 text-info"></i>Payment Fees</h3>
+            <p>Manage monthly fee structures for each class year.</p>
         </div>
-
-        <div class="table-responsive">
-            <table class="table table-tech align-middle mb-0" style="color: aliceblue;">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Class Year</th>
-                        <th>Monthly Amount</th>
-                        <th>Status</th>
-                        <th>Created Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td class="fw-semibold">First Year</td>
-                        <td>$ 500.00</td>
-                        <td><span class="badge bg-success">Active</span></td>
-                        <td>Oct 24, 2023</td>
-                        <td>
-                            <NavLink href="/admin/fee/edit/1" class="btn btn-sm btn-outline-primary me-2">
-                                <i class="bi bi-pencil"></i> Edit
-                            </NavLink>
-                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                data-bs-target="#deleteFeeModal">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>2</td>
-                        <td class="fw-semibold">Second Year</td>
-                        <td>$ 550.00</td>
-                        <td><span class="badge bg-secondary">Inactive</span></td>
-                        <td>Oct 25, 2023</td>
-                        <td>
-                            <NavLink href="/admin/fee/edit" class="btn btn-sm btn-outline-primary me-2">
-                                <i class="bi bi-pencil"></i> Edit
-                            </NavLink>
-                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                data-bs-target="#deleteFeeModal">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <NavLink href="/admin/fee/create" class="btn btn-sm btn-info text-dark fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i> Add Fee Structure
+        </NavLink>
     </div>
 </div>
 
-<div class="modal fade" id="deleteFeeModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content tech-card">
+<div class="tech-card">
 
-            <div class="modal-header border-0">
-                <h5 class="modal-title text-danger fw-bold">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
-                </button>
+    <div class="tech-card-header">
+        <h6 class="tech-card-title">
+            <i class="bi bi-table me-2 text-info"></i>All Fee Structures
+        </h6>
+        <span class="badge bg-info text-dark">4 Records</span>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-md-5">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text search-icon-bg">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text"
+                       class="form-control border-start-0"
+                       placeholder="Search by Fee ID or Class Year..." />
             </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <select class="form-select form-select-sm">
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
 
-            <div class="modal-body text-center">
-                <div class="mb-3">
-                    <i class="bi bi-trash-fill" style="font-size:4rem;color:#dc3545;">
-                    </i>
-                </div>
-                <h4 class="fw-bold">
-                    Delete Fee Structure?
-                </h4>
-                <p class="text-muted">
-                    This action cannot be undone.
-                    The fee details for this class year will be permanently removed.
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-tech table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Class Year</th>
+                    <th>Monthly Amount</th>
+                    <th class="d-none d-sm-table-cell">Status</th>
+                    <th class="d-none d-md-table-cell">Created Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-muted">1</td>
+                    <td class="fw-semibold">First Year</td>
+                    <td>
+                        <span class="fw-bold text-success">
+                            <i class="bi bi-currency-dollar" style="font-size:0.8rem;"></i>500.00
+                        </span>
+                        <small class="text-muted d-block" style="font-size:0.7rem;">/ month</small>
+                    </td>
+                    <td class="d-none d-sm-table-cell">
+                        <span class="badge bg-success">Active</span>
+                    </td>
+                    <td class="d-none d-md-table-cell text-secondary">Jun 10, 2026</td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <NavLink href="/admin/fee/edit/1" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-pencil"></i>
+                                <span class="d-none d-sm-inline ms-1">Edit</span>
+                            </NavLink>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteFeeModal">
+                                <i class="bi bi-trash"></i>
+                                <span class="d-none d-sm-inline ms-1">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">2</td>
+                    <td class="fw-semibold">Second Year</td>
+                    <td>
+                        <span class="fw-bold text-success">
+                            <i class="bi bi-currency-dollar" style="font-size:0.8rem;"></i>550.00
+                        </span>
+                        <small class="text-muted d-block" style="font-size:0.7rem;">/ month</small>
+                    </td>
+                    <td class="d-none d-sm-table-cell">
+                        <span class="badge bg-success">Active</span>
+                    </td>
+                    <td class="d-none d-md-table-cell text-secondary">Jun 10, 2026</td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <NavLink href="/admin/fee/edit/2" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-pencil"></i>
+                                <span class="d-none d-sm-inline ms-1">Edit</span>
+                            </NavLink>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteFeeModal">
+                                <i class="bi bi-trash"></i>
+                                <span class="d-none d-sm-inline ms-1">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">3</td>
+                    <td class="fw-semibold">Third Year</td>
+                    <td>
+                        <span class="fw-bold text-success">
+                            <i class="bi bi-currency-dollar" style="font-size:0.8rem;"></i>600.00
+                        </span>
+                        <small class="text-muted d-block" style="font-size:0.7rem;">/ month</small>
+                    </td>
+                    <td class="d-none d-sm-table-cell">
+                        <span class="badge bg-success">Active</span>
+                    </td>
+                    <td class="d-none d-md-table-cell text-secondary">Jun 10, 2026</td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <NavLink href="/admin/fee/edit/3" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-pencil"></i>
+                                <span class="d-none d-sm-inline ms-1">Edit</span>
+                            </NavLink>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteFeeModal">
+                                <i class="bi bi-trash"></i>
+                                <span class="d-none d-sm-inline ms-1">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">4</td>
+                    <td class="fw-semibold">Fourth Year</td>
+                    <td>
+                        <span class="fw-bold text-warning">
+                            <i class="bi bi-currency-dollar" style="font-size:0.8rem;"></i>650.00
+                        </span>
+                        <small class="text-muted d-block" style="font-size:0.7rem;">/ month</small>
+                    </td>
+                    <td class="d-none d-sm-table-cell">
+                        <span class="badge bg-secondary">Inactive</span>
+                    </td>
+                    <td class="d-none d-md-table-cell text-secondary">Jun 11, 2026</td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <NavLink href="/admin/fee/edit/4" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-pencil"></i>
+                                <span class="d-none d-sm-inline ms-1">Edit</span>
+                            </NavLink>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteFeeModal">
+                                <i class="bi bi-trash"></i>
+                                <span class="d-none d-sm-inline ms-1">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary bar -->
+    <div class="d-flex align-items-center justify-content-between mt-3 flex-wrap gap-2">
+        <div class="d-flex gap-3">
+            <small class="text-muted">Showing 4 of 4 records</small>
+            <small>
+                <span class="text-success fw-semibold">3 Active</span>
+                <span class="text-muted mx-1">·</span>
+                <span class="text-secondary">1 Inactive</span>
+            </small>
+        </div>
+        <nav aria-label="Fee pagination">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteFeeModal" tabindex="-1" aria-labelledby="deleteFeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center px-4 pb-2">
+                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:3.5rem;"></i>
+                <h5 class="fw-bold mt-3 mb-1">Delete Fee Structure?</h5>
+                <p class="text-muted small mb-0">
+                    This action cannot be undone. The fee structure for this class year will be permanently removed.
                 </p>
             </div>
-
-            <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Cancel
-                </button>
-                <button type="button" class="btn btn-danger">
-                    <i class="bi bi-trash me-2"></i>
-                    Yes, Delete
+            <div class="modal-footer border-0 justify-content-center gap-2 pt-2">
+                <button type="button" class="btn btn-sm btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-danger px-4">
+                    <i class="bi bi-trash me-1"></i>Yes, Delete
                 </button>
             </div>
-
         </div>
     </div>
 </div>

@@ -1,53 +1,133 @@
-@page "/admin/fee/edit"
+@page "/admin/fee/edit/{id:int}"
 @layout AdminLayout
 
-<div class="tab-pane fade show active" id="editFeeContainer" tabindex="-1">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content tech-card">
+<!-- Page Header -->
+<div class="page-header">
+    <div class="d-flex align-items-center gap-2">
+        <NavLink href="/admin/fees" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </NavLink>
+        <div>
+            <h3><i class="bi bi-cash-coin me-2 text-warning"></i>Edit Fee Structure</h3>
+            <p>Update the monthly fee amount and status for a class year.</p>
+        </div>
+    </div>
+</div>
 
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">
-                    Edit Payment Fee
-                </h5>
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="tech-card">
+
+            <!-- Current record summary -->
+            <div class="mb-4 pb-3 border-bottom" style="border-color: var(--border) !important;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="stat-icon"
+                         style="width:44px;height:44px;background:rgba(34,211,238,0.12);border-radius:0.5rem;font-size:1.2rem;">
+                        <i class="bi bi-cash text-info"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">First Year Fee</h5>
+                        <span class="text-muted small">
+                            Fee #1 &bull; <span class="text-success fw-semibold">$500.00 / month</span>
+                        </span>
+                    </div>
+                    <span class="badge bg-success ms-auto">Active</span>
+                </div>
+                <p class="text-muted small mb-0 mt-2">
+                    Fields marked with <span class="text-danger">*</span> are required.
+                </p>
             </div>
 
-            <div class="modal-body">
-                <div class="row g-3">
+            <div class="row g-3">
 
-                    <div class="col-12 mb-2">
-                        <label class="form-label text-light">Class Year</label>
-                        <input type="text" class="form-control" value="First Year" placeholder="Enter Class Year">
+                <!-- Class Year -->
+                <div class="col-12">
+                    <label class="form-label">
+                        Class Year <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="">-- Select Class Year --</option>
+                        <option value="First Year" selected>First Year</option>
+                        <option value="Second Year">Second Year</option>
+                        <option value="Third Year">Third Year</option>
+                        <option value="Fourth Year">Fourth Year</option>
+                        <option value="Fifth Year">Fifth Year</option>
+                    </select>
+                    <div class="form-text">The academic year this fee applies to (max 50 characters).</div>
+                </div>
+
+                <!-- Monthly Amount -->
+                <div class="col-12 col-sm-7">
+                    <label class="form-label">
+                        Monthly Amount <span class="text-danger">*</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text fw-bold">
+                            <i class="bi bi-currency-dollar"></i>
+                        </span>
+                        <input type="number"
+                               class="form-control"
+                               step="0.01"
+                               min="0"
+                               value="500.00"
+                               placeholder="0.00" />
+                        <span class="input-group-text text-muted" style="font-size:0.8rem;">/ month</span>
                     </div>
+                    <div class="form-text">Enter the decimal fee amount (e.g., 500.00). Stored as DECIMAL(10,2).</div>
+                </div>
 
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label text-light">Monthly Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" class="form-control" step="0.01" value="500.00" placeholder="0.00">
+                <!-- Status -->
+                <div class="col-12 col-sm-5">
+                    <label class="form-label">
+                        Status <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select">
+                        <option value="Active" selected>Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <!-- Audit info (read-only) -->
+                <div class="col-12">
+                    <div class="p-3 rounded-2"
+                         style="background:rgba(255,255,255,0.03);border:1px solid var(--border);">
+                        <p class="text-muted small mb-1 fw-bold" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;">
+                            Record Audit Info
+                        </p>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <p class="mb-0" style="font-size:0.75rem;">
+                                    <span class="text-muted">Created:</span>
+                                    <span class="text-secondary ms-1">Jun 10, 2026</span>
+                                </p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-0" style="font-size:0.75rem;">
+                                    <span class="text-muted">Last Modified:</span>
+                                    <span class="text-secondary ms-1">—</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="col-md-6 mb-2">
-                        <label class="form-label text-light">Status</label>
-                        <select class="form-select">
-                            <option value="Active" selected>Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-                    </div>
-
                 </div>
+
             </div>
 
-            <div class="modal-footer border-0 pt-0">
-                <NavLink href="/admin/fees" class="nav-link me-3">
-                    <span class="sidebar-text text-muted">Cancel</span>
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top"
+                 style="border-color: var(--border) !important;">
+                <NavLink href="/admin/fees" class="btn btn-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
                 </NavLink>
-
-                <button type="button" class="btn btn-primary">
-                    Save Changes
+                <button type="button" class="btn btn-warning text-dark fw-semibold">
+                    <i class="bi bi-save me-1"></i>Save Changes
                 </button>
             </div>
 
         </div>
     </div>
 </div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}

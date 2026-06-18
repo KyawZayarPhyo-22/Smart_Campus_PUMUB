@@ -1,0 +1,54 @@
+@page "/student/payment"
+@layout MainLayout
+@rendermode InteractiveServer
+
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<div class="payment-viewport" style="margin-top: 130px;">
+    <div class="payment-card animate-fade">
+        <div class="payment-header">
+            <h2>ကျောင်းလခနှင့် စာမေးပွဲကြေး ပေးချေရန်</h2>
+            <p>Registration Connection Verified — ID: <strong>TargetRegistrationId</strong></p>
+        </div>
+
+        <div class="payment-body">
+            <!-- Bank Detail Box -->
+            <div class="bank-info-box">
+                <h6 style="font-weight: 900;"><i class="fas fa-university"></i> ကျောင်းတော်ကြီး၏ ဘဏ်အကောင့်များ</h6>
+                <p>KBZ Pay / Wave Pay : <strong>09-777888999</strong></p>
+                <p>KBZ Bank Account : <strong>123-456-789012345</strong></p>
+                <span class="pay-alert">* ငွေလွှဲပြောင်းပြီးပါက အောက်တွင် ဘဏ်စလစ်ပုံ တင်ပေးရပါမည်။</span>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="pay-form-group">
+                <label>ပေးချေရမည့် ငွေပမာဏ (Kyats)</label>
+                <input type="number" class="pay-input" value="5,0000" disabled/>
+            </div>
+
+            <div class="pay-form-group">
+                <label>ငွေပေးချေသည့် စနစ် (Payment Method)</label>
+                <select class="pay-input" bind="paymentModel.PaymentMethod">
+                    <option value="KBZPay">KBZ Pay</option>
+                    <option value="WavePay">Wave Pay</option>
+                    <option value="KBZ Bank">KBZ Bank Transfer</option>
+                </select>
+            </div>
+
+            <div class="pay-form-group">
+                <label>ဘဏ်ပြေစာ/စလစ်ပုံ (Receipt Image URL/Path)</label>
+                <input type="file" accept="image/*" style="padding-top: 8px;" class="pay-input" bind="paymentModel.ReceiptImage" placeholder="ဥပမာ - receipts/slip001.png" />
+            </div>
+
+            
+
+            <button class="btn-submit-payment" onclick="SubmitPaymentData" disabled="isSavingPayment">
+                
+               
+                    <span>ငွေသွင်းစလစ် အတည်ပြုမည်</span>
+                
+            </button>
+        </div>
+    </div>
+</div>

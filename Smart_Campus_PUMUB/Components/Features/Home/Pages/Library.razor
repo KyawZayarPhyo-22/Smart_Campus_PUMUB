@@ -1,60 +1,58 @@
 @page "/Library"
-<section id="library" style="background:var(--bg2);margin-top: 50px;">
+@rendermode InteractiveServer
+
+<section id="library" style="margin:50px;">
     <div class="container">
-        <div class="section-header" data-aos="fade-up">
+        <div class="section-header">
             <div>
                 <div class="section-tag"><i class="fas fa-book"></i> Knowledge Hub</div>
                 <h2 class="section-title">University <span>Library</span></h2>
-                <p class="section-desc">Access over 50,000 books, journals, and digital resources across all engineering
-                    and technology disciplines.</p>
+                
             </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:40px;"
-            data-aos="fade-up">
-            <div
-                style="background:linear-gradient(135deg,var(--secondary),var(--accent));border-radius:16px;padding:24px;text-align:center;color:#fff;">
-                <i class="fas fa-book" style="font-size:2rem;margin-bottom:8px;"></i>
-                <div style="font-size:1.5rem;font-weight:900;font-family:'Playfair Display',serif;">50,000+</div>
-                <div style="font-size:0.78rem;opacity:0.8;">Physical Books</div>
+        <div class="" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+
+            <div class="">
+                <div class="dropdown">
+
+                    <button class="btn dropdown-toggle rounded-pill shadow-sm bg-white px-4 py-2" type="button"
+                        @onclick="ToggleMenu" style="border: 1px solid #e0e0e0; color: #495057; font-weight: 500;">
+                        Select Category
+                    </button>
+
+                    <ul class="dropdown-menu shadow-sm border-0 mt-2 py-2 @(isOpen ? "show" : "")"
+                        style="border-radius: 12px; @(isOpen ? "display: block;" : "display: none;")">
+                        <li><a class="dropdown-item py-2 px-3" href="#">Option 1</a></li>
+                        <li><a class="dropdown-item py-2 px-3" href="#">Option 2</a></li>
+                        <li><a class="dropdown-item py-2 px-3" href="#">Option 3</a></li>
+                    </ul>
+
+                </div>
             </div>
-            <div
-                style="background:var(--card-bg);border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border);">
-                <i class="fas fa-tablet-alt" style="font-size:2rem;margin-bottom:8px;color:var(--secondary);"></i>
-                <div style="font-size:1.5rem;font-weight:900;font-family:'Playfair Display',serif;color:var(--text);">
-                    15,000+</div>
-                <div style="font-size:0.78rem;color:var(--text2);">E-Books</div>
+
+            <div class="">
+                <div class="input-group rounded-pill shadow-sm bg-white"
+                    style="max-width: 400px; border: 1px solid #e0e0e0; overflow: hidden;">
+
+                    <input type="text" class="form-control border-0 shadow-none px-4 py-2" placeholder="Search"
+                        aria-label="Search" style="background-color: transparent;">
+
+                    <button class="btn border-0 shadow-none px-4" type="button"
+                        style="color: #5A4FCF; background-color: transparent;">
+                        <i class="fas fa-search" style="font-size: 1.2rem; font-weight: bold;"></i>
+                    </button>
+
+                </div>
             </div>
-            <div
-                style="background:var(--card-bg);border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border);">
-                <i class="fas fa-file-alt" style="font-size:2rem;margin-bottom:8px;color:var(--accent);"></i>
-                <div style="font-size:1.5rem;font-weight:900;font-family:'Playfair Display',serif;color:var(--text);">
-                    8,000+</div>
-                <div style="font-size:0.78rem;color:var(--text2);">Research Papers</div>
-            </div>
-            <div
-                style="background:var(--card-bg);border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border);">
-                <i class="fas fa-journal-whills" style="font-size:2rem;margin-bottom:8px;color:var(--gold);"></i>
-                <div style="font-size:1.5rem;font-weight:900;font-family:'Playfair Display',serif;color:var(--text);">
-                    200+</div>
-                <div style="font-size:0.78rem;color:var(--text2);">Journals</div>
-            </div>
+
         </div>
-        <div class="library-grid" data-aos="fade-up">
-            <div class="book-card">
-                <div class="book-cover">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=280&q=80" alt="Book">
-                    <span class="book-avail avail-yes">Available</span>
-                </div>
-                <div class="book-body">
-                    <div class="book-category">Civil Engineering</div>
-                    <h4>Structural Analysis & Design</h4>
-                    <p class="book-author">Dr. Aung Kyaw Zin</p>
-                </div>
-            </div>
+
+
+        <div class="library-grid">
+          
             <div class="book-card">
                 <div class="book-cover">
                     <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=280&q=80" alt="Book">
-                    <span class="book-avail avail-yes">Available</span>
                 </div>
                 <div class="book-body">
                     <div class="book-category">Electronics</div>
@@ -65,7 +63,6 @@
             <div class="book-card">
                 <div class="book-cover">
                     <img src="https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?w=400&h=280&q=80" alt="Book">
-                    <span class="book-avail avail-no">Borrowed</span>
                 </div>
                 <div class="book-body">
                     <div class="book-category">IT</div>
@@ -76,7 +73,6 @@
             <div class="book-card">
                 <div class="book-cover">
                     <img src="https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&h=280&q=80" alt="Book">
-                    <span class="book-avail avail-yes">Available</span>
                 </div>
                 <div class="book-body">
                     <div class="book-category">Mechanical</div>
@@ -87,7 +83,7 @@
             <div class="book-card">
                 <div class="book-cover">
                     <img src="https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&h=280&q=80" alt="Book">
-                    <span class="book-avail avail-yes">Available</span>
+
                 </div>
                 <div class="book-body">
                     <div class="book-category">Electrical</div>
@@ -107,5 +103,60 @@
                 </div>
             </div>
         </div>
+
+        <div class="d-flex justify-content-end mt-5 mb-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0">
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1 px-3" href="#" style="color: #495057;">
+                            <i class="fas fa-chevron-left fa-sm"></i> Prev
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#" style="color: #495057;">
+                            1
+                        </a>
+                    </li>
+
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#"
+                            style="background-color: #5A4FCF; border-color: #5A4FCF; color: white;">
+                            2
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#" style="color: #495057;">
+                            3
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1" href="#" style="color: #495057;">
+                            4
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link rounded-pill shadow-sm border-0 mx-1 px-3" href="#" style="color: #495057;">
+                            Next <i class="fas fa-chevron-right fa-sm"></i>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
     </div>
 </section>
+
+@code
+{
+    private bool isOpen = false;
+
+    private void ToggleMenu()
+    {
+        isOpen = !isOpen;
+    }
+}
