@@ -52,6 +52,8 @@ public class RuleModel
     public string? Title { get; set; }
     public string? Description { get; set; }
     public string? Penalty { get; set; }
+    public DateTime CreatedDateTime { get; set; } // 🌟 ဒီနေရာမှာ ရှိဖို့လိုပါတယ်
+
 }
 
 // ==========================================
@@ -139,6 +141,7 @@ public class DepartmentModel
     public string? DepartmentName { get; set; }
 
     public string? FacultyName { get; set; }
+    
 }
 
 // ==========================================
@@ -185,6 +188,7 @@ public class BookModel
     public int CategoryId { get; set; }
     public string? BookName { get; set; }
     public string? Image { get; set; }
+    
 
 }
 

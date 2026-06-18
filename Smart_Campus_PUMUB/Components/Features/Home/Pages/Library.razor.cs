@@ -1,69 +1,73 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Pages
 {
-    // 🌟 [CONNECTED INTERFACE]: HTML View ဘက်မှ @inherits စနစ်ဖြင့် ကွက်တိ လှမ်းချိတ်နိုင်ရန် ဖန်တီးထားပါသည်
     public class LibraryBase : ComponentBase
     {
-        [Inject] public HttpClientService HttpClientService { get; set; } = null!;
+        [Inject] public HttpClientService HttpClientService { get; set; } = default!;
 
-        // 💡 ကိုကိုပေးထားသော Web API View Model "BookModel" စံနှုန်းအတိုင်း တိကျစွာ သတ်မှတ်ခြင်း
         public List<BookModel> masterBooks { get; set; } = new();
         public List<BookModel> filteredBooks { get; set; } = new();
-        public string searchQuery { get; set; } = "";
+        public List<CategoryModel> Categories { get; set; } = new();
 
-        protected override async Task OnInitializedAsync()
+        public int SelectedCategoryId { get; set; } = 0;
+        public string searchQuery { get; set; } = "";
+        public bool isSearching { get; set; } = false;
+        public bool isOpen { get; set; } = false;
+
+        // အရေးကြီး: Page တိုင်းမှာ Data အသစ်ပြန်ခေါ်ရန်
+        protected override async Task OnParametersSetAsync()
         {
             await LoadBooks();
         }
 
-        // 🚀 API ဆီကနေ "books" လမ်းကြောင်းအတိုင်း HttpClient ဖြင့် ဒေတာဆွဲယူခြင်းစနစ်
         public async Task LoadBooks()
         {
-            try
-            {
-                var response = await HttpClientService.ExecuteAsync<List<BookModel>>("book", EnumHttpMethod.Get);
-                if (response != null)
-                {
-                    masterBooks = response;
-                }
-                ApplyFilter();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"API Transport Error (Library): {ex.Message}");
-                masterBooks = new List<BookModel>();
-                ApplyFilter();
-            }
+            masterBooks = await HttpClientService.ExecuteAsync<List<BookModel>>("book", EnumHttpMethod.Get) ?? new();
+            Categories = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get) ?? new();
+            FilterData();
         }
 
-        // 🔍 စာအုပ်ခေါင်းစဉ်အလိုက် ချက်ချင်းစစ်ထုတ်ပေးမည့် Dynamic Filter Logic
-        public void ApplyFilter()
-        {
-            if (masterBooks == null) return;
+        public void ToggleMenu() => isOpen = !isOpen;
 
-            if (string.IsNullOrWhiteSpace(searchQuery))
+        public void OnCategorySelected(int categoryId)
+        {
+            SelectedCategoryId = categoryId;
+            isOpen = false;
+            FilterData();
+        }
+
+        public void FilterData()
+        {
+            var query = masterBooks.AsEnumerable();
+
+            if (SelectedCategoryId != 0)
+                query = query.Where(b => b.CategoryId == SelectedCategoryId);
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
             {
-                filteredBooks = masterBooks;
+                query = query.Where(b => b.BookName != null && 
+                                        b.BookName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+                isSearching = true;
             }
             else
             {
-                filteredBooks = masterBooks
-                    .Where(b => b.BookName != null && b.BookName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                isSearching = false;
             }
+
+            // အသစ်ထည့်ထားတဲ့ စာအုပ်တွေ အရင်ပေါ်စေရန် ID အကြီးဆုံးကနေ အငယ်ကို စီသည်
+            filteredBooks = query.OrderByDescending(b => b.BookId).ToList();
+            
+            StateHasChanged();
         }
 
-        public void ResetFilter()
+        public void ClearSearch()
         {
             searchQuery = "";
-            ApplyFilter();
+            isSearching = false;
+            FilterData();
         }
     }
 }

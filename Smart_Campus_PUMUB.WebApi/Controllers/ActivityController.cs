@@ -33,14 +33,29 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetActivities()
         {
             // Database ကနေ Data အရင်ဆွဲထုတ်ပြီး မှတ်ဉာဏ်ထဲမှာ စစ်မယ်
+            // var lst = _db.Activities
+            //              .AsNoTracking()
+            //              .Where(x => x.IsDelete == false)
+            //              .ToList()
+            //              .Where(x => !IsSystemLog(x.ActivityTitle)) // ဒီနေရာမှာ စစ်ဆေးမယ်
+            //              .OrderByDescending(x => x.ActivityId)
+            //              .ToList();
             var lst = _db.Activities
-                         .AsNoTracking()
-                         .Where(x => x.IsDelete == false)
-                         .ToList()
-                         .Where(x => !IsSystemLog(x.ActivityTitle)) // ဒီနေရာမှာ စစ်ဆေးမယ်
-                         .OrderByDescending(x => x.ActivityId)
-                         .ToList();
-
+                             .AsNoTracking()
+                             .Where(x => x.IsDelete == false)
+                             .ToList() // Memory ထဲဆွဲထုတ်ခြင်း
+                             .Where(x => !IsSystemLog(x.ActivityTitle))
+                             .OrderByDescending(x => x.CreatedDateTime) // 🌟 အသစ်ဆုံးကို အရင်ပြရန်
+                             .Select(x => new
+                             {
+                                 x.ActivityId,
+                                 x.ActivityTitle,
+                                 x.Description,
+                                 x.Image,
+                                 x.Location,
+                                 CreatedAt = x.CreatedDateTime // 🌟 Model မှာ CreatedAt လို့သုံးထားရင် ဒီလို Mapping လုပ်ပါ
+                             })
+                             .ToList();
             return Ok(lst);
         }
 
@@ -105,7 +120,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 Image = imagePath,
                 Description = request.Description,
                 Location = request.Location,
-                IsDelete = false
+                IsDelete = false,
+                CreatedDateTime = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();
@@ -223,8 +239,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return "bi-info-circle";
         }
 
-    
-}
+
+    }
 
 
 }
