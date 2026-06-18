@@ -90,6 +90,27 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+    .view-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .view-input-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #a1a5b7;
+        margin-bottom: 2px;
+    }
+    .view-modern-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #323248;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #ffffff;
+        background: #2b2b40;
+    }
 </style>
 
 <div class="d-flex align-items-center mb-4 mt-2">
@@ -237,94 +258,274 @@
                         <div class="bg-primary rounded p-2 me-3 shadow-sm">
                             <i class="bi bi-file-earmark-person fs-5 text-white"></i>
                         </div>
-                        Registration Details
+                        Student Registration & Payment Profile
                     </h5>
                     <button type="button" class="btn-close btn-close-white opacity-75" @onclick="CloseViewModal"></button>
                 </div>
 
                 <div class="modal-body p-4">
-                    <div class="row g-4">
+                    <!-- Tab Controls -->
+                    <ul class="nav nav-pills nav-justified mb-4" style="background: #2b2b40; padding: 6px; border-radius: 12px; gap: 8px;">
+                        <li class="nav-item">
+                            <button type="button" class="nav-link @(ActiveTab == "personal" ? "active bg-primary text-white" : "text-muted") fw-bold py-2 border-0 bg-transparent" @onclick='() => ActiveTab = "personal"'>
+                                <i class="bi bi-person-circle me-2"></i>Personal Info
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link @(ActiveTab == "academic" ? "active bg-primary text-white" : "text-muted") fw-bold py-2 border-0 bg-transparent" @onclick='() => ActiveTab = "academic"'>
+                                <i class="bi bi-book-half me-2"></i>Academic Info
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link @(ActiveTab == "family" ? "active bg-primary text-white" : "text-muted") fw-bold py-2 border-0 bg-transparent" @onclick='() => ActiveTab = "family"'>
+                                <i class="bi bi-people-fill me-2"></i>Family & Guardian
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button" class="nav-link @(ActiveTab == "payment" ? "active bg-primary text-white" : "text-muted") fw-bold py-2 border-0 bg-transparent" @onclick='() => ActiveTab = "payment"'>
+                                <i class="bi bi-credit-card-2-back-fill me-2"></i>Payment Details
+                            </button>
+                        </li>
+                    </ul>
 
-                        <div class="col-md-7">
-                            <div class="card bg-dark text-white border-0 h-100 shadow-sm" style="border-radius: 12px;">
-                                <div class="card-header bg-transparent border-bottom border-secondary fw-bolder text-uppercase text-muted py-3">
-                                    <i class="bi bi-person-lines-fill me-2"></i> Student Information
+                    <!-- Tab Contents -->
+                    @if (ActiveTab == "personal")
+                    {
+                        <div class="row g-3 animate-fade">
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အမည် (မြန်မာစာဖြင့်)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.StudentNameMm" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အမည် (အင်္ဂလိပ်စာဖြင့်)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.StudentNameEn" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">မှတ်ပုံတင် (NRC)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.StudentNrcNo" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">မွေးသက္ကရာဇ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.Dob?.ToString("dd-MM-yyyy")" />
+                            </div>
+                            <div class="col-md-4 view-input-group">
+                                <span class="view-input-label">ကျား / မ</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.GenderRelation" />
+                            </div>
+                            <div class="col-md-4 view-input-group">
+                                <span class="view-input-label">သွေးအုပ်စု</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.BloodType" />
+                            </div>
+                            <div class="col-md-4 view-input-group">
+                                <span class="view-input-label">ကိုးကွယ်သည့်ဘာသာ / လူမျိုး</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.Religion / @SelectedDetail.Ethnicity" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">နိုင်ငံသား အမျိုးအစား</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.NationalityStatus" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">မွေးဖွားရာဇာတိ (မြို့နယ် / တိုင်း)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.Pob (@SelectedDetail.BirthPlaceRegion)" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">ဖုန်းနံပါတ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.AppStudentPhone" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">Email Address</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.Email" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">ကိုဗစ်ကာကွယ်ဆေးထိုးပြီးသည့်ရက်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.CovidVaccineStatus" />
+                            </div>
+                        </div>
+                    }
+                    else if (ActiveTab == "academic")
+                    {
+                        <div class="row g-3 animate-fade">
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">ပညာသင်နှစ် (Academic Year Range)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.AcademicYearRange" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">သင်တန်းနှစ် (Semester)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.AcademicYearLevel" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အထူးပြုဘာသာ (Major)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.Major" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">ခုံအမှတ် (Roll No)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.RollNo" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">တက္ကသိုလ်မှတ်ပုံတင်အမှတ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.UniversityRegNo" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">တက္ကသိုလ်ဝင်ရောက်သည့်နှစ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.AdmissionYear" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">တက္ကသိုလ်ဝင်တန်းခုံအမှတ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.MatricRollNo" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">တက္ကသိုလ်ဝင်တန်းအောင်မြင်သည့်နှစ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.MatricPassedYear" />
+                            </div>
+                            <div class="col-md-12 view-input-group">
+                                <span class="view-input-label">စာစစ်ဌာန</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.ExamCenter" />
+                            </div>
+                        </div>
+                    }
+                    else if (ActiveTab == "family")
+                    {
+                        <div class="row g-3 animate-fade">
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အဘအမည်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.FatherName" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အဘ၏ အလုပ်အကိုင် / ရာထူး</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.FatherOccupation" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အမိအမည်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.MotherName" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အမိ၏ အလုပ်အကိုင် / ရာထူး</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.MotherOccupation" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အုပ်ထိန်းသူအမည် (ဆွေမျိုးတော်စပ်ပုံ)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.GuardianName (@SelectedDetail.GuardianRelationship)" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အုပ်ထိန်းသူ ဖုန်းနှင့်လိပ်စာ</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.GuardianAddressPhone" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">အုပ်ထိန်းသူ၏ အလုပ်အကိုင်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.GuardianOccupation" />
+                            </div>
+                            <div class="col-md-6 view-input-group">
+                                <span class="view-input-label">ပညာသင်ထောက်ပံ့ကြေး လျှောက်ထားမှု</span>
+                                <input type="text" class="view-modern-input" readonly value="@(SelectedDetail.StipendRequested == true ? "ပြုလုပ်ပါသည်" : "မပြုလုပ်ပါ")" />
+                            </div>
+                            <div class="col-md-4 view-input-group">
+                                <span class="view-input-label">အုပ်ထိန်းသူ (လက်မှတ်ပေးသူ)</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.AppGuardianName" />
+                            </div>
+                            <div class="col-md-4 view-input-group">
+                                <span class="view-input-label">အုပ်ထိန်းသူ မှတ်ပုံတင်နံပါတ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.AppGuardianNrc" />
+                            </div>
+                            <div class="col-md-4 view-input-group">
+                                <span class="view-input-label">အုပ်ထိန်းသူ ဖုန်းနံပါတ်</span>
+                                <input type="text" class="view-modern-input" readonly value="@SelectedDetail.AppGuardianPhone" />
+                            </div>
+                            <div class="col-md-12 view-input-group">
+                                <span class="view-input-label">အုပ်ထိန်းသူ နေရပ်လိပ်စာ</span>
+                                <textarea class="view-modern-input" style="height:60px;" readonly>@SelectedDetail.AppGuardianAddress</textarea>
+                            </div>
+                            <div class="col-md-12 view-input-group">
+                                <span class="view-input-label">အမြဲတမ်းနေရပ်လိပ်စာ (မြန်မာစာဖြင့်)</span>
+                                <textarea class="view-modern-input" style="height:60px;" readonly>@SelectedDetail.PermanentAddressMm</textarea>
+                            </div>
+                            <div class="col-md-12 view-input-group">
+                                <span class="view-input-label">အမြဲတမ်းနေရပ်လိပ်စာ (အင်္ဂလိပ်စာဖြင့်)</span>
+                                <textarea class="view-modern-input" style="height:60px;" readonly>@SelectedDetail.PermanentAddressEn</textarea>
+                            </div>
+                            <div class="col-md-12 view-input-group">
+                                <span class="view-input-label">လက်ရှိနေရပ်လိပ်စာ</span>
+                                <textarea class="view-modern-input" style="height:60px;" readonly>@SelectedDetail.CurrentAddress</textarea>
+                            </div>
+                        </div>
+                    }
+                    else if (ActiveTab == "payment")
+                    {
+                        <div class="row g-4 animate-fade">
+                            <div class="col-md-6">
+                                <div style="background: #2b2b40; border-radius: 12px; padding: 20px; border: 1px solid #323248;">
+                                    <h6 class="fw-bold text-white mb-3" style="border-bottom:1px solid #323248; padding-bottom:8px;">
+                                        <i class="bi bi-receipt me-2 text-primary"></i>ကျောင်းလခနှင့် စာမေးပွဲကြေး အသေးစိတ်
+                                    </h6>
+                                    <div class="d-flex flex-column gap-2" style="font-size:0.88rem;">
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>မှတ်ပုံတင်ကြေး</span>
+                                            <span class="text-white">၂၀၀၀ Ks</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>ကျောင်းဝင်ကြေး</span>
+                                            <span class="text-white">၂၀၀၀ Ks</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>အားကစားကြေး</span>
+                                            <span class="text-white">၂၀၀၀ Ks</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>ဓာတ်ခွဲခန်းကြေး</span>
+                                            <span class="text-white">၆၀၀၀ Ks</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>စာမေးပွဲဝင်ကြေး</span>
+                                            <span class="text-white">၅၀၀၀ Ks</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>စာကြည့်တိုက်ကြေး</span>
+                                            <span class="text-white">၅၀၀၀ Ks</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted pb-2" style="border-bottom: 1px dashed #323248;">
+                                            <span>ကျောင်းလခ (@SelectedDetail.AcademicYearLevel)</span>
+                                            <span class="text-white">၃၀၀၀၀ Ks</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between fw-bold text-white pt-2 fs-6">
+                                            <span>စုစုပေါင်း ကျသင့်ငွေ</span>
+                                            <span class="text-success">52,000 Ks</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-body p-4" style="font-size: 0.95rem;">
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Name (MM/EN)</div>
-                                        <div class="col-8 fw-bold text-white">@SelectedDetail.StudentNameMm / @SelectedDetail.StudentNameEn</div>
+
+                                <div class="mt-3 row g-3">
+                                    <div class="col-md-6 view-input-group">
+                                        <span class="view-input-label">ပေးချေပြီးငွေပမာဏ</span>
+                                        <input type="text" class="view-modern-input fw-bold text-success" readonly value="@(payment?.AmountPaid.ToString("N0") ?? "0") Ks" />
                                     </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Roll No & Major</div>
-                                        <div class="col-8 fw-bold text-info">@SelectedDetail.RollNo <span class="text-white fw-normal">(@SelectedDetail.Major)</span></div>
-                                    </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Academic Year</div>
-                                        <div class="col-8 text-white">@SelectedDetail.AcademicYearLevel</div>
-                                    </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">NRC No</div>
-                                        <div class="col-8 text-white">@SelectedDetail.StudentNrcNo</div>
-                                    </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Parents</div>
-                                        <div class="col-8 text-white">@SelectedDetail.FatherName & @SelectedDetail.MotherName</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-4 text-muted">Address</div>
-                                        <div class="col-8 text-white">@SelectedDetail.PermanentAddressMm</div>
+                                    <div class="col-md-6 view-input-group">
+                                        <span class="view-input-label">ငွေပေးချေသည့် စနစ်</span>
+                                        <input type="text" class="view-modern-input" readonly value="@(payment?.PaymentMethod ?? "-")" />
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="col-md-5">
-                            <div class="card bg-dark text-white border-0 h-100 shadow-sm" style="border-radius: 12px;">
-                                <div class="card-header bg-transparent border-bottom border-secondary fw-bolder text-uppercase text-muted py-3">
-                                    <i class="bi bi-wallet2 me-2"></i> Payment Details
-                                </div>
-                                <div class="card-body p-4">
-                                    @if (payment != null)
+                            <div class="col-md-6">
+                                <div style="background: #2b2b40; border-radius: 12px; padding: 20px; border: 1px solid #323248; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                    <span class="view-input-label mb-3 text-uppercase fw-bold"><i class="bi bi-image me-1"></i> ဘဏ်ပြေစာ / ငွေသွင်းစလစ်ပုံ</span>
+                                    @if (payment != null && !string.IsNullOrEmpty(payment.ReceiptImage))
                                     {
-                                        <div class="d-flex justify-content-between align-items-center mb-4 bg-secondary bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-25">
-                                            <div>
-                                                <small class="text-muted d-block mb-1">Amount Paid</small>
-                                                <strong class="text-success fs-5">@payment.AmountPaid.ToString("N0") MMK</strong>
-                                            </div>
-                                            <div class="text-end">
-                                                <small class="text-muted d-block mb-1">Method</small>
-                                                <strong class="text-white">@payment.PaymentMethod</strong>
-                                            </div>
-                                        </div>
-
-                                        <div class="text-center p-3 rounded-3" style="background-color: #1a1a27; border: 1px dashed #323248;">
-                                            <p class="text-muted small mb-3 text-uppercase fw-bold"><i class="bi bi-image me-1"></i> Receipt Slip</p>
-                                            @if (!string.IsNullOrEmpty(payment.ReceiptImage))
-                                            {
-                                                <img src="@payment.ReceiptImage" alt="Receipt" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: contain; cursor: pointer;" />
-                                            }
-                                            else
-                                            {
-                                                <div class="text-danger p-4"><i class="bi bi-exclamation-circle me-2"></i> No Receipt Found</div>
-                                            }
-                                        </div>
+                                        <a href="@payment.ReceiptImage" target="_blank" title="Click to view full image">
+                                            <img src="@payment.ReceiptImage" alt="Receipt" class="img-fluid rounded shadow-sm" style="max-height: 220px; object-fit: contain; border: 1px solid #323248; padding:4px; background:#1e1e2d; cursor: pointer;" />
+                                        </a>
+                                        <span class="text-muted small mt-2 d-block"><i class="bi bi-zoom-in"></i> စလစ်ပုံကို ကြီးကြီးကြည့်ရန် ပုံပေါ်နှိပ်ပါ</span>
                                     }
                                     else
                                     {
-                                        <div class="alert alert-warning border-0 d-flex align-items-center" role="alert">
-                                            <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
-                                            <div>No payment record found for this student.</div>
-                                        </div>
+                                        <div class="text-danger p-4"><i class="bi bi-exclamation-circle me-2 fs-3"></i><br>ငွေသွင်းစလစ်ပုံ တင်ထားခြင်းမရှိပါ။</div>
                                     }
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
 
                 <div class="modal-footer border-top border-dark px-4 py-3 bg-dark" style="border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-                    <button type="button" class="btn btn-danger btn-action me-2"
+                    <button type="button" class="btn btn-danger btn-action me-2 px-4"
                             disabled="@(SelectedDetail.Status != "Pending")"
                             @onclick="@(() => PromptConfirm("Rejected"))">
                         <i class="bi bi-x-circle me-1"></i> Reject
