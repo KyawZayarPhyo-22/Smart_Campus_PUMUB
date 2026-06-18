@@ -23,6 +23,45 @@ public partial class Page_StudentList : ComponentBase
     private DateTime? FromDate { get; set; }
     private DateTime? ToDate { get; set; } = DateTime.Today;
 
+    // Filter Inputs (bound to UI)
+    private string SearchInput { get; set; } = "";
+    private string SelectedLevelInput { get; set; } = "All";
+    private DateTime? FromDateInput { get; set; }
+    private DateTime? ToDateInput { get; set; } = DateTime.Today;
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        SelectedLevel = SelectedLevelInput;
+        FromDate = FromDateInput;
+        ToDate = ToDateInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SelectedLevelInput = "All";
+        FromDateInput = null;
+        ToDateInput = DateTime.Today;
+
+        SearchTerm = "";
+        SelectedLevel = "All";
+        FromDate = null;
+        ToDate = DateTime.Today;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
+
     private bool ShowDetailModal { get; set; } = false;
     private StudentRegistrationFullModel? SelectedDetail { get; set; }
     private bool IsLoading { get; set; } = true;
@@ -31,37 +70,67 @@ public partial class Page_StudentList : ComponentBase
     private string ConfirmAction { get; set; } = "";
     private string ConfirmMessage { get; set; } = "";
 
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10; // ၁ မျက်နှာလျှင် ပြသလိုသော size (ဥပမာ - ၁၀ ယောက်စီ ပြသမည်)
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<StudentRegistrationDataModel> GetFilteredStudents()
+    {
+        var data = StudentList.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+            data = data.Where(s => (s.RollNo ?? "").Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                                   (s.StudentNameMm ?? "").Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+        if (SelectedLevel != "All")
+            data = data.Where(s => string.Equals(s.AcademicYearLevel, SelectedLevel, StringComparison.OrdinalIgnoreCase));
+
+        // 💡 1. From ရော To ရော ရွေးထားလျှင် (Range Filter)
+        if (FromDate.HasValue && ToDate.HasValue)
+        {
+            data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date && s.CreatedDatetime.Date <= ToDate.Value.Date);
+        }
+        // 💡 2. From တစ်ခုတည်း ရွေးထားလျှင် (From နောက်ပိုင်း အကုန်)
+        else if (FromDate.HasValue && !ToDate.HasValue)
+        {
+            data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date);
+        }
+        // 💡 3. From မရွေးဘဲ To တစ်ခုတည်း ရွေးထားလျှင် (ToDate ထဲက ရက်စွဲ တစ်ရက်တည်းစာ ကွက်တိရှာမည်)
+        else if (!FromDate.HasValue && ToDate.HasValue)
+        {
+            data = data.Where(s => s.CreatedDatetime.Date == ToDate.Value.Date);
+        }
+
+        return data.OrderBy(s => s.AcademicYearLevel).ToList();
+    }
+
     private IEnumerable<StudentRegistrationDataModel> FilteredStudents
     {
         get
         {
-            var data = StudentList.AsEnumerable();
+            var allFiltered = GetFilteredStudents();
 
-            if (!string.IsNullOrWhiteSpace(SearchTerm))
-                data = data.Where(s => (s.RollNo ?? "").Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                       (s.StudentNameMm ?? "").Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+            // Total Pages ကို တွက်ချက်ခြင်း
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
 
-            if (SelectedLevel != "All")
-                data = data.Where(s => string.Equals(s.AcademicYearLevel, SelectedLevel, StringComparison.OrdinalIgnoreCase));
-
-            // 💡 1. From ရော To ရော ရွေးထားလျှင် (Range Filter)
-            if (FromDate.HasValue && ToDate.HasValue)
+            // Filter ပြောင်းသွားလို့ လက်ရှိ Page က စာမျက်နှာစုစုပေါင်းထက် ကြီးသွားရင် ချိန်ညှိပေးခြင်း
+            if (CurrentPage > TotalPages)
             {
-                data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date && s.CreatedDatetime.Date <= ToDate.Value.Date);
-            }
-            // 💡 2. From တစ်ခုတည်း ရွေးထားလျှင် (From နောက်ပိုင်း အကုန်)
-            else if (FromDate.HasValue && !ToDate.HasValue)
-            {
-                data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date);
-            }
-            // 💡 3. From မရွေးဘဲ To တစ်ခုတည်း ရွေးထားလျှင် (ToDate ထဲက ရက်စွဲ တစ်ရက်တည်းစာ ကွက်တိရှာမည်)
-            else if (!FromDate.HasValue && ToDate.HasValue)
-            {
-                data = data.Where(s => s.CreatedDatetime.Date == ToDate.Value.Date);
+                CurrentPage = TotalPages;
             }
 
-            return data.OrderBy(s => s.AcademicYearLevel).ToList();
+            // Skip နှင့် Take ကို အသုံးပြုပြီး သတ်မှတ်ထားသော စာမျက်နှာအတွက်သာ data ကို ဖြတ်ယူခြင်း
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
         }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
     }
 
     protected override async Task OnInitializedAsync()
@@ -195,4 +264,10 @@ public class StudentRegistrationFullModel : StudentRegistrationDataModel
     public string? MotherName { get; set; }
     public string? StudentNrcNo { get; set; }
     public string? PermanentAddressMm { get; set; }
+    public string? StudentImage { get; set; }
+    public string? SignatureImage { get; set; }
+    public string? AppGuardianName { get; set; }
+    public string? AppGuardianNrc { get; set; }
+    public string? AppGuardianPhone { get; set; }
+    public string? AppGuardianAddress { get; set; }
 }

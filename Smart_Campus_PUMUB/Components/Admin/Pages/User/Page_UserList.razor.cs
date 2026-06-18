@@ -21,11 +21,34 @@ public partial class Page_UserList
     private bool ShowModal { get; set; } = false;
     private UserModel? SelectedUser { get; set; }
 
-    // 🔍 Search Filter (Username သို့မဟုတ် FullName ဖြင့် ရှာဖွေခြင်း)
-    private IEnumerable<UserModel> FilteredUsers => string.IsNullOrWhiteSpace(SearchTerm)
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<UserModel> GetFilteredUsers() => string.IsNullOrWhiteSpace(SearchTerm)
         ? UserList
         : UserList.Where(u => (u.FullName != null && u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
                               (u.UserName != null && u.UserName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+
+    private IEnumerable<UserModel> FilteredUsers
+    {
+        get
+        {
+            var allFiltered = GetFilteredUsers();
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync()
     {

@@ -1,0 +1,58 @@
+<!-- 💡 Reusable Pagination Component -->
+<!-- ဂျူနီယာ Developer များပါ နားလည်လွယ်အောင် ရိုးရှင်းစွာ ရေးသားထားပြီး Bootstrap စတိုင်ကို အသုံးပြုထားပါသည် -->
+<div class="d-flex justify-content-between align-items-center mt-3 px-3">
+    <!-- လက်ရှိပြသနေသော အခြေအနေ စာသား -->
+    <div class="text-muted" style="font-size: 0.9rem;">
+        Page <span class="text-success fw-bold">@CurrentPage</span> of <span class="text-dark fw-bold">@TotalPages</span>
+    </div>
+
+    <!-- Page နံပါတ် ခလုတ်များ -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm mb-0">
+            <!-- ⬅️ Previous Button -->
+            <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
+                <button class="page-link border-secondary-subtle" 
+                        style="background-color: #ffffff; color: #1b8a5a; border: 1px solid #dee2e6;"
+                        @onclick="() => ChangePage(CurrentPage - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            </li>
+
+            <!-- Page Number Buttons -->
+            @for (int i = 1; i <= TotalPages; i++)
+            {
+                var pageNumber = i;
+                <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
+                    <button class="page-link" 
+                            style="@(CurrentPage == pageNumber ? "background-color: #1b8a5a; border-color: #1b8a5a; color: #ffffff;" : "background-color: #ffffff; color: #1b8a5a; border: 1px solid #dee2e6;")"
+                            @onclick="() => ChangePage(pageNumber)">
+                        @pageNumber
+                    </button>
+                </li>
+            }
+
+            <!-- ➡️ Next Button -->
+            <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
+                <button class="page-link border-secondary-subtle" 
+                        style="background-color: #ffffff; color: #1b8a5a; border: 1px solid #dee2e6;"
+                        @onclick="() => ChangePage(CurrentPage + 1)">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+@code {
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+
+    private async Task ChangePage(int newPage)
+    {
+        if (newPage >= 1 && newPage <= TotalPages && newPage != CurrentPage)
+        {
+            await OnPageChanged.InvokeAsync(newPage);
+        }
+    }
+}

@@ -236,7 +236,7 @@
                     }
                     else
                     {
-                        int count = 1;
+                        int count = (CurrentPageAdm - 1) * PageSize + 1;
                         @foreach (var s in AdmissionReportData)
                         {
                             var currentStatus = string.IsNullOrEmpty(s.Status) ? "Pending" : s.Status;
@@ -266,6 +266,9 @@
                     }
                 </tbody>
             </table>
+        </div>
+        <div class="p-3 no-print">
+            <PaginationComponent CurrentPage="CurrentPageAdm" TotalPages="TotalPagesAdm" OnPageChanged="OnPageChangedAdm" />
         </div>
     </div>
 }
@@ -342,7 +345,7 @@
                     }
                     else
                     {
-                        int count = 1;
+                        int count = (CurrentPagePay - 1) * PageSize + 1;
                         decimal totalAmount = 0;
                         @foreach (var p in PaymentReportData)
                         {
@@ -380,6 +383,9 @@
                     }
                 </tbody>
             </table>
+        </div>
+        <div class="p-3 no-print">
+            <PaginationComponent CurrentPage="CurrentPagePay" TotalPages="TotalPagesPay" OnPageChanged="OnPageChangedPay" />
         </div>
     </div>
 }

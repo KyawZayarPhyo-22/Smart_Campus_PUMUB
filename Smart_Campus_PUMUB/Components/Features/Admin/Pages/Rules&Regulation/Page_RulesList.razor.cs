@@ -22,10 +22,58 @@ public partial class Page_RulesList
     private bool ShowModal { get; set; } = false;
     private RuleModel? SelectedRule { get; set; }
 
-    // Search Logic: Rule Title ကို ရှာဖွေခြင်း
-    private IEnumerable<RuleModel> FilteredRules => string.IsNullOrWhiteSpace(SearchTerm)
+    private string SearchInput = "";
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SearchTerm = "";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
+
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<RuleModel> GetFilteredRules() => string.IsNullOrWhiteSpace(SearchTerm)
         ? RulesList
         : RulesList.Where(r => r.Title != null && r.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<RuleModel> FilteredRules
+    {
+        get
+        {
+            var allFiltered = GetFilteredRules();
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync()
     {

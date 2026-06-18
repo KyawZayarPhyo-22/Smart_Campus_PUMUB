@@ -103,16 +103,16 @@
 <div class="material-card p-3 mb-4">
     <div class="row g-3 align-items-center">
         <!-- Search Input -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchTerm" @bind:event="oninput" />
+                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
         <!-- Level Dropdown -->
         <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedLevel">
+            <select class="form-select material-input" @bind="SelectedLevelInput">
                 <option value="All">All Academic Levels</option>
                 @foreach (var level in StudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
                 {
@@ -122,25 +122,28 @@
         </div>
 
         <!-- 💡 From Date & To Date Range Picker -->
-        <div class="col-md-5">
+        <div class="col-md-4">
             <div class="d-flex align-items-center gap-2">
                 <div class="flex-grow-1 position-relative">
-                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #1e1e2d; padding: 0 4px;">From</span>
-                    <input type="date" class="form-control material-input w-100" @bind="FromDate" />
+                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #ffffff; padding: 0 4px; color: #6b7280 !important;">From</span>
+                    <input type="date" class="form-control material-input w-100" @bind="FromDateInput" />
                 </div>
                 <span class="text-muted fw-bold">~</span>
                 <div class="flex-grow-1 position-relative">
-                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #1e1e2d; padding: 0 4px;">To</span>
-                    <input type="date" class="form-control material-input w-100" @bind="ToDate" />
+                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #ffffff; padding: 0 4px; color: #6b7280 !important;">To</span>
+                    <input type="date" class="form-control material-input w-100" @bind="ToDateInput" />
                 </div>
-                <!-- 💡 Clear Dates Button (နှိပ်လိုက်လျှင် ToDate ကို ဒီနေ့ရက်စွဲသို့ ပြန်ပြောင်းပေးမည်) -->
-                @if (FromDate != null || ToDate?.Date != DateTime.Today.Date)
-                {
-                    <button class="btn btn-sm btn-outline-danger border-0" title="Reset Filters" @onclick="() => { FromDate = null; ToDate = DateTime.Today; }">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                }
             </div>
+        </div>
+
+        <!-- Search and Reset Buttons -->
+        <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
         </div>
     </div>
 </div>
@@ -221,6 +224,9 @@
             </tbody>
         </table>
     </div>
+    
+    <!-- 🔹 Pagination Component -->
+    <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
 </div>
 
 <!-- 🔹 View Modal Section -->
@@ -228,111 +234,241 @@
 {
     var payment = SelectedDetail.RegistrationPayments?.FirstOrDefault();
 
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.65); backdrop-filter: blur(5px); z-index: 1050; overflow-y: auto;">
-        <div class="modal-dialog modal-xl modal-dialog-centered" style="z-index: 1051;">
-            <div class="modal-content material-card border-0">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1050; overflow-y: auto;">
+        <div class="modal-dialog modal-xl modal-dialog-centered" style="z-index: 1051; max-width: 1100px;">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; background-color: #ffffff; color: #1f2937;">
 
-                <div class="modal-header border-bottom border-dark px-4 py-3">
-                    <h5 class="modal-title fw-bold text-white d-flex align-items-center">
-                        <div class="bg-primary rounded p-2 me-3 shadow-sm">
-                            <i class="bi bi-file-earmark-person fs-5 text-white"></i>
-                        </div>
-                        Registration Details
+                <!-- Modal Header -->
+                <div class="modal-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between" style="background-color: #f8fafc; border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center mb-0" style="font-size: 1.25rem;">
+                        <i class="bi bi-file-earmark-person-fill text-success me-2 fs-4"></i>
+                        ကျောင်းသား/သူ စာရင်းသွင်းမှုဖောင် အချက်အလက်များ (Registration Details)
                     </h5>
-                    <button type="button" class="btn-close btn-close-white opacity-75" @onclick="CloseViewModal"></button>
+                    <button type="button" class="btn-close" style="filter: none; opacity: 0.8;" @onclick="CloseViewModal"></button>
                 </div>
 
-                <div class="modal-body p-4">
-                    <div class="row g-4">
+                <!-- Modal Body (Styled Form Layout) -->
+                <div class="modal-body p-4" style="background-color: #f1f5f9;">
+                    <!-- Stepper Mockup (Shows completed state) -->
+                    <div class="d-flex justify-content-around align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">1</span>
+                            <span class="fw-semibold text-secondary" style="font-size: 0.9rem;">Personal Info</span>
+                        </div>
+                        <div class="text-muted" style="font-size: 1.2rem;">➔</div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">2</span>
+                            <span class="fw-semibold text-secondary" style="font-size: 0.9rem;">Academic Info</span>
+                        </div>
+                        <div class="text-muted" style="font-size: 1.2rem;">➔</div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">3</span>
+                            <span class="fw-semibold text-secondary" style="font-size: 0.9rem;">Family & Guardian Info</span>
+                        </div>
+                        <div class="text-muted" style="font-size: 1.2rem;">➔</div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">4</span>
+                            <span class="fw-semibold text-secondary" style="font-size: 0.9rem;">Payment Info</span>
+                        </div>
+                    </div>
 
-                        <div class="col-md-7">
-                            <div class="card bg-dark text-white border-0 h-100 shadow-sm" style="border-radius: 12px;">
-                                <div class="card-header bg-transparent border-bottom border-secondary fw-bolder text-uppercase text-muted py-3">
-                                    <i class="bi bi-person-lines-fill me-2"></i> Student Information
+                    <div class="row g-4">
+                        <!-- Left Side: Registration Form Fields -->
+                        <div class="col-lg-8">
+                            <!-- SECTION 1: Personal Info -->
+                            <div class="bg-white p-4 mb-4 border rounded shadow-sm">
+                                <h6 class="fw-bold mb-3 pb-2 border-bottom text-success d-flex align-items-center">
+                                    <i class="bi bi-person-fill me-2 fs-5"></i> ၁။ ကိုယ်ရေးအချက်အလက် (Personal Info)
+                                </h6>
+                                
+                                <div class="row g-3">
+                                    <!-- Passport Photo Alignment -->
+                                    <div class="col-12 d-flex justify-content-center mb-3">
+                                        <div class="border rounded p-1 bg-light text-center" style="width: 120px; height: 150px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                            @if (!string.IsNullOrEmpty(SelectedDetail.StudentImage))
+                                            {
+                                                <img src="@($"https://localhost:7297{SelectedDetail.StudentImage}")" alt="Student Profile" class="img-fluid" style="height: 100%; width: 100%; object-fit: cover;" />
+                                            }
+                                            else
+                                            {
+                                                <div class="text-muted">
+                                                    <i class="bi bi-person-bounding-box fs-1 d-block mb-1"></i>
+                                                    <span style="font-size: 0.75rem;">No Photo</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- Myanmar Name -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အမည် (မြန်မာစာဖြင့်)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.StudentNameMm" />
+                                    </div>
+
+                                    <!-- English Name -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အမည် (အင်္ဂလိပ်စာဖြင့်)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.StudentNameEn" />
+                                    </div>
+
+                                    <!-- NRC Number -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">မှတ်ပုံတင်အမှတ် (NRC)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.StudentNrcNo" />
+                                    </div>
+
+                                    <!-- Roll No -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">ခုံအမှတ် / Roll No</label>
+                                        <input type="text" class="form-control bg-light text-success fw-bold" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.RollNo" />
+                                    </div>
                                 </div>
-                                <div class="card-body p-4" style="font-size: 0.95rem;">
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Name (MM/EN)</div>
-                                        <div class="col-8 fw-bold text-white">@SelectedDetail.StudentNameMm / @SelectedDetail.StudentNameEn</div>
+                            </div>
+
+                            <!-- SECTION 2: Academic Info -->
+                            <div class="bg-white p-4 mb-4 border rounded shadow-sm">
+                                <h6 class="fw-bold mb-3 pb-2 border-bottom text-success d-flex align-items-center">
+                                    <i class="bi bi-mortarboard-fill me-2 fs-5"></i> ၂။ ပညာရေးအချက်အလက် (Academic Info)
+                                </h6>
+
+                                <div class="row g-3">
+                                    <!-- Major -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အထူးပြုဘာသာ (Major)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.Major" />
                                     </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Roll No & Major</div>
-                                        <div class="col-8 fw-bold text-info">@SelectedDetail.RollNo <span class="text-white fw-normal">(@SelectedDetail.Major)</span></div>
+
+                                    <!-- Academic Year Level -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">သင်တန်းနှစ် (Academic Year Level)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.AcademicYearLevel" />
                                     </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Academic Year</div>
-                                        <div class="col-8 text-white">@SelectedDetail.AcademicYearLevel</div>
+
+                                    <!-- Permanent Address -->
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အမြဲတမ်းနေရပ်လိပ်စာ (Permanent Address)</label>
+                                        <textarea class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly rows="2">@SelectedDetail.PermanentAddressMm</textarea>
                                     </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">NRC No</div>
-                                        <div class="col-8 text-white">@SelectedDetail.StudentNrcNo</div>
+                                </div>
+                            </div>
+
+                            <!-- SECTION 3: Family & Guardian Info -->
+                            <div class="bg-white p-4 border rounded shadow-sm">
+                                <h6 class="fw-bold mb-3 pb-2 border-bottom text-success d-flex align-items-center">
+                                    <i class="bi bi-people-fill me-2 fs-5"></i> ၃။ မိဘ/အုပ်ထိန်းသူအချက်အလက် (Family & Guardian Info)
+                                </h6>
+
+                                <div class="row g-3">
+                                    <!-- Father Name -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အဘအမည် (Father's Name)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.FatherName" />
                                     </div>
-                                    <div class="row mb-3 border-bottom border-secondary pb-2">
-                                        <div class="col-4 text-muted">Parents</div>
-                                        <div class="col-8 text-white">@SelectedDetail.FatherName & @SelectedDetail.MotherName</div>
+
+                                    <!-- Mother Name -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အမိအမည် (Mother's Name)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.MotherName" />
                                     </div>
-                                    <div class="row">
-                                        <div class="col-4 text-muted">Address</div>
-                                        <div class="col-8 text-white">@SelectedDetail.PermanentAddressMm</div>
+
+                                    <!-- Guardian Name -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အုပ်ထိန်းသူအမည် (Guardian Name)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.AppGuardianName" />
                                     </div>
+
+                                    <!-- Guardian NRC -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အုပ်ထိန်းသူမှတ်ပုံတင် (Guardian NRC)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@(string.IsNullOrEmpty(SelectedDetail.AppGuardianNrc) ? "-" : SelectedDetail.AppGuardianNrc)" />
+                                    </div>
+
+                                    <!-- Guardian Phone -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အုပ်ထိန်းသူဖုန်း (Guardian Phone)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.AppGuardianPhone" />
+                                    </div>
+
+                                    <!-- Guardian Address -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">အုပ်ထိန်းသူလိပ်စာ (Guardian Address)</label>
+                                        <input type="text" class="form-control bg-light text-dark fw-medium" style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px;" readonly value="@SelectedDetail.AppGuardianAddress" />
+                                    </div>
+
+                                    <!-- Student Signature Image -->
+                                    @if (!string.IsNullOrEmpty(SelectedDetail.SignatureImage))
+                                    {
+                                        <div class="col-12 mt-3">
+                                            <label class="form-label fw-bold text-secondary mb-1" style="font-size: 0.8rem;">ကျောင်းသား/သူ လက်မှတ် (Signature)</label>
+                                            <div class="text-start p-2 bg-light rounded border" style="max-width: 250px;">
+                                                <img src="@($"https://localhost:7297{SelectedDetail.SignatureImage}")" alt="Signature" class="bg-white p-1 rounded" style="max-height: 80px; object-fit: contain; width: 100%;" />
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-md-5">
-                            <div class="card bg-dark text-white border-0 h-100 shadow-sm" style="border-radius: 12px;">
-                                <div class="card-header bg-transparent border-bottom border-secondary fw-bolder text-uppercase text-muted py-3">
-                                    <i class="bi bi-wallet2 me-2"></i> Payment Details
-                                </div>
-                                <div class="card-body p-4">
-                                    @if (payment != null)
-                                    {
-                                        <div class="d-flex justify-content-between align-items-center mb-4 bg-secondary bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-25">
-                                            <div>
-                                                <small class="text-muted d-block mb-1">Amount Paid</small>
-                                                <strong class="text-success fs-5">@payment.AmountPaid.ToString("N0") MMK</strong>
-                                            </div>
-                                            <div class="text-end">
-                                                <small class="text-muted d-block mb-1">Method</small>
-                                                <strong class="text-white">@payment.PaymentMethod</strong>
-                                            </div>
-                                        </div>
+                        <!-- Right Side: Payment Details -->
+                        <div class="col-lg-4">
+                            <div class="bg-white p-4 border rounded shadow-sm h-100">
+                                <h6 class="fw-bold mb-3 pb-2 border-bottom text-success d-flex align-items-center">
+                                    <i class="bi bi-wallet2 me-2 fs-5"></i> ၄။ ငွေပေးချေမှုအခြေအနေ (Payment Info)
+                                </h6>
 
-                                        <div class="text-center p-3 rounded-3" style="background-color: #1a1a27; border: 1px dashed #323248;">
-                                            <p class="text-muted small mb-3 text-uppercase fw-bold"><i class="bi bi-image me-1"></i> Receipt Slip</p>
-                                            @if (!string.IsNullOrEmpty(payment.ReceiptImage))
-                                            {
-                                                <img src="@payment.ReceiptImage" alt="Receipt" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: contain; cursor: pointer;" />
-                                            }
-                                            else
-                                            {
-                                                <div class="text-danger p-4"><i class="bi bi-exclamation-circle me-2"></i> No Receipt Found</div>
-                                            }
+                                @if (payment != null)
+                                {
+                                    <div class="mb-4 bg-light p-3 rounded border">
+                                        <div class="mb-3">
+                                            <small class="text-muted d-block mb-1">ပေးချေငွေပမာဏ (Amount Paid)</small>
+                                            <strong class="text-success fs-5">@payment.AmountPaid.ToString("N0") MMK</strong>
                                         </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="alert alert-warning border-0 d-flex align-items-center" role="alert">
-                                            <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
-                                            <div>No payment record found for this student.</div>
+                                        <div>
+                                            <small class="text-muted d-block mb-1">ငွေပေးချေသည့်စနစ် (Payment Method)</small>
+                                            <strong class="text-dark">@payment.PaymentMethod</strong>
                                         </div>
-                                    }
-                                </div>
+                                    </div>
+
+                                    <div class="text-center p-3 rounded bg-light" style="border: 1px dashed #cbd5e1;">
+                                        <p class="text-muted small mb-2 text-uppercase fw-bold"><i class="bi bi-image me-1"></i> ငွေလွှဲပြေစာ (Receipt Slip)</p>
+                                        @if (!string.IsNullOrEmpty(payment.ReceiptImage))
+                                        {
+                                            <a href="@($"https://localhost:7297{payment.ReceiptImage}")" target="_blank">
+                                                <img src="@($"https://localhost:7297{payment.ReceiptImage}")" alt="Receipt" class="img-fluid rounded shadow-sm border bg-white" style="max-height: 300px; object-fit: contain;" />
+                                            </a>
+                                            <small class="text-muted d-block mt-2">Click to view full image</small>
+                                        }
+                                        else
+                                        {
+                                            <div class="text-danger p-4"><i class="bi bi-exclamation-circle me-2"></i> No Receipt Found</div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning border-0 d-flex align-items-center" role="alert">
+                                        <i class="bi bi-exclamation-triangle-fill me-2 fs-5 text-warning"></i>
+                                        <div class="text-dark" style="font-size: 0.85rem;">No payment record found for this student.</div>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-footer border-top border-dark px-4 py-3 bg-dark" style="border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                <!-- Modal Footer -->
+                <div class="modal-footer border-top px-4 py-3 bg-light" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                    <button type="button" class="btn btn-secondary me-auto" @onclick="CloseViewModal">ပိတ်ရန် (Close)</button>
+                    
                     <button type="button" class="btn btn-danger btn-action me-2"
                             disabled="@(SelectedDetail.Status != "Pending")"
                             @onclick="@(() => PromptConfirm("Rejected"))">
-                        <i class="bi bi-x-circle me-1"></i> Reject
+                        <i class="bi bi-x-circle me-1"></i> ငြင်းပယ်ရန် (Reject)
                     </button>
                     <button type="button" class="btn btn-success btn-action px-4"
                             disabled="@(SelectedDetail.Status != "Pending")"
                             @onclick="@(() => PromptConfirm("Approved"))">
-                        <i class="bi bi-check-circle me-1"></i> Approve
+                        <i class="bi bi-check-circle me-1"></i> အတည်ပြုရန် (Approve)
                     </button>
                 </div>
             </div>

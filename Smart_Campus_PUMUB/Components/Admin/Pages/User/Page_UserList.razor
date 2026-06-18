@@ -109,7 +109,7 @@
                         </thead>
                         <tbody>
                             @{
-                                int count = 1;
+                                int count = (CurrentPage - 1) * PageSize + 1;
                             }
                             @foreach (var user in FilteredUsers)
                             {
@@ -146,6 +146,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
             }
         </div>
 

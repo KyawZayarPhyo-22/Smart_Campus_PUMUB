@@ -25,15 +25,21 @@
 
     <div class="tech-card p-4">
         <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-5">
+            <div class="col-md-7 col-lg-6">
                 <div class="input-group">
-                    <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" class="form-control border-start-0 text-white" 
+                    <span class="input-group-text search-icon-bg"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control text-white" 
                            placeholder="Search by Book Name..."
-                           @bind-value="SearchTerm" @bind-value:event="oninput">
+                           @bind-value="SearchInput" @onkeyup="HandleKeyUp">
+                    <button class="btn btn-primary" type="button" @onclick="ApplyFilter" title="Search">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    <button class="btn btn-secondary" type="button" @onclick="ResetFilter" title="Reset">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </button>
                 </div>
             </div>
-            <div class="col-md-7 text-end">
+            <div class="col-md-5 col-lg-6 text-end">
                 <NavLink href="/admin/book/create" class="btn btn-add-modern text-white d-inline-flex align-items-center">
                     <i class="bi bi-plus-lg me-2"></i> Add Book
                 </NavLink>
@@ -57,7 +63,7 @@
                     </thead>
                     <tbody>
                         @{
-                            int count = 1;
+                            int count = (CurrentPage - 1) * PageSize + 1;
                         }
                         @foreach (var book in FilteredBooks) {
                             <tr class="table-row-hover">
@@ -84,6 +90,8 @@
                     </tbody>
                 </table>
             </div>
+
+            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
         }
     </div>
 </div>

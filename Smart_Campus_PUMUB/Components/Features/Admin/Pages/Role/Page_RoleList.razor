@@ -107,18 +107,24 @@
 
     <div class="tech-card p-4">
         <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-5">
+            <div class="col-md-7 col-lg-6">
                 <div class="input-group">
-                    <span class="input-group-text search-icon-bg border-end-0"
+                    <span class="input-group-text search-icon-bg"
                           style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);"><i
                         class="bi bi-search text-muted"></i></span>
                         <input type="text" class="form-control border-start-0 text-white"
                                style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);"
-                               placeholder="Search by Role Name..." @bind-value="SearchTerm" @bind-value:event="oninput">
+                               placeholder="Search by Role Name..." @bind-value="SearchInput" @onkeyup="HandleKeyUp">
+                        <button class="btn btn-primary" type="button" @onclick="ApplyFilter" title="Search">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <button class="btn btn-secondary" type="button" @onclick="ResetFilter" title="Reset">
+                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        </button>
                     </div>
                 </div>
 
-                <div class="col-md-7 text-end">
+                <div class="col-md-5 col-lg-6 text-end">
                     <NavLink href="/admin/role/create"
                              class="btn btn-add-modern text-white d-inline-flex align-items-center">
                         <i class="bi bi-plus-lg me-2"></i> Add New Role
@@ -163,7 +169,7 @@
                         </thead>
                         <tbody>
                             @{
-                                int count = 1;
+                                int count = (CurrentPage - 1) * PageSize + 1;
                             }
                             @foreach (var role in FilteredRoles)
                             {
@@ -191,6 +197,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
             }
         </div>
     </div>

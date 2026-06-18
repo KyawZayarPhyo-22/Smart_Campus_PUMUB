@@ -132,14 +132,55 @@ public partial class Page_RegistrationReport : ComponentBase
     private int TotalApprovedPay => BasePaymentFilteredData.Count(p => p.Status == "Approved");
     private int TotalRejectedPay => BasePaymentFilteredData.Count(p => p.Status == "Rejected");
 
+    // Pagination Variables
+    private int PageSize { get; set; } = 10;
+    private int CurrentPageAdm { get; set; } = 1;
+    private int TotalPagesAdm { get; set; } = 1;
+    private int CurrentPagePay { get; set; } = 1;
+    private int TotalPagesPay { get; set; } = 1;
+
+    private void OnPageChangedAdm(int newPage)
+    {
+        CurrentPageAdm = newPage;
+        StateHasChanged();
+    }
+
+    private void OnPageChangedPay(int newPage)
+    {
+        CurrentPagePay = newPage;
+        StateHasChanged();
+    }
+
     // =================================================================
     // 💡 3. UI တွင် ပြသမည့် Table Data
     // =================================================================
-    private IEnumerable<StudentRegistrationDataModel> AdmissionReportData =>
-        BaseAdmissionFilteredData.OrderBy(s => s.RollNo?.Length ?? 0).ThenBy(s => s.RollNo).ToList();
+    private IEnumerable<StudentRegistrationDataModel> AdmissionReportData
+    {
+        get
+        {
+            var allFiltered = BaseAdmissionFilteredData.OrderBy(s => s.RollNo?.Length ?? 0).ThenBy(s => s.RollNo).ToList();
+            int count = allFiltered.Count;
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPagesAdm = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPageAdm > TotalPagesAdm) CurrentPageAdm = TotalPagesAdm;
+            if (CurrentPageAdm < 1) CurrentPageAdm = 1;
+            return allFiltered.Skip((CurrentPageAdm - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
 
-    private IEnumerable<PaymentReportItem> PaymentReportData =>
-        BasePaymentFilteredData.OrderBy(p => p.RollNo?.Length ?? 0).ThenBy(p => p.RollNo).ToList();
+    private IEnumerable<PaymentReportItem> PaymentReportData
+    {
+        get
+        {
+            var allFiltered = BasePaymentFilteredData.OrderBy(p => p.RollNo?.Length ?? 0).ThenBy(p => p.RollNo).ToList();
+            int count = allFiltered.Count;
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPagesPay = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPagePay > TotalPagesPay) CurrentPagePay = TotalPagesPay;
+            if (CurrentPagePay < 1) CurrentPagePay = 1;
+            return allFiltered.Skip((CurrentPagePay - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
 
 
     private async Task ExportAdmissionToExcel()
@@ -147,8 +188,9 @@ public partial class Page_RegistrationReport : ComponentBase
         var builder = new StringBuilder();
         builder.AppendLine("No,Admission Date,Roll No,Name,Major,Academic Year,Status");
 
+        var allData = BaseAdmissionFilteredData.OrderBy(s => s.RollNo?.Length ?? 0).ThenBy(s => s.RollNo).ToList();
         int count = 1;
-        foreach (var item in AdmissionReportData)
+        foreach (var item in allData)
         {
             builder.AppendLine($"{count},{item.CreatedDatetime:dd-MM-yyyy},{item.RollNo},{item.StudentNameMm},{item.Major},{item.AcademicYearLevel},{item.Status ?? "Pending"}");
             count++;
@@ -162,8 +204,9 @@ public partial class Page_RegistrationReport : ComponentBase
         var builder = new StringBuilder();
         builder.AppendLine("No,Date,Roll No,Name,Major,Academic Year,Payment Method,Amount Paid,Status");
 
+        var allData = BasePaymentFilteredData.OrderBy(p => p.RollNo?.Length ?? 0).ThenBy(p => p.RollNo).ToList();
         int count = 1;
-        foreach (var item in PaymentReportData)
+        foreach (var item in allData)
         {
             builder.AppendLine($"{count},{item.PaymentDate:dd-MM-yyyy},{item.RollNo},{item.StudentName},{item.Major},{item.AcademicYear},{item.PaymentMethod},{item.AmountPaid},{item.Status}");
             count++;

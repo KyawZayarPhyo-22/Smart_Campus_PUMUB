@@ -51,7 +51,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၃။ POST: ကျောင်းအပ်ဖောင် အသစ်တင်သွင်းရန် (Create)
     [HttpPost]
-    public IActionResult CreateRegistration([FromBody] StudentRegistrationCreateRequestModel request)
+    public IActionResult CreateRegistration([FromForm] StudentRegistrationCreateRequestModel request)
     {
         // 💡 Fix: UserId သည် int? ဖြစ်သွားသဖြင့် null စစ်ရန် ထည့်သွင်းထားသည်
         if (request.UserId == null || request.UserId <= 0)
@@ -247,6 +247,8 @@ public class StudentRegistrationsController : ControllerBase
             AppStudentPhone = request.app_student_phone,
             StipendRequested = request.stipend_requested ?? false,
             Status = "Pending",
+            StudentImage = studentImagePath,
+            SignatureImage = signatureImagePath,
             CreatedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
             CreatedBy = string.IsNullOrEmpty(request.created_by) ? "System" : request.created_by,
             IsDelete = false

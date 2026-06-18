@@ -46,6 +46,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public DateTime? SignDate { get; set; } = DateTime.Today;
 
         public string? PreviewImageUrl { get; set; }
+        public IBrowserFile? SelectedPhotoFile { get; set; }
         public List<SemesterModel> SemesterList { get; set; } = new();
 
         public string NrcType { get; set; } = "(နိုင်)";
@@ -143,12 +144,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
         private async Task OnPhotoSelected(InputFileChangeEventArgs e)
         {
-            var file = e.File;
-            if (file != null)
+            SelectedPhotoFile = e.File;
+            if (SelectedPhotoFile != null)
             {
-                var buffer = new byte[file.Size];
-                await file.OpenReadStream(5 * 1024 * 1024).ReadAsync(buffer);
-                PreviewImageUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+                using var ms = new MemoryStream();
+                await SelectedPhotoFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                PreviewImageUrl = $"data:{SelectedPhotoFile.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
                 StateHasChanged();
             }
         }
@@ -267,12 +268,82 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             RegModel.ethnicity ??= "-";
             RegModel.religion ??= "-";
 
-            var json = JsonSerializer.Serialize(RegModel);
-            Console.WriteLine("Sending Data: " + json);
+            using var content = new MultipartFormDataContent();
+
+            if (RegModel.UserId.HasValue)
+                content.Add(new StringContent(RegModel.UserId.Value.ToString()), "UserId");
+            if (!string.IsNullOrEmpty(RegModel.AdmissionSerialNo))
+                content.Add(new StringContent(RegModel.AdmissionSerialNo), "AdmissionSerialNo");
+
+            content.Add(new StringContent(RegModel.academic_year_range ?? "-"), "academic_year_range");
+            content.Add(new StringContent(RegModel.academic_year_level ?? "-"), "academic_year_level");
+            content.Add(new StringContent(RegModel.major ?? "-"), "major");
+            content.Add(new StringContent(RegModel.roll_no ?? "-"), "roll_no");
+            content.Add(new StringContent(RegModel.university_reg_no ?? "-"), "university_reg_no");
+
+            if (RegModel.admission_year.HasValue)
+                content.Add(new StringContent(RegModel.admission_year.Value.ToString()), "admission_year");
+
+            content.Add(new StringContent(RegModel.student_name_mm ?? "-"), "student_name_mm");
+            content.Add(new StringContent(RegModel.student_name_en ?? "-"), "student_name_en");
+            content.Add(new StringContent(RegModel.mother_name ?? "-"), "mother_name");
+            content.Add(new StringContent(RegModel.father_name ?? "-"), "father_name");
+            content.Add(new StringContent(RegModel.gender_relation ?? "-"), "gender_relation");
+            content.Add(new StringContent(RegModel.ethnicity ?? "-"), "ethnicity");
+            content.Add(new StringContent(RegModel.religion ?? "-"), "religion");
+            content.Add(new StringContent(RegModel.pob ?? "-"), "pob");
+            content.Add(new StringContent(RegModel.birth_place_region ?? "-"), "birth_place_region");
+            content.Add(new StringContent(RegModel.student_nrc_no ?? "-"), "student_nrc_no");
+            content.Add(new StringContent(RegModel.nationality_status ?? "-"), "nationality_status");
+            content.Add(new StringContent(RegModel.dob.ToString("yyyy-MM-dd")), "dob");
+            content.Add(new StringContent(RegModel.email ?? ""), "email");
+            content.Add(new StringContent(RegModel.blood_type ?? "-"), "blood_type");
+            content.Add(new StringContent(RegModel.covid_vaccine_status ?? "-"), "covid_vaccine_status");
+            content.Add(new StringContent(RegModel.current_address ?? ""), "current_address");
+            content.Add(new StringContent(RegModel.permanent_address_mm ?? "-"), "permanent_address_mm");
+            content.Add(new StringContent(RegModel.permanent_address_en ?? "-"), "permanent_address_en");
+            content.Add(new StringContent(RegModel.matric_roll_no ?? "-"), "matric_roll_no");
+            content.Add(new StringContent(RegModel.matric_passed_year.ToString()), "matric_passed_year");
+            content.Add(new StringContent(RegModel.exam_center ?? "-"), "exam_center");
+            content.Add(new StringContent(RegModel.father_occupation ?? ""), "father_occupation");
+            content.Add(new StringContent(RegModel.mother_occupation ?? ""), "mother_occupation");
+            content.Add(new StringContent(RegModel.past_exam_major ?? ""), "past_exam_major");
+            content.Add(new StringContent(RegModel.past_exam_roll_no ?? ""), "past_exam_roll_no");
+
+            if (RegModel.past_exam_year.HasValue)
+                content.Add(new StringContent(RegModel.past_exam_year.Value.ToString()), "past_exam_year");
+
+            content.Add(new StringContent(RegModel.past_exam_status ?? ""), "past_exam_status");
+            content.Add(new StringContent(RegModel.previous_year_roll_no ?? ""), "previous_year_roll_no");
+            content.Add(new StringContent(RegModel.guardian_name ?? ""), "guardian_name");
+            content.Add(new StringContent(RegModel.guardian_relationship ?? ""), "guardian_relationship");
+            content.Add(new StringContent(RegModel.guardian_occupation ?? ""), "guardian_occupation");
+            content.Add(new StringContent(RegModel.guardian_address_phone ?? ""), "guardian_address_phone");
+            content.Add(new StringContent(RegModel.app_guardian_name ?? ""), "app_guardian_name");
+            content.Add(new StringContent(RegModel.app_guardian_nrc ?? ""), "app_guardian_nrc");
+            content.Add(new StringContent(RegModel.app_guardian_phone ?? ""), "app_guardian_phone");
+            content.Add(new StringContent(RegModel.app_guardian_address ?? ""), "app_guardian_address");
+            content.Add(new StringContent(RegModel.app_student_name ?? ""), "app_student_name");
+            content.Add(new StringContent(RegModel.app_student_phone ?? ""), "app_student_phone");
+
+            if (RegModel.stipend_requested.HasValue)
+                content.Add(new StringContent(RegModel.stipend_requested.Value.ToString().ToLower()), "stipend_requested");
+
+            content.Add(new StringContent(RegModel.created_by ?? ""), "created_by");
+            content.Add(new StringContent(RegModel.nrc_state ?? ""), "nrc_state");
+            content.Add(new StringContent(RegModel.nrc_township ?? ""), "nrc_township");
+            content.Add(new StringContent(RegModel.nrc_number ?? ""), "nrc_number");
+
+            if (SelectedPhotoFile != null)
+            {
+                var fileContent = new StreamContent(SelectedPhotoFile.OpenReadStream(5 * 1024 * 1024));
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedPhotoFile.ContentType);
+                content.Add(fileContent, "StudentImageFile", SelectedPhotoFile.Name);
+            }
 
             try
             {
-                var response = await HttpClientService.ExecuteAsync<StudentRegistrationResponseModel>("StudentRegistrations", EnumHttpMethod.Post, RegModel);
+                var response = await HttpClientService.ExecuteMultipartAsync<StudentRegistrationResponseModel>("StudentRegistrations", content);
 
                 if (response?.IsSuccess == true)
                 {

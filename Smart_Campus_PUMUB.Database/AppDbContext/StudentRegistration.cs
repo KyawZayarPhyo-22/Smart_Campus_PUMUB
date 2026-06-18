@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -225,6 +225,14 @@ public partial class StudentRegistration
 
     [Column("is_delete")]
     public bool? IsDelete { get; set; }
+
+    [Column("student_image")]
+    [StringLength(500)]
+    public string? StudentImage { get; set; }
+
+    [Column("signature_image")]
+    [StringLength(500)]
+    public string? SignatureImage { get; set; }
 
     [InverseProperty("Registration")]
     public virtual ICollection<RegistrationPayment> RegistrationPayments { get; set; } = new List<RegistrationPayment>();

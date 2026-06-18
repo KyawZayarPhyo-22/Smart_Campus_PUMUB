@@ -12,30 +12,30 @@
     --sidebar-w-sm:      68px;
     --topnav-h:          64px;
 
-    --bg-base:          #0d1117;
-    --bg-surface:       #161b22;
-    --bg-surface-2:     #1c2333;
-    --bg-surface-hover: rgba(255,255,255,0.05);
+    --bg-base:          #f4f7f6;
+    --bg-surface:       #ffffff;
+    --bg-surface-2:     #f8faf9;
+    --bg-surface-hover: rgba(27, 138, 90, 0.08);
 
-    --accent-cyan:      #22d3ee;
-    --accent-blue:      #3b82f6;
-    --accent-violet:    #8b5cf6;
-    --accent-green:     #10b981;
-    --accent-amber:     #f59e0b;
-    --accent-red:       #ef4444;
+    --accent-cyan:      #1b8a5a;
+    --accent-blue:      #2563eb;
+    --accent-violet:    #7c3aed;
+    --accent-green:     #1b8a5a;
+    --accent-amber:     #d97706;
+    --accent-red:       #dc2626;
 
-    --border:           rgba(255,255,255,0.08);
-    --text-primary:     #f0f6fc;
-    --text-secondary:   #8b949e;
-    --text-muted:       #6e7681;
+    --border:           rgba(0,0,0,0.08);
+    --text-primary:     #1f2937;
+    --text-secondary:   #4b5563;
+    --text-muted:       #9ca3af;
 
     --radius-sm:        0.5rem;
     --radius-md:        0.75rem;
     --radius-lg:        1rem;
 
-    --shadow-sm:        0 1px 3px rgba(0,0,0,0.4);
-    --shadow-md:        0 4px 16px rgba(0,0,0,0.5);
-    --shadow-lg:        0 10px 40px rgba(0,0,0,0.6);
+    --shadow-sm:        0 1px 3px rgba(0,0,0,0.05);
+    --shadow-md:        0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg:        0 10px 40px rgba(0,0,0,0.12);
 
     --transition:       0.25s ease;
 }
@@ -737,3 +737,515 @@ main.admin-body,
     .stat-card  { padding: 1rem; }
     .stat-card .stat-value { font-size: 1.5rem; }
 }
+
+/* ── Light Forest Green Theme Overrides (Foodager Style) ───────────────── */
+.admin-sidebar {
+    background: #ffffff !important;
+    border-right: 1px solid var(--border) !important;
+}
+
+.sidebar-brand {
+    background: #1b8a5a !important;
+    border-bottom: none !important;
+}
+
+.sidebar-brand .brand-text {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+.sidebar-brand i {
+    color: #ffffff !important;
+}
+
+.admin-topnav {
+    background: #1b8a5a !important;
+    color: #ffffff !important;
+    border-bottom: none !important;
+}
+
+.admin-topnav .breadcrumb-item a,
+.admin-topnav .breadcrumb-item.active {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.admin-topnav .breadcrumb-item + .breadcrumb-item::before {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.admin-topnav .text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.admin-topnav .btn-link {
+    color: #ffffff !important;
+}
+
+.admin-wrapper .form-control,
+.admin-wrapper .form-select,
+.admin-wrapper textarea.form-control,
+.modal-content .form-control,
+.modal-content .form-select,
+.modal-content textarea {
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #1f2937 !important;
+}
+
+.admin-wrapper .form-control:focus,
+.admin-wrapper .form-select:focus,
+.admin-wrapper textarea.form-control:focus,
+.modal-content .form-control:focus,
+.modal-content .form-select:focus,
+.modal-content textarea:focus {
+    border-color: #5A4FCF !important;
+    box-shadow: 0 0 0 3px rgba(90, 79, 207, 0.15) !important;
+}
+
+.btn-primary, .btn-cyan {
+    background-color: #1b8a5a !important;
+    border-color: #1b8a5a !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover, .btn-cyan:hover {
+    background-color: #146c45 !important;
+    border-color: #146c45 !important;
+    color: #ffffff !important;
+}
+
+.sidebar-nav-link {
+    color: #374151 !important;
+}
+
+.sidebar-nav-link:hover {
+    background-color: rgba(90, 79, 207, 0.05) !important;
+    color: #5A4FCF !important;
+}
+
+.sidebar-nav-link.active {
+    background-color: rgba(90, 79, 207, 0.12) !important;
+    color: #5A4FCF !important;
+    border-color: rgba(90, 79, 207, 0.2) !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-nav-link.active i,
+.sidebar-nav-link:hover i {
+    color: #5A4FCF !important;
+}
+
+.table-tech thead th {
+    background-color: #f0fdf4 !important;
+    color: #1b8a5a !important;
+}
+
+.table-tech tbody td {
+    color: #374151 !important;
+    background-color: #ffffff !important;
+}
+
+.table-tech tbody tr:hover {
+    background-color: #f7fee7 !important;
+}
+
+/* ── LIGHT THEME COMPLETE OVERRIDES (FOODAGER STYLE) ── */
+.admin-wrapper {
+    background-color: #ffffff !important;
+}
+
+.admin-body {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+/* Page titles and header text */
+.admin-body h3,
+.admin-body h4,
+.admin-body h5,
+.admin-body .text-white,
+.admin-body .fw-semibold,
+.admin-body .fw-bold {
+    color: #1f2937 !important;
+}
+
+/* Input search placeholders & text */
+.admin-body input,
+.admin-body select,
+.admin-body textarea {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.admin-body input::placeholder {
+    color: #9ca3af !important;
+}
+
+/* Overriding cards (.tech-card and .material-card) */
+.admin-body .tech-card,
+.admin-body .material-card {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    color: #1f2937 !important;
+}
+
+/* Overriding tables (.custom-table) */
+.admin-body .custom-table {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.admin-body .custom-table thead,
+.admin-body .custom-table thead th,
+.admin-body .custom-table tr th {
+    background-color: #f0fdf4 !important;
+    background: #f0fdf4 !important;
+    color: #1b8a5a !important;
+    border-bottom: 2px solid rgba(27, 138, 90, 0.15) !important;
+    font-weight: 600 !important;
+}
+
+.admin-body .custom-table tbody tr {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.admin-body .custom-table tbody tr:hover,
+.admin-body .table-row-hover:hover {
+    background-color: rgba(27, 138, 90, 0.04) !important;
+    box-shadow: none !important;
+}
+
+.admin-body .custom-table td {
+    color: #374151 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Overrides for text inside tables */
+.admin-body .custom-table td,
+.admin-body .custom-table td span,
+.admin-body .custom-table td code,
+.admin-body .custom-table td strong {
+    color: #374151 !important;
+}
+
+/* Specific elements inside tables (like roll no text etc) */
+.admin-body .custom-table td.text-white,
+.admin-body .custom-table td .text-white,
+.admin-body .custom-table td .fw-bold {
+    color: #1f2937 !important;
+}
+
+/* Modals */
+.modal-content {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.modal-content .modal-header,
+.modal-content .modal-body,
+.modal-content .modal-footer {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+.modal-content .text-white,
+.modal-content strong {
+    color: #1f2937 !important;
+}
+
+.modal-content .btn-close {
+    filter: none !important;
+}
+
+/* Registration Report filters specific */
+.admin-body .material-input {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.admin-body .material-input:focus {
+    background-color: #ffffff !important;
+    border-color: #5A4FCF !important;
+    color: #1f2937 !important;
+}
+
+/* Text muted overrides */
+.admin-body .text-muted {
+    color: #6b7280 !important;
+}
+
+/* Nav tabs */
+.nav-tabs-custom .nav-link {
+    color: #4b5563 !important;
+}
+
+.nav-tabs-custom .nav-link.active {
+    color: #5A4FCF !important;
+    border-bottom: 3px solid #5A4FCF !important;
+}
+
+.admin-body .badge.bg-primary.bg-opacity-10 {
+    background-color: rgba(90, 79, 207, 0.1) !important;
+    color: #5A4FCF !important;
+    border-color: rgba(90, 79, 207, 0.2) !important;
+}
+
+/* Solid Navbar and Header Brand */
+.admin-topnav {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    opacity: 1 !important;
+}
+
+.admin-topnav .breadcrumb-item a,
+.admin-topnav .breadcrumb-item.active,
+.admin-topnav .text-muted,
+.admin-topnav .btn-link,
+.admin-topnav * {
+    color: #1f2937 !important;
+}
+
+.sidebar-brand {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    opacity: 1 !important;
+}
+
+.sidebar-brand .brand-text {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937 !important;
+}
+
+.sidebar-brand i {
+    color: #1b8a5a !important;
+}
+
+/* Add buttons to match solid navbar green */
+.admin-body .btn-primary,
+.admin-body .btn-cyan,
+.admin-body .btn-success,
+.admin-body a.btn-primary,
+.admin-body .btn-add,
+.admin-body a.btn-success,
+.admin-body .btn-add-modern,
+.admin-body a.btn-add-modern {
+    background-color: #1b8a5a !important;
+    background: #1b8a5a !important;
+    border-color: #1b8a5a !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+.admin-body .btn-primary:hover,
+.admin-body .btn-cyan:hover,
+.admin-body .btn-success:hover,
+.admin-body a.btn-primary:hover,
+.admin-body .btn-add:hover,
+.admin-body a.btn-success:hover,
+.admin-body .btn-add-modern:hover,
+.admin-body a.btn-add-modern:hover {
+    background-color: #146c45 !important;
+    background: #146c45 !important;
+    border-color: #146c45 !important;
+}
+
+/* Align and size action buttons inside table */
+/* Edit Button Style: Solid Blue, uniform 90px width & 32px height */
+.admin-body .btn-action-edit,
+.admin-body .btn-outline-info,
+.admin-body .btn-edit,
+.admin-body .btn-outline-primary,
+.admin-body .btn-primary-outline,
+.admin-body td .btn-outline-info,
+.admin-body td .btn-action-edit,
+.admin-body td .btn-edit,
+.admin-body td a.btn-outline-info,
+.admin-body td a.btn-action-edit,
+.admin-body td a.btn-edit {
+    width: 90px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 6px !important;
+    text-align: center !important;
+    background-color: #2563eb !important;
+    border: 1px solid #2563eb !important;
+    color: #ffffff !important;
+    gap: 6px !important;
+    transition: all 0.2s ease !important;
+}
+
+.admin-body .btn-action-edit:hover,
+.admin-body .btn-outline-info:hover,
+.admin-body .btn-edit:hover,
+.admin-body td .btn-outline-info:hover,
+.admin-body td .btn-action-edit:hover,
+.admin-body td .btn-edit:hover,
+.admin-body td a.btn-outline-info:hover,
+.admin-body td a.btn-action-edit:hover,
+.admin-body td a.btn-edit:hover {
+    background-color: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+}
+
+/* Delete Button Style: Solid Red, uniform 90px width & 32px height */
+.admin-body .btn-action-delete,
+.admin-body .btn-outline-danger,
+.admin-body .btn-delete,
+.admin-body .btn-danger-outline,
+.admin-body td .btn-outline-danger,
+.admin-body td .btn-action-delete,
+.admin-body td .btn-delete,
+.admin-body td a.btn-outline-danger,
+.admin-body td a.btn-action-delete,
+.admin-body td a.btn-delete {
+    width: 90px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 6px !important;
+    text-align: center !important;
+    background-color: #dc2626 !important;
+    border: 1px solid #dc2626 !important;
+    color: #ffffff !important;
+    gap: 6px !important;
+    transition: all 0.2s ease !important;
+}
+
+.admin-body .btn-action-delete:hover,
+.admin-body .btn-outline-danger:hover,
+.admin-body .btn-delete:hover,
+.admin-body td .btn-outline-danger:hover,
+.admin-body td .btn-action-delete:hover,
+.admin-body td .btn-delete:hover,
+.admin-body td a.btn-outline-danger:hover,
+.admin-body td a.btn-action-delete:hover,
+.admin-body td a.btn-delete:hover {
+    background-color: #b91c1c !important;
+    border-color: #b91c1c !important;
+    color: #ffffff !important;
+}
+
+/* Uniform spacing between action buttons */
+.admin-body td .btn,
+.admin-body td a.btn,
+.admin-body td button {
+    margin: 0 4px !important;
+}
+
+/* Align Action column header and contents left */
+.admin-body th:last-child,
+.admin-body td:last-child,
+.admin-body th:last-child.text-center,
+.admin-body td:last-child.text-center {
+    text-align: left !important;
+    padding-left: 12px !important;
+    min-width: 220px !important;
+}
+.admin-body td:last-child {
+    vertical-align: middle !important;
+}
+.admin-body td:last-child .d-flex,
+.admin-body td:last-child > div {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Remove side border bar on hover */
+.admin-body .custom-table tbody tr:hover,
+.admin-body .table-row-hover:hover {
+    box-shadow: none !important;
+    background-color: rgba(27, 138, 90, 0.05) !important;
+}
+
+/* Custom Table and dark-theme cleanup overrides */
+.admin-body .custom-table,
+.admin-body table.table {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.admin-body .custom-table thead,
+.admin-body table.table thead {
+    background-color: #f0fdf4 !important;
+    background: #f0fdf4 !important;
+}
+
+.admin-body .custom-table th,
+.admin-body table.table th {
+    color: #1b8a5a !important;
+    border-bottom: 2px solid rgba(27, 138, 90, 0.15) !important;
+    font-weight: 600 !important;
+    background-color: #f0fdf4 !important;
+    background: #f0fdf4 !important;
+}
+
+.admin-body .custom-table td,
+.admin-body table.table td {
+    color: #374151 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.admin-body .custom-table a:not(.btn),
+.admin-body table.table a:not(.btn) {
+    color: #2563eb !important;
+}
+
+/* Custom Pagination styling to prevent dark/black appearance and match theme */
+.admin-body .pagination .page-link {
+    background-color: #ffffff !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+.admin-body .pagination .page-link:hover {
+    background-color: rgba(90, 79, 207, 0.05) !important;
+    color: #5A4FCF !important;
+    border-color: rgba(90, 79, 207, 0.3) !important;
+}
+
+.admin-body .pagination .page-item.active .page-link {
+    background-color: #5A4FCF !important;
+    border-color: #5A4FCF !important;
+    color: #ffffff !important;
+}
+
+.admin-body .pagination .page-item.disabled .page-link {
+    background-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+    border-color: #e5e7eb !important;
+    opacity: 0.6 !important;
+}
+
+
+

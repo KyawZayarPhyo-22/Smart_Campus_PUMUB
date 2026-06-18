@@ -17,10 +17,58 @@ public partial class Page_RegistrationPaymentList
     private bool ShowModal { get; set; } = false;
     private RegistrationPaymentModel? SelectedPayment { get; set; }
 
-    // Search Logic (PaymentMethod ကို ရှာဖွေခြင်း)
-    private IEnumerable<RegistrationPaymentModel> FilteredPayments => string.IsNullOrWhiteSpace(SearchTerm)
+    private string SearchInput = "";
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SearchTerm = "";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
+
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<RegistrationPaymentModel> GetFilteredPayments() => string.IsNullOrWhiteSpace(SearchTerm)
         ? PaymentList
         : PaymentList.Where(p => p.PaymentMethod != null && p.PaymentMethod.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<RegistrationPaymentModel> FilteredPayments
+    {
+        get
+        {
+            var allFiltered = GetFilteredPayments();
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync() => await LoadPayments();
 

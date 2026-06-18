@@ -91,7 +91,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @{ int count = 1; }
+                        @{ int count = (CurrentPage - 1) * PageSize + 1; }
                         @foreach (var item in FilteredSubjects) {
                             <tr class="table-row-hover">
                                 <td class="fw-bold text-muted">@count.ToString("D2")</td>
@@ -118,6 +118,8 @@
                     </tbody>
                 </table>
             </div>
+
+            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
         }
     </div>
 </div>

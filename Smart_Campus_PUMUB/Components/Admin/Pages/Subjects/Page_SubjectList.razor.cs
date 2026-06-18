@@ -17,10 +17,34 @@ public partial class Page_SubjectList
     private bool ShowModal { get; set; } = false;
     private SubjectModel? SelectedSubject { get; set; }
 
-    private IEnumerable<SubjectModel> FilteredSubjects => string.IsNullOrWhiteSpace(SearchTerm)
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<SubjectModel> GetFilteredSubjects() => string.IsNullOrWhiteSpace(SearchTerm)
         ? SubjectList
         : SubjectList.Where(s => (s.SubjectName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
                                  (s.SubjectCode?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private IEnumerable<SubjectModel> FilteredSubjects
+    {
+        get
+        {
+            var allFiltered = GetFilteredSubjects();
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync() => await LoadSubjects();
 

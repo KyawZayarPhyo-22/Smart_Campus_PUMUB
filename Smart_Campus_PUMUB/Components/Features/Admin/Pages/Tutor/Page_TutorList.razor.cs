@@ -26,6 +26,31 @@ public partial class Page_TutorList
         set { _searchTerm = value; StateHasChanged(); } 
     }
 
+    private string SearchInput = "";
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SearchTerm = "";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
+
     protected override async Task OnInitializedAsync() => await LoadTutors();
 
     private async Task LoadTutors()
@@ -35,9 +60,33 @@ public partial class Page_TutorList
         IsLoading = false;
     }
 
-    private IEnumerable<TutorModel> FilteredTutors => string.IsNullOrWhiteSpace(SearchTerm)
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<TutorModel> GetFilteredTutors() => string.IsNullOrWhiteSpace(SearchTerm)
         ? TutorList
         : TutorList.Where(t => t.TutorName != null && t.TutorName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<TutorModel> FilteredTutors
+    {
+        get
+        {
+            var allFiltered = GetFilteredTutors();
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
+    }
 
     private void OpenDeleteModal(TutorModel tutor)
     {

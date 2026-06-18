@@ -7,33 +7,33 @@ public class StudentRegistrationCreateRequestModel
 {
     public int? UserId { get; set; }
     public string? AdmissionSerialNo { get; set; }
-    public string academic_year_range { get; set; } = null!;
-    public string academic_year_level { get; set; } = null!;
-    public string major { get; set; } = null!;
+    public string? academic_year_range { get; set; }
+    public string? academic_year_level { get; set; }
+    public string? major { get; set; }
     public string? roll_no { get; set; }
     public string? university_reg_no { get; set; }
     public int? admission_year { get; set; }
-    public string student_name_mm { get; set; } = null!;
-    public string student_name_en { get; set; } = null!;
-    public string mother_name { get; set; } = null!;
-    public string father_name { get; set; } = null!;
-    public string gender_relation { get; set; } = null!; // Dropdown Field
-    public string ethnicity { get; set; } = null!;
-    public string religion { get; set; } = null!;
-    public string pob { get; set; } = null!;
-    public string birth_place_region { get; set; } = null!;
-    public string student_nrc_no { get; set; } = null!;
-    public string nationality_status { get; set; } = null!;
+    public string? student_name_mm { get; set; }
+    public string? student_name_en { get; set; }
+    public string? mother_name { get; set; }
+    public string? father_name { get; set; }
+    public string? gender_relation { get; set; } // Dropdown Field
+    public string? ethnicity { get; set; }
+    public string? religion { get; set; }
+    public string? pob { get; set; }
+    public string? birth_place_region { get; set; }
+    public string? student_nrc_no { get; set; }
+    public string? nationality_status { get; set; }
     public DateTime dob { get; set; }
     public string? email { get; set; }
-    public string blood_type { get; set; } = null!; // Dropdown Field
+    public string? blood_type { get; set; } // Dropdown Field
     public string? covid_vaccine_status { get; set; }
     public string? current_address { get; set; }
-    public string permanent_address_mm { get; set; } = null!;
-    public string permanent_address_en { get; set; } = null!;
-    public string matric_roll_no { get; set; } = null!;
+    public string? permanent_address_mm { get; set; }
+    public string? permanent_address_en { get; set; }
+    public string? matric_roll_no { get; set; }
     public int matric_passed_year { get; set; }
-    public string exam_center { get; set; } = null!;
+    public string? exam_center { get; set; }
     public string? father_occupation { get; set; }
     public string? mother_occupation { get; set; }
     public string? past_exam_major { get; set; }

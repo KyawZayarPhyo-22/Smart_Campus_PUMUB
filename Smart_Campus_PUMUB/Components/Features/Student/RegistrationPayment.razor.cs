@@ -153,9 +153,9 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             SelectedReceiptFile = e.File;
             if (SelectedReceiptFile != null)
             {
-                var buffer = new byte[SelectedReceiptFile.Size];
-                await SelectedReceiptFile.OpenReadStream(5 * 1024 * 1024).ReadAsync(buffer);
-                PreviewReceiptUrl = $"data:{SelectedReceiptFile.ContentType};base64,{Convert.ToBase64String(buffer)}";
+                using var ms = new MemoryStream();
+                await SelectedReceiptFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                PreviewReceiptUrl = $"data:{SelectedReceiptFile.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
                 StateHasChanged();
             }
         }

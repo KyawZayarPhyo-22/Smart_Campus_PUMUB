@@ -10,14 +10,20 @@
 
 <div class="tech-card p-4">
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-md-7 col-lg-6">
             <div class="input-group">
-                <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control border-start-0" placeholder="Search by Name..." 
-                       @bind="SearchTerm" @bind:event="oninput" />
+                <span class="input-group-text search-icon-bg"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" placeholder="Search by Name..." 
+                       @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <button class="btn btn-primary" type="button" @onclick="ApplyFilter" title="Search">
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <button class="btn btn-secondary" type="button" @onclick="ResetFilter" title="Reset">
+                    <i class="bi bi-arrow-clockwise"></i> Reset
+                </button>
             </div>
         </div>
-        <div class="col-md-8 text-end">
+        <div class="col-md-5 col-lg-6 text-end">
             <NavLink href="/admin/tutor/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Tutor</NavLink>
         </div>
     </div>
@@ -32,13 +38,14 @@
                         <th>No.</th>
                         <th>Profile</th>
                         <th>Name</th>
+                        <th>Role</th>
                         <th>Email</th>
                         <th>Phone</th>
                         <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @{ int count = 1; }
+                    @{ int count = (CurrentPage - 1) * PageSize + 1; }
                     @foreach (var tutor in FilteredTutors)
                     {
                         <tr>
@@ -48,11 +55,12 @@
                                      class="rounded-circle" width="50" height="50" style="object-fit: cover;">
                             </td>
                             <td>@tutor.TutorName</td>
+                            <td>@tutor.RoleName</td>
                             <td>@tutor.Email</td>
                             <td>@tutor.Phone</td>
                             <td class="text-center">
-                                <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2">Edit</NavLink>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)">Delete</button>
+                                <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2"><i class="bi bi-pencil me-1.5"></i> Edit</NavLink>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)"><i class="bi bi-trash me-1.5"></i> Delete</button>
                             </td>
                         </tr>
                         count++;
@@ -60,6 +68,8 @@
                 </tbody>
             </table>
         </div>
+
+        <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
     }
 </div>
 

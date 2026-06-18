@@ -16,17 +16,17 @@ function applyHighchartsTheme() {
             style: { fontFamily: "'Inter', 'Segoe UI', sans-serif" },
             animation: { duration: 600, easing: "easeOutQuart" },
         },
-        title: { style: { color: "#f0f6fc", fontSize: "13px", fontWeight: "700" } },
-        subtitle: { style: { color: "#8b949e" } },
+        title: { style: { color: "#1f2937", fontSize: "13px", fontWeight: "700" } },
+        subtitle: { style: { color: "#4b5563" } },
         legend: {
-            itemStyle: { color: "#8b949e", fontWeight: "500", fontSize: "12px" },
-            itemHoverStyle: { color: "#f0f6fc" },
+            itemStyle: { color: "#4b5563", fontWeight: "500", fontSize: "12px" },
+            itemHoverStyle: { color: "#1f2937" },
         },
         tooltip: {
-            backgroundColor: "#1c2333",
-            borderColor: "rgba(255,255,255,0.1)",
+            backgroundColor: "#ffffff",
+            borderColor: "rgba(0,0,0,0.1)",
             borderRadius: 8,
-            style: { color: "#f0f6fc", fontSize: "12px" },
+            style: { color: "#1f2937", fontSize: "12px" },
             shadow: true,
         },
         credits: { enabled: false },
@@ -72,9 +72,9 @@ function initCharts(roleDistributionData) {
                 }))
                 .filter((item) => item.name && Number.isFinite(item.y) && item.y > 0)
             : [
-                { name: "Admin", y: 10, color: "#22d3ee" },
-                { name: "Student", y: 70, color: "#10b981" },
-                { name: "Tutor", y: 20, color: "#8b5cf6" },
+                { name: "Admin", y: 10, color: "#1b8a5a" },
+                { name: "Student", y: 70, color: "#2563eb" },
+                { name: "Tutor", y: 20, color: "#7c3aed" },
             ];
 
     if (typeof Highcharts === "undefined") {
@@ -117,7 +117,7 @@ function initCharts(roleDistributionData) {
                     dataLabels: {
                         enabled: true,
                         format: "<b>{point.name}</b><br>{point.percentage:.1f}%",
-                        style: { color: "#8b949e", fontSize: "11px", fontWeight: "500" },
+                        style: { color: "#4b5563", fontSize: "11px", fontWeight: "500" },
                         distance: 18,
                     },
                     showInLegend: true,
@@ -162,15 +162,15 @@ function initCharts(roleDistributionData) {
             title: { text: null },
             xAxis: {
                 categories: ["Civil", "Mech", "IT", "Math", "Science"],
-                labels: { style: { color: "#6e7681", fontSize: "12px" } },
-                lineColor: "rgba(255,255,255,0.05)",
-                tickColor: "rgba(255,255,255,0.05)",
+                labels: { style: { color: "#4b5563", fontSize: "12px" } },
+                lineColor: "rgba(0,0,0,0.08)",
+                tickColor: "rgba(0,0,0,0.08)",
             },
             yAxis: {
                 min: 0,
                 title: { text: null },
-                labels: { style: { color: "#6e7681", fontSize: "11px" } },
-                gridLineColor: "rgba(255,255,255,0.05)",
+                labels: { style: { color: "#4b5563", fontSize: "11px" } },
+                gridLineColor: "rgba(0,0,0,0.05)",
                 gridLineDashStyle: "ShortDash",
             },
             legend: {
@@ -189,12 +189,12 @@ function initCharts(roleDistributionData) {
             series: [
                 {
                     name: "Library PDF Books",
-                    color: "#22d3ee",
+                    color: "#1b8a5a",
                     data: [300, 250, 400, 150, 140],
                 },
                 {
                     name: "Tutors",
-                    color: "#8b5cf6",
+                    color: "#7c3aed",
                     data: [80, 75, 90, 40, 30],
                 },
             ],
@@ -212,9 +212,9 @@ function renderFallbackRolePie(rolePieData) {
         rolePieData && rolePieData.length
             ? rolePieData
             : [
-                { name: "Admin", y: 10, color: "#22d3ee" },
-                { name: "Student", y: 70, color: "#10b981" },
-                { name: "Tutor", y: 20, color: "#8b5cf6" },
+                { name: "Admin", y: 10, color: "#1b8a5a" },
+                { name: "Student", y: 70, color: "#2563eb" },
+                { name: "Tutor", y: 20, color: "#7c3aed" },
             ];
 
     let start = 0;
@@ -230,13 +230,13 @@ function renderFallbackRolePie(rolePieData) {
     pieEl.innerHTML = `
         <div style="min-height:260px;display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;">
             <div style="width:180px;height:180px;border-radius:50%;background:conic-gradient(${gradientStops});position:relative;flex:0 0 auto;">
-                <div style="position:absolute;inset:48px;border-radius:50%;background:#0d1117;"></div>
+                <div style="position:absolute;inset:48px;border-radius:50%;background:#ffffff;"></div>
             </div>
             <div style="display:grid;gap:10px;min-width:140px;">
                 ${data
             .map(
                 (item) => `
-                    <div style="display:flex;align-items:center;gap:8px;color:#8b949e;font-size:12px;">
+                    <div style="display:flex;align-items:center;gap:8px;color:#4b5563;font-size:12px;">
                         <span style="width:10px;height:10px;border-radius:3px;background:${item.color};display:inline-block;"></span>
                         <span>${item.name}: ${Number(item.y).toFixed(0)}%</span>
                     </div>

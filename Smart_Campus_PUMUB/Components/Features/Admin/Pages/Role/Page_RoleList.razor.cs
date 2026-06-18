@@ -26,6 +26,31 @@ public partial class Page_RoleList
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+
+    private string SearchInput = "";
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SearchTerm = "";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
     public bool IsSuccess { get; private set; }
 
     private string statusMessage;
@@ -34,11 +59,33 @@ public partial class Page_RoleList
     private bool ShowModal { get; set; } = false;
     private RoleModel? SelectedRole { get; set; }
 
-    // 🔍 Search Textbox ရိုက်သည့်အပေါ်မူတည်ပြီး Dynamic Filter စစ်ပေးခြင်း
-    private IEnumerable<RoleModel> FilteredRoles => string.IsNullOrWhiteSpace(SearchTerm)
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<RoleModel> GetFilteredRoles() => string.IsNullOrWhiteSpace(SearchTerm)
         ? RoleList
-        : RoleList.Where(r =>
-                              (r.RoleName != null && r.RoleName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+        : RoleList.Where(r => r.RoleName != null && r.RoleName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<RoleModel> FilteredRoles
+    {
+        get
+        {
+            var allFiltered = GetFilteredRoles();
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
+    }
 
     // စာမျက်နှာ စတင်ပွင့်လာချိန်တွင် API အား GET ခေါ်ခြင်း
     protected override async Task OnInitializedAsync()

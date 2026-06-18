@@ -20,15 +20,64 @@ public partial class Page_CategoryList
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
 
+    private string SearchInput = "";
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SearchTerm = "";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
+
     private string statusMessage;
 
     public bool IsSuccess { get; private set; }
     private bool ShowModal { get; set; } = false;
     private CategoryModel? SelectedCategory { get; set; }
 
-    private IEnumerable<CategoryModel> FilteredCategories => string.IsNullOrWhiteSpace(SearchTerm)
+    // Pagination Variables
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    private IEnumerable<CategoryModel> GetFilteredCategories() => string.IsNullOrWhiteSpace(SearchTerm)
         ? CategoryList
         : CategoryList.Where(c => c.CategoryName != null && c.CategoryName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private IEnumerable<CategoryModel> FilteredCategories
+    {
+        get
+        {
+            var allFiltered = GetFilteredCategories();
+            int count = allFiltered.Count();
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    private void OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync()
     {
