@@ -8,7 +8,7 @@ public class ActivityCreateRequestModel
     public string? Description { get; set; }
     public string? Location { get; set; }
     // 💡 Frontend တွင် Base64 စာသား သို့မဟုတ် File Stream ဖြင့်င်တွယ်ရန် String အဖြစ် ထားရှိခြင်း
-    public string? ImageBase64 { get; set; } 
+    public string? ImageBase64 { get; set; }
     public string? ImageFileName { get; set; }
 }
 
@@ -40,4 +40,10 @@ public class ActivityModel
     public string? Image { get; set; } // API မှ ပြန်လာမည့် ပုံ URL သို့မဟုတ် ရုပ်ထွက်လမ်းကြောင်း
     public string? Description { get; set; }
     public string? Location { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    // ဖန်တီးသူ (လိုအပ်ပါက)
+    public string? CreatedBy { get; set; }
+
+
 }

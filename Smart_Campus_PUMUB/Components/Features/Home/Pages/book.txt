@@ -1,21 +1,78 @@
+using Microsoft.AspNetCore.Components;
+using Smart_Campus_PUMUB.WebApi.Models;
+using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+
+namespace Smart_Campus_PUMUB.Components.Pages
+{
+    public class LibraryBase : ComponentBase
+    {
+        [Inject] public HttpClientService HttpClientService { get; set; } = default!;
+
+        public List<BookModel> masterBooks { get; set; } = new();
+        public List<BookModel> filteredBooks { get; set; } = new();
+        public List<CategoryModel> Categories { get; set; } = new();
+
+        public int SelectedCategoryId { get; set; } = 0; // 0 = All
+        public string searchQuery { get; set; } = "";
+        public bool isSearching { get; set; } = false;
+        public bool isOpen { get; set; } = false;
+
+        protected override async Task OnInitializedAsync()
+        {
+            // API နှစ်ခုလုံးဆီက Data ခေါ်ယူခြင်း
+            masterBooks = await HttpClientService.ExecuteAsync<List<BookModel>>("book", EnumHttpMethod.Get) ?? new();
+            Categories = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get) ?? new();
+
+            FilterData();
+        }
+
+        public void ToggleMenu() => isOpen = !isOpen;
+
+        public void OnCategorySelected(int categoryId)
+        {
+            SelectedCategoryId = categoryId;
+            isOpen = false;
+            FilterData();
+        }
+
+        public void FilterData()
+        {
+            var query = masterBooks.AsEnumerable();
+
+            // 1. Category Filter
+            if (SelectedCategoryId != 0)
+                query = query.Where(b => b.CategoryId == SelectedCategoryId);
+
+            // 2. Search Filter
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                query = query.Where(b => b.BookName != null &&
+                                        b.BookName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+                isSearching = true;
+            }
+            else
+            {
+                isSearching = false;
+            }
+
+            filteredBooks = query.ToList();
+            StateHasChanged();
+        }
+
+        public void ClearSearch()
+        {
+            searchQuery = "";
+            isSearching = false;
+            FilterData();
+        }
+    }
+}and 
+
+
 @page "/Library"
 @rendermode InteractiveServer
 @using Smart_Campus_PUMUB.Components.Pages
 @inherits LibraryBase
-<style>
-    /* Dropdown item ကို hover လုပ်ရင် အရောင်ပြောင်းရန် */
-    .dropdown-item:hover {
-        background-color: #5A4FCF !important;
-        color: white !important;
-        cursor: pointer;
-    }
-
-    /* Download button hover effect */
-    .btn:hover {
-        filter: brightness(90%);
-        /* အနည်းငယ် အရောင်ရင့်သွားအောင် */
-    }
-</style>
 
 <section id="library" style="margin:50px;">
     <div class="container">
@@ -60,18 +117,12 @@
                     {
                         <div class="book-card">
                             <div class="book-cover">
-                                <img src="@book.Image" alt="@book.BookName"
-                                     onerror="this.src='https://via.placeholder.com/400x280'">
+                                <img src="@book.Image" alt="@book.BookName">
                             </div>
                             <div class="book-body">
                                 <div class="book-category">@book.CategoryName</div>
                                 <h4>@book.BookName</h4>
                                 <p class="book-author">@book.Author</p>
-
-                                <a href="@book.FilePath" target="_blank" class="btn rounded-pill mt-2"
-                                   style="background-color: #5A4FCF; color: white; width: 100%; padding: 8px;">
-                                    <i class="fas fa-download"></i> Download
-                                </a>
                             </div>
                         </div>
                     }

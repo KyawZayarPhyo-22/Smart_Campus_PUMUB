@@ -17,10 +17,20 @@ public class RulesRegulationsController : ControllerBase
     [HttpGet]
     public IActionResult GetRules()
     {
+        // var lst = _db.RulesRegulations
+        //              .Where(x => x.IsDelete == false || x.IsDelete == null)
+        //              .OrderByDescending(x => x.RuleId)
+        //              .ToList();
         var lst = _db.RulesRegulations
-                     .Where(x => x.IsDelete == false || x.IsDelete == null)
-                     .OrderByDescending(x => x.RuleId)
-                     .ToList();
+                   .Where(r => r.IsDelete == false)
+                   .OrderByDescending(r => r.CreatedDateTime) // အသစ်ဆုံးကို အရင်ပြရန်
+                   .Select(r => new RuleModel {
+                       RuleId = r.RuleId,
+                       Title = r.Title,
+                       Description = r.Description,
+                       Penalty = r.Penalty,
+                       CreatedDateTime = r.CreatedDateTime ?? DateTime.Now
+                   }).ToList();
         return Ok(lst);
     }
 
@@ -47,7 +57,7 @@ public class RulesRegulationsController : ControllerBase
             Title = request.Title,
             Description = request.Description,
             Penalty = request.Penalty,
-            CreatedDateTime = DateTime.Now,
+            CreatedDateTime = DateTime.UtcNow,
             CreatedBy = request.CreatedBy,
             IsDelete = false
         });

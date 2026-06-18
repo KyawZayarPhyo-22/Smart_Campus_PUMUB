@@ -26,5 +26,6 @@ namespace Smart_Campus_PUMUB.WebApi.Models
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? Penalty { get; set; }
+        public DateTime CreatedDateTime { get; set; }
     }
 }

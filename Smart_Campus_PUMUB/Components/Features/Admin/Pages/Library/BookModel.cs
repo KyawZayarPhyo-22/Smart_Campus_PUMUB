@@ -59,6 +59,8 @@ public class BookModel
     public string? BookName { get; set; }
     public string? Image { get; set; }
     public string? FilePath { get; set; }
+    public string? Author { get; set; }
+    public string? CategoryName { get; set; }
 }
 
 // ==========================================
