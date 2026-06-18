@@ -1,0 +1,403 @@
+@page "/Register"
+@layout MainLayout
+@@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+<div class="modern-form-card" style="margin-top: 80px;">
+    <div class="form-header">
+        <i class="fas fa-file-alt"></i>
+        <h2>Online Registration Form</h2>
+    </div>
+
+    <div class="stepper-wrapper">
+        <div class="stepper-progress"></div>
+        
+        <div class="step-block active">
+            <div class="step-circle">1</div>
+            <div class="step-label">Personal Info</div>
+        </div>
+        <div class="step-block">
+            <div class="step-circle">2</div>
+            <div class="step-label">Academic Info</div>
+        </div>
+        <div class="step-block">
+            <div class="step-circle">3</div>
+            <div class="step-label">Family Info</div>
+        </div>
+        <div class="step-block">
+            <div class="step-circle">4</div>
+            <div class="step-label">Submit</div>
+        </div>
+    </div>
+
+    <div class="form-step active" id="step1">
+        <div class="input-grid">
+            
+            <div class="photo-upload-wrapper">
+                <label for="photoUpload" class="photo-box">
+                    <i class="far fa-user"></i>
+                    <span class="photo-text">ဓါတ်ပုံ ၄ ပုံနှင့်<br>တင်သွင်းပါ</span>
+                </label>
+                <input type="file" id="photoUpload" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အမည် (မြန်မာစာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="ကိုအောင်မင်း">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">အမည် (အင်္ဂလိပ်စာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="Ko Aung Min">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မှတ်ပုံတင်အမှတ်</label>
+                <input type="text" class="modern-input" placeholder="၉/မကန(နိုင်)၀၀၀၀၀၀">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မွေးသက္ကရာဇ်</label>
+                <input type="date" class="modern-input">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">လူမျိုး နှင့် ကိုးကွယ်သည့်ဘာသာ</label>
+                <div style="display: flex; gap:10px;">
+                    <input type="text" class="modern-input" placeholder="လူမျိုး">
+                    <input type="text" class="modern-input" placeholder="ဘာသာ">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မွေးဖွားရာဇာတိ / မြို့နယ် / တိုင်း</label>
+                <input type="text" class="modern-input" placeholder="မွေးဖွားရာဇာတိမြို့">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">သွေးအုပ်စု</label>
+                <input type="text" class="modern-input" placeholder="e.g. O+">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Email</label>
+                <input type="email" class="modern-input" placeholder="student@example.com">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ကိုဗစ်ကာကွယ်ရေးထိုးနှံမှုပြီးစီးသည့်ရက်</label>
+                <input type="date" class="modern-input" placeholder="ထိုး/မထိုး ပြီးစီးသည့်ရက်">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">နိုင်ငံသား အမျိုးအစား</label>
+                <div class="radio-group">
+                    <label class="radio-item"><input type="radio" name="nationality" value="တိုင်းရင်းသား" checked> တိုင်းရင်းသား</label>
+                    <label class="radio-item"><input type="radio" name="nationality" value="နိုင်ငံခြားသား"> နိုင်ငံခြားသား</label>
+                </div>
+            </div>
+
+            
+        </div>
+
+        <div class="form-footer">
+            <button class="btn-next">Next: Academic Info <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div class="form-step" id="step2">
+        <div class="input-grid">
+            <div class="input-group full-width">
+                <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (မြန်မာစာဖြင့်)</label>
+                <textarea class="modern-input" placeholder="နေရပ်လိပ်စာ အပြည့်အစုံ ရေးရန်..."></textarea>
+            </div>
+
+            <div class="input-group full-width">
+                <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (အင်္ဂလိပ်စာဖြင့်)</label>
+                <textarea class="modern-input" placeholder="Full permanent address..."></textarea>
+            </div>
+            <div class="input-group">
+                <label class="input-label">သင်တန်းနှစ်</label>
+                <input type="text" class="modern-input" placeholder="e.g. ပထမနှစ်">
+            </div>
+            <div class="input-group">
+                <label class="input-label">အထူးပြုဘာသာ</label>
+                <input type="text" class="modern-input" placeholder="e.g. Computing">
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">ခုံအမှတ်</label>
+                <input type="text" class="modern-input" placeholder="ခုံအမှတ် ရိုက်ထည့်ပါ">
+            </div>
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်မှတ်ပုံတင်အမှတ်</label>
+                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် ရိုက်ထည့်ပါ">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်ဝင်ရောက်သည့်နှစ် (ခုနှစ်)</label>
+                <input type="number" class="modern-input" placeholder="e.g. 2024">
+            </div>
+            <div class="input-group">
+                <label class="input-label">အောင်မြင်သည့် ခုနှစ်</label>
+                <input type="number" class="modern-input" placeholder="e.g. 2022">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်ဝင်တန်း ခုံအမှတ်</label>
+                <input type="text" class="modern-input" placeholder="e.g. အမ-၁၂၃၄">
+            </div>
+            <div class="input-group">
+                <label class="input-label">စာစစ်ဌာန</label>
+                <input type="text" class="modern-input" placeholder="စာစစ်ဌာန အမည်">
+            </div>
+        </div>
+
+        <div class="form-footer">
+            <button class="btn-prev"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-next">Next: Family Info <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div class="form-step" id="step3">
+        <div class="input-grid">
+            <div class="input-group full-width" style="border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 10px;">
+                <label class="input-label">၂။ ဖြေဆိုသည့်စာမေးပွဲများ</label>
+                <div class="table-responsive">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>ဖြေဆိုသည့်စာမေးပွဲများ</th>
+                                <th>အဓိကဘာသာ</th>
+                                <th>ခုံအမှတ်</th>
+                                <th>ခုနှစ်</th>
+                                <th>အောင် / ကျ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" class="modern-input"></td>
+                                <td><input type="text" class="modern-input"></td>
+                                <td><input type="text" class="modern-input"></td>
+                                <td><input type="number" class="modern-input"></td>
+                                <td><input type="text" class="modern-input"></td>
+                            </tr>
+                           
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="input-group">
+                <label class="input-label">အဘ အမည် (မြန်မာစာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="အဘ အမည်">
+            </div>
+            <div class="input-group">
+                <label class="input-label">အဘ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အမိ အမည် (မြန်မာစာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="အမိ အမည်">
+            </div>
+            <div class="input-group">
+                <label class="input-label">အမိ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်">
+            </div>
+
+            <div class="input-group full-width" style="border-top: 1px dashed #e2e8f0; padding-top: 20px; margin-top: 10px;">
+                <label class="input-label" style="font-size: 1rem;">၃။ ကျောင်းနေရန်အထောက်အပံ့ပြုမည့် ပုဂ္ဂိုလ်</label>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အမည်</label>
+                <input type="text" class="modern-input" placeholder="အုပ်ထိန်းသူ အမည်">
+            </div>
+            <div class="input-group">
+                <label class="input-label">ဆွေမျိုးတော်စပ်ပုံ</label>
+                <input type="text" class="modern-input" placeholder="e.g. ဦးလေး / အဒေါ်">
+            </div>
+            <div class="input-group">
+                <label class="input-label">အလုပ်အကိုင်</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်">
+            </div>
+            <div class="input-group">
+                <label class="input-label">ဆက်သွယ်ရန်လိပ်စာနှင့် ဖုန်းနံပါတ်</label>
+                <input type="text" class="modern-input" placeholder="လိပ်စာ နှင့် ဖုန်း">
+            </div>
+        </div>
+
+        <div class="form-footer">
+            <button class="btn-prev"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-next">Next: Submit <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div class="form-step" id="step4">
+        <div class="input-grid">
+            
+           
+
+            <div class="input-group full-width">
+                <label class="input-label">ပညာသင်ထောက်ပံ့ကြေးပေးရန်မေတ္တာရပ်ခံခြင်း</label>
+                <div class="radio-group">
+                    <label class="radio-item"><input type="radio" name="prize"> ပြုမည်</label>
+                    <label class="radio-item"><input type="radio" name="prize" checked> မပြုပါ</label>
+                </div>
+            </div>
+
+            <div class="input-group full-width">
+                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h4 style="margin: 0 0 15px 0; color: #0f172a;">ကိုယ်ပိုင်ဝန်ခံချက်</h4>
+                    <ul style="font-size: 0.9rem; color: #475569; padding-left: 20px; margin: 0; line-height: 1.8;">
+                        <li>၁။ အထက်ဖော်ပြပါ အချက်များအားလုံး မှန်ကန်ပါသည်။</li>
+                        <li>၂။ ဤတက္ကသိုလ်၌ ကိုယ်တိုင်ပညာသင်ခွင့် တောင်းသည်ကို မိဘ (သို့မဟုတ်) အုပ်ထိန်းသူက သဘောတူကြောင်း ဖြစ်ပါသည်။</li>
+                        <li>၃။ တက္ကသိုလ်ကျောင်းသားတစ်ဦးပီသစွာ တက္ကသိုလ် / ကောလိပ်က ချမှတ်သည့် စည်းမျဉ်းစည်းကမ်းနှင့်အညီ လိုက်နာကျင့်သုံးနေထိုင်ပါမည်။</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ပညာသင်ခွင့်လျောက်ထားသူ၏ လက်မှတ် (အမည်ရိုက်ရန်)</label>
+                <input type="text" class="modern-input" placeholder="အမည် အပြည့်အစုံ ရိုက်ထည့်ပါ">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ရက်စွဲ</label>
+                <input type="date" class="modern-input">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အုပ်ထိန်းသူအမည်</label>
+                <input type="text" class="modern-input" placeholder="အုပ်ထိန်းသူအမည် အပြည့်အစုံ ရိုက်ထည့်ပါ">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မှတ်ပုံတင်အမှတ်</label>
+                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် အပြည့်အစုံ ရိုက်ထည့်ပါ">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ဖုန်းနံပါတ်</label>
+                <input type="text" class="modern-input" placeholder="ဖုန်းနံပါတ် အပြည့်အစုံ ရိုက်ထည့်ပါ">
+            </div>
+
+            <div class="input-group full-width">
+                <label class="input-label">ယခုဆက်သွယ်ရန်လိပ်စာ</label>
+                <textarea class="modern-input" placeholder="ယခုလက်ရှိ နေထိုင်သောလိပ်စာ..."></textarea>
+            </div>
+
+        </div>
+
+        <div class="form-footer">
+            <button class="btn-prev"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-next" style="background: #10b981;">
+                ငွေပေးချေမှုစနစ်သို့ သွားရန် <i class="fas fa-credit-card"></i>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const nextBtns = document.querySelectorAll(".btn-next");
+        const prevBtns = document.querySelectorAll(".btn-prev");
+        const formSteps = document.querySelectorAll(".form-step");
+        const stepBlocks = document.querySelectorAll(".step-block");
+        const progressLine = document.querySelector(".stepper-progress");
+
+        let currentStep = 0;
+
+        // Next Button နှိပ်လျှင် အလုပ်လုပ်မည့်အပိုင်း (Validation ပါဝင်သည်)
+        // nextBtns.forEach((btn) => {
+        //     btn.addEventListener("click", (e) => {
+        //         e.preventDefault(); 
+
+        //         // လက်ရှိ Step ကို ဆွဲယူမည်
+        //         const currentStepEl = formSteps[currentStep];
+                
+        //         // လက်ရှိ Step ထဲက input အကွက်တွေကိုပဲ ဆွဲယူမည်
+        //         const inputs = currentStepEl.querySelectorAll(".modern-input");
+        //         let isValid = true;
+
+        //         // အကွက်တိုင်းကို လိုက်စစ်မည်
+        //         inputs.forEach(input => {
+        //             // အလွတ်ဖြစ်နေသလား စစ်ဆေးခြင်း (Readonly မဟုတ်တဲ့အကွက်တွေကိုပဲ စစ်ပါမည်)
+        //             if (input.value.trim() === "" && !input.readOnly) {
+        //                 isValid = false;
+        //                 input.style.borderColor = "#ef4444"; // အနီရောင်ပြောင်းမည်
+        //                 input.style.boxShadow = "0 0 0 3px rgba(239, 68, 68, 0.1)";
+        //             } else {
+        //                 input.style.borderColor = "#cbd5e1"; // မူလအရောင်
+        //                 input.style.boxShadow = "none";
+        //             }
+
+        //             // User စာပြန်ရိုက်ထည့်တဲ့အခါ အနီရောင်ပျောက်သွားစေရန်
+        //             input.addEventListener("input", function() {
+        //                 this.style.borderColor = "#cbd5e1";
+        //                 this.style.boxShadow = "none";
+        //             });
+                    
+        //             // Select Box တွေအတွက်
+        //             input.addEventListener("change", function() {
+        //                 this.style.borderColor = "#cbd5e1";
+        //                 this.style.boxShadow = "none";
+        //             });
+        //         });
+
+        //         // မဖြည့်ထားတာ ရှိရင် ရှေ့ဆက်မသွားဘဲ ရပ်ထားမည်
+        //         if (!isValid) {
+        //             alert("ကျေးဇူးပြု၍ လိုအပ်သော အချက်အလက်များကို ပြည့်စုံစွာ ဖြည့်သွင်းပါ။");
+        //             return; 
+        //         }
+
+        //         // အကုန်ဖြည့်ထားမှသာ နောက်တစ်မျက်နှာသို့ သွားမည်
+        //         if (currentStep < formSteps.length - 1) {
+        //             currentStep++;
+        //             updateFormSteps();
+        //         }
+        //     });
+        // });
+
+        nextBtns.forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault(); 
+                if (currentStep < formSteps.length - 1) {
+                    currentStep++;
+                    updateFormSteps();
+                }
+            });
+        });
+
+        // Back Button နှိပ်လျှင် အလုပ်လုပ်မည့်အပိုင်း
+        prevBtns.forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault(); 
+                if (currentStep > 0) {
+                    currentStep--;
+                    updateFormSteps();
+                }
+            });
+        });
+
+        // UI ကို Update လုပ်ပေးမည့် Function
+        function updateFormSteps() {
+            formSteps.forEach((step, index) => {
+                step.classList.toggle("active", index === currentStep);
+            });
+
+            stepBlocks.forEach((block, index) => {
+                if (index <= currentStep) {
+                    block.classList.add("active");
+                } else {
+                    block.classList.remove("active");
+                }
+            });
+
+            const progressPercentage = (currentStep / (stepBlocks.length - 1)) * 100;
+            progressLine.style.width = progressPercentage + "%";
+        }
+        
+        updateFormSteps();
+    });
+</script>

@@ -6,6 +6,9 @@ using Smart_Campus_PUMUB.Components.Features.Services;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using System.Globalization;
 
+// User ရဲ့ Login Status ကို ခေတ္တမှတ်ထားပေးမယ့် Class ဖြစ်ပါတယ်
+
+
 var cultureInfo = new CultureInfo("en-GB"); // en-GB က dd-MM-yyyy ကို သုံးပါတယ်
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
 CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
@@ -25,6 +28,8 @@ builder.Services.AddCors(options =>
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+
 
 // ==========================================
 // 🛠️ ဤနေရာတွင် Services များကို စနစ်တကျ ရေးရပါမည် (app = builder.Build() မတိုင်မီ)
@@ -58,6 +63,7 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
 app.UseHttpsRedirection();
@@ -66,5 +72,7 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.Run();
 
 app.Run();

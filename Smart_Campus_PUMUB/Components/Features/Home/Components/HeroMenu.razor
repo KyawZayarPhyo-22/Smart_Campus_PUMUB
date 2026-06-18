@@ -1,76 +1,25 @@
-@using Microsoft.AspNetCore.Components.Authorization
-@using Smart_Campus_PUMUB.Components.Features.Services
-@inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager NavManager
-
-<section id="hero" style="min-height: 100vh; height: auto; position: relative;">
+<!-- HERO -->
+<section id="hero" style="min-height: 100vh;height: auto;">
     <div class="hero-bg">
         <img class="hero-bg-img" src="https://images.unsplash.com/photo-1562774053-701939374585?w=1920&q=80"
              alt="Polytechnic University Maubin Campus">
         <div class="hero-overlay"></div>
     </div>
-    <div class="hero-particles" id="particles"></div>
 
     <div class="hero-content">
-        <div style="max-width:700px;">
+        <div >
             <div class="hero-badge"><i class="fas fa-star"></i> Excellence in Technology & Engineering</div>
-
-            <h1 class="hero-title" style="border: none !important; outline: none !important; box-shadow: none !important; line-height: 1.2 !important;">
-                Polytechnic<br>University <span>(Maubin)</span>
+            <h1 class="hero-title">Polytechnic<br>University <span>(Maubin)</span>
             </h1>
-
             <div class="typing-text" id="typingText"></div>
-            <p class="hero-desc">
-                A premier institution of higher learning dedicated to advancing technology,
+            <p class="hero-desc" style="color: white">A premier institution of higher learning dedicated to
+                advancing technology,
                 engineering, and innovation in Myanmar. Shaping tomorrow's engineers and technologists since 1999.
             </p>
 
-            <div class="hero-btns">
-                <AuthorizeView>
-                    <Authorized>
-                        @if (context.User.IsInRole("Student"))
-                        {
-                            <a href="/register" class="btn-primary">
-                                <i class="fas fa-graduation-cap"></i> Apply Now
-                            </a>
-                        }
-                        else
-                        {
-                            <a href="/" class="btn-primary">
-                                <i class="fas fa-graduation-cap"></i> Apply Now
-                            </a>
-                        }
-                    </Authorized>
-                    <NotAuthorized>
-                        <a href="/login" class="btn-primary">
-                            <i class="fas fa-graduation-cap"></i> Apply Now
-                        </a>
-                    </NotAuthorized>
-                </AuthorizeView>
-
-                <a href="#programs" class="btn-outline"><i class="fas fa-compass"></i> Explore Programs</a>
-                <a href="#about" class="btn-outline"><i class="fas fa-play-circle"></i> Virtual Tour</a>
-            </div>
         </div>
 
-        <div class="hero-stats">
-            <div class="stat-card">
-                <div class="stat-num" data-count="8500">0</div>
-                <div class="stat-label">Students</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-num" data-count="420">0</div>
-                <div class="stat-label">Faculty Staff</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-num" data-count="12">0</div>
-                <div class="stat-label">Departments</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-num" data-count="180">0</div>
-                <div class="stat-label">Research Projects</div>
-            </div>
-        </div>
+        
     </div>
 
     <div class="scroll-hint">

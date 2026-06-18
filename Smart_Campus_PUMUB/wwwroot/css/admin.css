@@ -12,12 +12,13 @@
     --sidebar-w-sm:      68px;
     --topnav-h:          64px;
 
-    --bg-base:          #0d1117;
-    --bg-surface:       #161b22;
-    --bg-surface-2:     #1c2333;
-    --bg-surface-hover: rgba(255,255,255,0.05);
+    --bg-base:          #f3f4f6; /* Standard light gray background */
+    --bg-surface:       #ffffff; /* Pure white content areas */
+    --bg-surface-2:     #fafafa; /* Barely noticeable off-white for slight depth */
+    --bg-surface-hover: #e5e7eb; 
 
-    --accent-cyan:      #22d3ee;
+    /* --accent-cyan:      #22d3ee; */
+    --accent-cyan:      #5A4FCF;
     --accent-blue:      #3b82f6;
     --accent-violet:    #8b5cf6;
     --accent-green:     #10b981;
@@ -25,9 +26,9 @@
     --accent-red:       #ef4444;
 
     --border:           rgba(255,255,255,0.08);
-    --text-primary:     #f0f6fc;
-    --text-secondary:   #8b949e;
-    --text-muted:       #6e7681;
+    --text-primary:     #303131;
+    --text-secondary:   #2f3133;
+    --text-muted:       #303339;
 
     --radius-sm:        0.5rem;
     --radius-md:        0.75rem;
@@ -190,7 +191,7 @@ body {
 
 .sidebar-nav-link.active {
     color: var(--accent-cyan);
-    background: rgba(34,211,238,0.1);
+    background: rgba(24, 74, 222, 0.1);
     border-color: rgba(34,211,238,0.2);
     font-weight: 600;
 }
@@ -251,6 +252,8 @@ body {
     align-items: center;
     padding: 0 1.25rem;
     background: var(--bg-surface);
+    /* background: #5A4FCF; */
+    /* background: black; */
     border-bottom: 1px solid var(--border);
     gap: 0.75rem;
     z-index: 1020;
