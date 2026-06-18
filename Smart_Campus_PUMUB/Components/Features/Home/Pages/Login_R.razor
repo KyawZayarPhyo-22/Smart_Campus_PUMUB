@@ -1,0 +1,124 @@
+@page "/loginr"
+@* .NET 8 သုံးနေရင် OnAfterRender အလုပ်လုပ်ဖို့ အောက်က rendermode ကို မဖြစ်မနေ ထည့်ပေးရပါမယ် *@
+@rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+@if (!isLoaded)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <p style="color: #666; font-family: sans-serif;">Loading...</p>
+    </div>
+}
+else
+{
+    <div class="split-viewport-wrapper">
+        <div class="split-main-card">
+
+            <div class="split-left-panel">
+                <div class="left-panel-overlay"></div>
+                <div class="left-panel-content">
+                    <span class="welcome-text">Welcome to hell</span>
+                    <div class="brand-emblem-sphere">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h2 class="brand-title">Smart Campus</h2>
+                    <p class="brand-description">
+                        A premier knowledge gateway dedicated to advancing technologies and empowering future innovations.
+                    </p>
+
+                </div>
+            </div>
+
+            <div class="split-right-panel">
+                <div class="right-panel-content">
+                    <h3 class="form-main-headline">Sign In to Account</h3>
+                    <p class="form-sub-headline">Please enter your campus credentials below.</p>
+
+                    <div class="m3-form-engine">
+                        <div class="modern-field-container">
+                            <label class="modern-field-label">Username Identity</label>
+                            <div class="modern-input-capsule">
+                                <i class="fas fa-user-shield field-icon-accent"></i>
+                                <input type="text" class="bootstrap-destroyer-input"
+                                    placeholder="Enter your account username" />
+                            </div>
+                        </div>
+
+                        <div class="modern-field-container">
+                            <label class="modern-field-label">Security Credentials</label>
+                            <div class="modern-input-capsule">
+                                <i class="fas fa-key field-icon-accent"></i>
+                                <input type="password" class="bootstrap-destroyer-input password-padding-fix"
+                                    placeholder="Enter secure password" />
+
+                                <button type="button" class="field-eye-toggler-btn" tabindex="-1">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="luxury-error-banner alert-bounce" style="display: none;">
+                            <div class="error-accent-edge"></div>
+                            <i class="fas fa-circle-exclamation"></i>
+                            <span>Error message goes here</span>
+                        </div>
+
+                        <div class="action-button-layer" style="display: flex;gap: 15px;">
+                            <button type="button" class="modern-action-btn">
+                                <a href="/" style="text-decoration: none;color: #475569;">Home Page</a>
+                            </button>
+                            <button type="button" class="modern-action-btn" style="background: linear-gradient(135deg, #2563eb, #3b82f6) !important; color: #fff !important;">
+                                <span>Sign In Portal</span>
+                                <i class="fas fa-arrow-right-long arrow-slide-motion"></i>
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <div class="split-right-footer">
+                        <a href="/Account_Register" style="text-decoration: none;">
+                            <p>Create an account?</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div> 
+}
+
+@code {
+    // UI ကို ချက်ချင်း မပြသေးဘဲ ထိန်းထားမယ့် Flag ပါ
+    private bool isLoaded = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // JavaScript ဆီကနေ "isLoggedIn" key ကို လှမ်းဖတ်ပါတယ်
+                var isLoggedInValue = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "isLoggedIn");
+
+                // Data ရှိနေပြီးတော့ တန်ဖိုးကလည်း "true" ဖြစ်နေမှသာ (Login ဝင်ထားပြီးသား)
+                if (!string.IsNullOrEmpty(isLoggedInValue) && isLoggedInValue == "true")
+                {
+                    // Home Page ကို forceLoad နဲ့ တိုက်ရိုက် မောင်းထုတ်မယ်
+                    NavigationManager.NavigateTo("/", forceLoad: true);
+                    return; // အောက်က UI ဆွဲတဲ့ Code တွေကို ဆက်အလုပ်မလုပ်ခိုင်းတော့ပါ
+                }
+            }
+            catch (Exception ex)
+            {
+                // JavaScript error တစ်ခုခုတက်ခဲ့ရင် Debug လုပ်ရလွယ်အောင်
+                Console.WriteLine($"JS Interop Error: {ex.Message}");
+            }
+
+            // Storage ထဲမှာ Data မရှိရင် ဒါမှမဟုတ် Login မဝင်ရသေးရင် Loading ကိုပိတ်ပြီး Login UI ကို ပြပေးပါမယ်
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
+}

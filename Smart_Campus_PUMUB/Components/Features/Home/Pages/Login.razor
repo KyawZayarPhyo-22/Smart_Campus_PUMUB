@@ -1,27 +1,48 @@
 ﻿@page "/login"
 @layout EmptyLayout
-@using Microsoft.EntityFrameworkCore
-@using Smart_Campus_PUMUB.Database.AppDbContext
-@using Smart_Campus_PUMUB.Components.Features.Services
+@* @using Microsoft.EntityFrameworkCore *@
+@* @using Smart_Campus_PUMUB.Database.AppDbContext *@
+@* @using Smart_Campus_PUMUB.Components.Features.Services *@
 @using Smart_Campus_PUMUB.Components.Shared.Layout
 @using Microsoft.AspNetCore.Components.Authorization
-@inject SmartCampusDbContext DbContext
+@* @inject SmartCampusDbContext DbContext *@
 @inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager NavManager
-@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<div class="split-viewport-wrapper">
+@* <div class="split-viewport-wrapper">
     <div class="split-main-card">
 
         <div class="split-left-panel">
             <div class="left-panel-overlay"></div>
             <div class="left-panel-content">
-                <span class="welcome-text">Welcome to</span>
-                <div class="brand-emblem-sphere">
-                    <i class="fas fa-university"></i>
+                <span class="welcome-text">Welcome to hell</span>
+                <div class="nav-brand">
+                     <div class="brand-emblem-sphere" style="width: 54px;
+    height: 54px;
+    color: aliceblue;
+
+    backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;">
+        <div class="logo"
+          style="background-color: white;border-radius: 50%; width: 60px;height: 60px;align-items: center;">
+          <img src="/puu.png" alt="img" style="width: 60px;height: 60px">
+        </div>
+      </div>
+      <div class="nav-brand-text">
+        <span>Polytechnic University</span>
+        <span>Maubin · Est. 1999</span>
+      </div>
                 </div>
                 <h2 class="brand-title">Smart Campus</h2>
                 <p class="brand-description">
@@ -46,8 +67,8 @@
                         <div class="modern-input-capsule">
                             <i class="fas fa-user-shield field-icon-accent"></i>
                             <input type="text" class="bootstrap-destroyer-input"
-                                   placeholder="Enter your account username"
-                                   @bind="username" @bind:event="oninput" @onkeydown="HandleKeyDown" />
+                                placeholder="Enter your account username" @bind="username" @bind:event="oninput"
+                                @onkeydown="HandleKeyDown" />
                         </div>
                     </div>
 
@@ -56,10 +77,11 @@
                         <div class="modern-input-capsule">
                             <i class="fas fa-key field-icon-accent"></i>
                             <input type="@PasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
-                                   placeholder="Enter secure password"
-                                   @bind="password" @bind:event="oninput" @onkeydown="HandleKeyDown" />
+                                placeholder="Enter secure password" @bind="password" @bind:event="oninput"
+                                @onkeydown="HandleKeyDown" />
 
-                            <button type="button" class="field-eye-toggler-btn" @onclick="TogglePasswordVisibility" tabindex="-1">
+                            <button type="button" class="field-eye-toggler-btn" @onclick="TogglePasswordVisibility"
+                                tabindex="-1">
                                 <i class="fas @(isPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
                             </button>
                         </div>
@@ -98,211 +120,7 @@
         </div>
 
     </div>
-</div>
-
-<style>
-    .split-viewport-wrapper {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        background: #090d16 !important; /* Premium Midnight Dark Blue */
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 40px 24px;
-    }
-
-    /* পিনমပင် ပင်မ ကတ်ထူဘောင်ကြီး */
-    .split-main-card {
-        width: 100%;
-        max-width: 960px;
-        min-height: 560px;
-        background: #ffffff !important;
-        border-radius: 28px !important;
-        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4);
-        display: flex;
-        overflow: hidden;
-    }
-
-    /* 🌟 ဘယ်ဘက် အပြာရောင် PANEL ဒီဇိုင်း */
-    .split-left-panel {
-        flex: 1.1;
-        background: url('/images/university-bg.jpg') no-repeat center center/cover; /* ကိုကို့ Background ပုံရှိရင် ထည့်နိုင်ပါတယ်ရှင် */
-        background-color: #1e40af; /* Fallback Solid Premium Blue */
-        position: relative;
-        display: flex;
-        align-items: center;
-        padding: 48px;
-    }
-
-    .left-panel-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(29, 78, 216, 0.95), rgba(3, 105, 161, 0.9));
-        z-index: 1;
-    }
-
-    .left-panel-content {
-        position: relative;
-        z-index: 2;
-        color: #ffffff !important;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-
-    .welcome-text {
-        font-size: 1.1rem;
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.8);
-        letter-spacing: 0.02em;
-    }
-
-    .brand-emblem-sphere {
-        width: 64px;
-        height: 64px;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.6rem;
-    }
-
-    .brand-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        margin: 0;
-    }
-
-    .brand-description {
-        font-size: 0.92rem;
-        color: rgba(255, 255, 255, 0.75);
-        line-height: 1.6;
-        margin: 0;
-        max-width: 360px;
-    }
-
-    .brand-meta-tags {
-        display: flex;
-        gap: 10px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: rgba(255,255,255,0.4);
-        letter-spacing: 0.08em;
-        margin-top: 24px;
-    }
-
-    /* 🌟 ညာဘက် FORM PANEL ဒီဇိုင်း */
-    .split-right-panel {
-        flex: 1;
-        background: #ffffff !important;
-        display: flex;
-        align-items: center;
-        padding: 54px;
-    }
-
-    .right-panel-content {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-    }
-
-    .form-main-headline {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #0f172a !important;
-        margin: 0;
-        letter-spacing: -0.01em;
-    }
-
-    .form-sub-headline {
-        font-size: 0.88rem;
-        color: #64748b !important;
-        margin: 0;
-    }
-
-    .m3-form-engine {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .modern-field-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .modern-field-label {
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #475569 !important;
-        padding-left: 2px;
-    }
-
-    /* 🌟 THE HIGH-INSET CAPSULE BAR (အဖြူတုံးလုံးဝမထွက်စေရမည့် နည်းပညာ) */
-    .modern-input-capsule {
-        background: #f8fafc !important; /* Premium Soft Cream White */
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 50px !important; /* ဝိုင်းစက်သော ဆေးတောင့်ပုံစံ */
-        padding: 0 20px !important;
-        display: flex !important;
-        align-items: center !important;
-        position: relative !important;
-        width: 100% !important;
-        height: 52px !important;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04) !important;
-        transition: all 0.2s ease;
-    }
-
-        .modern-input-capsule:focus-within {
-            border-color: #2563eb !important;
-            background: #ffffff !important;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02), 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
-        }
-
-    .field-icon-accent {
-        font-size: 0.95rem;
-        color: #94a3b8 !important;
-        margin-right: 12px !important;
-    }
-
-    .modern-input-capsule:focus-within .field-icon-accent {
-        color: #2563eb !important;
-    }
-
-    /* 🌟 BOOTSTRAP OVERRIDE ANNIHILATION LAUNCHER */
-    /* (ကိုကို့စက်ထဲက Input စာသားအကွက်တွေ လေးထောင့်အဖြူတုံးကြီး ဖြစ်မသွားအောင် တိုက်ရိုက် Override လုပ်ပိတ်ချလိုက်တာပါ) */
-    .modern-input-capsule input,
-    .modern-input-capsule input[type="text"],
-    .modern-input-capsule input[type="password"],
-    .bootstrap-destroyer-input {
-        flex: 1 !important;
-        width: 100% !important;
-        height: 100% !important;
-        background: transparent !important; /* 💡 မလိုအပ်သော နောက်ခံ အဖြူတုံးကြီးကို ဖျောက်ချခြင်း */
-        background-color: transparent !important;
-        border: none !important; /* 💡 Bootstrap Default Border ကို ဖြုတ်ချခြင်း */
-        color: #0f172a !important; /* စာသားအရောင် အမည်းရင့် */
-        font-size: 0.92rem !important;
-        font-weight: 550 !important;
-        outline: none !important;
-        box-shadow: none !important; /* 💡 Bootstrap Hover/Focus Glow ကိုပါ သတ်ပစ်ခြင်း */
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-        .bootstrap-destroyer-input::placeholder {
-            color: #94a3b8 !important;
-            font-weight: 400;
-        }
+</div> *@
 
     .password-padding-fix {
         padding-right: 30px !important;
@@ -326,126 +144,86 @@
         z-index: 5 !important;
     }
 
-        .field-eye-toggler-btn:hover {
-            color: #475569 !important;
-        }
+<div class="split-viewport-wrapper">
+    <div class="split-main-card">
 
-    /* PREMIUM GLOW ACTION BUTTON */
-    .modern-action-btn {
-        width: 100% !important;
-        height: 50px !important;
-        background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 50px !important;
-        font-size: 0.95rem !important;
-        font-weight: 700 !important;
-        cursor: pointer !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 8px !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25) !important;
-        transition: all 0.2s ease;
-    }
+        <div class="split-left-panel" style="display: flex;flex-direction: column;justify-content: center;background-color: #f8fafc;gap: 20px">
+            <div class="left-panel-overlay" ></div>
+            <div class="left-panel-content" style=" height: 100%;display: flex;flex-direction: column;margin-top: 20px">
+                <div class=""><span class="welcome-text" style="font-size: 24px;font-weight: 800;color: white">Welcome to</span></div>
+                <div class="nav-brand">
+                    
+                        <div class="logo"
+                            style="background-color: white;border-radius: 80%; width: 120px;height: 120px;align-items: center;">
+                            <img src="/puu.png" alt="img" style="width: 120px;height: 120px">
+                        </div>
 
-        .modern-action-btn:hover {
-            background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
-            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35) !important;
-            transform: translateY(-1px) !important;
-        }
+                </div>
+                <div class="nav-brand-text" style="margin-top: 20px;">
+                    <span style="font-size: 24px;color: white">Polytechnic University</span>
+                    
+                </div>
+                <p class="brand-description">
+                    A premier knowledge gateway dedicated to advancing technologies and empowering future innovations.
+                </p>
 
-    .arrow-slide-motion {
-        transition: transform 0.2s ease;
-        font-size: 0.85rem;
-    }
+            </div>
+        </div>
 
-    .modern-action-btn:hover .arrow-slide-motion {
-        transform: translateX(4px);
-    }
+        <div class="split-right-panel">
+            <div class="right-panel-content">
+                <h3 class="form-main-headline">Sign In to Account</h3>
+                <p class="form-sub-headline">Please enter your campus credentials below.</p>
 
-    .modern-action-btn-processing {
-        width: 100% !important;
-        height: 50px !important;
-        background: #e2e8f0 !important;
-        color: #94a3b8 !important;
-        border: none !important;
-        border-radius: 50px !important;
-        font-weight: 600 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 10px !important;
-        cursor: not-allowed !important;
-    }
+                <div class="m3-form-engine">
+                    <div class="modern-field-container">
+                        <label class="modern-field-label">Username </label>
+                        <div class="modern-input-capsule">
+                            <i class="fas fa-user-shield field-icon-accent"></i>
+                            <input type="text" class="bootstrap-destroyer-input"
+                                placeholder="Enter your account username" />
+                        </div>
+                    </div>
 
-    /* ERROR RESPONSE TOAST */
-    .luxury-error-banner {
-        background: #fef2f2 !important;
-        border: 1px solid #fca5a5 !important;
-        color: #991b1b !important;
-        padding: 12px 16px !important;
-        border-radius: 12px !important;
-        font-size: 0.85rem !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        font-weight: 500 !important;
-        position: relative !important;
-        overflow: hidden !important;
-    }
+                    <div class="modern-field-container">
+                        <label class="modern-field-label">Password</label>
+                        <div class="modern-input-capsule">
+                            <i class="fas fa-key field-icon-accent"></i>
+                            <input type="password" class="bootstrap-destroyer-input password-padding-fix"
+                                placeholder="Enter secure password" />
 
-    .error-accent-edge {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: #ef4444 !important;
-    }
+                            <button type="button" class="field-eye-toggler-btn" tabindex="-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
 
-    .split-right-footer {
-        text-align: center;
-        font-size: 0.72rem;
-        color: #94a3b8 !important;
-        font-weight: 600;
-        margin-top: 12px;
-    }
+                    <div class="luxury-error-banner alert-bounce" style="display: none;">
+                        <div class="error-accent-edge"></div>
+                        <i class="fas fa-circle-exclamation"></i>
+                        <span>Error message goes here</span>
+                    </div>
 
-    /* RESPONSIVE DESIGN ARCHITECTURE (မိုဘိုင်းဖုန်းဖြင့်ကြည့်လျှင်လည်း အော်တို ကွက်တိညှိပေးမည့်စနစ်ပါ ကိုကို) */
-    @@media (max-width: 768px) {
-        .split-main-card {
-            flex-direction: column !important;
-            min-height: auto !important;
-            border-radius: 20px !important;
-        }
+                    <div class="action-button-layer" style="display: flex;gap: 15px;">
+                        <button type="button" class="modern-action-btn1">
+                            <a href="/" style="text-decoration: none;color: #5A4FCF;">Home Page</a>
+                        </button>
+                        <button type="button" class="modern-action-btn" style="backgroud: #5A4FCF">
+                            <span>Sign In</span>
+                        </button>
 
-        .split-left-panel {
-            padding: 36px 24px !important;
-            text-align: center !important;
-        }
-
-        .left-panel-content {
-            align-items: center !important;
-        }
-
-        .brand-description {
-            max-width: 100% !important;
-        }
+                    </div>
+                </div>
 
         .split-right-panel {
             padding: 36px 24px !important;
         }
+               
+            </div>
+        </div>
 
-        .brand-meta-tags {
-            display: none !important;
-        }
-    }
-
-    /* Animations core */
-    .alert-bounce {
-        animation: miniBounce 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    </div>
+</div>
 
     @@keyframes miniBounce {
         0% {
@@ -475,7 +253,8 @@
     }
 </style>
 
-@code {
+@* @code
+{
     private string username = "";
     private string password = "";
     private string errorMessage = "";
@@ -504,9 +283,9 @@
             isLoggingIn = true;
             errorMessage = "";
 
-            var user = await DbContext.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserName == username && u.IsDelete != true);
+             var user = await DbContext.Users 
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.UserName == username && u.IsDelete != true);
 
             if (user != null && user.Password == password)
             {
@@ -514,8 +293,7 @@
                 await customAuth.UpdateAuthenticationState(new UserSession
                 {
                     Username = user.UserName,
-                    Role = user.Role.RoleName,
-                    UserId = user.UserId
+                    Role = user.Role.RoleName
                 });
 
                 string roleName = user.Role.RoleName.ToLower();
@@ -543,5 +321,23 @@
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await HandleLogin();
+    }
+} *@
+
+@code
+{
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // LocalStorage ထဲက isLoggedIn ရဲ့ တန်ဖိုးကို လှမ်းဖတ်မယ်
+            var loginStatus = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "isLoggedIn");
+
+            // တန်ဖိုးက null မဟုတ်ရုံတင်မကဘဲ စာသားက "true" ဖြစ်မှ သွားခိုင်းပါမယ်
+            if (!string.IsNullOrEmpty(loginStatus) && loginStatus == "true")
+            {
+                NavigationManager.NavigateTo("/");
+            }
+        }
     }
 }

@@ -224,3 +224,14 @@ window.addEventListener('scroll', () => {
     });
 });
 
+// 1. Select the paragraph
+const paragraph = document.querySelector('.faculty-body p');
+    
+// 2. Split the text into an array of words
+const words = paragraph.innerText.split(' ');
+
+// 3. Check if it's over 50 words
+if (words.length > 50) {
+    // Cut it to 50 words, join it back with spaces, and add "..."
+    paragraph.innerText = words.slice(0, 50).join(' ') + '...';
+}
