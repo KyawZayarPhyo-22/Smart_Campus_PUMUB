@@ -47,10 +47,17 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
         public string? PreviewImageUrl { get; set; }
         public IBrowserFile? SelectedPhotoFile { get; set; }
+        public byte[]? SelectedPhotoBytes { get; set; }
         public List<SemesterModel> SemesterList { get; set; } = new();
 
         public string NrcType { get; set; } = "(နိုင်)";
         public List<string> CurrentTownshipList { get; set; } = new();
+
+        public string? GuardianNrcState { get; set; }
+        public string? GuardianNrcTownship { get; set; }
+        public string GuardianNrcType { get; set; } = "(နိုင်)";
+        public string? GuardianNrcNumber { get; set; }
+        public List<string> GuardianTownshipList { get; set; } = new();
 
         private readonly Dictionary<string, List<string>> NrcTownshipsByState = new()
         {
@@ -142,6 +149,17 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 CurrentTownshipList = new List<string>();
         }
 
+        public void OnGuardianNrcStateChanged(ChangeEventArgs e)
+        {
+            GuardianNrcState = e.Value?.ToString();
+            GuardianNrcTownship = "";
+
+            if (!string.IsNullOrEmpty(GuardianNrcState) && NrcTownshipsByState.ContainsKey(GuardianNrcState))
+                GuardianTownshipList = NrcTownshipsByState[GuardianNrcState];
+            else
+                GuardianTownshipList = new List<string>();
+        }
+
         private async Task OnPhotoSelected(InputFileChangeEventArgs e)
         {
             SelectedPhotoFile = e.File;
@@ -149,7 +167,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             {
                 using var ms = new MemoryStream();
                 await SelectedPhotoFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
-                PreviewImageUrl = $"data:{SelectedPhotoFile.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+                SelectedPhotoBytes = ms.ToArray();
+                PreviewImageUrl = $"data:{SelectedPhotoFile.ContentType};base64,{Convert.ToBase64String(SelectedPhotoBytes)}";
                 StateHasChanged();
             }
         }
@@ -252,6 +271,11 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             else
                 RegModel.student_nrc_no = "-";
 
+            if (!string.IsNullOrEmpty(GuardianNrcState) && !string.IsNullOrEmpty(GuardianNrcTownship) && !string.IsNullOrEmpty(GuardianNrcNumber))
+                RegModel.app_guardian_nrc = $"{GuardianNrcState}/{GuardianNrcTownship}{GuardianNrcType}{GuardianNrcNumber}";
+            else
+                RegModel.app_guardian_nrc = "-";
+
             RegModel.student_name_mm ??= "-";
             RegModel.student_name_en ??= "-";
             RegModel.permanent_address_mm ??= "-";
@@ -334,9 +358,9 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             content.Add(new StringContent(RegModel.nrc_township ?? ""), "nrc_township");
             content.Add(new StringContent(RegModel.nrc_number ?? ""), "nrc_number");
 
-            if (SelectedPhotoFile != null)
+            if (SelectedPhotoBytes != null && SelectedPhotoFile != null)
             {
-                var fileContent = new StreamContent(SelectedPhotoFile.OpenReadStream(5 * 1024 * 1024));
+                var fileContent = new ByteArrayContent(SelectedPhotoBytes);
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedPhotoFile.ContentType);
                 content.Add(fileContent, "StudentImageFile", SelectedPhotoFile.Name);
             }

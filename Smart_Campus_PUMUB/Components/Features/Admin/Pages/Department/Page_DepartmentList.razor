@@ -86,31 +86,57 @@
     }
 </style>
 
-<div class="mb-4">
-    <h3 class="fw-bold mb-1" style="color: #ffffff;">Department Directory</h3>
+<div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+    <div class="d-flex align-items-center">
+        <div class="bg-primary rounded p-2 me-3 shadow-sm">
+            <i class="bi bi-diagram-3 fs-5 text-white"></i>
+        </div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Department Directory</h4>
+    </div>
+</div>
+
+<!-- 🔹 Filter Section -->
+<div class="material-card p-3 mb-4">
+    <div class="row g-3 align-items-center">
+        <!-- Search Input -->
+        <div class="col">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
+                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Department Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+            </div>
+        </div>
+
+        <!-- Faculty Dropdown -->
+        <div class="col-md-3">
+            <select class="form-select material-input" @bind="SelectedFacultyInput">
+                <option value="All">All Faculties</option>
+                @foreach (var fac in DepartmentList.Select(d => d.FacultyName).Distinct().Where(f => !string.IsNullOrEmpty(f)))
+                {
+                    <option value="@fac">@fac</option>
+                }
+            </select>
+        </div>
+
+        <!-- Search and Reset Buttons -->
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+
+        <!-- Add Button -->
+        <div class="col-auto">
+            <NavLink href="/admin/department/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Department">
+                <i class="bi bi-plus-lg"></i>
+            </NavLink>
+        </div>
+    </div>
 </div>
 
 <div class="tech-card p-4">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-7 col-lg-6">
-                <div class="input-group">
-                    <span class="input-group-text search-icon-bg"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" class="form-control text-white" 
-                           placeholder="Search by Department Name..." @bind="SearchInput" @onkeyup="HandleKeyUp">
-                    <button class="btn btn-primary" type="button" @onclick="ApplyFilter" title="Search">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                    <button class="btn btn-secondary" type="button" @onclick="ResetFilter" title="Reset">
-                        <i class="bi bi-arrow-clockwise"></i> Reset
-                    </button>
-                </div>
-            </div>
-            <div class="col-md-5 col-lg-6 text-end">
-                <NavLink href="/admin/department/create" class="btn btn-primary text-white">
-                    <i class="bi bi-plus-lg me-1"></i> Add Department
-                </NavLink>
-            </div>
-        </div>
 
         @if (IsLoading)
         {

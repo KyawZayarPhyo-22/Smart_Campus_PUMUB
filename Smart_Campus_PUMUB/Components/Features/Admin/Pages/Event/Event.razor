@@ -7,24 +7,32 @@
     </div>
     <div class="tech-card">
         <!-- RESTORED: Search & Filter -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <div class="input-group">
-                    <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control border-start-0" placeholder="Search event name...">
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" class="form-control material-input w-100 ps-5" placeholder="Search event name...">
                 </div>
             </div>
             <div class="col-md-3">
-                <select class="form-select">
+                <select class="form-select material-input">
                     <option value="">All Event Types...</option>
                     <option>Ceremony</option>
                     <option>Seminar / Workshop</option>
                 </select>
             </div>
-            <div class="col-md-5 text-end">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal"><i
-                        class="bi bi-plus-lg me-2"></i> Create
-                    Event</button>
+            <div class="col-auto">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" type="button" title="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" type="button" title="Reset">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                    <button class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" data-bs-toggle="modal" data-bs-target="#addActivityModal" title="Create Event">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </div>
             </div>
         </div>
 

@@ -17,15 +17,55 @@ public partial class Page_SubjectList
     private bool ShowModal { get; set; } = false;
     private SubjectModel? SelectedSubject { get; set; }
 
+    private string SearchInput = "";
+    private string SelectedSemesterInput = "All";
+    private string SelectedSemester = "All";
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        SelectedSemester = SelectedSemesterInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SearchTerm = "";
+        SelectedSemesterInput = "All";
+        SelectedSemester = "All";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
+
     // Pagination Variables
     private int CurrentPage { get; set; } = 1;
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<SubjectModel> GetFilteredSubjects() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? SubjectList
-        : SubjectList.Where(s => (s.SubjectName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                                 (s.SubjectCode?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+    private IEnumerable<SubjectModel> GetFilteredSubjects()
+    {
+        var list = SubjectList.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            list = list.Where(s => (s.SubjectName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                                   (s.SubjectCode?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+        if (SelectedSemester != "All")
+        {
+            list = list.Where(s => s.SemesterName == SelectedSemester);
+        }
+        return list;
+    }
 
     private IEnumerable<SubjectModel> FilteredSubjects
     {

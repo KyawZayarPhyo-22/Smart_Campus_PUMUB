@@ -57,34 +57,48 @@
     }
 </style>
 
-<div class="tab-pane fade show active" id="v-pills-faculty">
-    <div class="mb-4">
-        <h3 class="fw-bold mb-1" style="color: #ffffff;">Faculty Directory</h3>
+<div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+    <div class="d-flex align-items-center">
+        <div class="bg-primary rounded p-2 me-3 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" id="Apartment--Streamline-Outlined-Material" height="24" width="24" >
+                <path fill="#ffffff" d="M3 21V7.125h4.125V3h9.75v8.25H21V21H13.325v-4.125h-2.65V21H3Zm1.5 -1.5h2.625v-2.625H4.5V19.5Zm0 -4.125h2.625V12.75H4.5v2.625Zm0 -4.125h2.625v-2.625H4.5v2.625Zm4.125 4.125h2.625V12.75h-2.625v2.625Zm0 -4.125h2.625v-2.625h-2.625v2.625Zm0 -4.125h2.625V4.5h-2.625v2.625Zm4.125 8.25h2.625V12.75H12.75v2.625Zm0 -4.125h2.625v-2.625H12.75v2.625Zm0 -4.125h2.625V4.5H12.75v2.625ZM16.875 19.5H19.5v-2.625h-2.625V19.5Zm0 -4.125H19.5V12.75h-2.625v2.625Z" stroke-width="0.5"></path>
+            </svg>
+        </div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Faculty Directory</h4>
     </div>
+</div>
 
-    <div class="tech-card p-4">
-        <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-7 col-lg-6">
-                <div class="input-group">
-                    <span class="input-group-text search-icon-bg border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" class="form-control border-start-0 text-white" 
-                           placeholder="Search by Faculty Name..."
-                           @bind-value="SearchInput" @onkeyup="HandleKeyUp">
-                    <button class="btn btn-primary" type="button" @onclick="ApplyFilter" title="Search">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                    <button class="btn btn-secondary" type="button" @onclick="ResetFilter" title="Reset">
-                        <i class="bi bi-arrow-clockwise"></i> Reset
-                    </button>
-                </div>
-            </div>
-
-            <div class="col-md-5 col-lg-6 text-end">
-                <NavLink href="/admin/faculty/create" class="btn btn-primary nav-link d-inline-block text-white">
-                    <span class="sidebar-text"><i class="bi bi-plus-lg me-1"></i> Add Faculty</span>
-                </NavLink>
+<!-- 🔹 Filter Section -->
+<div class="material-card p-3 mb-4">
+    <div class="row g-3 align-items-center">
+        <!-- Search Input -->
+        <div class="col">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
+                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Faculty Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
+
+        <!-- Search and Reset Buttons -->
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+
+        <!-- Add Button -->
+        <div class="col-auto">
+            <NavLink href="/admin/faculty/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Faculty">
+                <i class="bi bi-plus-lg"></i>
+            </NavLink>
+        </div>
+    </div>
+</div>
+
+<div class="tech-card p-4">
 
         @if (IsLoading)
         {
@@ -142,7 +156,6 @@
             <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
         }
     </div>
-</div>
 
 @* ... (မူလ table အပိုင်းတွေပြီးရင်) ... *@
 

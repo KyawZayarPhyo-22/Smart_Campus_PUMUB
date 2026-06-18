@@ -89,7 +89,6 @@ public partial class StudentRegistration
 
     [Column("student_nrc_no")]
     [StringLength(50)]
-    [Unicode(false)]
     public string StudentNrcNo { get; set; } = null!;
 
     [Column("nationality_status")]
@@ -184,7 +183,6 @@ public partial class StudentRegistration
 
     [Column("app_guardian_nrc")]
     [StringLength(50)]
-    [Unicode(false)]
     public string? AppGuardianNrc { get; set; }
 
     [Column("app_guardian_phone")]

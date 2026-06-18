@@ -683,7 +683,32 @@
 
             <div class="input-group">
                 <label class="input-label">အဘ မှတ်ပုံတင်အမှတ် (NRC)</label>
-                <input type="text" class="modern-input" placeholder="၉/မကန(နိုင်)၁၂၃၄၅၆" @bind="RegModel.app_guardian_nrc">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnGuardianNrcStateChanged">
+                        <option value="">တိုင်း</option>
+                        @for (int i = 1; i <= 14; i++)
+                        {
+                            <option value="@i" selected="@(GuardianNrcState == i.ToString())">@i</option>
+                        }
+                    </select>
+                    <span style="font-weight:bold; color:#334155;">/</span>
+                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="GuardianNrcTownship">
+                        <option value="">မြို့နယ်</option>
+                        @foreach (var town in GuardianTownshipList)
+                        {
+                            <option value="@town">@town</option>
+                        }
+                    </select>
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="GuardianNrcType">
+                        <option value="(နိုင်)">(နိုင်)</option>
+                        <option value="(ဧည့်)">(ဧည့်)</option>
+                        <option value="(ပြု)">(ပြု)</option>
+                        <option value="(စ)">(စ)</option>
+                        <option value="(သီ)">(သီ)</option>
+                        <option value="(သ)">(သ)</option>
+                    </select>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="GuardianNrcNumber" maxlength="6">
+                </div>
             </div>
 
             <div class="input-group">
@@ -775,7 +800,32 @@
             </div>
             <div class="input-group">
                 <label class="input-label">မှတ်ပုံတင်အမှတ် (အုပ်ထိန်းသူ)</label>
-                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် အပြည့်အစုံ ရိုက်ထည့်ပါ" @bind="RegModel.app_guardian_nrc">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnGuardianNrcStateChanged">
+                        <option value="">တိုင်း</option>
+                        @for (int i = 1; i <= 14; i++)
+                        {
+                            <option value="@i" selected="@(GuardianNrcState == i.ToString())">@i</option>
+                        }
+                    </select>
+                    <span style="font-weight:bold; color:#334155;">/</span>
+                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="GuardianNrcTownship">
+                        <option value="">မြို့နယ်</option>
+                        @foreach (var town in GuardianTownshipList)
+                        {
+                            <option value="@town">@town</option>
+                        }
+                    </select>
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="GuardianNrcType">
+                        <option value="(နိုင်)">(နိုင်)</option>
+                        <option value="(ဧည့်)">(ဧည့်)</option>
+                        <option value="(ပြု)">(ပြု)</option>
+                        <option value="(စ)">(စ)</option>
+                        <option value="(သီ)">(သီ)</option>
+                        <option value="(သ)">(သ)</option>
+                    </select>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="GuardianNrcNumber" maxlength="6">
+                </div>
             </div>
 
             <div class="input-group">

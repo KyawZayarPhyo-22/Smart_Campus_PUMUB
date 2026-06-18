@@ -18,6 +18,7 @@ public partial class Page_RegistrationPaymentList
     private RegistrationPaymentModel? SelectedPayment { get; set; }
 
     private string SearchInput = "";
+    private string SelectedStatus = "";
 
     private void ApplyFilter()
     {
@@ -30,6 +31,7 @@ public partial class Page_RegistrationPaymentList
     {
         SearchInput = "";
         SearchTerm = "";
+        SelectedStatus = "";
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -47,9 +49,25 @@ public partial class Page_RegistrationPaymentList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<RegistrationPaymentModel> GetFilteredPayments() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? PaymentList
-        : PaymentList.Where(p => p.PaymentMethod != null && p.PaymentMethod.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<RegistrationPaymentModel> GetFilteredPayments()
+    {
+        var filtered = PaymentList.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            filtered = filtered.Where(p => 
+                (p.PaymentMethod != null && p.PaymentMethod.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                p.RegistrationId.ToString().Contains(SearchTerm)
+            );
+        }
+
+        if (!string.IsNullOrEmpty(SelectedStatus))
+        {
+            filtered = filtered.Where(p => p.Status != null && p.Status.Equals(SelectedStatus, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return filtered;
+    }
 
     private IEnumerable<RegistrationPaymentModel> FilteredPayments
     {

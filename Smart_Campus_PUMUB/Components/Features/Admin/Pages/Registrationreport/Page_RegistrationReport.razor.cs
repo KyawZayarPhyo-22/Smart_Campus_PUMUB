@@ -26,15 +26,87 @@ public partial class Page_RegistrationReport : ComponentBase
     private string AdmSelectedYear { get; set; } = "All";
     private string AdmSelectedStatus { get; set; } = "All"; // 💡 Registration Status Filter
 
+    // Active Filters (actually applied on button click)
+    private DateTime? ActiveAdmFromDate { get; set; }
+    private DateTime? ActiveAdmToDate { get; set; } = DateTime.Today;
+    private string ActiveAdmSelectedMajor { get; set; } = "All";
+    private string ActiveAdmSelectedYear { get; set; } = "All";
+    private string ActiveAdmSelectedStatus { get; set; } = "All";
+
+    private void ApplyAdmissionFilter()
+    {
+        ActiveAdmFromDate = AdmFromDate;
+        ActiveAdmToDate = AdmToDate;
+        ActiveAdmSelectedMajor = AdmSelectedMajor;
+        ActiveAdmSelectedYear = AdmSelectedYear;
+        ActiveAdmSelectedStatus = AdmSelectedStatus;
+        CurrentPageAdm = 1;
+        StateHasChanged();
+    }
+
+    private void ResetAdmissionFilter()
+    {
+        AdmFromDate = null;
+        AdmToDate = DateTime.Today;
+        AdmSelectedMajor = "All";
+        AdmSelectedYear = "All";
+        AdmSelectedStatus = "All";
+
+        ActiveAdmFromDate = null;
+        ActiveAdmToDate = DateTime.Today;
+        ActiveAdmSelectedMajor = "All";
+        ActiveAdmSelectedYear = "All";
+        ActiveAdmSelectedStatus = "All";
+        CurrentPageAdm = 1;
+        StateHasChanged();
+    }
+
     private DateTime? PayFromDate { get; set; }
     private DateTime? PayToDate { get; set; } = DateTime.Today;
     private string PaySelectedYear { get; set; } = "All";
     private string PaySelectedMethod { get; set; } = "All";
     private string PaySelectedStatus { get; set; } = "All"; // 💡 Payment Status Filter
 
+    // Active Filters (actually applied on button click)
+    private DateTime? ActivePayFromDate { get; set; }
+    private DateTime? ActivePayToDate { get; set; } = DateTime.Today;
+    private string ActivePaySelectedYear { get; set; } = "All";
+    private string ActivePaySelectedMethod { get; set; } = "All";
+    private string ActivePaySelectedStatus { get; set; } = "All";
+
+    private void ApplyPaymentFilter()
+    {
+        ActivePayFromDate = PayFromDate;
+        ActivePayToDate = PayToDate;
+        ActivePaySelectedYear = PaySelectedYear;
+        ActivePaySelectedMethod = PaySelectedMethod;
+        ActivePaySelectedStatus = PaySelectedStatus;
+        CurrentPagePay = 1;
+        StateHasChanged();
+    }
+
+    private void ResetPaymentFilter()
+    {
+        PayFromDate = null;
+        PayToDate = DateTime.Today;
+        PaySelectedYear = "All";
+        PaySelectedMethod = "All";
+        PaySelectedStatus = "All";
+
+        ActivePayFromDate = null;
+        ActivePayToDate = DateTime.Today;
+        ActivePaySelectedYear = "All";
+        ActivePaySelectedMethod = "All";
+        ActivePaySelectedStatus = "All";
+        CurrentPagePay = 1;
+        StateHasChanged();
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        ApplyAdmissionFilter();
+        ApplyPaymentFilter();
     }
 
     private async Task LoadData()
@@ -57,20 +129,20 @@ public partial class Page_RegistrationReport : ComponentBase
         {
             var data = RawStudentList.AsEnumerable();
 
-            if (AdmFromDate.HasValue && AdmToDate.HasValue)
-                data = data.Where(s => s.CreatedDatetime.Date >= AdmFromDate.Value.Date && s.CreatedDatetime.Date <= AdmToDate.Value.Date);
-            else if (!AdmFromDate.HasValue && AdmToDate.HasValue)
-                data = data.Where(s => s.CreatedDatetime.Date == AdmToDate.Value.Date);
+            if (ActiveAdmFromDate.HasValue && ActiveAdmToDate.HasValue)
+                data = data.Where(s => s.CreatedDatetime.Date >= ActiveAdmFromDate.Value.Date && s.CreatedDatetime.Date <= ActiveAdmToDate.Value.Date);
+            else if (!ActiveAdmFromDate.HasValue && ActiveAdmToDate.HasValue)
+                data = data.Where(s => s.CreatedDatetime.Date == ActiveAdmToDate.Value.Date);
 
-            if (AdmSelectedMajor != "All")
-                data = data.Where(s => s.Major == AdmSelectedMajor);
+            if (ActiveAdmSelectedMajor != "All")
+                data = data.Where(s => s.Major == ActiveAdmSelectedMajor);
 
-            if (AdmSelectedYear != "All")
-                data = data.Where(s => s.AcademicYearLevel == AdmSelectedYear);
+            if (ActiveAdmSelectedYear != "All")
+                data = data.Where(s => s.AcademicYearLevel == ActiveAdmSelectedYear);
 
             // 💡 Registration Status Logic
-            if (AdmSelectedStatus != "All")
-                data = data.Where(s => (s.Status ?? "Pending") == AdmSelectedStatus);
+            if (ActiveAdmSelectedStatus != "All")
+                data = data.Where(s => (s.Status ?? "Pending") == ActiveAdmSelectedStatus);
 
             return data;
         }
@@ -102,20 +174,20 @@ public partial class Page_RegistrationReport : ComponentBase
 
             var data = payments.AsEnumerable();
 
-            if (PayFromDate.HasValue && PayToDate.HasValue)
-                data = data.Where(p => p.PaymentDate.Date >= PayFromDate.Value.Date && p.PaymentDate.Date <= PayToDate.Value.Date);
-            else if (!PayFromDate.HasValue && PayToDate.HasValue)
-                data = data.Where(p => p.PaymentDate.Date == PayToDate.Value.Date);
+            if (ActivePayFromDate.HasValue && ActivePayToDate.HasValue)
+                data = data.Where(p => p.PaymentDate.Date >= ActivePayFromDate.Value.Date && p.PaymentDate.Date <= ActivePayToDate.Value.Date);
+            else if (!ActivePayFromDate.HasValue && ActivePayToDate.HasValue)
+                data = data.Where(p => p.PaymentDate.Date == ActivePayToDate.Value.Date);
 
-            if (PaySelectedYear != "All")
-                data = data.Where(p => p.AcademicYear == PaySelectedYear);
+            if (ActivePaySelectedYear != "All")
+                data = data.Where(p => p.AcademicYear == ActivePaySelectedYear);
 
-            if (PaySelectedMethod != "All")
-                data = data.Where(p => p.PaymentMethod == PaySelectedMethod);
+            if (ActivePaySelectedMethod != "All")
+                data = data.Where(p => p.PaymentMethod == ActivePaySelectedMethod);
 
             // 💡 Payment Status Logic
-            if (PaySelectedStatus != "All")
-                data = data.Where(p => p.Status == PaySelectedStatus);
+            if (ActivePaySelectedStatus != "All")
+                data = data.Where(p => p.Status == ActivePaySelectedStatus);
 
             return data;
         }

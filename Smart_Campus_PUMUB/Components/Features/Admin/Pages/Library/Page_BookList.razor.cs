@@ -17,11 +17,15 @@ public partial class Page_BookList : ComponentBase
     public bool ShowModal { get; set; } = false;
     public BookModel? SelectedBook { get; set; }
 
+    public List<CategoryModel> CategoryList { get; set; } = new();
     public string SearchInput = "";
+    public int SelectedCategoryIdInput = 0;
+    public int SelectedCategoryId = 0;
 
     private void ApplyFilter()
     {
         SearchTerm = SearchInput;
+        SelectedCategoryId = SelectedCategoryIdInput;
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -30,6 +34,8 @@ public partial class Page_BookList : ComponentBase
     {
         SearchInput = "";
         SearchTerm = "";
+        SelectedCategoryIdInput = 0;
+        SelectedCategoryId = 0;
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -47,9 +53,19 @@ public partial class Page_BookList : ComponentBase
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<BookModel> GetFilteredBooks() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? BookList
-        : BookList.Where(b => b.BookName != null && b.BookName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<BookModel> GetFilteredBooks()
+    {
+        var list = BookList.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            list = list.Where(b => b.BookName != null && b.BookName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+        if (SelectedCategoryId != 0)
+        {
+            list = list.Where(b => b.CategoryId == SelectedCategoryId);
+        }
+        return list;
+    }
 
     public IEnumerable<BookModel> FilteredBooks
     {
@@ -83,6 +99,9 @@ public partial class Page_BookList : ComponentBase
         {
             var response = await HttpClientService.ExecuteAsync<List<BookModel>>("book", EnumHttpMethod.Get);
             if (response != null) BookList = response;
+
+            var catResponse = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get);
+            if (catResponse != null) CategoryList = catResponse;
         }
         catch (Exception ex)
         {

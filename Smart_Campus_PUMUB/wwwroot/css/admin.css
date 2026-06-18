@@ -89,6 +89,7 @@ body {
     top: 0;
     align-self: flex-start;
     max-height: 100vh;
+    z-index: 1030;
 }
 
 .admin-sidebar.collapsed {
@@ -169,6 +170,46 @@ body {
     border: 1px solid transparent;
 }
 
+.sidebar-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+    padding: 0.65rem 1.25rem;
+    margin: 0.1rem 0.625rem;
+    border-radius: var(--radius-sm);
+    color: #991b1b;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition);
+    cursor: pointer;
+}
+
+.sidebar-logout-btn i {
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    width: 1.25rem;
+    text-align: center;
+    color: #dc2626;
+    transition: color var(--transition);
+}
+
+.sidebar-logout-btn:hover,
+.sidebar-logout-btn:focus {
+    color: #b91c1c;
+    background: #fee2e2;
+    border-color: #fca5a5;
+    text-decoration: none;
+}
+
+.sidebar-logout-btn:hover i,
+.sidebar-logout-btn:focus i {
+    color: #b91c1c;
+}
+
 .sidebar-nav-link i {
     font-size: 1.05rem;
     flex-shrink: 0;
@@ -188,12 +229,12 @@ body {
     color: var(--accent-cyan);
 }
 
-.sidebar-nav-link.active {
-    color: var(--accent-cyan);
-    background: rgba(34,211,238,0.1);
-    border-color: rgba(34,211,238,0.2);
-    font-weight: 600;
-}
+    .sidebar-nav-link.active {
+        color: var(--accent-cyan);
+        background: #5A4FCF;
+        border-color: rgba(34,211,238,0.2);
+        font-weight: 600;
+    }
 
 .sidebar-nav-link.active i {
     color: var(--accent-cyan);
@@ -403,7 +444,7 @@ main.admin-body,
 
 .table-tech thead th {
     color: var(--text-muted);
-    font-size: 0.72rem;
+    font-size: 0.875rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -421,6 +462,7 @@ main.admin-body,
 .table-tech tbody tr {
     transition: background var(--transition);
 }
+
 
 /* ── Forms — Full Bootstrap Override ────────────────────────────────── */
 /* Use !important throughout to beat Bootstrap 5.1's default specificity  */
@@ -823,14 +865,17 @@ main.admin-body,
     color: #5A4FCF !important;
 }
 
-.sidebar-nav-link.active {
-    background-color: rgba(90, 79, 207, 0.12) !important;
-    color: #5A4FCF !important;
-    border-color: rgba(90, 79, 207, 0.2) !important;
-    font-weight: 600 !important;
+    .sidebar-nav-link.active {
+        background-color: #450c7a !important;
+        color: #ffffff !important;
+        border-color: #5A4FCF !important;
+        font-weight: 600 !important;
+    }
+
+.sidebar-nav-link.active i {
+    color: #ffffff !important;
 }
 
-.sidebar-nav-link.active i,
 .sidebar-nav-link:hover i {
     color: #5A4FCF !important;
 }
@@ -902,11 +947,14 @@ main.admin-body,
 .admin-body .custom-table thead,
 .admin-body .custom-table thead th,
 .admin-body .custom-table tr th {
-    background-color: #f0fdf4 !important;
-    background: #f0fdf4 !important;
-    color: #1b8a5a !important;
-    border-bottom: 2px solid rgba(27, 138, 90, 0.15) !important;
+    background-color: #5A4FCF !important;
+    background: #5A4FCF !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
     font-weight: 600 !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    line-height: 1.2 !important;
 }
 
 .admin-body .custom-table tbody tr {
@@ -1040,9 +1088,9 @@ main.admin-body,
 .admin-body a.btn-success,
 .admin-body .btn-add-modern,
 .admin-body a.btn-add-modern {
-    background-color: #1b8a5a !important;
-    background: #1b8a5a !important;
-    border-color: #1b8a5a !important;
+    background-color: #5A4FCF !important;
+    background: #5A4FCF !important;
+    border-color: #5A4FCF !important;
     color: #ffffff !important;
     opacity: 1 !important;
 }
@@ -1054,9 +1102,9 @@ main.admin-body,
 .admin-body a.btn-success:hover,
 .admin-body .btn-add-modern:hover,
 .admin-body a.btn-add-modern:hover {
-    background-color: #146c45 !important;
-    background: #146c45 !important;
-    border-color: #146c45 !important;
+    background-color: #483eb0 !important;
+    background: #483eb0 !important;
+    border-color: #483eb0 !important;
 }
 
 /* Align and size action buttons inside table */
@@ -1191,17 +1239,20 @@ main.admin-body,
 
 .admin-body .custom-table thead,
 .admin-body table.table thead {
-    background-color: #f0fdf4 !important;
-    background: #f0fdf4 !important;
+    background-color: #5A4FCF !important;
+    background: #5A4FCF !important;
 }
 
 .admin-body .custom-table th,
 .admin-body table.table th {
-    color: #1b8a5a !important;
-    border-bottom: 2px solid rgba(27, 138, 90, 0.15) !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
     font-weight: 600 !important;
-    background-color: #f0fdf4 !important;
-    background: #f0fdf4 !important;
+    background-color: #5A4FCF !important;
+    background: #5A4FCF !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    line-height: 1.2 !important;
 }
 
 .admin-body .custom-table td,
@@ -1245,6 +1296,37 @@ main.admin-body,
     color: #9ca3af !important;
     border-color: #e5e7eb !important;
     opacity: 0.6 !important;
+}
+
+
+/* Disable hover "pop" effect for admin buttons (remove transforms and shadows) */
+.admin-body .btn,
+.admin-body button,
+.admin-body a.btn {
+    transform: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.admin-body .btn:hover,
+.admin-body button:hover,
+.admin-body a.btn:hover,
+.admin-body .btn:focus,
+.admin-body button:focus,
+.admin-body a.btn:focus,
+.admin-body .btn:active,
+.admin-body button:active,
+.admin-body a.btn:active {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Also neutralize any small translateY used for subtle pop on cards/buttons */
+.admin-body [class*="-pop"],
+.admin-body [class*="-hover"],
+.admin-body .pop-on-hover,
+.admin-body .pop-effect {
+    transform: none !important;
 }
 
 

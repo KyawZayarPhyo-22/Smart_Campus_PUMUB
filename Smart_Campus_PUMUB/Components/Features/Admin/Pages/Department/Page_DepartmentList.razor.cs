@@ -17,10 +17,13 @@ public partial class Page_DepartmentList : ComponentBase
     private bool IsProcessing { get; set; } = false;
 
     private string SearchInput = "";
+    private string SelectedFacultyInput = "All";
+    private string SelectedFaculty = "All";
 
     private void ApplyFilter()
     {
         SearchTerm = SearchInput;
+        SelectedFaculty = SelectedFacultyInput;
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -29,6 +32,8 @@ public partial class Page_DepartmentList : ComponentBase
     {
         SearchInput = "";
         SearchTerm = "";
+        SelectedFacultyInput = "All";
+        SelectedFaculty = "All";
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -52,9 +57,19 @@ public partial class Page_DepartmentList : ComponentBase
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<DepartmentModel> GetFilteredDepartments() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? DepartmentList
-        : DepartmentList.Where(d => d.DepartmentName != null && d.DepartmentName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<DepartmentModel> GetFilteredDepartments()
+    {
+        var list = DepartmentList.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            list = list.Where(d => d.DepartmentName != null && d.DepartmentName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+        if (SelectedFaculty != "All")
+        {
+            list = list.Where(d => d.FacultyName == SelectedFaculty);
+        }
+        return list;
+    }
 
     private IEnumerable<DepartmentModel> FilteredDepartments
     {

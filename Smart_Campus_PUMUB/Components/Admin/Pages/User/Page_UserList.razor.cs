@@ -17,6 +17,36 @@ public partial class Page_UserList
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
 
+    private string SearchInput = "";
+    private string SelectedRoleInput = "All";
+    private string SelectedRole = "All";
+
+    private void ApplyFilter()
+    {
+        SearchTerm = SearchInput;
+        SelectedRole = SelectedRoleInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        SearchTerm = "";
+        SelectedRoleInput = "All";
+        SelectedRole = "All";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ApplyFilter();
+        }
+    }
+
     // Delete Modal Controls
     private bool ShowModal { get; set; } = false;
     private UserModel? SelectedUser { get; set; }
@@ -26,10 +56,20 @@ public partial class Page_UserList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<UserModel> GetFilteredUsers() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? UserList
-        : UserList.Where(u => (u.FullName != null && u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                              (u.UserName != null && u.UserName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+    private IEnumerable<UserModel> GetFilteredUsers()
+    {
+        var list = UserList.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            list = list.Where(u => (u.FullName != null && u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                                   (u.UserName != null && u.UserName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+        }
+        if (SelectedRole != "All")
+        {
+            list = list.Where(u => u.RoleName == SelectedRole);
+        }
+        return list;
+    }
 
     private IEnumerable<UserModel> FilteredUsers
     {

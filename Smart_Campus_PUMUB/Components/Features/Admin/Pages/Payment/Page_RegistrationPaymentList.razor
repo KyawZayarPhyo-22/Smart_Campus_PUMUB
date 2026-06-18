@@ -24,21 +24,35 @@
 
     <div class="tech-card p-4">
         <div class="row g-3 mb-4 align-items-center">
-            <div class="col-md-7 col-lg-6">
-                <div class="input-group">
-                    <span class="input-group-text search-icon-bg"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" class="form-control text-white" placeholder="Search by Registration ID..." @bind-value="SearchInput" @onkeyup="HandleKeyUp">
-                    <button class="btn btn-primary" type="button" @onclick="ApplyFilter" title="Search">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                    <button class="btn btn-secondary" type="button" @onclick="ResetFilter" title="Reset">
-                        <i class="bi bi-arrow-clockwise"></i> Reset
-                    </button>
+            <div class="col">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" class="form-control material-input w-100 ps-5" placeholder="Search by Registration ID or Method..." @bind-value="SearchInput" @onkeyup="HandleKeyUp">
                 </div>
             </div>
-            <div class="col-md-5 col-lg-6 text-end">
-                <NavLink href="/admin/payment/create" class="btn btn-primary text-white">
-                    <i class="bi bi-plus-lg me-1"></i> Add Payment
+            <div class="col-md-3">
+                <select class="form-select material-input" @bind="SelectedStatus">
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
+            
+            <!-- Search and Reset Buttons -->
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+
+            <!-- Add Button -->
+            <div class="col-auto">
+                <NavLink href="/admin/payment/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Payment">
+                    <i class="bi bi-plus-lg"></i>
                 </NavLink>
             </div>
         </div>

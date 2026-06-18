@@ -166,20 +166,16 @@
 @if (ActiveTab == 1)
 {
     <div class="material-card p-4 mb-4 no-print">
-        <div class="row g-3">
+        <div class="row g-3 align-items-center">
             <div class="col-md-4">
                 <label class="text-muted small mb-2 fw-bold text-uppercase">Date Range Filter</label>
                 <div class="d-flex align-items-center gap-2">
                     <input type="date" class="form-control material-input" @bind="AdmFromDate" />
                     <span class="text-muted fw-bold">~</span>
                     <input type="date" class="form-control material-input" @bind="AdmToDate" />
-                    @if (AdmFromDate != null || AdmToDate?.Date != DateTime.Today.Date)
-                    {
-                        <button class="btn btn-sm btn-outline-danger border-0 px-3 py-2" style="border-radius: 8px;" @onclick="() => { AdmFromDate = null; AdmToDate = DateTime.Today; }"><i class="bi bi-x-lg"></i></button>
-                    }
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="text-muted small mb-2 fw-bold text-uppercase">Academic Year</label>
                 <select class="form-select material-input" @bind="AdmSelectedYear">
                     <option value="All">All Years</option>
@@ -189,7 +185,7 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="text-muted small mb-2 fw-bold text-uppercase">Major</label>
                 <select class="form-select material-input" @bind="AdmSelectedMajor">
                     <option value="All">All Majors</option>
@@ -208,6 +204,17 @@
                     <option value="Rejected">Rejected</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <label class="d-block small mb-2 fw-bold text-uppercase">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ApplyAdmissionFilter" title="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ResetAdmissionFilter" title="Reset">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -216,27 +223,32 @@
             <h5 class="text-white mb-1 fw-bold fs-6">Student Admission Report</h5>
             <span class="text-info" style="font-size: 0.8rem;">All Registration Records</span>
         </div>
-        <div class="table-responsive">
-            <table class="table custom-table align-middle">
-                <thead>
-                    <tr>
-                        <th class="text-center">No.</th>
-                        <th>Admission Date</th>
-                        <th>Roll No</th>
-                        <th>Name</th>
-                        <th>Major</th>
-                        <th>Academic Year</th>
-                        <th class="text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (IsLoading)
-                    {
-                        <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
-                    }
-                    else
-                    {
-                        int count = (CurrentPageAdm - 1) * PageSize + 1;
+        @if (IsLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="text-muted mt-2">Data များ ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table custom-table align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-center">No.</th>
+                            <th>Admission Date</th>
+                            <th>Roll No</th>
+                            <th>Name</th>
+                            <th>Major</th>
+                            <th>Academic Year</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int count = (CurrentPageAdm - 1) * PageSize + 1;
+                        }
                         @foreach (var s in AdmissionReportData)
                         {
                             var currentStatus = string.IsNullOrEmpty(s.Status) ? "Pending" : s.Status;
@@ -263,33 +275,29 @@
                                 <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Rejected: <strong>@TotalRejectedReg</strong></span>
                             </td>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="p-3 no-print">
-            <PaginationComponent CurrentPage="CurrentPageAdm" TotalPages="TotalPagesAdm" OnPageChanged="OnPageChangedAdm" />
-        </div>
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 no-print">
+                <PaginationComponent CurrentPage="CurrentPageAdm" TotalPages="TotalPagesAdm" OnPageChanged="OnPageChangedAdm" />
+            </div>
+        }
     </div>
 }
 
 @if (ActiveTab == 2)
 {
     <div class="material-card p-4 mb-4 no-print">
-        <div class="row g-3">
+        <div class="row g-3 align-items-center">
             <div class="col-md-4">
                 <label class="text-muted small mb-2 fw-bold text-uppercase">Date Range Filter</label>
                 <div class="d-flex align-items-center gap-2">
                     <input type="date" class="form-control material-input" @bind="PayFromDate" />
                     <span class="text-muted fw-bold">~</span>
                     <input type="date" class="form-control material-input" @bind="PayToDate" />
-                    @if (PayFromDate != null || PayToDate?.Date != DateTime.Today.Date)
-                    {
-                        <button class="btn btn-sm btn-outline-danger border-0 px-3 py-2" style="border-radius: 8px;" @onclick="() => { PayFromDate = null; PayToDate = DateTime.Today; }"><i class="bi bi-x-lg"></i></button>
-                    }
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="text-muted small mb-2 fw-bold text-uppercase">Academic Year</label>
                 <select class="form-select material-input" @bind="PaySelectedYear">
                     <option value="All">All Years</option>
@@ -299,7 +307,7 @@
                     }
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label class="text-muted small mb-2 fw-bold text-uppercase">Payment Method</label>
                 <select class="form-select material-input" @bind="PaySelectedMethod">
                     <option value="All">All Methods</option>
@@ -317,6 +325,17 @@
                     <option value="Rejected">Rejected</option>
                 </select>
             </div>
+            <div class="col-md-2">
+                <label class="d-block small mb-2 fw-bold text-uppercase">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ApplyPaymentFilter" title="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ResetPaymentFilter" title="Reset">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -325,28 +344,33 @@
             <h5 class="text-white mb-1 fw-bold fs-6">Payment Transaction Report</h5>
             <span class="text-success" style="font-size: 0.8rem;">Finance & Revenue Records</span>
         </div>
-        <div class="table-responsive">
-            <table class="table custom-table align-middle">
-                <thead>
-                    <tr>
-                        <th class="text-center">No.</th>
-                        <th>Date</th>
-                        <th>Roll No</th>
-                        <th>Name</th>
-                        <th>Method</th>
-                        <th class="text-end">Amount Paid</th>
-                        <th class="text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (IsLoading)
-                    {
-                        <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
-                    }
-                    else
-                    {
-                        int count = (CurrentPagePay - 1) * PageSize + 1;
-                        decimal totalAmount = 0;
+        @if (IsLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="text-muted mt-2">Data များ ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table custom-table align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-center">No.</th>
+                            <th>Date</th>
+                            <th>Roll No</th>
+                            <th>Name</th>
+                            <th>Method</th>
+                            <th class="text-end">Amount Paid</th>
+                            <th class="text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int count = (CurrentPagePay - 1) * PageSize + 1;
+                            decimal totalAmount = 0;
+                        }
                         @foreach (var p in PaymentReportData)
                         {
                             totalAmount += p.AmountPaid;
@@ -380,13 +404,13 @@
                                 <span class="text-success fw-bold fs-5">@totalAmount.ToString("N0") <span class="text-muted" style="font-size: 0.8rem;">MMK</span></span>
                             </td>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="p-3 no-print">
-            <PaginationComponent CurrentPage="CurrentPagePay" TotalPages="TotalPagesPay" OnPageChanged="OnPageChangedPay" />
-        </div>
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 no-print">
+                <PaginationComponent CurrentPage="CurrentPagePay" TotalPages="TotalPagesPay" OnPageChanged="OnPageChangedPay" />
+            </div>
+        }
     </div>
 }
 

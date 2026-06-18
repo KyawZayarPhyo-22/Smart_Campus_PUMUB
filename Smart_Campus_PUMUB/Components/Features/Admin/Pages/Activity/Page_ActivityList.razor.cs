@@ -23,10 +23,13 @@ public partial class Page_ActivityList
     private bool IsProcessing { get; set; } = false;
 
     private string SearchInput = "";
+    private string SelectedLocationInput = "All";
+    private string SelectedLocation = "All";
 
     private void ApplyFilter()
     {
         SearchTerm = SearchInput;
+        SelectedLocation = SelectedLocationInput;
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -35,6 +38,8 @@ public partial class Page_ActivityList
     {
         SearchInput = "";
         SearchTerm = "";
+        SelectedLocationInput = "All";
+        SelectedLocation = "All";
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -57,9 +62,20 @@ public partial class Page_ActivityList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<ActivityModel> GetFilteredActivities() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? ActivityList
-        : ActivityList.Where(a => a.ActivityTitle != null && a.ActivityTitle.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<ActivityModel> GetFilteredActivities()
+    {
+        var list = ActivityList.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            list = list.Where(a => (a.ActivityTitle != null && a.ActivityTitle.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                                   (a.Location != null && a.Location.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
+        }
+        if (SelectedLocation != "All")
+        {
+            list = list.Where(a => a.Location == SelectedLocation);
+        }
+        return list;
+    }
 
     private IEnumerable<ActivityModel> FilteredActivities
     {

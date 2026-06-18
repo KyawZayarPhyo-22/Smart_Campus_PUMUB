@@ -27,10 +27,13 @@ public partial class Page_TutorList
     }
 
     private string SearchInput = "";
+    private string SelectedRoleInput = "All";
+    private string SelectedRole = "All";
 
     private void ApplyFilter()
     {
         SearchTerm = SearchInput;
+        SelectedRole = SelectedRoleInput;
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -39,6 +42,8 @@ public partial class Page_TutorList
     {
         SearchInput = "";
         SearchTerm = "";
+        SelectedRoleInput = "All";
+        SelectedRole = "All";
         CurrentPage = 1;
         StateHasChanged();
     }
@@ -65,9 +70,19 @@ public partial class Page_TutorList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<TutorModel> GetFilteredTutors() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? TutorList
-        : TutorList.Where(t => t.TutorName != null && t.TutorName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<TutorModel> GetFilteredTutors()
+    {
+        var list = TutorList.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            list = list.Where(t => t.TutorName != null && t.TutorName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+        }
+        if (SelectedRole != "All")
+        {
+            list = list.Where(t => t.RoleName == SelectedRole);
+        }
+        return list;
+    }
 
     private IEnumerable<TutorModel> FilteredTutors
     {

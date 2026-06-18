@@ -1,3 +1,10 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@using Smart_Campus_PUMUB.Components.Features.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+
 <div class="sidebar-nav-wrapper">
 
     <!-- ── MAIN MENU ──────────────────────────── -->
@@ -116,4 +123,51 @@
         <i class="bi bi-people-fill"></i>
         <span class="sidebar-label">Student Admission Report</span>
     </NavLink>
+
+    <div class="sidebar-section-label mt-2">
+        <span class="sidebar-label">Account</span>
+    </div>
+
+    
+
+    <button type="button" class="sidebar-nav-link sidebar-logout-btn mx-auto" @onclick="OpenLogoutModal">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="sidebar-label">Logout</span>
+    </button>
 </div>
+
+@if (ShowLogoutModal)
+{
+    <div class="modal show d-block" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99999;">
+        <div class="modal-dialog modal-dialog-centered" style="z-index: 100000;">
+            <div class="modal-content tech-card">
+                <div class="modal-header border-0">
+                    <h5 class="text-danger">Logout Confirmation</h5>
+                </div>
+                <div class="modal-body text-center">
+                    Are you sure you want to logout?
+                    <div class="mt-3 text-muted">You will be redirected to the login page.</div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <button class="btn btn-secondary me-2" @onclick="CloseLogoutModal">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmLogout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowLogoutModal { get; set; }
+
+    private void OpenLogoutModal() => ShowLogoutModal = true;
+    private void CloseLogoutModal() => ShowLogoutModal = false;
+
+    private async Task ConfirmLogout()
+    {
+        ShowLogoutModal = false;
+        var customAuth = (CustomAuthStateProvider)AuthStateProvider;
+        await customAuth.UpdateAuthenticationState(null);
+        NavManager.NavigateTo("/login", true);
+    }
+} 
