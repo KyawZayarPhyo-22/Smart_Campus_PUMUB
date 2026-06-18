@@ -44,7 +44,7 @@ public partial class Page_SemesterEdit
             var response = await HttpClientService.ExecuteAsync<SemesterUpdateResponseModel>($"semester/{Id}", EnumHttpMethod.Put, semesterModel);
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Semester ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Semester ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/semesters");
             }
             else { statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။"; }

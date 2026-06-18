@@ -88,7 +88,7 @@ public partial class Page_TutorEdit
         {
             // Edit လုပ်သည့်အခါ ပုံပါ/မပါ စစ်ဆေးပြီး Multipart သုံးခြင်း
             var content = new MultipartFormDataContent();
-            content.Add(new StringContent(createModel.TutorName ?? ""), "Tutor_Name");
+            content.Add(new StringContent(createModel.TutorName ?? ""), "TutorName");
             content.Add(new StringContent(createModel.Email ?? ""), "Email");
             content.Add(new StringContent(createModel.Phone ?? ""), "Phone");
             content.Add(new StringContent(createModel.About ?? ""), "About");

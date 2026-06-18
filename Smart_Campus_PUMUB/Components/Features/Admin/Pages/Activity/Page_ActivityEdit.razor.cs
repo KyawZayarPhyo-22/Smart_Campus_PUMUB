@@ -58,34 +58,7 @@ public partial class Page_ActivityEdit
         }
     }
 
-    // private async Task UpdateActivity()
-    // {
-    //     if (string.IsNullOrWhiteSpace(activityModel.ActivityTitle))
-    //     {
-    //         statusMessage = "Activity Title ဖြည့်စွက်ရန် လိုအပ်ပါသည်။";
-    //         return;
-    //     }
-    //     isProcessing = true;
-    //     statusMessage = "ပြင်ဆင်ချက်များကို သိမ်းဆည်းနေပါသည်...";
-    //     try
-    //     {
-    //         var response = await HttpClientService.ExecuteAsync<ActivityUpdateResponseModel>($"activity/{Id}", EnumHttpMethod.Put, activityModel);
-    //         if (response != null && response.IsSuccess)
-    //         {
-    //             await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Activity ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
-    //             NavigationManager.NavigateTo("/admin/activities");
-    //         }
-    //         else { statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။"; }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         if (ex.Message.Contains("BadRequest") || ex.Message.Contains("400"))
-    //             statusMessage = "Activity ခေါင်းစဉ်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။";
-    //         else
-    //             statusMessage = $"Error: {ex.Message}";
-    //     }
-    //     finally { isProcessing = false; }
-    // }
+
     private async Task UpdateActivity()
     {
         isProcessing = true;
@@ -110,7 +83,7 @@ public partial class Page_ActivityEdit
 
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", "ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/activities");
             }
         }

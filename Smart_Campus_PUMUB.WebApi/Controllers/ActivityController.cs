@@ -16,17 +16,50 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         {
             _db = db;
         }
+        private void AddActivityLog(string title, string description)
+        {
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = title,
+                Description = description,
+                CreatedDateTime = DateTime.UtcNow,
+                IsDelete = false
+            });
+            _db.SaveChanges();
+        }
 
         // GET /api/activities
         [HttpGet]
         public IActionResult GetActivities()
         {
+            // Database ကနေ Data အရင်ဆွဲထုတ်ပြီး မှတ်ဉာဏ်ထဲမှာ စစ်မယ်
             var lst = _db.Activities
                          .AsNoTracking()
                          .Where(x => x.IsDelete == false)
+                         .ToList()
+                         .Where(x => !IsSystemLog(x.ActivityTitle)) // ဒီနေရာမှာ စစ်ဆေးမယ်
                          .OrderByDescending(x => x.ActivityId)
                          .ToList();
+
             return Ok(lst);
+        }
+
+        private bool IsSystemLog(string title)
+        {
+            if (string.IsNullOrEmpty(title)) return false;
+
+            // စာသားအားလုံးကို lowercase ပြောင်းလိုက်ပါ
+            var t = title.ToLower();
+
+            // Log လို သတ်မှတ်ထားတဲ့ စာသားအပိုင်းအစများ (Keywords)
+            var logKeywords = new List<string>
+    {
+        "uploaded", "updated", "deleted", "added","removed",
+        "department", "position", "book", "role", "student", "semester"
+    };
+
+            // Title ထဲမှာ အပေါ်က စာလုံးတွေထဲက တစ်ခုခု ပါနေရင် System Log လို သတ်မှတ်မယ်
+            return logKeywords.Any(k => t.Contains(k));
         }
 
         // GET /api/activities/{id}
@@ -76,10 +109,11 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             });
 
             await _db.SaveChangesAsync();
+            AddActivityLog("New Activity Uploaded", $"{request.ActivityTitle} was added.");
             return StatusCode(201, new { IsSuccess = true, Message = "Saving Successful" });
         }
 
-  
+
         [HttpPost("update/{id}")] // Route ကိုသီးသန့်ခွဲထားပါ
         public async Task<IActionResult> UpdateActivity(int id, [FromForm] ActivityUpdateRequestModel request)
         {
@@ -105,6 +139,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             item.Location = request.Location ?? item.Location;
 
             await _db.SaveChangesAsync();
+            AddActivityLog("Activity Updated", $"{item.ActivityTitle} was updated to the Activity.");
 
             return Ok(new { IsSuccess = true, Message = "Activity Update Successfully" });
         }
@@ -120,6 +155,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             // Soft Delete
             item.IsDelete = true;
             int result = _db.SaveChanges();
+            AddActivityLog("Activity Deleted", $"{item.ActivityTitle} was deleted to the Activity.");
 
             return Ok(new ActivityDeleteResponseModel
             {
@@ -127,7 +163,68 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 Message = result > 0 ? "ဖျက်ဆီးမှု အောင်မြင်ပါသည်။" : "ဖျက်ဆီးမှု မအောင်မြင်ပါ။"
             });
         }
-    }
+
+        [HttpGet("count/active")]
+        public IActionResult GetActivityCount()
+        {
+            // ၁။ Delete မဖြစ်သေးသော Activity အားလုံးကို အရင်ယူပါ
+            var activeActivities = _db.Activities
+                                   .AsNoTracking()
+                                   .Where(x => x.IsDelete == false)
+                                   .ToList();
+
+            // ၂။ System Log များ မပါဝင်သော Activity အရေအတွက်ကိုသာ ရေတွက်ပါ
+            int count = activeActivities.Count(x => !IsSystemLog(x.ActivityTitle));
+
+            return Ok(new { Count = count });
+        }
+
+        [HttpGet("recent")]
+        public IActionResult GetRecentActivities()
+        {
+            // ၁။ Database မှ Data ကို အရင်ဆွဲထုတ်ပါ (ToList() သုံးလိုက်သည့်အတွက် Query ပြီးဆုံးသွားသည်)
+            var activities = _db.Activities
+                                 .AsNoTracking()
+                                 .Where(x => x.IsDelete == false
+                                 && x.ActivityTitle != "New Activity Uploaded"
+                                && x.ActivityTitle != "Activity Updated"
+                                && x.ActivityTitle != "Activity deleted")
+                                 .OrderByDescending(x => x.CreatedDateTime)
+                                 .Take(5)
+                                 .ToList(); // 👈 ဒီနေရာမှာ Memory ထဲရောက်သွားပြီ
+
+            // ၂။ Memory ထဲရောက်မှ Icon ကို Mapping လုပ်ပါ
+            var recentActivities = activities.Select(x => new
+            {
+                ActivityTitle = x.ActivityTitle,
+                Description = x.Description,
+                CreatedDateTime = x.CreatedDateTime,
+                Icon = GetIconByActivityType(x.ActivityTitle) // 👈 အခုဆိုရင် Error မတက်တော့ပါ
+            }).ToList();
+
+            return Ok(recentActivities);
+        }
+        // Activity အမျိုးအစားအလိုက် Icon သတ်မှတ်ပေးမည့် Helper Method
+        private string GetIconByActivityType(string title)
+        {
+            title = title.ToLower();
+            if (title.Contains("book")) return "bi-book";
+            if (title.Contains("student")) return "bi-person";
+            if (title.Contains("tutor")) return "bi-person-badge";
+            if (title.Contains("role")) return "bi-shield-lock";
+            if (title.Contains("position")) return "bi-briefcase";
+            if (title.Contains("faculty")) return "bi-building";
+            if (title.Contains("semester")) return "bi-calendar3";
+            if (title.Contains("category")) return "bi-tags";
+            if (title.Contains("department")) return "bi-diagram-3";
+            if (title.Contains("subject")) return "bi-journal-bookmark";
+            if (title.Contains("rule")) return "bi-file-earmark-text";
+
+            return "bi-info-circle";
+        }
+
+    
+}
 
 
 }

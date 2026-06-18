@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,9 @@ public partial class Page_RoleList
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+    public bool IsSuccess { get; private set; }
+
+    private string statusMessage;
 
     // Delete Modal Control လုပ်ရန်
     private bool ShowModal { get; set; } = false;
@@ -55,6 +59,7 @@ public partial class Page_RoleList
                 EnumHttpMethod.Get
             );
 
+
             if (response != null)
             {
                 RoleList = response;
@@ -74,6 +79,10 @@ public partial class Page_RoleList
     {
         SelectedRole = role;
         ShowModal = true;
+
+        // 💡 ဒီနေရာမှာ ထည့်ပေးပါ - Modal အသစ်ဖွင့်တိုင်း Message ကို Clear လုပ်မယ်
+        statusMessage = "";
+        IsSuccess = false;
     }
 
     private void CloseDeleteModal()
@@ -82,37 +91,92 @@ public partial class Page_RoleList
         ShowModal = false;
     }
 
+    //private async Task DeleteRole()
+    //{
+    //    if (SelectedRole == null) return;
+
+    //    IsProcessing = true;
+    //    statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+
+    //    try
+    //    {
+    //        var response = await HttpClientService.ExecuteAsync<RoleDeleteResponseModel>(
+    //            $"role/{SelectedRole.RoleId}",
+    //            EnumHttpMethod.Delete
+    //        );
+
+    //        if (response?.IsSuccess == true)
+    //        {
+    //            statusMessage = response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+    //            CloseDeleteModal();
+    //            await LoadRoles(); // refresh table
+    //        }
+    //        else
+    //        {
+    //            statusMessage = response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။";
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        statusMessage = $"Error: {ex.Message}";
+    //    }
+    //    finally
+    //    {
+    //        IsProcessing = false;
+    //    }
+    //}
+    //private void CloseDeleteModal()
+    //{
+    //    SelectedRole = null;
+    //    ShowModal = false;
+    //    statusMessage = ""; // Reset message
+    //    IsSuccess = false;
+    //}
     private async Task DeleteRole()
     {
         if (SelectedRole == null) return;
 
         IsProcessing = true;
+        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        IsSuccess = false;
+
         try
         {
-            // 🚀 API သို့ DELETE Request ပို့ခြင်း (ဥပမာ: role/5)
             var response = await HttpClientService.ExecuteAsync<RoleDeleteResponseModel>(
                 $"role/{SelectedRole.RoleId}",
                 EnumHttpMethod.Delete
             );
-
+          //  var response = await HttpClientService.ExecuteAsync<SemesterDeleteResponseModel>(
+          //    $"semester/{SelectedSemester.SemesterId}",
+          //    EnumHttpMethod.Delete
+          //);
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+                statusMessage = "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                IsSuccess = true;
+
+                await Task.Delay(1500);
                 CloseDeleteModal();
-                await LoadRoles(); // 🔄 Table ထဲမှာ စာရင်းအသစ် ချက်ချင်းဖြစ်သွားအောင် ပြန်ခေါ်ခြင်း
+                await LoadRoles();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါတကား။");
+                // API ကနေ response အမှားပြန်လာရင် ဒီစာသားကို ပြပါ
+                statusMessage = "ဤ Role ကို User များက အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+                IsSuccess = false;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            // Exception ဖြစ်တဲ့အခါမှာလည်း ဒီစာသားပဲ ပြပေးလိုက်ပါ
+            statusMessage = "ဤ Role ကို User များက အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+            IsSuccess = false;
         }
         finally
         {
             IsProcessing = false;
         }
     }
+
+
 }

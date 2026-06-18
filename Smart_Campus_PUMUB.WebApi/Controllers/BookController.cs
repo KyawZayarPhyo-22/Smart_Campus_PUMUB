@@ -86,6 +86,13 @@ public class BookController : ControllerBase
         });
 
         int result = _db.SaveChanges();
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "New Book Uploaded",
+            Description = $"{request.BookName.Trim()} was added to the Library.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
         return StatusCode(201, new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Book created with .jpg image!" : "Saving Failed" });
     }
 
@@ -132,6 +139,13 @@ public class BookController : ControllerBase
         item.ModifiedBy = request.ModifiedBy;
 
         int result = _db.SaveChanges();
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Book Updated",
+            Description = $"{request.BookName.Trim()} was Updated to the Library.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
         return Ok(new ActionResponseModel { IsSuccess = result > 0, Message = "Update Successful" });
     }
 
@@ -145,6 +159,23 @@ public class BookController : ControllerBase
 
         item.IsDelete = true;
         int result = _db.SaveChanges();
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Book Deleted",
+            Description = $"{item.BookName.Trim()} was deleted to the Library.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
         return Ok(new ActionResponseModel { IsSuccess = result > 0, Message = "Delete Successfully" });
+    }
+    [HttpGet("count/active")]
+    public IActionResult GetBookCount()
+    {
+        // IsDelete မဖြစ်သေးတဲ့ စာအုပ်အရေအတွက်ကို ရေတွက်ခြင်း
+        int count = _db.Books
+            .AsNoTracking()
+            .Count(x => x.IsDelete == false || x.IsDelete == null);
+
+        return Ok(new { Count = count });
     }
 }

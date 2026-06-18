@@ -82,6 +82,13 @@ public class DepartmentController : ControllerBase
         });
 
         int result = _db.SaveChanges();
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Department added",
+            Description = $"{request.DepartmentName} was added to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
         return StatusCode(201, new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Saving Successful" : "Saving Failed" });
     }
 
@@ -123,6 +130,13 @@ public class DepartmentController : ControllerBase
         item.ModifiedBy = request.ModifiedBy; // string? အနေနဲ့ သိမ်းသွားပါမယ်
 
         int result = _db.SaveChanges();
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Department Updated",
+            Description = $"{request.DepartmentName} was Updated to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
         return Ok(new DepartmentResponseModel
         {
             IsSuccess = result > 0,
@@ -130,20 +144,57 @@ public class DepartmentController : ControllerBase
             Data = new DepartmentModel { DepartmentId = item.DepartmentId, FacultyId = item.FacultyId, DepartmentName = item.DepartmentName }
         });
     }
-
     [HttpDelete("{id}")]
     public IActionResult DeleteDepartment(int id)
     {
-        // Role: ID Validation
+        // 1. ID validation
         if (id <= 0)
-            return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "မှားယွင်းသော ID ပုံစံဖြစ်နေပါသည်။" });
+            return BadRequest(new ActionResponseModel
+            {
+                IsSuccess = false,
+                Message = "မှားယွင်းသော ID ပုံစံဖြစ်နေပါသည်။"
+            });
 
-        var item = _db.Departments.FirstOrDefault(x => x.DepartmentId == id && (x.IsDelete == false || x.IsDelete == null));
+        // 2. Find department
+        var item = _db.Departments
+            .FirstOrDefault(x => x.DepartmentId == id && (x.IsDelete == false || x.IsDelete == null));
+
         if (item is null)
-            return NotFound(new ActionResponseModel { IsSuccess = false, Message = "ဖျက်ရန် ဒေတာ ရှာမတွေ့ပါ။" });
+            return NotFound(new ActionResponseModel
+            {
+                IsSuccess = false,
+                Message = "ဖျက်ရန် ဒေတာ ရှာမတွေ့ပါ။"
+            });
 
-        item.IsDelete = true; // Soft Delete Role (IsDelete column ကို သုံးပါတယ်)
+        // 3. 🔥 FOREIGN KEY CHECK (IMPORTANT)
+        bool isUsed = _db.Tutors.Any(x => x.DepartmentId == id && x.IsDelete == false);
+
+        if (isUsed)
+        {
+            return BadRequest(new ActionResponseModel
+            {
+                IsSuccess = false,
+                Message = "ဤ Department ကို အသုံးပြုထားသော Tutor များရှိနေသဖြင့် ဖျက်၍မရပါ။"
+            });
+        }
+
+        // 4. Soft delete
+        item.IsDelete = true;
+
         int result = _db.SaveChanges();
-        return Ok(new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Delete Successfully" : "Delete Failed" });
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Department deleted",
+            Description = $"{item.DepartmentName} was deleted to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
+
+        return Ok(new ActionResponseModel
+        {
+            IsSuccess = result > 0,
+            Message = result > 0 ? "Delete Successfully" : "Delete Failed"
+        });
     }
 }

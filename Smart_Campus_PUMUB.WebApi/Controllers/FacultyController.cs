@@ -55,6 +55,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             _db.Faculties.Add(new Faculty { FacultyName = request.FacultyName, IsDelete = false });
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = "New Faculty added",
+                Description = $"{request.FacultyName} was added to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return StatusCode(201, new FacultyCreateResponseModel { IsSuccess = result > 0, Message = result > 0 ? "သိမ်းဆည်းမှု အောင်မြင်ပါသည်။" : "သိမ်းဆည်းမှု မအောင်မြင်ပါ။" });
         }
@@ -74,6 +81,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             item.FacultyName = request.FacultyName;
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = " Faculty updated",
+                Description = $"{request.FacultyName} was updated to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return Ok(new FacultyUpdateResponseModel
             {
@@ -87,17 +101,50 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteFaculty(int id)
         {
-            var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false);
-            if (item is null) return NotFound(new FacultyDeleteResponseModel { IsSuccess = false, Message = "Faculty ကို ရှာမတွေ့ပါ။" });
+            var item = _db.Faculties
+                .FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false);
 
-            // Soft Delete အသုံးပြုခြင်း
+            if (item is null)
+            {
+                return NotFound(new FacultyDeleteResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "Faculty ကို ရှာမတွေ့ပါ။"
+                });
+            }
+
+            // 🚨 CHECK FK (Department exists or not)
+            var hasDepartments = _db.Departments
+                .Any(x => x.FacultyId == id && x.IsDelete == false);
+
+            if (hasDepartments)
+            {
+                return BadRequest(new FacultyDeleteResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "ဒီ Faculty ကို Department တွေက အသုံးပြုနေပါတယ်။ ဖျက်လို့မရပါ။"
+                });
+            }
+
+            // ✅ Soft Delete
             item.IsDelete = true;
+            item.ModifiedDateTime = DateTime.Now; // optional audit
+
             int result = _db.SaveChanges();
+            _db.Activities.Add(new Activity
+            {
+                ActivityTitle = " Faculty deleted",
+                Description = $"{item.FacultyName} was deleted to the System.",
+                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            });
+            _db.SaveChanges();
 
             return Ok(new FacultyDeleteResponseModel
             {
                 IsSuccess = result > 0,
-                Message = result > 0 ? "ဖျက်ဆီးမှု အောင်မြင်ပါသည်။" : "ဖျက်ဆီးမှု မအောင်မြင်ပါ။"
+                Message = result > 0
+                    ? "ဖျက်ဆီးမှု အောင်မြင်ပါသည်။"
+                    : "ဖျက်ဆီးမှု မအောင်မြင်ပါ။"
             });
         }
     }

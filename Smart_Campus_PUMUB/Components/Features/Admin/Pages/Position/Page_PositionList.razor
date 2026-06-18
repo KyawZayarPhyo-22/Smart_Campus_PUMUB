@@ -172,41 +172,36 @@
 </div>
 
 @* 🛠️ Custom Blazor Modal (Bootstrap Controlled by State) *@
-<div class="modal fade @(ShowModal ? "show d-block" : "")" tabindex="-1"
-     style="background: @(ShowModal ? "rgba(10, 14, 22, 0.85)" : "none"); backdrop-filter: blur(4px);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content tech-card" style="border: 1px solid rgba(220, 53, 69, 0.2);">
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
 
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title text-danger fw-bold d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteModal"></button>
-            </div>
-
-            <div class="modal-body text-center py-4">
-                <div class="mb-3">
-                    <i class="bi bi-trash-fill text-danger display-3"></i>
+                <div class="modal-header border-0">
+                    <h5 class="text-danger">Confirm Delete</h5>
                 </div>
-                <h4 class="fw-bold text-white">Delete Position?</h4>
-                <p class="text-light opacity-75">
-                    စာရင်းဖျက်ရန် သေချာပါသလား? <br />
-                    Position အမည်: <strong class="text-info">@SelectedPosition?.PositionName</strong>
-                </p>
-                <p class="text-muted small mb-0">This action cannot be undone.</p>
-            </div>
 
-            <div class="modal-footer border-0 justify-content-center pt-0">
-                <button type="button" class="btn btn-secondary px-4" style="border-radius: 6px;" @onclick="CloseDeleteModal" disabled="@IsProcessing">
-                    Cancel
-                </button>
-                <button type="button" class="btn btn-danger px-4" style="border-radius: 6px;" @onclick="DeletePosition" disabled="@IsProcessing">
-                    <i class="bi bi-trash me-2"></i>
-                    @(IsProcessing ? "Deleting..." : "Yes, Delete")
-                </button>
-            </div>
+                <div class="modal-body text-center">
+                    Are you sure to delete
+                    <strong>@SelectedPosition?.PositionName</strong>?
+                </div>
 
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary"
+                            @onclick="CloseDeleteModal"
+                            disabled="@IsProcessing">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-danger"
+                            @onclick="DeletePosition"
+                            disabled="@IsProcessing">
+                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                    </button>
+                </div>
+
+            </div>
         </div>
     </div>
-</div>
+}

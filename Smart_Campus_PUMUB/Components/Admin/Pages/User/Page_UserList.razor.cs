@@ -87,7 +87,7 @@ public partial class Page_UserList
 
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "User အား ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "User အား ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
                 CloseDeleteModal();
                 await LoadUsers(); // 🔄 စာရင်းအသစ် ပြန်တင်ခြင်း
             }

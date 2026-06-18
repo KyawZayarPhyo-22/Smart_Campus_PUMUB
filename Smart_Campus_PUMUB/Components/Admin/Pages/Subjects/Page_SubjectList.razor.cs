@@ -45,30 +45,44 @@ public partial class Page_SubjectList
         ShowModal = false;
     }
 
+    private string statusMessage = string.Empty;
+    private bool IsSuccess = false;
+
     private async Task DeleteSubject()
     {
         if (SelectedSubject == null) return;
 
         IsProcessing = true;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+
         try
         {
-            // API Route ကို "api/subject/{id}" ဟု ပြောင်းလိုက်ပါ
             var response = await HttpClientService.ExecuteAsync<ActionResponseModel>(
-                $"subject/{SelectedSubject.SubjectId}", EnumHttpMethod.Delete);
+                $"subject/{SelectedSubject.SubjectId}",
+                EnumHttpMethod.Delete);
 
             if (response?.IsSuccess == true)
             {
-                await LoadSubjects(); // အောင်မြင်ပါက စာရင်းအသစ် ပြန်ဆွဲပါ
+                IsSuccess = true;
+                statusMessage = response.Message ?? "Subject ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။";
+
+                await LoadSubjects();
+                await Task.Delay(800);
+
                 CloseDeleteModal();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်ရန် အဆင်မပြေပါ");
+                IsSuccess = false;
+                statusMessage = response?.Message ?? "Subject ကို ဖျက်၍ မရပါ။";
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            IsSuccess = false;
+            statusMessage = $"Error: {ex.Message}";
         }
         finally
         {

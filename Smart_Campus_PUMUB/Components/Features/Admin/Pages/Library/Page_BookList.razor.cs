@@ -47,37 +47,66 @@ public partial class Page_BookList : ComponentBase
         }
     }
 
-    public void OpenDeleteModal(BookModel book) { SelectedBook = book; ShowModal = true; }
-    public void CloseDeleteModal() { ShowModal = false; }
+    private string statusMessage = string.Empty;
+    private bool IsSuccess = false;
+
+    public void OpenDeleteModal(BookModel book)
+    {
+        SelectedBook = book;
+        ShowModal = true;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
+
+    public void CloseDeleteModal()
+    {
+        SelectedBook = null;
+        ShowModal = false;
+
+        statusMessage = string.Empty;
+        IsSuccess = false;
+    }
 
     public async Task DeleteBook()
     {
         if (SelectedBook == null) return;
-        
+
         IsProcessing = true;
+
+        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        IsSuccess = false;
+
         try
         {
-            var response = await HttpClientService.ExecuteAsync<BookResponseModel>($"book/{SelectedBook.BookId}", EnumHttpMethod.Delete);
-            
-            if (response != null && response.IsSuccess)
+            var response = await HttpClientService.ExecuteAsync<BookResponseModel>(
+                $"book/{SelectedBook.BookId}",
+                EnumHttpMethod.Delete);
+
+            if (response?.IsSuccess == true)
             {
-                // Delete လုပ်ပြီးမှသာ JS alert ကို သုံးပါ (ဘာလို့လဲဆိုတော့ User က button နှိပ်ပြီးမှ ဖြစ်တာမို့)
-                await JSRuntime.InvokeVoidAsync("alert", "စာအုပ်ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
-                CloseDeleteModal();
+                IsSuccess = true;
+                statusMessage = response.Message ?? "စာအုပ်ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။";
+
                 await LoadBooks();
+
+                await Task.Delay(800);
+                CloseDeleteModal();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
+                IsSuccess = false;
+                statusMessage = response?.Message ?? "စာအုပ်ကို ဖျက်၍ မရပါ။";
             }
         }
-        catch (Exception ex) 
-        { 
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); 
+        catch (Exception ex)
+        {
+            IsSuccess = false;
+            statusMessage = $"Error: {ex.Message}";
         }
-        finally 
-        { 
-            IsProcessing = false; 
+        finally
+        {
+            IsProcessing = false;
         }
     }
 }

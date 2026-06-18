@@ -31,7 +31,7 @@ public partial class Page_SemesterCreate
             var response = await HttpClientService.ExecuteAsync<SemesterCreateResponseModel>("semester", EnumHttpMethod.Post, semesterModel);
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Semester ဖန်တီးမှု အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Semester ဖန်တီးမှု အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/semesters");
             }
             else { statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။"; }

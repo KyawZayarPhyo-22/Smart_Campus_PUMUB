@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -24,6 +25,7 @@ public class TutorController : ControllerBase
                        join d in _db.Departments on t.DepartmentId equals d.DepartmentId
                        join p in _db.Positions on t.PositionId equals p.PositionId
                        join u in _db.Users on t.UserId equals u.UserId
+                       join r in _db.Roles on u.RoleId equals r.RoleId
                        where t.IsDelete == false
                        orderby t.TutorId descending
                        select new
@@ -37,7 +39,8 @@ public class TutorController : ControllerBase
                            d.DepartmentName,
                            p.PositionName,
                            u.UserName,
-                           t.CreatedDateTime
+                           t.CreatedDateTime,
+                           r.RoleName
                        }).ToList();
 
         var lst = rawList.Select(t => new
@@ -51,6 +54,7 @@ public class TutorController : ControllerBase
             departmentName = t.DepartmentName,
             positionName = t.PositionName,
             accountUserName = t.UserName,
+            roleName = t.RoleName,
             createdDateTime = t.CreatedDateTime.HasValue ? t.CreatedDateTime.Value.AddHours(6).AddMinutes(30) : (DateTime?)null
         }).ToList();
 
@@ -104,7 +108,7 @@ public class TutorController : ControllerBase
 
     // ၃။ POST: Tutor Profile အသစ်ထည့်ရန် (ဓာတ်ပုံဖိုင် Upload Logic ပါဝင်သည်)
     [HttpPost]
-    public IActionResult CreateTutor([FromBody] TutorCreateRequestModel request) // File ပါ၍ [FromForm] သုံးရပါမည်
+    public IActionResult CreateTutor([FromForm] TutorCreateRequestModel request) // File ပါ၍ [FromForm] သုံးရပါမည်
     {
         // --- Validation စစ်ဆေးခြင်း ---
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Phone))
@@ -113,10 +117,19 @@ public class TutorController : ControllerBase
         }
 
         // User Role စစ်ဆေးခြင်း (Tutor ဟုတ်မဟုတ်)
-        var userAccount = _db.Users.FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
-        if (userAccount is null || userAccount.RoleId != 3) // မင်းရဲ့ Tutor Role ID ပြောင်းလဲနိုင်သည်
+        var userAccount = _db.Users.Include(x => x.Role).FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
+        if (userAccount == null)
         {
-            return BadRequest(new TutorCreateResponseModel { IsSuccess = false, Message = "ဤ User ID သည် ဆရာ/မ (Tutor) Role မဟုတ်သဖြင့် Profile ဆောက်ခွင့်မရှိပါ။" });
+            return BadRequest(new TutorCreateResponseModel { IsSuccess = false, Message = "User ရှာမတွေ့ပါ။" });
+        }
+
+        // ၂။ Database ထဲက "Tutor" ဆိုတဲ့ Role ရဲ့ ID ကို ရှာဖွေစစ်ဆေးခြင်း
+        var tutorRole = _db.Roles.FirstOrDefault(x => x.RoleName == "Tutor");
+
+        // စစ်ဆေးချက် - Role မရှိရင် (သိုမဟုတ်) User ရဲ့ RoleId က Tutor RoleId နဲ့ မတူရင်
+        if (tutorRole == null || userAccount.RoleId != tutorRole.RoleId)
+        {
+            return BadRequest(new TutorCreateResponseModel { IsSuccess = false, Message = "ဤ User သည် ဆရာ/မ (Tutor) Role မဟုတ်သဖြင့် Profile ဆောက်ခွင့်မရှိပါ။" });
         }
 
         // Email / Phone Format Validations
@@ -185,6 +198,14 @@ public class TutorController : ControllerBase
         _db.Tutors.Add(newTutor);
         int result = _db.SaveChanges();
 
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "New Tutor Registered",
+            Description = $"{request.TutorName} was added to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
+
         return StatusCode(201, new TutorCreateResponseModel
         {
             IsSuccess = result > 0,
@@ -193,7 +214,7 @@ public class TutorController : ControllerBase
     }
 
     // ၄။ PUT: Tutor Profile ပြင်ရန် (ဓာတ်ပုံပါ လဲလှယ်နိုင်သည်)
-    [HttpPut("{id}")]
+    [HttpPost("{id}")]
     public IActionResult UpdateTutor(int id, [FromForm] TutorUpdateRequestModel request)
     {
         var item = _db.Tutors.FirstOrDefault(x => x.TutorId == id && x.IsDelete == false);
@@ -202,11 +223,20 @@ public class TutorController : ControllerBase
             return NotFound(new TutorUpdateResponseModel { IsSuccess = false, Message = "ပြင်ဆင်မည့် ဆရာ/မ Profile ကို ရှာမတွေ့ပါ။" });
         }
 
-        // Role Validation
-        var userAccount = _db.Users.FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
-        if (userAccount == null || userAccount.RoleId != 3)
+        //Role Validation
+        var userAccount = _db.Users.Include(x => x.Role).FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
+        if (userAccount == null)
         {
-            return BadRequest(new TutorUpdateResponseModel { IsSuccess = false, Message = "သတ်မှတ်ပေးသော User အကောင့်သည် ဆရာ/မ Role မဟုတ်ပါ။" });
+            return BadRequest(new TutorCreateResponseModel { IsSuccess = false, Message = "User ရှာမတွေ့ပါ။" });
+        }
+
+        // ၂။ Database ထဲက "Tutor" ဆိုတဲ့ Role ရဲ့ ID ကို ရှာဖွေစစ်ဆေးခြင်း
+        var tutorRole = _db.Roles.FirstOrDefault(x => x.RoleName == "Tutor");
+
+        // စစ်ဆေးချက် - Role မရှိရင် (သိုမဟုတ်) User ရဲ့ RoleId က Tutor RoleId နဲ့ မတူရင်
+        if (tutorRole == null || userAccount.RoleId != tutorRole.RoleId)
+        {
+            return BadRequest(new TutorCreateResponseModel { IsSuccess = false, Message = "ဤ User သည် ဆရာ/မ (Tutor) Role မဟုတ်သဖြင့် Profile ဆောက်ခွင့်မရှိပါ။" });
         }
 
         // ပုံအသစ် ထပ်တင်လာခဲ့လျှင်
@@ -230,12 +260,20 @@ public class TutorController : ControllerBase
         item.DepartmentId = request.DepartmentId;
         item.PositionId = request.PositionId;
         item.UserId = request.UserId;
-        item.TutorName = request.TutorName;
+        item.TutorName = request.TutorName!;
         item.Email = request.Email;
         item.Phone = request.Phone;
         item.About = request.About;
 
         int result = _db.SaveChanges();
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "Tutor Updated",
+            Description = $"Tutor '{item.TutorName}' was Updated from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
         return Ok(new TutorUpdateResponseModel { IsSuccess = result > 0, Message = "ပြင်ဆင်မှု အောင်မြင်ပါသည်" });
     }
     // ၅။ PATCH: Tutor Profile တစ်စိတ်တစ်ပိုင်းစီ လိုက်ပြင်ရန် (ဓာတ်ပုံ သို့မဟုတ် အချက်အလက် သီးသန့်ပြင်နိုင်သည်)
@@ -267,8 +305,8 @@ public class TutorController : ControllerBase
         if (request.UserId > 0)
         {
             // UserId ပါလာခဲ့လျှင် အဲ့ဒီ User သည် တကယ်ရှိပြီး Tutor Role ဟုတ်မဟုတ် စစ်ဆေးမည်
-            var userAccount = _db.Users.FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
-            if (userAccount == null || userAccount.RoleId != 3) // 3 = Tutor Role ID
+            var userAccount = _db.Users.Include(u => u.Role).FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
+            if (userAccount == null || userAccount.RoleId != userAccount.Role.RoleId) // 3 = Tutor Role ID
             {
                 return BadRequest(new TutorUpdateResponseModel { IsSuccess = false, Message = "လွှဲပြောင်းပေးမည့် User ID သည် ဆရာ/မ (Tutor) Role မဟုတ်သဖြင့် ပြင်ဆင်ခွင့်မရှိပါ။" });
             }
@@ -369,6 +407,13 @@ public class TutorController : ControllerBase
 
         // ပြောင်းလဲမှုများကို သိမ်းဆည်းခြင်း
         int result = _db.SaveChanges();
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "Tutor Updated",
+            Description = $"Tutor '{item.TutorName}' was Updated from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
 
         return Ok(new TutorUpdateResponseModel
         {
@@ -391,6 +436,35 @@ public class TutorController : ControllerBase
         item.IsDelete = true;
         int result = _db.SaveChanges();
 
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "Tutor Removed",
+            Description = $"Tutor '{item.TutorName}' was removed from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+
         return Ok(new TutorDeleteResponseModel { IsSuccess = result > 0, Message = "စနစ်ထဲမှ ဖယ်ရှားပြီးပါပြီ။" });
+    }
+    //[HttpGet("count/active")]
+    //public async Task<ActionResult<object>> GetActiveTutorCount()
+    //{
+    //    // Database မှ Status က 'Active' ဖြစ်သော Tutor အရေအတွက်ကို ရေတွက်ခြင်း
+    //    int count = await _db.Tutors
+
+    //        .CountAsync(x => x.IsDelete == false);
+
+    //    return Ok(new { Count = count });
+    //}
+
+    [HttpGet("count/active")]
+    public async Task<ActionResult<object>> GetActiveTutorCount()
+    {
+        // Database မှ Status က 'Active' ဖြစ်သော Tutor အရေအတွက်ကို ရေတွက်ခြင်း
+        int count = await _db.Tutors
+
+            .CountAsync(x => x.IsDelete == false);
+
+        return Ok(new { Count = count });
     }
 }

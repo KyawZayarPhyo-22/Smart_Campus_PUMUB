@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Smart_Campus_PUMUB.Database.AppDbContext; // မင်းရဲ့ AppDbContext တည်နေရာ
+using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Smart_Campus_PUMUB.Database.AppDbContext; // မင်းရဲ့ AppDbContext တည်နေရာ
-using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -123,6 +124,14 @@ public class StudentController : ControllerBase
         _db.Students.Add(newStudent);
         int result = _db.SaveChanges();
 
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "New Student Registered",
+            Description = $"{request.Name} was added to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
+
         return StatusCode(201, new StudentResponseModel
         {
             IsSuccess = result > 0,
@@ -169,6 +178,14 @@ public class StudentController : ControllerBase
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
         int result = _db.SaveChanges();
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Student Updated",
+            Description = $"{request.CurrentClassYear} {request.CurrentMajor} was updated to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
 
         return Ok(new StudentResponseModel
         {
@@ -249,6 +266,14 @@ public class StudentController : ControllerBase
 
         int result = _db.SaveChanges();
 
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Student Updated",
+            Description = $"{request.CurrentClassYear} {request.CurrentMajor} was updated to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
+
         return Ok(new StudentResponseModel
         {
             IsSuccess = result > 0,
@@ -282,10 +307,26 @@ public class StudentController : ControllerBase
 
         int result = _db.SaveChanges();
 
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = " Student deleted",
+            Description = $"{item.CurrentClassYear} {item.CurrentMajor} was deleted to the System.",
+            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+        });
+        _db.SaveChanges();
+
         return Ok(new StudentResponseModel
         {
             IsSuccess = result > 0,
             Message = result > 0 ? "ကျောင်းသားမှတ်တမ်းကို ပယ်ဖျက်ခြင်း အောင်မြင်ပါသည်။" : "ပယ်ဖျက်ခြင်း မအောင်မြင်ပါ။"
         });
+    }
+
+    [HttpGet("count/active")]
+    public async Task<IActionResult> GetActiveStudentCount()
+    {
+        // Database ထဲမှ Status = "Active" ဖြစ်သော ကျောင်းသားအရေအတွက်ကို ရယူခြင်း
+        var count = await _db.Students.CountAsync(s => s.Status == "Active");
+        return Ok(new { Count = count });
     }
 }

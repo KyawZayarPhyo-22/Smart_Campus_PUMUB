@@ -60,7 +60,7 @@ public partial class Page_DepartmentCreate : ComponentBase
 
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Department အသစ်ဖန်တီးခြင်း အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", "Department အသစ်ဖန်တီးခြင်း အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/departments");
             }
             else

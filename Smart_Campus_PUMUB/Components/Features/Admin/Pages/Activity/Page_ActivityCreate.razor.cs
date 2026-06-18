@@ -63,7 +63,7 @@ public partial class Page_ActivityCreate
             var response = await HttpClientService.ExecuteMultipartAsync<ActivityCreateResponseModel>("activity", content);
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Activity အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
+                //await JSRuntime.InvokeVoidAsync("alert", "Activity အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
                 NavigationManager.NavigateTo("/admin/activities");
             }
             else

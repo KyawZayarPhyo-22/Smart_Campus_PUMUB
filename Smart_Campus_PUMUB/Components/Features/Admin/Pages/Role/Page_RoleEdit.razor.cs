@@ -62,7 +62,6 @@ public partial class Page_RoleEdit
 
         try
         {
-            // 🚀 API သို့ PUT Method ဖြင့် ဒေတာအသစ် လှမ်းပို့ခြင်း (ဥပမာ: role/5)
             var response = await HttpClientService.ExecuteAsync<RoleUpdateResponseModel>(
                 $"role/{Id}",
                 EnumHttpMethod.Put,
@@ -72,7 +71,6 @@ public partial class Page_RoleEdit
             if (response != null && response.IsSuccess)
             {
                 statusMessage = response.Message ?? "Role ပြင်ဆင်မှု အောင်မြင်ပါသည်။";
-                await JSRuntime.InvokeVoidAsync("alert", statusMessage);
                 NavigationManager.NavigateTo("/admin/roles");
             }
             else
@@ -82,7 +80,6 @@ public partial class Page_RoleEdit
         }
         catch (Exception ex)
         {
-            // ✨ API က BadRequest (400) ပြန်လာပြီး ပြင်လိုက်တဲ့နာမည်က တခြား Role နာမည်နဲ့ သွားတူနေတဲ့ အခြေအနေကို ဖမ်းယူခြင်း
             if (ex.Message.Contains("BadRequest") || ex.Message.Contains("400"))
             {
                 statusMessage = "Role အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။";

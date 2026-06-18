@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Smart_Campus_PUMUB.Database.AppDbContext;
-using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -168,17 +169,17 @@ public class UserController : ControllerBase
 
         if (!Regex.IsMatch(formattedUserName, "^[a-zA-Z0-9_]+$"))
         {
-            return BadRequest(new UserCreateResponseModel { IsSuccess = false, Message = "Username တွင် သင်္ကေတ (Special Characters) များ မသုံးရပါ။" });
+            return BadRequest(new UserCreateResponseModel { Message = "Username တွင် သင်္ကေတ (Special Characters) များ မသုံးရပါ။" });
         }
 
         var isUsernameExist = _db.Users.Any(x => x.UserName == formattedUserName && x.IsDelete == false);
         if (isUsernameExist)
         {
-            return BadRequest(new UserCreateResponseModel { IsSuccess = false, Message = "ဤ Username သည် စနစ်ထဲတွင် ရှိပြီးသား ဖြစ်နေသည်။" });
+            return BadRequest(new UserCreateResponseModel { Message = "ဤ Username သည် စနစ်ထဲတွင် ရှိပြီးသား ဖြစ်နေသည်။" });
         }
 
         var passwordError = ValidatePasswordPolicy(request.Password);
-        if (passwordError != null) return BadRequest(new UserCreateResponseModel { IsSuccess = false, Message = passwordError });
+        if (passwordError != null) return BadRequest(new UserCreateResponseModel { Message = passwordError });
 
         // 🔒 Password အား Hash လုပ်ခြင်း
         string hashedPass = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -195,6 +196,14 @@ public class UserController : ControllerBase
 
         _db.Users.Add(newUser);
         int result = _db.SaveChanges();
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "User Added",
+            Description = $"User '{request.UserName}' was added from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
 
         return StatusCode(201, new UserCreateResponseModel
         {
@@ -240,6 +249,13 @@ public class UserController : ControllerBase
         item.Password = BCrypt.Net.BCrypt.HashPassword(request.Password); //🔒 Update တွင်လည်း Hash ပြုလုပ်သိမ်းဆည်းခြင်း
 
         int result = _db.SaveChanges();
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "User Updated",
+            Description = $"Tutor '{request.UserName}' was Updated from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
 
         return Ok(new UserUpdateResponseModel
         {
@@ -316,6 +332,14 @@ public class UserController : ControllerBase
 
         int result = _db.SaveChanges();
 
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "User Updated",
+            Description = $"Tutor '{request.UserName}' was Updated from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+
         return Ok(new UserUpdateResponseModel
         {
             IsSuccess = result > 0,
@@ -345,11 +369,47 @@ public class UserController : ControllerBase
         item.IsDelete = true;
         int result = _db.SaveChanges();
 
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "User Deleted",
+            Description = $"User '{item.UserName}' was Deleted from the system.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+
         return Ok(new UserDeleteResponseModel
         {
             IsSuccess = result > 0,
             Message = result > 0 ? "အကောင့်ကို ပိတ်သိမ်း (Delete) ခြင်း အောင်မြင်ပါသည်။" : "အကောင့်ပိတ်ခြင်း မအောင်မြင်ပါ။"
         });
+    }
+    //[HttpGet("count/by-role")]
+    //public IActionResult GetCountByRole()
+    //{
+    //    var data = _db.Users // သင်၏ User သို့မဟုတ် Student/Staff စားပွဲနာမည်
+    //        .GroupBy(u => u.Role)
+    //        .Select(g => new { Name = g.Key, Y = g.Count() })
+    //        .ToList();
+
+    //    return Ok(data);
+    //}
+
+    [HttpGet("count/by-role")]
+
+    public IActionResult GetCountByRole()
+    {
+        var result = _db.Users
+            .Include(u => u.Role)
+            .Where(u => u.IsDelete == false)
+            .GroupBy(u => u.Role.RoleName)
+            .Select(g => new
+            {
+                name = g.Key ?? "Unknown", // Frontend မှ name ဟု ခေါ်ထားသည်နှင့် ကိုက်အောင်လုပ်ပါ
+                y = (double)g.Count(),
+                // color = g.Key == "Admin" ? "#22d3ee" : (g.Key == "Student" ? "#10b981" : "#8b5cf6")
+            }).ToList();
+
+        return Ok(result);
     }
 
     // 💡 ကုဒ်များ ထပ်ခါတလဲလဲ မဖြစ်စေရန် Password Policy ကို ခွဲထုတ်ထားသော သီးသန့် Private Method

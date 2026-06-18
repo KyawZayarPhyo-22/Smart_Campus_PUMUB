@@ -44,7 +44,7 @@ public partial class Page_CategoryEdit
             var response = await HttpClientService.ExecuteAsync<CategoryUpdateResponseModel>($"category/{Id}", EnumHttpMethod.Put, categoryModel);
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Category ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
+                //await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Category ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/categories");
             }
             else { statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။"; }

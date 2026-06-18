@@ -19,6 +19,10 @@ public partial class Page_CategoryList
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+
+    private string statusMessage;
+
+    public bool IsSuccess { get; private set; }
     private bool ShowModal { get; set; } = false;
     private CategoryModel? SelectedCategory { get; set; }
 
@@ -47,25 +51,61 @@ public partial class Page_CategoryList
         finally { IsLoading = false; }
     }
 
-    private void OpenDeleteModal(CategoryModel category) { SelectedCategory = category; ShowModal = true; }
-    private void CloseDeleteModal() { SelectedCategory = null; ShowModal = false; }
+    private void OpenDeleteModal(CategoryModel category)
+    {
+        SelectedCategory = category;
+        ShowModal = true;
+        statusMessage = ""; // Reset message
+        IsSuccess = false;
+    }
 
+    private void CloseDeleteModal()
+    {
+        SelectedCategory = null;
+        ShowModal = false;
+        statusMessage = "";
+        IsSuccess = false;
+    }
     private async Task DeleteCategory()
     {
         if (SelectedCategory == null) return;
+
         IsProcessing = true;
+        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        IsSuccess = false;
+
         try
         {
-            var response = await HttpClientService.ExecuteAsync<CategoryDeleteResponseModel>($"category/{SelectedCategory.CategoryId}", EnumHttpMethod.Delete);
+            var response = await HttpClientService.ExecuteAsync<CategoryDeleteResponseModel>(
+                $"category/{SelectedCategory.CategoryId}",
+                EnumHttpMethod.Delete
+            );
+
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+                statusMessage = "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                IsSuccess = true;
+
+                await Task.Delay(1500);
                 CloseDeleteModal();
                 await LoadCategories();
             }
-            else { await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။"); }
+            else
+            {
+                statusMessage = "ဤ Category ကို အခြားနေရာတွင် အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+                IsSuccess = false;
+            }
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
-        finally { IsProcessing = false; }
+        catch (Exception)
+        {
+            statusMessage = "ဤ Category ကို အခြားနေရာတွင် အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+            IsSuccess = false;
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
+
+
 }
