@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="Smart_Campus_PUMUB.Database/Smart_Campus_PUMUB.Database.csproj" Id="d16736c6-ce27-48a2-9753-8281fa19fe86" />
   <Project Path="Smart_Campus_PUMUB.WebApi/Smart_Campus_PUMUB.WebApi.csproj" Id="04ce9349-5e1d-49c1-9984-ba2c5defbaa9" />
-  <Project Path="Smart_Campus_PUMUB/Smart_Campus_PUMUB.csproj" />
+  <Project Path="Smart_Campus_PUMUB/Smart_Campus_PUMUB.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
 </Solution>
