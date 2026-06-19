@@ -19,11 +19,6 @@
         </Authorized>
     </AuthorizeView>
 
-    <NavLink href="/admin/student-directory" class="sidebar-nav-link">
-        <i class="bi bi-person-lines-fill"></i>
-        <span class="sidebar-label">Student Directory</span>
-    </NavLink>
-
     <NavLink href="/admin/tutors" class="sidebar-nav-link">
         <i class="bi bi-person-workspace"></i>
         <span class="sidebar-label">Tutor Directory</span>
@@ -34,10 +29,15 @@
         <span class="sidebar-label">Library System</span>
     </NavLink> *@
 
+
+     <AuthorizeView Policy="view_role">
+        <Authorized>
     <NavLink href="/admin/roles" class="sidebar-nav-link">
         <i class="bi bi-shield-check"></i>
         <span class="sidebar-label">Roles</span>
     </NavLink>
+        </Authorized>
+    </AuthorizeView>
 
     <NavLink href="/admin/positions" class="sidebar-nav-link">
         <i class="bi bi-person-badge"></i>
@@ -102,6 +102,7 @@
         <i class="bi bi-file-earmark-ruled"></i>
         <span class="sidebar-label">Rules</span>
     </NavLink>
+
     <NavLink href="/admin/permissions" class="sidebar-nav-link">
         <i class="bi bi-cash-coin"></i>
         <span class="sidebar-label">Permissions</span>

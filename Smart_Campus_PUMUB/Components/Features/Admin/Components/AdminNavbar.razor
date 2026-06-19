@@ -1,8 +1,3 @@
-@using Microsoft.AspNetCore.Components.Authorization
-@using Smart_Campus_PUMUB.Components.Features.Services
-@inject AuthenticationStateProvider AuthStateProvider
-@inject NavigationManager NavManager
-
 <header class="admin-topnav sticky-top">
     <div class="d-flex align-items-center gap-3">
 
@@ -139,21 +134,12 @@
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <button type="button" class="dropdown-item d-flex align-items-center gap-2 text-danger" @onclick="HandleLogout">
+                    <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="#">
                         <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
+                    </a>
                 </li>
             </ul>
         </div>
 
     </div>
 </header>
-
-@code {
-    private async Task HandleLogout()
-    {
-        var customAuth = (CustomAuthStateProvider)AuthStateProvider;
-        await customAuth.UpdateAuthenticationState(null);
-        NavManager.NavigateTo("/login", true);
-    }
-}
