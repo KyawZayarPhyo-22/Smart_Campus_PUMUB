@@ -1,287 +1,87 @@
 @page "/Library"
-@inherits Smart_Campus_PUMUB.Components.Pages.LibraryBase
-@using Smart_Campus_PUMUB.WebApi.Models
-@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
 @rendermode InteractiveServer
-
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<section id="library" style="background:var(--bg2); margin-top: 20px; padding-bottom: 80px;">
-    <div class="container">
-
-        <div class="section-header" data-aos="fade-up">
-            <div>
-                <div class="section-tag"><i class="fas fa-book"></i> Knowledge Hub</div>
-                <h2 class="section-title">University <span>Library</span></h2>
-                <p class="section-desc">Access over 50,000 books, journals, and digital resources across all engineering and technology disciplines.</p>
-            </div>
-        </div>
-
-        @* 🌟 MATERIAL INSET FILTER BAR SYSTEM 🌟 *@
-        <div class="library-filter-right-wrapper" data-aos="fade-up">
-            <div class="material-inset-filter-bar">
-                <div class="compact-field">
-                    <i class="fas fa-search field-icon-medium"></i>
-                    <input type="text" class="compact-filter-input-extended"
-                           placeholder="Search books by name..."
-                           @bind="searchQuery" @bind:event="oninput" @onkeyup="ApplyFilter" />
-                </div>
-
-                @if (!string.IsNullOrWhiteSpace(searchQuery))
-                {
-                    <button class="compact-reset-btn" @onclick="ResetFilter">
-                        <i class="fas fa-undo"></i> Clear
-                    </button>
-                }
-            </div>
-        </div>
-
-        @* 🌟 DYNAMIC LIBRARY GRID DISPLAY SYSTEM 🌟 *@
-        <div class="library-grid" data-aos="fade-up">
-            @if (filteredBooks == null || masterBooks == null || !masterBooks.Any())
-            {
-                @for (int i = 0; i < 4; i++) // 💡 API ဒေတာမကျလာခင် Modern Neon Shimmer စာအုပ်ပုံစံ Loading အပြိုင်ပြသရန်
-                {
-                    <div class="skeleton-book-card">
-                        <div class="skeleton-book-cover-glow">
-                            <div class="skeleton-shimmer-line"></div>
-                        </div>
-                        <div class="skeleton-book-body-glow">
-                            <div class="skeleton-badge-line"><div class="skeleton-shimmer-line"></div></div>
-                            <div class="skeleton-title-line"><div class="skeleton-shimmer-line"></div></div>
-                            <div class="skeleton-author-line"><div class="skeleton-shimmer-line"></div></div>
-                        </div>
-                        <div class="skeleton-btn-line"><div class="skeleton-shimmer-line"></div></div>
-                    </div>
-                }
-            }
-            else if (filteredBooks.Count == 0)
-            {
-                <p class="status-msg-text">No PDF resources match your search.</p>
-            }
-            else
-            {
-                @foreach (var book in filteredBooks)
-                {
-                    <div class="book-card" style="display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <div class="book-cover">
-                                @if (!string.IsNullOrEmpty(book.Image))
-                                {
-                                    <img src="@($"https://localhost:7297/{book.Image}")" alt="@book.BookName">
-                                }
-                                else
-                                {
-                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=280&q=80" alt="Default Book">
-                                }
-                            </div>
-                            <div class="book-body" style="padding-bottom: 8px;">
-                                <div class="book-category">E-Book Resource</div>
-                                <h4 style="margin: 8px 0;">@book.BookName</h4>
-                                <p class="book-author">By: Faculty Repository</p>
-                            </div>
-                        </div>
-
-                        <div style="padding: 0 15px 15px 15px;">
-                            <a href="@($"https://localhost:7297/{book.Image}")" target="_blank" class="btn btn-primary"
-                               style="display: block; text-align: center; background: var(--secondary, #2563EB); color: white; border-radius: 8px; padding: 8px; text-decoration: none; font-size: 0.9rem; font-weight: bold; border: none; transition: background 0.3s;">
-                                <i class="fas fa-download" style="margin-right: 6px;"></i> Download PDF
-                            </a>
-                        </div>
-                    </div>
-                }
-            }
-        </div>
-    </div>
-</section>
-
+@using Smart_Campus_PUMUB.Components.Pages
+@inherits LibraryBase
 <style>
-    #library {
-        font-family: 'Roboto', 'Inter', sans-serif !important;
-    }
-
-    .library-filter-right-wrapper {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 35px;
-        width: 100%;
-    }
-
-    .material-inset-filter-bar {
-        background: var(--bg, #ededed);
-        border: 1px solid var(--border, #dbdbdb);
-        border-radius: 50px;
-        padding: 6px 12px;
-        width: 100%;
-        max-width: 340px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.08);
-    }
-
-    @@media (max-width: 768px) {
-        .library-filter-right-wrapper {
-            justify-content: center;
-        }
-
-        .material-inset-filter-bar {
-            border-radius: 12px;
-            padding: 10px;
-            max-width: 100%;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-    }
-
-    .compact-field {
-        position: relative;
-        display: flex;
-        align-items: center;
-        width: 100%;
-    }
-
-    .field-icon-medium {
-        position: absolute;
-        left: 16px;
-        color: #8E918F;
-        z-index: 5;
-        font-size: 0.9rem;
-    }
-
-    .compact-filter-input-extended {
-        width: 100%;
-        padding: 10px 14px 10px 42px !important;
-        border-radius: 30px !important;
-        border: 1px solid transparent !important;
-        background: var(--card-bg, #ffffff) !important;
-        color: var(--text, #1C1B1F) !important;
-        font-size: 0.92rem;
-        height: 40px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        transition: all 0.2s ease;
-    }
-
-        .compact-filter-input-extended:focus {
-            border-color: var(--secondary, #2563EB) !important;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
-            outline: none;
-        }
-
-    .compact-reset-btn {
-        background: #EF4444;
-        border: none;
-        color: #ffffff;
-        padding: 0 18px;
-        border-radius: 30px;
-        font-size: 0.88rem;
-        font-weight: 500;
-        height: 40px;
+    /* Dropdown item ကို hover လုပ်ရင် အရောင်ပြောင်းရန် */
+    .dropdown-item:hover {
+        background-color: #5A4FCF !important;
+        color: white !important;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-        transition: all 0.2s;
     }
 
-        .compact-reset-btn:hover {
-            background: #DC2626;
-            transform: translateY(-1px);
-        }
-
-    .status-msg-text {
-        font-size: 0.95rem;
-        padding: 15px;
-        color: var(--text2);
-    }
-
-    /* 🌟 MODERN CYBER SKELETON BOOK LOADING ANIMATION SYSTEM */
-    .skeleton-book-card {
-        background: rgba(30, 41, 59, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        overflow: hidden;
-        backdrop-filter: blur(10px);
-        display: flex;
-        flex-direction: column;
-        padding: 0 0 15px 0;
-        gap: 12px;
-        position: relative;
-        height: 420px;
-        justify-content: space-between;
-    }
-
-    .skeleton-book-cover-glow {
-        height: 240px;
-        background: rgba(15, 23, 42, 0.6);
-        position: relative;
-        overflow: hidden;
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
-    }
-
-    .skeleton-book-body-glow {
-        padding: 0 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        flex-grow: 1;
-    }
-
-    .skeleton-badge-line {
-        height: 16px;
-        width: 35%;
-        background: rgba(51, 65, 85, 0.4);
-        border-radius: 4px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .skeleton-title-line {
-        height: 22px;
-        width: 85%;
-        background: rgba(51, 65, 85, 0.6);
-        border-radius: 6px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .skeleton-author-line {
-        height: 14px;
-        width: 55%;
-        background: rgba(51, 65, 85, 0.3);
-        border-radius: 4px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .skeleton-btn-line {
-        height: 38px;
-        background: rgba(51, 65, 85, 0.3);
-        border-radius: 8px;
-        margin: 0 15px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .skeleton-shimmer-line {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient( 90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100% );
-        animation: library-shimmer-engine 1.5s infinite linear;
-    }
-
-    /* 💡 Blazor Razor Compiler Optimization Escape */
-    @@keyframes library-shimmer-engine {
-        0% {
-            transform: translateX(-100%);
-        }
-
-        100% {
-            transform: translateX(100%);
-        }
+    /* Download button hover effect */
+    .btn:hover {
+        filter: brightness(90%);
+        /* အနည်းငယ် အရောင်ရင့်သွားအောင် */
     }
 </style>
+
+<section id="library" style="margin:50px;">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-tag"><i class="fas fa-book"></i> Knowledge Hub</div>
+            <h2 class="section-title">University <span>Library</span></h2>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+            <div class="dropdown">
+                <button class="btn dropdown-toggle rounded-pill shadow-sm bg-white px-4 py-2" @onclick="ToggleMenu"
+                        style="border: 1px solid #e0e0e0; color: #495057;">
+                    @(SelectedCategoryId == 0 ? "Select Category" : Categories.FirstOrDefault(c => c.CategoryId ==
+                    SelectedCategoryId)?.CategoryName)
+                </button>
+                <ul class="dropdown-menu shadow-sm border-0 mt-2 @(isOpen ? "show" : "")"
+                    style="display: @(isOpen ? "block" : "none")">
+                    <li><a class="dropdown-item" @onclick="() => OnCategorySelected(0)">All Categories</a></li>
+                    @foreach (var cat in Categories)
+                    {
+                        <li><a class="dropdown-item"
+                                   @onclick="() => OnCategorySelected(cat.CategoryId)">@cat.CategoryName</a></li>
+                        }
+                    </ul>
+                </div>
+
+                <div class="input-group rounded-pill shadow-sm bg-white"
+                     style="max-width: 400px; border: 1px solid #e0e0e0; overflow: hidden;">
+                    <input type="text" class="form-control border-0 shadow-none px-4" placeholder="Search Books..."
+                           @bind="searchQuery" />
+                    <button class="btn border-0 shadow-none px-4" style="color: #5A4FCF;"
+                            @onclick="isSearching ? ClearSearch : FilterData">
+                        <i class="fas @(isSearching ? "fa-times" : "fa-search")"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="library-grid">
+                @if (filteredBooks != null && filteredBooks.Any())
+                {
+                    @foreach (var book in filteredBooks)
+                    {
+                        <div class="book-card">
+                            <div class="book-cover">
+                                <img src="@book.Image" alt="@book.BookName"
+                                     onerror="this.src='https://via.placeholder.com/400x280'">
+                            </div>
+                            <div class="book-body">
+                                <div class="book-category">@book.CategoryName</div>
+                                <h4>@book.BookName</h4>
+                                <p class="book-author">@book.Author</p>
+
+                                <a href="@book.FilePath" target="_blank" class="btn rounded-pill mt-2"
+                                   style="background-color: #5A4FCF; color: white; width: 100%; padding: 8px;">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center w-100 mt-5">
+                        <p>No books found matching your selection.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>

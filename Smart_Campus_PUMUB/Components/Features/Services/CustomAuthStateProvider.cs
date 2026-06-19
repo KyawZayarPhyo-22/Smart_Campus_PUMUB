@@ -63,6 +63,22 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
 
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
     }
+    // public async Task MarkUserAsLoggedOut()
+    // {
+    //     // AuthenticationState ကို Anonymous အဖြစ် ပြောင်းပေးခြင်း
+    //     var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
+    //     var authState = Task.FromResult(new AuthenticationState(anonymousUser));
+    //     NotifyAuthenticationStateChanged(authState);
+    // }
+    public async Task MarkUserAsLoggedOut()
+    {
+        // ၁။ Session ကို တကယ် ဖျက်ပစ်ရပါမည်
+        await _sessionStorage.DeleteAsync("UserSession");
+
+        // ၂။ Anonymous အခြေအနေကို Notify လုပ်ပါ
+        var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(anonymousUser)));
+    }
 }
 
 public class UserSession

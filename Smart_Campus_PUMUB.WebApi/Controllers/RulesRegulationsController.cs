@@ -17,10 +17,16 @@ public class RulesRegulationsController : ControllerBase
     [HttpGet]
     public IActionResult GetRules()
     {
-        var lst = _db.RulesRegulations
-                     .Where(x => x.IsDelete == false || x.IsDelete == null)
-                     .OrderByDescending(x => x.RuleId)
-                     .ToList();
+         var lst = _db.RulesRegulations
+                   .Where(r => r.IsDelete == false)
+                   .OrderByDescending(r => r.CreatedDateTime) // အသစ်ဆုံးကို အရင်ပြရန်
+                   .Select(r => new RuleModel {
+                       RuleId = r.RuleId,
+                       Title = r.Title,
+                       Description = r.Description,
+                       Penalty = r.Penalty,
+                       CreatedDateTime = r.CreatedDateTime ?? DateTime.Now
+                   }).ToList();
         return Ok(lst);
     }
 

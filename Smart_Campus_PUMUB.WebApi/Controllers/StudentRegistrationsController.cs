@@ -59,19 +59,38 @@ public class StudentRegistrationsController : ControllerBase
             return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအိုင်ဒီ (UserId) ထည့်သွင်းရန် လိုအပ်သည်။" });
         }
 
-        var userCheck = _db.Users.FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
+        //var userCheck = _db.Users.FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
+
+        //if (userCheck is null)
+        //{
+        //    return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအကောင့်ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
+        //}
+
+        //if (userCheck.RoleId != 3)
+        //{
+        //    return BadRequest(new StudentRegistrationResponseModel
+        //    {
+        //        IsSuccess = false,
+        //        Message = "ကျောင်းသားအကောင့်များသာ ကျောင်းအပ်ဖောင် တင်သွင်းခွင့်ရှိသည်။ (Admin သို့မဟုတ် Tutor အကောင့်များ တင်၍မရပါ)"
+        //    });
+        //}
+
+        var userCheck = _db.Users
+          .Include(x => x.Role)
+          .FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
 
         if (userCheck is null)
         {
             return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအကောင့်ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
         }
 
-        if (userCheck.RoleId != 3)
+        // ၂။ RoleName ကို အခြေခံ၍ စစ်ဆေးပါ
+        if (userCheck.Role?.RoleName != "Student")
         {
             return BadRequest(new StudentRegistrationResponseModel
             {
                 IsSuccess = false,
-                Message = "ကျောင်းသားအကောင့်များသာ ကျောင်းအပ်ဖောင် တင်သွင်းခွင့်ရှိသည်။ (Admin သို့မဟုတ် Tutor အကောင့်များ တင်၍မရပါ)"
+                Message = "ကျောင်းသားအကောင့်များသာ ကျောင်းအပ်ဖောင် တင်သွင်းခွင့်ရှိသည်။"
             });
         }
 

@@ -40,4 +40,9 @@ public class ActivityModel
     public string? Image { get; set; } // API မှ ပြန်လာမည့် ပုံ URL သို့မဟုတ် ရုပ်ထွက်လမ်းကြောင်း
     public string? Description { get; set; }
     public string? Location { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    // ဖန်တီးသူ (လိုအပ်ပါက)
+    public string? CreatedBy { get; set; }
 }

@@ -1322,12 +1322,12 @@ main.admin-body,
 }
 
 /* Also neutralize any small translateY used for subtle pop on cards/buttons */
-.admin-body [class*="-pop"],
+/* .admin-body [class*="-pop"],
 .admin-body [class*="-hover"],
 .admin-body .pop-on-hover,
 .admin-body .pop-effect {
     transform: none !important;
-}
+} */
 
 
 
