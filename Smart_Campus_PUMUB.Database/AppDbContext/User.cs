@@ -46,6 +46,10 @@ public partial class User
 
     public string? ModifiedBy { get; set; }
 
+    [Column("Role_No")]
+    [StringLength(50)]
+    public string? RoleNo { get; set; }
+
     public bool? IsDelete { get; set; }
 
     [InverseProperty("VerifyByNavigation")]
