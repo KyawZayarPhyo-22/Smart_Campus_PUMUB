@@ -428,18 +428,17 @@ public class StudentController : ControllerBase
             return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ဖျက်သိမ်းမည့် ကျောင်းသားမှတ်တမ်းကို ရှာမတွေ့ပါ။" });
         }
 
-        // ဒေတာအပြီးမဖျက်ဘဲ Soft Delete ပြုလုပ်ပြီး Status ကိုပါ Expired/Dropped သတ်မှတ်ခြင်း
         item.IsDelete = true;
-        item.Status = "Deleted";
+        item.Status = "Dropped";
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
         int result = _db.SaveChanges();
 
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Student deleted",
+            ActivityTitle = "Student deleted",
             Description = $"{item.CurrentClassYear} {item.CurrentMajor} was deleted to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            CreatedDateTime = DateTime.UtcNow
         });
         _db.SaveChanges();
 
@@ -450,11 +449,11 @@ public class StudentController : ControllerBase
         });
     }
 
+    // 🎯 ၆။ GET: api/student/count/active (တက်ကြွဆဲ ကျောင်းသားအရေအတွက်)
     [HttpGet("count/active")]
-    public async Task<IActionResult> GetActiveStudentCount()
+    public IActionResult GetActiveStudentCount()
     {
-        // Database ထဲမှ Status = "Active" ဖြစ်သော ကျောင်းသားအရေအတွက်ကို ရယူခြင်း
-        var count = await _db.Students.CountAsync(s => s.Status == "Active");
+        var count = _db.Users.Count(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
         return Ok(new { Count = count });
     }
-}
+}

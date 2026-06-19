@@ -14,16 +14,25 @@
                 </button>
             </li>
 
-            @for (int i = 1; i <= TotalPages; i++)
+            @foreach (var pageNumber in GetPageNumbers())
             {
-                var pageNumber = i;
-                <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
-                    <button class="page-link px-3"
-                            style="@(CurrentPage == pageNumber ? "background-color: #5A4FCF; border-color:#5A4FCF; color: white;" : "background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6;")"
-                            @onclick="() => ChangePage(pageNumber)">
-                        @pageNumber
-                    </button>
-                </li>
+                if (pageNumber == null)
+                {
+                    <li class="page-item disabled">
+                        <span class="page-link px-3" style="background-color: #ffffff; color: #6c757d; border: 1px solid #dee2e6;">...</span>
+                    </li>
+                }
+                else
+                {
+                    var p = pageNumber.Value;
+                    <li class="page-item @(CurrentPage == p ? "active" : "")">
+                        <button class="page-link px-3"
+                                style="@(CurrentPage == p ? "background-color: #5A4FCF; border-color:#5A4FCF; color: white;" : "background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6;")"
+                                @onclick="() => ChangePage(p)">
+                            @p
+                        </button>
+                    </li>
+                }
             }
 
             <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
@@ -48,5 +57,42 @@
         {
             await OnPageChanged.InvokeAsync(newPage);
         }
+    }
+
+    private List<int?> GetPageNumbers()
+    {
+        var pages = new List<int?>();
+        if (TotalPages <= 7)
+        {
+            for (int i = 1; i <= TotalPages; i++)
+            {
+                pages.Add(i);
+            }
+        }
+        else
+        {
+            pages.Add(1);
+
+            int start = Math.Max(2, CurrentPage - 1);
+            int end = Math.Min(TotalPages - 1, CurrentPage + 1);
+
+            if (start > 2)
+            {
+                pages.Add(null);
+            }
+
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            if (end < TotalPages - 1)
+            {
+                pages.Add(null);
+            }
+
+            pages.Add(TotalPages);
+        }
+        return pages;
     }
 }

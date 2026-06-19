@@ -1,4 +1,4 @@
-﻿// using Microsoft.AspNetCore.Components;
+// using Microsoft.AspNetCore.Components;
 // using Smart_Campus_PUMUB.WebApi.Models;
 // using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 
@@ -130,10 +130,10 @@ namespace Smart_Campus_PUMUB.Components.Pages
         public bool isSearching { get; set; } = false;
         public bool isOpen { get; set; } = false;
 
-        // 🌟 Pagination အတွက် လိုအပ်သော Variables များ
         public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 2; // 💡 တစ်မျက်နှာမှာ စာအုပ် ၆ အုပ်စီပဲ ပြသမည်
+        public int PageSize { get; set; } = 10; // 💡 တစ်မျက်နှာမှာ စာအုပ် ၁၀ အုပ်စီပဲ ပြသမည်
         public int TotalPages { get; set; } = 1;
+
 
         // အရေးကြီး: Page တိုင်းမှာ Data အသစ်ပြန်ခေါ်ရန်
         protected override async Task OnParametersSetAsync()

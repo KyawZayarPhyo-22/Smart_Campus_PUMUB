@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
@@ -162,5 +162,12 @@ public class BookController : ControllerBase
 
         _db.SaveChanges();
         return Ok(new ActionResponseModel { IsSuccess = true, Message = "Delete Successfully" });
+    }
+
+    [HttpGet("count/active")]
+    public async Task<IActionResult> GetActiveBookCount()
+    {
+        int count = await _db.Books.CountAsync(x => x.IsDelete == false || x.IsDelete == null);
+        return Ok(new { Count = count });
     }
 }

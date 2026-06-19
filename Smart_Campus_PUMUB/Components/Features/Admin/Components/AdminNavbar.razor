@@ -99,47 +99,71 @@
             </ul>
         </div> *@
 
-        <!-- Profile Dropdown -->
-        <div class="dropdown">
-            <a href="#"
-               class="d-flex align-items-center text-white text-decoration-none gap-2"
-               id="profileDropdown"
-               data-bs-toggle="dropdown"
-               aria-expanded="false">
-                <img src="https://ui-avatars.com/api/?name=Admin+Ops&background=06b6d4&color=fff"
-                     alt="Admin"
-                     width="36"
-                     height="36"
-                     class="rounded-circle border border-2 border-info" />
-                <div class="d-none d-sm-block lh-1">
-                    <span class="d-block fw-semibold" style="font-size:0.85rem;">Admin Ops</span>
-                    <span class="text-muted" style="font-size:0.7rem;">SUPER ADMIN</span>
-                </div>
-                <i class="bi bi-chevron-down d-none d-sm-inline" style="font-size:0.7rem;"></i>
-            </a>
+@using Microsoft.AspNetCore.Components.Authorization
+@using Smart_Campus_PUMUB.Components.Features.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
-            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2"
-                aria-labelledby="profileDropdown"
-                style="min-width:200px;">
-                <li><h6 class="dropdown-header text-uppercase fw-bold" style="font-size:0.7rem;">Account</h6></li>
-                <li>
-                    <a class="dropdown-item d-flex align-items-center gap-2" href="#">
-                        <i class="bi bi-person-circle text-info"></i> My Profile
+        <!-- Profile Dropdown -->
+        <AuthorizeView>
+            <Authorized>
+                <div class="dropdown">
+                    <a href="#"
+                       class="d-flex align-items-center text-white text-decoration-none gap-2"
+                       id="profileDropdown"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <img src="@($"https://ui-avatars.com/api/?name={context.User.Identity?.Name}&background=06b6d4&color=fff")"
+                             alt="Admin"
+                             width="36"
+                             height="36"
+                             class="rounded-circle border border-2 border-info" />
+                        <div class="d-none d-sm-block lh-1">
+                            <span class="d-block fw-semibold" style="font-size:0.85rem;">@context.User.Identity?.Name</span>
+                            <span class="text-muted text-uppercase" style="font-size:0.7rem;">@context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
+                        </div>
+                        <i class="bi bi-chevron-down d-none d-sm-inline" style="font-size:0.7rem;"></i>
                     </a>
-                </li>
-                <li>
-                    <a class="dropdown-item d-flex align-items-center gap-2" href="#">
-                        <i class="bi bi-gear text-secondary"></i> Settings
-                    </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                    <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="#">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
-                </li>
-            </ul>
-        </div>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2"
+                        aria-labelledby="profileDropdown"
+                        style="min-width:200px;">
+                        <li><h6 class="dropdown-header text-uppercase fw-bold" style="font-size:0.7rem;">Account</h6></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2" href="#">
+                                <i class="bi bi-person-circle text-info"></i> My Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2" href="#">
+                                <i class="bi bi-gear text-secondary"></i> Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <button class="dropdown-item d-flex align-items-center gap-2 text-danger bg-transparent border-0 w-100 text-start" @onclick="Logout">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <a href="/login" class="text-white text-decoration-none">Login</a>
+            </NotAuthorized>
+        </AuthorizeView>
+
+@code {
+    private async Task Logout()
+    {
+        var customAuth = (CustomAuthStateProvider)AuthStateProvider;
+        await customAuth.MarkUserAsLoggedOut();
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "isLoggedIn", "false");
+        NavigationManager.NavigateTo("/", true);
+    }
+}
+
 
     </div>
 </header>

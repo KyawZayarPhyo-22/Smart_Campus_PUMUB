@@ -189,8 +189,11 @@
             }
         </div>
 
-        <div class="mt-4">
-            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
-        </div>
+        @if (TotalPages > 1)
+        {
+            <div class="mt-4">
+                <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+            </div>
+        }
     </div>
-</section>
+</section>

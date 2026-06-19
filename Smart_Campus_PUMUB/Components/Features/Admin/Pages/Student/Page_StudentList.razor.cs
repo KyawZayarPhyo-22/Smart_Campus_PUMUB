@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student;
 
-public partial class Page_StudentList : ComponentBase
+public partial class Page_StudentList : ComponentBase, IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService NotifierService { get; set; } = null!;
 
     private List<StudentRegistrationDataModel> StudentList { get; set; } = new();
+
 
     // Filter Variables
     private string SearchTerm { get; set; } = "";
@@ -136,8 +138,21 @@ public partial class Page_StudentList : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        NotifierService.OnRegistrationSubmitted += HandleRegistrationSubmitted;
         await LoadStudents();
     }
+
+    private async Task HandleRegistrationSubmitted()
+    {
+        await LoadStudents();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        NotifierService.OnRegistrationSubmitted -= HandleRegistrationSubmitted;
+    }
+
 
     private async Task LoadStudents()
     {

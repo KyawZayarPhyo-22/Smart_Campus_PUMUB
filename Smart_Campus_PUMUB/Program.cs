@@ -124,6 +124,7 @@ builder.Services.AddAuthenticationCore();
 // Register the Circuit Handler — fires when SignalR circuit opens, pushes real auth state
 // to all AuthorizeView components so permissions show without needing a page reload
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, AuthCircuitHandler>();
+builder.Services.AddSingleton<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService>();
 
 
 // Program.cs ထဲတွင် ဤအတိုင်း အစားထိုးပါ
@@ -176,7 +177,8 @@ using (var serviceProvider = builder.Services.BuildServiceProvider())
 
 //builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.RegistrationState>();
 builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationState>();
-
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options => { options.DetailedErrors = true; });
 var app = builder.Build();
 app.UseCors("AllowBlazorServer");
 

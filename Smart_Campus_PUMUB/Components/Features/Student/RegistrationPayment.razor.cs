@@ -15,6 +15,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
         [Inject] public NavigationManager Nav { get; set; } = null!;
         [Inject] public StudentRegistrationState StudentRegState { get; set; } = null!; // 💡 Register မှ Data ကို လက်ခံမည့် State
+        [Inject] public Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService NotifierService { get; set; } = null!;
+
 
         public RegistrationPaymentCreateRequestModel PaymentModel { get; set; } = new()
         {
@@ -208,7 +210,18 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     IsSuccessModal = true;
                     ModalMessage = "ငွေသွင်းအချက်အလက်များ အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။ ကျောင်းမှ အတည်ပြုချိန်အား စောင့်ဆိုင်းပေးပါ။";
                     ShowModal = true;
+                    
+                    // Notify any listening components (like Page_StudentList.razor)
+                    try
+                    {
+                        await NotifierService.NotifyRegistrationSubmitted();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error triggering registration notifier: {ex.Message}");
+                    }
                 }
+
                 else
                 {
                     ShowError(response?.Message ?? "ငွေသွင်းစနစ် ချို့ယွင်းနေပါသည်။");

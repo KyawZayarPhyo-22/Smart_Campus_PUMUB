@@ -203,6 +203,7 @@ public partial class Page_RegistrationReport : ComponentBase
     private int TotalPayments => BasePaymentFilteredData.Count();
     private int TotalApprovedPay => BasePaymentFilteredData.Count(p => p.Status == "Approved");
     private int TotalRejectedPay => BasePaymentFilteredData.Count(p => p.Status == "Rejected");
+    private decimal TotalRevenue => BasePaymentFilteredData.Where(p => p.Status == "Approved").Sum(p => p.AmountPaid);
 
     // Pagination Variables
     private int PageSize { get; set; } = 10;
