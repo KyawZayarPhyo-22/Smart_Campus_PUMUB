@@ -1,11 +1,15 @@
-@page "/activities"
+@* @* @page "/activities"
 @using Smart_Campus_PUMUB.Components.Pages
 @inherits ActivityBase
 
 <section id="events" style="background:var(--bg2); margin-top: 50px;">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">Events & <span>Activities</span></h2>
+            <div>
+                <div class="section-tag"><i class="fas fa-calendar-alt"></i>Excited Events</div>
+                <h2 class="section-title">Events & <span>Activities</span></h2>
+
+            </div>
         </div>
 
         <!-- Filter & Search (Button နှိပ်မှသာ အလုပ်လုပ်မည်) -->
@@ -28,15 +32,17 @@
             <div class="faculties-grid">
                 @foreach (var item in filteredActivities)
                 {
-                    <div class="faculty-card">
-                        <div class="faculty-img"><img src="@item.Image" alt="@item.ActivityTitle"></div>
+                    <div class="faculty-card" style="overflow: hidden;">
+                        <div class="faculty-img"><img style="object-fit: cover;" src="@($"https://localhost:7297{item.Image}")"
+                                                          alt="@item.ActivityTitle">
+                        </div>
                         <div class="faculty-body">
                             <h3>@item.ActivityTitle</h3>
                             <p class="truncate-text">@(item.Description?.Length > 100 ? item.Description.Substring(0, 100) +
-                                                                  "..." : item.Description)</p>
+                                                                                                                                  "..." : item.Description)</p>
                                 <div class="event-meta">
                                     <span><i class="fas fa-calendar-day"></i> @(item.CreatedAt.Year > 1 ?
-                                                                                                            item.CreatedAt.ToString("yyyy-MM-dd") : "Not set")</span>
+                                                                                                                                                                                            item.CreatedAt.ToString("yyyy-MM-dd") : "Not set")</span>
                                     </div>
                                     <button class="btn-sm" style="background:#5A4FCF; color:white; border:none; margin-top:10px;"
                                             @onclick="() => OpenPopup(item)">Learn More</button>
@@ -61,4 +67,103 @@
                         </div>
                     </div>
                 </div>
+            } *@
+@page "/activities"
+@using Smart_Campus_PUMUB.Components.Pages
+@using Smart_Campus_PUMUB.Components.Shared @* 🌟 Shared Component ရှိရာ Namespace *@
+@inherits ActivityBase
+
+<section id="events" style="background:var(--bg2); margin-top: 50px;">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <div class="section-tag"><i class="fas fa-calendar-alt"></i>Excited Events</div>
+                <h2 class="section-title">Events & <span>Activities</span></h2>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-bottom: 40px; align-items: center; flex-wrap: wrap;">
+            <input type="date" class="form-control" style="width: 250px;" @bind="FromDate" />
+            <input type="date" class="form-control" style="width: 250px;" @bind="ToDate" />
+
+            <input type="text" class="form-control" placeholder="Search Title" @bind="searchQuery" style="max-width: 300px;" />
+
+            <button class="btn" style="background:#5A4FCF; color:white;" @onclick="ApplyFilters">
+                Search & Filter
+            </button>
+            <button class="btn btn-secondary" style="background:#5A4FCF;" @onclick="ResetFilters">
+                Reset
+            </button>
+        </div>
+
+        <div class="faculties-grid">
+            @if (pagedActivities != null && pagedActivities.Any())
+            {
+                @foreach (var item in pagedActivities)
+                {
+                    <div class="faculty-card" style="overflow: hidden;">
+                        <div class="faculty-img">
+                            @if (!string.IsNullOrEmpty(item.Image) && !item.Image.Equals("string", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <img style="object-fit: cover; width: 100%; height: 200px;" 
+                                     src="@($"https://localhost:7297{item.Image}")" 
+                                     alt="@item.ActivityTitle" 
+                                     onerror="this.src='https://via.placeholder.com/400x280'">
+                            }
+                            else
+                            {
+                                <img style="object-fit: cover; width: 100%; height: 200px;" 
+                                     src="https://via.placeholder.com/400x280" 
+                                     alt="Placeholder">
+                            }
+                        </div>
+                        <div class="faculty-body">
+                            <h3>@item.ActivityTitle</h3>
+                            <p class="truncate-text">
+                                @(item.Description?.Length > 100 ? item.Description.Substring(0, 100) + "..." : item.Description)
+                            </p>
+                            <div class="event-meta">
+                                <span>
+                                    <i class="fas fa-calendar-day"></i>
+                                    @(item.CreatedAt.Year > 1 ? item.CreatedAt.ToString("yyyy-MM-dd") : "Not set")
+                                </span>
+                            </div>
+                            <button class="btn-sm" style="background:#5A4FCF; color:white; border:none; margin-top:10px;" 
+                                    @onclick="() => OpenPopup(item)">
+                                Learn More
+                            </button>
+                        </div>
+                    </div>
+                }
             }
+            else
+            {
+                <div class="text-center w-100 mt-5">
+                    <p class="text-muted">No events or activities found matching your criteria.</p>
+                </div>
+            }
+        </div>
+
+        <div class="mt-4">
+            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+        </div>
+        
+    </div>
+</section>
+
+@if (isPopupOpen && selectedActivity != null)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.6); z-index: 1050;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4">
+                <h3 class="mb-3">@selectedActivity.ActivityTitle</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <p>@selectedActivity.Description</p>
+                </div>
+                <button class="btn mt-3" style="background:#5A4FCF; color:white;" @onclick="ClosePopup">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+}

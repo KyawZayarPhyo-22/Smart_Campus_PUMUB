@@ -11,7 +11,7 @@ namespace NLADotNetInternshipTraining.WebApi.Controllers;
 public class BookController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
-    private readonly IWebHostEnvironment _env; // Server ပတ်ဝန်းကျင်လမ်းကြောင်း ယူရန်
+    private readonly IWebHostEnvironment _env;
 
     public BookController(SmartCampusDbContext db, IWebHostEnvironment env)
     {
@@ -24,10 +24,23 @@ public class BookController : ControllerBase
     {
         var lst = _db.Books
             .AsNoTracking()
-            .Where(x => x.IsDelete == false || x.IsDelete == null).ToList();
+            .Include(b => b.Category) // 👈 ဒီ Include လေး ထည့်လိုက်ရုံပါပဲ
+            .Where(x => x.IsDelete == false || x.IsDelete == null)
+            .OrderByDescending(x => x.CreatedDateTime)
+.Select(x => new BookModel
+{
+    BookId = x.BookId,
+    BookName = x.BookName,
+    Image = x.Image,
+    CategoryId = x.CategoryId,
+    CategoryName = x.Category != null ? x.Category.CategoryName : "N/A"
+})
+            .ToList();
+
         return Ok(lst);
     }
-    [HttpGet("{id}")] // 👈 ဤ method အသစ်ကို ထည့်ပါ
+
+    [HttpGet("{id}")]
     public IActionResult GetBookById(int id)
     {
         var book = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
@@ -36,34 +49,29 @@ public class BookController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult CreateBook([FromForm] BookCreateRequestModel request) // Role: ဖိုင်ပါဝင်သဖြင့် [FromForm] သုံးရပါမည်
+    public IActionResult CreateBook([FromForm] BookCreateRequestModel request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        // Foreign Key Validation
         var category = _db.Categories.FirstOrDefault(c => c.CategoryId == request.CategoryId);
         if (category is null || category.IsDelete == true)
             return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Category ID ရှာမတွေ့ပါ။" });
 
         string? dbImagePath = null;
 
-        // Role: .jpg ဖိုင် ဟုတ်၊ မဟုတ် စစ်ဆေးပြီး Server ပေါ် တင်ခြင်း Validation
         if (request.ImageFile != null)
         {
             var extension = Path.GetExtension(request.ImageFile.FileName).ToLower();
-
-            // .jpg သို့မဟုတ် .jpeg သီးသန့် ဖြစ်ရမည့် Role
             if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
             {
-                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = ".jpg , .png သို့မဟုတ် .jpeg ဖိုင်အမျိုးအစားသာ လက်ခံပါသဖြင့် တင်၍မရပါ။" });
+                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = ".jpg , .png သို့မဟုတ် .jpeg ဖိုင်အမျိုးအစားသာ လက်ခံပါသည်။" });
             }
 
-            // Server ပေါ်က wwwroot/uploads Folder ထဲမှာ ပုံသွားသိမ်းခြင်း
-            string uploadFolder = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads");
+            string uploadFolder = Path.Combine(_env.WebRootPath, "uploads");
             if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
 
-            // နာမည်မထပ်အောင် GUID ဖြင့် နာမည်အသစ်ပေးခြင်း
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + request.ImageFile.FileName;
+            // Guid ကိုသုံးပြီး နာမည်သစ်ပေးခြင်း (Special Characters ပြဿနာဖြေရှင်းရန်)
+            string uniqueFileName = Guid.NewGuid().ToString() + extension;
             string filePath = Path.Combine(uploadFolder, uniqueFileName);
 
             using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -71,7 +79,6 @@ public class BookController : ControllerBase
                 request.ImageFile.CopyTo(fileStream);
             }
 
-            // Database ထဲ သိမ်းမည့် လမ်းကြောင်း
             dbImagePath = "/uploads/" + uniqueFileName;
         }
 
@@ -85,37 +92,28 @@ public class BookController : ControllerBase
             IsDelete = false
         });
 
-        int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
         {
             ActivityTitle = "New Book Uploaded",
             Description = $"{request.BookName.Trim()} was added to the Library.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            CreatedDateTime = DateTime.UtcNow
         });
+
         _db.SaveChanges();
-        return StatusCode(201, new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Book created with .jpg image!" : "Saving Failed" });
+        return StatusCode(201, new ActionResponseModel { IsSuccess = true, Message = "Book created successfully!" });
     }
 
-   [HttpPost("update/{id}")]
+    [HttpPost("update/{id}")]
     public IActionResult UpdateBook(int id, [FromForm] BookUpdateRequestModel request)
     {
-        if (id <= 0) return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Invalid ID" });
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-
         var item = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
         if (item is null) return NotFound(new ActionResponseModel { IsSuccess = false, Message = "Book not found" });
 
-        // ပုံအသစ် ထပ်တင်ခဲ့ရင်
         if (request.ImageFile != null)
         {
             var extension = Path.GetExtension(request.ImageFile.FileName).ToLower();
-            if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
-            {
-                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = ".jpg & .png ဖိုင်သာ လက်ခံပါသည်။" });
-            }
-
             string uploadFolder = Path.Combine(_env.WebRootPath, "uploads");
-            string uniqueFileName = Guid.NewGuid().ToString() + "_" + request.ImageFile.FileName;
+            string uniqueFileName = Guid.NewGuid().ToString() + extension;
             string filePath = Path.Combine(uploadFolder, uniqueFileName);
 
             using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -123,7 +121,6 @@ public class BookController : ControllerBase
                 request.ImageFile.CopyTo(fileStream);
             }
 
-            // ပုံဟောင်းရှိရင် Server ပေါ်ကနေ ဖျက်ပစ်ခြင်း Role
             if (!string.IsNullOrEmpty(item.Image))
             {
                 string oldFilePath = Path.Combine(_env.WebRootPath, item.Image.TrimStart('/'));
@@ -138,44 +135,32 @@ public class BookController : ControllerBase
         item.ModifiedDateTime = DateTime.Now;
         item.ModifiedBy = request.ModifiedBy;
 
-        int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Book Updated",
-            Description = $"{request.BookName.Trim()} was Updated to the Library.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            ActivityTitle = "Book Updated",
+            Description = $"{item.BookName.Trim()} was updated.",
+            CreatedDateTime = DateTime.UtcNow
         });
+
         _db.SaveChanges();
-        return Ok(new ActionResponseModel { IsSuccess = result > 0, Message = "Update Successful" });
+        return Ok(new ActionResponseModel { IsSuccess = true, Message = "Update Successful" });
     }
 
     [HttpDelete("{id}")]
     public IActionResult DeleteBook(int id)
     {
-        if (id <= 0) return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Invalid ID" });
-
         var item = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
-        if (item is null) return NotFound(new ActionResponseModel { IsSuccess = false, Message = "Book not found" });
+        if (item is null) return NotFound();
 
         item.IsDelete = true;
-        int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Book Deleted",
-            Description = $"{item.BookName.Trim()} was deleted to the Library.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            ActivityTitle = "Book Deleted",
+            Description = $"{item.BookName.Trim()} was deleted.",
+            CreatedDateTime = DateTime.UtcNow
         });
-        _db.SaveChanges();
-        return Ok(new ActionResponseModel { IsSuccess = result > 0, Message = "Delete Successfully" });
-    }
-    [HttpGet("count/active")]
-    public IActionResult GetBookCount()
-    {
-        // IsDelete မဖြစ်သေးတဲ့ စာအုပ်အရေအတွက်ကို ရေတွက်ခြင်း
-        int count = _db.Books
-            .AsNoTracking()
-            .Count(x => x.IsDelete == false || x.IsDelete == null);
 
-        return Ok(new { Count = count });
+        _db.SaveChanges();
+        return Ok(new ActionResponseModel { IsSuccess = true, Message = "Delete Successfully" });
     }
 }
