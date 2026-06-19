@@ -125,6 +125,7 @@ public class UserController : ControllerBase
                 UserName = x.user.UserName,
                 // RoleName ကို Role table ထဲမှ ဆွဲထုတ်လိုက်ခြင်း
                 RoleName = x.role.RoleName,
+                RoleNo = x.user.RoleNo,
                 Password = "********",
                 CreatedDateTime = x.user.CreatedDateTime
             })
@@ -149,6 +150,7 @@ public class UserController : ControllerBase
             RoleId = item.RoleId,
             FullName = item.FullName,
             UserName = item.UserName,
+            RoleNo = item.RoleNo,
             Password = "********",
             CreatedDateTime = item.CreatedDateTime
         };
@@ -181,6 +183,15 @@ public class UserController : ControllerBase
         var passwordError = ValidatePasswordPolicy(request.Password);
         if (passwordError != null) return BadRequest(new UserCreateResponseModel { Message = passwordError });
 
+        if (!string.IsNullOrEmpty(request.RoleNo))
+        {
+            var isRoleNoExist = _db.Users.Any(x => x.RoleNo == request.RoleNo && x.IsDelete == false);
+            if (isRoleNoExist)
+            {
+                return BadRequest(new UserCreateResponseModel { Message = "ဤ Roll Number သည် စနစ်ထဲတွင် ရှိနှင့်ပြီးသား ဖြစ်သည်။" });
+            }
+        }
+
         // 🔒 Password အား Hash လုပ်ခြင်း
         string hashedPass = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -189,6 +200,7 @@ public class UserController : ControllerBase
             RoleId = request.RoleId,
             FullName = request.FullName,
             UserName = formattedUserName,
+            RoleNo = request.RoleNo,
             Password = hashedPass,
             IsDelete = false,
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
@@ -243,9 +255,19 @@ public class UserController : ControllerBase
         var passwordError = ValidatePasswordPolicy(request.Password);
         if (passwordError != null) return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = passwordError });
 
+        if (!string.IsNullOrEmpty(request.RoleNo))
+        {
+            var isRoleNoExist = _db.Users.Any(x => x.RoleNo == request.RoleNo && x.UserId != id && x.IsDelete == false);
+            if (isRoleNoExist)
+            {
+                return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "ဤ Roll Number သည် အခြားသူတစ်ယောက် သုံးထားပြီးသား ဖြစ်သည်။" });
+            }
+        }
+
         item.RoleId = request.RoleId;
         item.FullName = request.FullName;
         item.UserName = formattedUserName;
+        item.RoleNo = request.RoleNo;
         item.Password = BCrypt.Net.BCrypt.HashPassword(request.Password); //🔒 Update တွင်လည်း Hash ပြုလုပ်သိမ်းဆည်းခြင်း
 
         int result = _db.SaveChanges();
@@ -267,6 +289,7 @@ public class UserController : ControllerBase
                 RoleId = item.RoleId,
                 FullName = item.FullName,
                 UserName = item.UserName,
+                RoleNo = item.RoleNo,
                 Password = "********",
                 CreatedDateTime = item.CreatedDateTime
             }
@@ -325,6 +348,20 @@ public class UserController : ControllerBase
             updateCount++;
         }
 
+        if (request.RoleNo != null) // Allow empty string if user wants to clear it
+        {
+            if (!string.IsNullOrEmpty(request.RoleNo))
+            {
+                var isRoleNoExist = _db.Users.Any(x => x.RoleNo == request.RoleNo && x.UserId != id && x.IsDelete == false);
+                if (isRoleNoExist)
+                {
+                    return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "ဤ Roll Number သည် အခြားသူတစ်ယောက် သုံးထားပြီးသား ဖြစ်သည်။" });
+                }
+            }
+            item.RoleNo = request.RoleNo;
+            updateCount++;
+        }
+
         if (updateCount == 0)
         {
             return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "ပြင်ဆင်ရန် အချက်အလက်များ လိုအပ်ပါသည်။" });
@@ -350,6 +387,7 @@ public class UserController : ControllerBase
                 RoleId = item.RoleId,
                 FullName = item.FullName,
                 UserName = item.UserName,
+                RoleNo = item.RoleNo,
                 Password = "********",
                 CreatedDateTime = item.CreatedDateTime
             }

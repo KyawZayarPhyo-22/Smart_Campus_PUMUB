@@ -30,7 +30,8 @@ public partial class Page_UserEdit
                 UserId = user.UserId,
                 FullName = user.FullName,
                 UserName = user.UserName,
-                RoleId = user.RoleId
+                RoleId = user.RoleId,
+                RoleNo = user.RoleNo
             };
         }
     }

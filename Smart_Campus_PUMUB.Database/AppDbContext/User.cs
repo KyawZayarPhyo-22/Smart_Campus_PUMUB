@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -24,6 +24,10 @@ public partial class User
     [StringLength(50)]
     [Unicode(false)]
     public string UserName { get; set; } = null!;
+
+    [Column("Role_No")]
+    [StringLength(50)]
+    public string? RoleNo { get; set; }
 
     [StringLength(255)]
     [Unicode(false)]

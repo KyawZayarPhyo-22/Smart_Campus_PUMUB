@@ -159,7 +159,16 @@
                                 <tr class="table-row-hover">
                                     <td class="fw-bold text-muted">@count.ToString("D2")</td>
                                     <td class="fw-semibold">@rule.Title</td>
-                                <td><span class="badge bg-warning text-dark">@rule.Penalty MMK</span></td>
+                                <td>
+                                    @if (decimal.TryParse(rule.Penalty, out var penaltyVal))
+                                    {
+                                        @($"{penaltyVal.ToString("N0")} MMK")
+                                    }
+                                    else
+                                    {
+                                        @($"{rule.Penalty} MMK")
+                                    }
+                                </td>
                                 <td>
                                     <span class="description text-muted" title="@rule.Description">
                                         @rule.Description

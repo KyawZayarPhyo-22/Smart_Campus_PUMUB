@@ -6,6 +6,7 @@ public class UserCreateRequestModel
     public string? FullName { get; set; }
     public string? UserName { get; set; }
     public string? Password { get; set; }
+    public string? RoleNo { get; set; }
 }
 
 public class UserCreateResponseModel
@@ -20,6 +21,7 @@ public class UserUpdateRequestModel
     public string? FullName { get; set; }
     public string? UserName { get; set; }
     public string? Password { get; set; }
+    public string? RoleNo { get; set; }
 }
 
 public class UserUpdateResponseModel
@@ -45,6 +47,7 @@ public class UserModel
     public DateTime? CreatedDateTime { get; set; }
     public int? PasswordLength { get; set; }
     public string? RoleName {get;set;}
+    public string? RoleNo { get; set; }
 }
 public class UserRegisterRequestModel
 {
