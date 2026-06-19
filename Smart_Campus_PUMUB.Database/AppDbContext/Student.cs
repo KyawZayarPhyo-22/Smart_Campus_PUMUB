@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -43,6 +43,33 @@ public partial class Student
     public string? ModifiedBy { get; set; }
 
     public bool? IsDelete { get; set; }
+
+    [StringLength(20)]
+    public string? Sem1_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem2_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem3_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem4_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem5_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem6_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem7_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem8_Result { get; set; }
+
+    [StringLength(20)]
+    public string? Sem9_Result { get; set; }
 
     [ForeignKey("UserId")]
     [InverseProperty("Students")]

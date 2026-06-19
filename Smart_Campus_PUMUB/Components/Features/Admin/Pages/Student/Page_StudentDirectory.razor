@@ -1,0 +1,331 @@
+@page "/admin/student-directory"
+@layout AdminLayout
+@rendermode InteractiveServer
+
+<style>
+    /* Dark Theme Material Card */
+    .material-card {
+        background-color: #1e1e2d;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .material-input {
+        background-color: #2b2b40;
+        border: 1px solid #323248;
+        color: #e4e6ef;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .material-input:focus {
+        background-color: #323248;
+        border-color: #696cff;
+        box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
+        color: #ffffff;
+        outline: none;
+    }
+
+    .table-container {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .custom-table {
+        margin-bottom: 0;
+        background-color: transparent;
+    }
+
+    .custom-table thead th {
+        background-color: #1a1a27;
+        color: #a1a5b7;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #2b2b40;
+        padding: 1rem;
+        white-space: nowrap;
+    }
+
+    .custom-table tbody tr {
+        border-bottom: 1px solid #2b2b40;
+        transition: all 0.2s ease;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .custom-table td {
+        padding: 0.85rem 1rem;
+        color: #cdcdde;
+        vertical-align: middle;
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    .result-dropdown {
+        background-color: #2b2b40;
+        border: 1px solid #323248;
+        color: #e4e6ef;
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+        width: 90px;
+        cursor: pointer;
+    }
+
+    .result-dropdown.pass {
+        border-color: #10b981;
+        color: #10b981;
+    }
+
+    .result-dropdown.fail {
+        border-color: #ef4444;
+        color: #ef4444;
+    }
+
+    .result-dropdown.none {
+        border-color: #6b7280;
+        color: #a1a5b7;
+    }
+
+    .status-select {
+        background-color: #2b2b40;
+        border: 1px solid #323248;
+        color: #e4e6ef;
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+        width: 100px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .status-select.active {
+        border-color: #10b981;
+        color: #10b981;
+    }
+
+    .status-select.inactive {
+        border-color: #ef4444;
+        color: #ef4444;
+    }
+
+    .toast-custom {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background-color: #10b981;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: slideIn 0.3s ease-out;
+    }
+
+
+</style>
+
+<div class="d-flex align-items-center mb-4 mt-2">
+    <div class="bg-primary rounded p-2 me-3 shadow-sm">
+        <i class="bi bi-person-lines-fill fs-5 text-white"></i>
+    </div>
+    <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Student Directory</h4>
+</div>
+
+<!-- Filter Section -->
+<div class="material-card p-3 mb-4">
+    <div class="row g-3 align-items-center">
+        <!-- Search Input -->
+        <div class="col-md-4">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
+                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+            </div>
+        </div>
+
+        <!-- Major Dropdown -->
+        <div class="col-md-3">
+            <select class="form-select material-input" @bind="SelectedMajorInput">
+                <option value="All">All Majors</option>
+                @foreach (var major in StudentList.Select(s => s.CurrentMajor).Distinct().Where(m => !string.IsNullOrEmpty(m)))
+                {
+                    <option value="@major">@major</option>
+                }
+            </select>
+        </div>
+
+        <!-- Year Dropdown -->
+        <div class="col-md-3">
+            <select class="form-select material-input" @bind="SelectedYearInput">
+                <option value="All">All Class Years</option>
+                @foreach (var year in StudentList.Select(s => s.CurrentClassYear).Distinct().Where(y => !string.IsNullOrEmpty(y)))
+                {
+                    <option value="@year">@year</option>
+                }
+            </select>
+        </div>
+
+        <!-- Search and Reset Buttons -->
+        <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Table Section -->
+<div class="material-card table-container mb-5">
+    <div class="table-responsive">
+        <table class="table custom-table align-middle">
+            <thead>
+                <tr>
+                    <th class="text-center">No.</th>
+                    <th>Roll No</th>
+                    <th>Full Name</th>
+                    <th>Class Year</th>
+                    <th>Major</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Sem 1</th>
+                    <th class="text-center">Sem 2</th>
+                    <th class="text-center">Sem 3</th>
+                    <th class="text-center">Sem 4</th>
+                    <th class="text-center">Sem 5</th>
+                    <th class="text-center">Sem 6</th>
+                    <th class="text-center">Sem 7</th>
+                    <th class="text-center">Sem 8</th>
+                    <th class="text-center">Sem 9</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (IsLoading)
+                {
+                    <tr>
+                        <td colspan="15" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status" style="width: 1.5rem; height: 1.5rem;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="text-muted mt-2 fs-6">Fetching data...</div>
+                        </td>
+                    </tr>
+                }
+                else if (!FilteredStudents.Any())
+                {
+                    <tr>
+                        <td colspan="15" class="text-center py-4 text-muted">No students found.</td>
+                    </tr>
+                }
+                else
+                {
+                    int count = 1 + (CurrentPage - 1) * PageSize;
+                    @foreach (var s in FilteredStudents)
+                    {
+                        <tr>
+                            <td class="text-center text-muted fw-bold">@count</td>
+                            <td class="fw-bold text-info">@(s.CurrentRollNo ?? "-")</td>
+                            <td class="fw-bold text-white">@(s.FullName ?? "N/A")</td>
+                            <td>@s.CurrentClassYear</td>
+                            <td>@s.CurrentMajor</td>
+                            <td class="text-center">
+                                <select class="status-select @(s.Status == "Active" ? "active" : "inactive")" 
+                                        value="@s.Status"
+                                        @onchange="@(async (e) => await UpdateStatus(s, e.Value?.ToString()))">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem1_Result)" value="@(s.Sem1_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 1, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem2_Result)" value="@(s.Sem2_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 2, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem3_Result)" value="@(s.Sem3_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 3, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem4_Result)" value="@(s.Sem4_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 4, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem5_Result)" value="@(s.Sem5_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 5, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem6_Result)" value="@(s.Sem6_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 6, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem7_Result)" value="@(s.Sem7_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 7, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem8_Result)" value="@(s.Sem8_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 8, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem9_Result)" value="@(s.Sem9_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 9, e.Value?.ToString()))">
+                                    <option value="None">မရှိ</option>
+                                    <option value="Pass">အောင်</option>
+                                    <option value="Fail">ကျ</option>
+                                </select>
+                            </td>
+                        </tr>
+                        count++;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Component -->
+    <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+</div>
+
+@if (ShowToast)
+{
+    <div class="toast-custom">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>@ToastMessage</span>
+    </div>
+}

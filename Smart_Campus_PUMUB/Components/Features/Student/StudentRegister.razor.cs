@@ -85,6 +85,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             { "14", new List<string> { "ကလန", "ခရန", "ညတန", "တကန", "ပသန", "ဖပန", "မအပ", "မမင", "ရကန", "လမန", "ဟသတ" } }
         };
 
+        private StudentModel? LoggedInStudent { get; set; }
+
         protected override async Task OnInitializedAsync()
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -108,6 +110,20 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 {
                     RegModel.UserId = parsedUserId;
                     Console.WriteLine($"Auto-filled UserId: {parsedUserId}");
+
+                    try
+                    {
+                        var studentData = await HttpClientService.ExecuteAsync<StudentModel>($"Student/user/{parsedUserId}", EnumHttpMethod.Get);
+                        if (studentData != null)
+                        {
+                            LoggedInStudent = studentData;
+                            Console.WriteLine($"Loaded student details for user: {parsedUserId}. Sem3_Result: {LoggedInStudent.Sem3_Result}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading student details: {ex.Message}");
+                    }
                 }
                 else
                 {
@@ -144,6 +160,41 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 new SemesterModel { SemesterName = "Fourth Year" },
                 new SemesterModel { SemesterName = "Fifth Year" }
             };
+        }
+
+        public int GetSemesterNumberFromName(string? name)
+        {
+            if (string.IsNullOrEmpty(name)) return 0;
+            var lower = name.ToLower();
+            if (lower.Contains("first") || lower.Contains("sem 1") || lower.Contains("semester 1") || lower.Contains("1st") || lower.Contains("one")) return 1;
+            if (lower.Contains("second") || lower.Contains("sem 2") || lower.Contains("semester 2") || lower.Contains("2nd") || lower.Contains("two")) return 2;
+            if (lower.Contains("third") || lower.Contains("sem 3") || lower.Contains("semester 3") || lower.Contains("3rd") || lower.Contains("three")) return 3;
+            if (lower.Contains("fourth") || lower.Contains("sem 4") || lower.Contains("semester 4") || lower.Contains("4th") || lower.Contains("four")) return 4;
+            if (lower.Contains("fifth") || lower.Contains("sem 5") || lower.Contains("semester 5") || lower.Contains("5th") || lower.Contains("five")) return 5;
+            if (lower.Contains("sixth") || lower.Contains("sem 6") || lower.Contains("semester 6") || lower.Contains("6th") || lower.Contains("six")) return 6;
+            if (lower.Contains("seventh") || lower.Contains("sem 7") || lower.Contains("semester 7") || lower.Contains("7th") || lower.Contains("seven")) return 7;
+            if (lower.Contains("eighth") || lower.Contains("sem 8") || lower.Contains("semester 8") || lower.Contains("8th") || lower.Contains("eight")) return 8;
+            if (lower.Contains("ninth") || lower.Contains("sem 9") || lower.Contains("semester 9") || lower.Contains("9th") || lower.Contains("nine")) return 9;
+            return 0;
+        }
+        public bool IsSemesterAllowed(string? semesterName)
+        {
+            if (LoggedInStudent == null) return true;
+
+            int targetSemNum = GetSemesterNumberFromName(semesterName);
+            if (targetSemNum == 0) return true;
+
+            if (LoggedInStudent.Sem1_Result == "Fail" && targetSemNum > 1) return false;
+            if (LoggedInStudent.Sem2_Result == "Fail" && targetSemNum > 2) return false;
+            if (LoggedInStudent.Sem3_Result == "Fail" && targetSemNum > 3) return false;
+            if (LoggedInStudent.Sem4_Result == "Fail" && targetSemNum > 4) return false;
+            if (LoggedInStudent.Sem5_Result == "Fail" && targetSemNum > 5) return false;
+            if (LoggedInStudent.Sem6_Result == "Fail" && targetSemNum > 6) return false;
+            if (LoggedInStudent.Sem7_Result == "Fail" && targetSemNum > 7) return false;
+            if (LoggedInStudent.Sem8_Result == "Fail" && targetSemNum > 8) return false;
+            if (LoggedInStudent.Sem9_Result == "Fail" && targetSemNum > 9) return false;
+
+            return true;
         }
 
         public void OnNrcStateChanged(ChangeEventArgs e)

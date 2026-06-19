@@ -618,7 +618,14 @@
                     {
                         @foreach (var sem in SemesterList)
                         {
-                            <option value="@sem.SemesterName">@sem.SemesterName</option>
+                            @if (IsSemesterAllowed(sem.SemesterName))
+                            {
+                                <option value="@sem.SemesterName">@sem.SemesterName</option>
+                            }
+                            else
+                            {
+                                <option value="@sem.SemesterName" disabled>@sem.SemesterName (🔒 Locked - Failed Previous Semester)</option>
+                            }
                         }
                     }
                 </select>

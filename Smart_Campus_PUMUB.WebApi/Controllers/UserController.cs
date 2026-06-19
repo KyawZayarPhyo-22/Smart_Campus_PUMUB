@@ -53,7 +53,7 @@ public class UserController : ControllerBase
 
         var newUser = new User
         {
-            RoleId = 4, // 💡 မင်းရဲ့ Role Table သတ်မှတ်ချက်အရ 4 သည် 'Student' ဖြစ်သည် (Default Assigned)
+            RoleId = 3, // 💡 မင်းရဲ့ Role Table သတ်မှတ်ချက်အရ 3 သည် 'Student' ဖြစ်သည် (Default Assigned)
             FullName = request.FullName,
             UserName = formattedUserName,
             Password = hashedPass,

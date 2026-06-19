@@ -23,17 +23,59 @@ public class StudentController : ControllerBase
     [HttpGet]
     public IActionResult GetStudents()
     {
+        // 1. Get all active users who are students
+        var studentUsers = _db.Users
+            .Where(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null))
+            .ToList();
+
+        // 2. Check if they have a Student record. If not, create one.
+        bool hasNewStudents = false;
+        foreach (var user in studentUsers)
+        {
+            var studentExists = _db.Students.Any(s => s.UserId == user.UserId);
+            if (!studentExists)
+            {
+                var newStudent = new Student
+                {
+                    UserId = user.UserId,
+                    CurrentClassYear = "First Year", // default
+                    CurrentMajor = "N/A", // default
+                    Status = "Active",
+                    CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                    IsDelete = false
+                };
+                _db.Students.Add(newStudent);
+                hasNewStudents = true;
+            }
+        }
+
+        if (hasNewStudents)
+        {
+            _db.SaveChanges();
+        }
+
         var lst = _db.Students
-            .Where(x => x.IsDelete == false || x.IsDelete == null)
+            .Include(s => s.User)
+            .Where(x => (x.IsDelete == false || x.IsDelete == null) && x.User.RoleId == 3 && (x.User.IsDelete == false || x.User.IsDelete == null))
             .OrderByDescending(s => s.StudentId)
             .Select(s => new StudentModel
             {
                 StudentId = s.StudentId,
                 UserId = s.UserId,
+                FullName = s.User.FullName,
                 CurrentClassYear = s.CurrentClassYear,
                 CurrentMajor = s.CurrentMajor,
                 CurrentRollNo = s.CurrentRollNo,
-                Status = s.Status ?? "Active"
+                Status = s.Status ?? "Active",
+                Sem1_Result = s.Sem1_Result,
+                Sem2_Result = s.Sem2_Result,
+                Sem3_Result = s.Sem3_Result,
+                Sem4_Result = s.Sem4_Result,
+                Sem5_Result = s.Sem5_Result,
+                Sem6_Result = s.Sem6_Result,
+                Sem7_Result = s.Sem7_Result,
+                Sem8_Result = s.Sem8_Result,
+                Sem9_Result = s.Sem9_Result
             })
             .ToList();
 
@@ -44,7 +86,7 @@ public class StudentController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetStudent(int id)
     {
-        var item = _db.Students.FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
+        var item = _db.Students.Include(s => s.User).FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
         if (item is null)
         {
             return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားကို ရှာမတွေ့ပါ။" });
@@ -54,10 +96,76 @@ public class StudentController : ControllerBase
         {
             StudentId = item.StudentId,
             UserId = item.UserId,
+            FullName = item.User?.FullName,
             CurrentClassYear = item.CurrentClassYear,
             CurrentMajor = item.CurrentMajor,
             CurrentRollNo = item.CurrentRollNo,
-            Status = item.Status ?? "Active"
+            Status = item.Status ?? "Active",
+            Sem1_Result = item.Sem1_Result,
+            Sem2_Result = item.Sem2_Result,
+            Sem3_Result = item.Sem3_Result,
+            Sem4_Result = item.Sem4_Result,
+            Sem5_Result = item.Sem5_Result,
+            Sem6_Result = item.Sem6_Result,
+            Sem7_Result = item.Sem7_Result,
+            Sem8_Result = item.Sem8_Result,
+            Sem9_Result = item.Sem9_Result
+        };
+
+        return Ok(data);
+    }
+
+    [HttpGet("user/{userId}")]
+    public IActionResult GetStudentByUserId(int userId)
+    {
+        var userCheck = _db.Users.FirstOrDefault(u => u.UserId == userId && u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
+        if (userCheck is null)
+        {
+            return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားအကောင့်ကို ရှာမတွေ့ပါ။" });
+        }
+
+        var item = _db.Students.Include(s => s.User).FirstOrDefault(x => x.UserId == userId && (x.IsDelete == false || x.IsDelete == null));
+        if (item is null)
+        {
+            // Create on the fly
+            var newStudent = new Student
+            {
+                UserId = userId,
+                CurrentClassYear = "First Year",
+                CurrentMajor = "N/A",
+                Status = "Active",
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                IsDelete = false
+            };
+            _db.Students.Add(newStudent);
+            _db.SaveChanges();
+
+            item = _db.Students.Include(s => s.User).FirstOrDefault(x => x.UserId == userId && (x.IsDelete == false || x.IsDelete == null));
+        }
+
+        if (item is null)
+        {
+            return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားမှတ်တမ်းကို ရှာမတွေ့ပါ။" });
+        }
+
+        var data = new StudentModel
+        {
+            StudentId = item.StudentId,
+            UserId = item.UserId,
+            FullName = item.User?.FullName,
+            CurrentClassYear = item.CurrentClassYear,
+            CurrentMajor = item.CurrentMajor,
+            CurrentRollNo = item.CurrentRollNo,
+            Status = item.Status ?? "Active",
+            Sem1_Result = item.Sem1_Result,
+            Sem2_Result = item.Sem2_Result,
+            Sem3_Result = item.Sem3_Result,
+            Sem4_Result = item.Sem4_Result,
+            Sem5_Result = item.Sem5_Result,
+            Sem6_Result = item.Sem6_Result,
+            Sem7_Result = item.Sem7_Result,
+            Sem8_Result = item.Sem8_Result,
+            Sem9_Result = item.Sem9_Result
         };
 
         return Ok(data);
@@ -96,7 +204,7 @@ public class StudentController : ControllerBase
         {
             return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ဤအသုံးပြုသူအကောင့် (UserId) ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
         }
-        if (userCheck.RoleId != 4)
+        if (userCheck.RoleId != 3)
         {
             return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားအကောင့် (Student Role) ဖြစ်မှသာ ကျောင်းသားစာရင်း သွင်းခွင့်ရှိသည်။" });
         }
@@ -255,7 +363,18 @@ public class StudentController : ControllerBase
             updateCount++;
         }
 
-        // ၆။ ဘာအချက်အလက်မှ ပြောင်းလဲလာခြင်း မရှိလျှင် BadRequest ပြန်မည်
+        // ၆။ Semester Results
+        if (request.Sem1_Result != null) { item.Sem1_Result = request.Sem1_Result == "None" ? null : request.Sem1_Result; updateCount++; }
+        if (request.Sem2_Result != null) { item.Sem2_Result = request.Sem2_Result == "None" ? null : request.Sem2_Result; updateCount++; }
+        if (request.Sem3_Result != null) { item.Sem3_Result = request.Sem3_Result == "None" ? null : request.Sem3_Result; updateCount++; }
+        if (request.Sem4_Result != null) { item.Sem4_Result = request.Sem4_Result == "None" ? null : request.Sem4_Result; updateCount++; }
+        if (request.Sem5_Result != null) { item.Sem5_Result = request.Sem5_Result == "None" ? null : request.Sem5_Result; updateCount++; }
+        if (request.Sem6_Result != null) { item.Sem6_Result = request.Sem6_Result == "None" ? null : request.Sem6_Result; updateCount++; }
+        if (request.Sem7_Result != null) { item.Sem7_Result = request.Sem7_Result == "None" ? null : request.Sem7_Result; updateCount++; }
+        if (request.Sem8_Result != null) { item.Sem8_Result = request.Sem8_Result == "None" ? null : request.Sem8_Result; updateCount++; }
+        if (request.Sem9_Result != null) { item.Sem9_Result = request.Sem9_Result == "None" ? null : request.Sem9_Result; updateCount++; }
+
+        // ၇။ ဘာအချက်အလက်မှ ပြောင်းလဲလာခြင်း မရှိလျှင် BadRequest ပြန်မည်
         if (updateCount == 0)
         {
             return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ပြင်ဆင်ရန် အချက်အလက်များ လိုအပ်ပါသည်။" });
@@ -285,7 +404,16 @@ public class StudentController : ControllerBase
                 CurrentClassYear = item.CurrentClassYear,
                 CurrentMajor = item.CurrentMajor,
                 CurrentRollNo = item.CurrentRollNo,
-                Status = item.Status ?? "Active"
+                Status = item.Status ?? "Active",
+                Sem1_Result = item.Sem1_Result,
+                Sem2_Result = item.Sem2_Result,
+                Sem3_Result = item.Sem3_Result,
+                Sem4_Result = item.Sem4_Result,
+                Sem5_Result = item.Sem5_Result,
+                Sem6_Result = item.Sem6_Result,
+                Sem7_Result = item.Sem7_Result,
+                Sem8_Result = item.Sem8_Result,
+                Sem9_Result = item.Sem9_Result
             }
         });
     }
