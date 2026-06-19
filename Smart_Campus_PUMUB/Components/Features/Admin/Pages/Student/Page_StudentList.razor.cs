@@ -181,10 +181,17 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private string GetStatusClass(string? status) => status switch
     {
         "Approved" => "bg-success",
+        "Pending Confirmation" => "bg-warning text-dark",
         "Pending" => "bg-warning text-dark",
         "Rejected" => "bg-danger",
         _ => "bg-secondary"
     };
+
+    private bool CanReviewRegistration(string? status)
+    {
+        return string.Equals(status, "Pending Confirmation", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
+    }
 
     private void PromptConfirm(string action)
     {
@@ -216,28 +223,15 @@ public partial class Page_StudentList : ComponentBase, IDisposable
             var regPayload = new { Status = newStatus, modified_by = "Admin" };
             await HttpClientService.ExecuteAsync<object>($"StudentRegistrations/{SelectedDetail.RegistrationId}/status", EnumHttpMethod.Patch, regPayload);
 
-            if (SelectedDetail.RegistrationPayments != null && SelectedDetail.RegistrationPayments.Any())
-            {
-                var paymentId = SelectedDetail.RegistrationPayments.First().PaymentId;
-                var payPayload = new { Status = newStatus, VerifyBy = 1 };
-                await HttpClientService.ExecuteAsync<object>($"RegistrationPayment/{paymentId}/verify", EnumHttpMethod.Patch, payPayload);
-            }
-
             SelectedDetail.Status = newStatus;
-            if (SelectedDetail.RegistrationPayments?.Any() == true)
-            {
-                SelectedDetail.RegistrationPayments.First().Status = newStatus;
-            }
 
             var listItem = StudentList.FirstOrDefault(x => x.RegistrationId == SelectedDetail.RegistrationId);
             if (listItem != null)
             {
                 listItem.Status = newStatus;
-                if (listItem.RegistrationPayments?.Any() == true)
-                {
-                    listItem.RegistrationPayments.First().Status = newStatus;
-                }
             }
+
+            await NotifierService.NotifyRegistrationStatusChanged(SelectedDetail.RegistrationId, SelectedDetail.UserId, newStatus);
         }
         catch (Exception ex)
         {

@@ -399,6 +399,73 @@
                 background: #059669;
             }
 
+    .review-status-panel {
+        border: 1px solid #dbeafe;
+        border-radius: 14px;
+        background: #f8fafc;
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .review-status-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 700;
+        font-size: 0.88rem;
+    }
+
+        .status-badge.pending {
+            color: #92400e;
+            background: #fef3c7;
+        }
+
+        .status-badge.approved {
+            color: #065f46;
+            background: #d1fae5;
+        }
+
+        .status-badge.rejected {
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+    .review-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+        .review-actions button {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+    .btn-review-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-review-secondary {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
     @@keyframes popIn {
         0% {
             transform: scale(0.9);
@@ -418,6 +485,54 @@
         <h2>Online Registration Form</h2>
     </div>
 
+    @if (ShowRegistrationStatusPanel)
+    {
+        <div class="review-status-panel">
+            <div class="review-status-top">
+                <div>
+                    <h3 style="margin: 0 0 8px 0; color: #0f172a; font-size: 1.25rem;">Registration Review</h3>
+                    <p style="margin: 0; color: #475569;">@GetReviewStatusMessage()</p>
+                </div>
+                <span class="status-badge @GetReviewStatusClass()">
+                    <i class="fas @(IsApproved ? "fa-check-circle" : IsRejected ? "fa-times-circle" : "fa-clock")"></i>
+                    @RegistrationReviewStatus
+                </span>
+            </div>
+
+            @if (SubmittedRegistrationId > 0)
+            {
+                <div style="color: #64748b; font-size: 0.9rem;">Registration ID: <strong>@SubmittedRegistrationId</strong></div>
+            }
+
+            <div class="review-actions">
+                @if (CanProceedToPayment)
+                {
+                    <button type="button" class="btn-review-primary" @onclick="ContinueToPayment">
+                        Continue to Payment <i class="fas fa-credit-card ms-1"></i>
+                    </button>
+                }
+                else if (IsRejected)
+                {
+                    <button type="button" class="btn-review-primary" @onclick="StartCorrectedRegistration">
+                        Submit Corrected Form <i class="fas fa-edit ms-1"></i>
+                    </button>
+                }
+
+                <button type="button" class="btn-review-secondary" disabled="@IsRefreshingStatus" @onclick="RefreshRegistrationStatus">
+                    @if (IsRefreshingStatus)
+                    {
+                        <span>Checking... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                    }
+                    else
+                    {
+                        <span>Refresh Status <i class="fas fa-sync-alt ms-1"></i></span>
+                    }
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
     <div class="stepper-wrapper">
         <div class="stepper-progress" style="width: @((CurrentStep - 1) * 33.33)%"></div>
         <div class="step-block @(CurrentStep >= 1 ? "active" : "")"><div class="step-circle">1</div><div class="step-label">Personal Info</div></div>
@@ -507,7 +622,7 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="RegModel.nrc_number" maxlength="6" required>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="RegModel.nrc_number" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)" required>
                 </div>
             </div>
 
@@ -755,7 +870,7 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="FatherNrcNumber" maxlength="6">
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="FatherNrcNumber" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
                 </div>
             </div>
 
@@ -869,7 +984,7 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="GuardianNrcNumber" maxlength="6">
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="GuardianNrcNumber" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
                 </div>
             </div>
 
@@ -895,10 +1010,11 @@
                 }
                 else
                 {
-                    <span>ငွေပေးချေမှုစနစ်သို့ သွားရန် <i class="fas fa-credit-card"></i></span>
+                    <span>Submit for Admin Review <i class="fas fa-paper-plane"></i></span>
                 }
             </button>
         </div>
+    }
     }
 </div>
 

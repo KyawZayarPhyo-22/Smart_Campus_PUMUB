@@ -55,6 +55,7 @@ public class StudentRegistrationCreateRequestModel
     public string? created_by { get; set; }
     public string? nrc_state { get; set; }     // Dropdown ဖိုး (ဥပမာ - "11")
     public string? nrc_township { get; set; }  // Dropdown ဖိုး (ဥပမာ - "THAKANA")
+    public string? nrc_type { get; set; }
     public string? nrc_number { get; set; }    // Textbox ရိုက်ချက် (ဥပမာ - "122344")
 
     // 📷 Images Upload Fields
@@ -71,7 +72,7 @@ public class StudentRegistrationUpdateRequestModel : StudentRegistrationCreateRe
 
 public class StudentRegistrationStatusPatchModel
 {
-    public string Status { get; set; } = null!; // Approved, Rejected, Pending
+    public string Status { get; set; } = null!; // Pending Confirmation, Approved, Rejected. Pending accepted for legacy clients.
     public string? modified_by { get; set; }
 }
 

@@ -13,6 +13,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 [Route("api/[controller]")]
 public class RegistrationPaymentController : ControllerBase
 {
+    private const string ApprovedStatus = "Approved";
+
     private readonly SmartCampusDbContext _db;
     private readonly IWebHostEnvironment _env;
 
@@ -95,6 +97,15 @@ public class RegistrationPaymentController : ControllerBase
         if (registrationCheck is null)
         {
             return NotFound(new RegistrationPaymentResponseModel { IsSuccess = false, Message = "သက်ဆိုင်ရာ ကျောင်းအပ်ဖောင် (RegistrationId) ကို ရှာမတွေ့ပါ။" });
+        }
+
+        if (!string.Equals(registrationCheck.Status, ApprovedStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new RegistrationPaymentResponseModel
+            {
+                IsSuccess = false,
+                Message = "Registration information is still under admin review. Payment can be submitted only after admin approval."
+            });
         }
 
         // Receipt Image File Upload Handling
@@ -242,18 +253,6 @@ public class RegistrationPaymentController : ControllerBase
         item.Status = request.Status;
         item.VerifyBy = request.VerifyBy; // 💡 SQL ရဲ့ VerifyBy ထဲသိမ်းမည်
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
-
-        // 💡 Business Logic: 'Approved' ဖြစ်သွားရင် သက်ဆိုင်ရာ ကျောင်းအပ်ဖောင် (StudentRegistration) ကိုပါ တန်း Approved ပေးမည်
-        if (request.Status == "Approved")
-        {
-            var regForm = _db.StudentRegistrations.FirstOrDefault(x => x.RegistrationId == item.RegistrationId);
-            if (regForm != null)
-            {
-                regForm.Status = "Approved";
-                regForm.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
-                regForm.ModifiedBy = Convert.ToString(request.VerifyBy);
-            }
-        }
 
         int result = _db.SaveChanges();
 

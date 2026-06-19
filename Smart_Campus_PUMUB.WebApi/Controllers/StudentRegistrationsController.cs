@@ -14,6 +14,11 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 [Route("api/[controller]")]
 public class StudentRegistrationsController : ControllerBase
 {
+    private const string PendingConfirmationStatus = "Pending Confirmation";
+    private const string LegacyPendingStatus = "Pending";
+    private const string ApprovedStatus = "Approved";
+    private const string RejectedStatus = "Rejected";
+
     private readonly SmartCampusDbContext _db;
 
     public StudentRegistrationsController(SmartCampusDbContext db)
@@ -21,15 +26,135 @@ public class StudentRegistrationsController : ControllerBase
         _db = db;
     }
 
+    private static string NormalizeRegistrationStatus(string? status)
+    {
+        if (string.Equals(status, LegacyPendingStatus, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(status))
+        {
+            return PendingConfirmationStatus;
+        }
+
+        if (string.Equals(status, ApprovedStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            return ApprovedStatus;
+        }
+
+        if (string.Equals(status, RejectedStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            return RejectedStatus;
+        }
+
+        return status;
+    }
+
+    private static bool CanProceedToPayment(string? status)
+    {
+        return string.Equals(status, ApprovedStatus, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsPendingReviewStatus(string? status)
+    {
+        return string.Equals(status, PendingConfirmationStatus, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, LegacyPendingStatus, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsMyanmarText(string? value)
+    {
+        return !string.IsNullOrWhiteSpace(value) && Regex.IsMatch(value, @"^[\u1000-\u109F]+$");
+    }
+
+    private static bool IsMyanmarNrcType(string? value)
+    {
+        return !string.IsNullOrWhiteSpace(value) && Regex.IsMatch(value, @"^\([\u1000-\u109F]+\)$");
+    }
+
+    private static bool IsFullMyanmarNrc(string value)
+    {
+        return Regex.IsMatch(value, @"^[0-9]{1,2}/[\u1000-\u109F]+\([\u1000-\u109F]+\)[0-9]{6}$");
+    }
+
+    private static object ToRegistrationResponse(StudentRegistration item)
+    {
+        var status = NormalizeRegistrationStatus(item.Status);
+
+        return new
+        {
+            item.RegistrationId,
+            item.UserId,
+            item.AdmissionSerialNo,
+            item.AcademicYearRange,
+            item.AcademicYearLevel,
+            item.Major,
+            item.RollNo,
+            item.UniversityRegNo,
+            item.AdmissionYear,
+            item.ApplicationDate,
+            item.StudentNameMm,
+            item.StudentNameEn,
+            item.MotherName,
+            item.FatherName,
+            item.GenderRelation,
+            item.Ethnicity,
+            item.Religion,
+            item.Pob,
+            item.BirthPlaceRegion,
+            item.StudentNrcNo,
+            item.NationalityStatus,
+            item.Dob,
+            item.Email,
+            item.BloodType,
+            item.CovidVaccineStatus,
+            item.CurrentAddress,
+            item.PermanentAddressMm,
+            item.PermanentAddressEn,
+            item.MatricRollNo,
+            item.MatricPassedYear,
+            item.ExamCenter,
+            item.FatherOccupation,
+            item.MotherOccupation,
+            item.PastExamMajor,
+            item.PastExamRollNo,
+            item.PastExamYear,
+            item.PastExamStatus,
+            item.PreviousYearRollNo,
+            item.GuardianName,
+            item.GuardianRelationship,
+            item.GuardianOccupation,
+            item.GuardianAddressPhone,
+            item.AppGuardianName,
+            item.AppGuardianNrc,
+            item.AppGuardianPhone,
+            item.AppGuardianAddress,
+            item.AppStudentName,
+            item.AppStudentPhone,
+            item.StipendRequested,
+            Status = status,
+            CanProceedToPayment = CanProceedToPayment(status),
+            item.CreatedDatetime,
+            item.CreatedBy,
+            item.ModifiedDatetime,
+            item.ModifiedBy,
+            item.IsDelete,
+            item.StudentImage,
+            item.SignatureImage,
+            item.RegistrationPayments
+        };
+    }
+
     // ၁။ GET: ဖောင်အားလုံး စာရင်းယူရန် (Read All)
     [HttpGet]
     public IActionResult GetRegistrations()
     {
         var lst = _db.StudentRegistrations
+            .AsNoTracking()
             .Include(x => x.RegistrationPayments)
             .Where(x => x.IsDelete == false || x.IsDelete == null)
             .OrderByDescending(x => x.RegistrationId)
             .ToList();
+
+        foreach (var item in lst)
+        {
+            item.Status = NormalizeRegistrationStatus(item.Status);
+        }
 
         return Ok(lst);
     }
@@ -39,6 +164,7 @@ public class StudentRegistrationsController : ControllerBase
     public IActionResult GetRegistration(int id)
     {
         var item = _db.StudentRegistrations
+            .AsNoTracking()
             .Include(x => x.RegistrationPayments)
             .FirstOrDefault(x => x.RegistrationId == id && (x.IsDelete == false || x.IsDelete == null));
 
@@ -46,7 +172,7 @@ public class StudentRegistrationsController : ControllerBase
         {
             return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "ကျောင်းအပ်ဖောင် ရှာမတွေ့ပါ။" });
         }
-        return Ok(item);
+        return Ok(ToRegistrationResponse(item));
     }
 
     // ၃။ POST: ကျောင်းအပ်ဖောင် အသစ်တင်သွင်းရန် (Create)
@@ -150,7 +276,8 @@ public class StudentRegistrationsController : ControllerBase
         }
 
         // --- (ဂ) NRC Validation (💡 Fix: Optional ဖြစ်သွား၍ ပါလာမှသာ စစ်မည်) ---
-        string fullNrcNo = null;
+        string fullNrcNo;
+        var nrcType = string.IsNullOrWhiteSpace(request.nrc_type) ? "(နိုင်)" : request.nrc_type.Trim();
         if (!string.IsNullOrEmpty(request.nrc_state) && !string.IsNullOrEmpty(request.nrc_township) && !string.IsNullOrEmpty(request.nrc_number))
         {
             if (!int.TryParse(request.nrc_state, out int stateCode) || stateCode < 1 || stateCode > 14)
@@ -158,12 +285,31 @@ public class StudentRegistrationsController : ControllerBase
                 return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC ပြည်နယ်ကုဒ်သည် ၁ မှ ၁၄ အတွင်းသာ ဖြစ်ရပါမည်။" });
             }
 
+            if (!IsMyanmarText(request.nrc_township))
+            {
+                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC မြို့နယ်အတိုကောက်ကို မြန်မာစာဖြင့်သာ ဖြည့်ပါ။" });
+            }
+
+            if (!IsMyanmarNrcType(nrcType))
+            {
+                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC အမျိုးအစားကို မြန်မာစာဖြင့်သာ ရွေးချယ်ပါ။" });
+            }
+
             if (!Regex.IsMatch(request.nrc_number, @"^\d{6}$"))
             {
                 return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC နောက်ဆုံး အမှတ်စဉ်သည် ဂဏန်း ၆ လုံးကွက်တိ ဖြစ်ရပါမည်။" });
             }
 
-            fullNrcNo = $"{request.nrc_state}/{request.nrc_township.ToUpper()}(N){request.nrc_number}";
+            fullNrcNo = $"{request.nrc_state}/{request.nrc_township}{nrcType}{request.nrc_number}";
+        }
+        else
+        {
+            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC အချက်အလက်များကို အပြည့်အစုံ ဖြည့်ပါ။" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.app_guardian_nrc) && request.app_guardian_nrc != "-" && !IsFullMyanmarNrc(request.app_guardian_nrc))
+        {
+            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အုပ်ထိန်းသူ NRC ကို မြန်မာစာ township/type နှင့် ဂဏန်း ၆ လုံးဖြင့်သာ ဖြည့်ပါ။" });
         }
 
         // --- (ဃ) Roll No & Blood Type Validation (💡 Fix: ပါလာမှသာ စစ်မည်) ---
@@ -265,7 +411,7 @@ public class StudentRegistrationsController : ControllerBase
             AppStudentName = request.app_student_name,
             AppStudentPhone = request.app_student_phone,
             StipendRequested = request.stipend_requested ?? false,
-            Status = "Pending",
+            Status = PendingConfirmationStatus,
             StudentImage = studentImagePath,
             SignatureImage = signatureImagePath,
             CreatedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
@@ -284,7 +430,9 @@ public class StudentRegistrationsController : ControllerBase
             {
                 id = newReg.RegistrationId,
                 registrationId = newReg.RegistrationId,
-                userId = newReg.UserId
+                userId = newReg.UserId,
+                status = newReg.Status,
+                canProceedToPayment = false
             }
         });
     }
@@ -416,6 +564,7 @@ public class StudentRegistrationsController : ControllerBase
     public IActionResult GetRegistrationByUserId(int userId)
     {
         var registration = _db.StudentRegistrations
+            .AsNoTracking()
             .Where(x => x.UserId == userId && (x.IsDelete == false || x.IsDelete == null))
             .OrderByDescending(x => x.RegistrationId)
             .FirstOrDefault();
@@ -444,7 +593,9 @@ public class StudentRegistrationsController : ControllerBase
                 roll_no = registration.RollNo ?? "",
                 major = registration.Major ?? "",
                 admission_year = registration.AdmissionYear,
-                created_datetime = registration.CreatedDatetime
+                created_datetime = registration.CreatedDatetime,
+                status = NormalizeRegistrationStatus(registration.Status),
+                canProceedToPayment = CanProceedToPayment(registration.Status)
             }
         });
     }
@@ -461,13 +612,14 @@ public class StudentRegistrationsController : ControllerBase
             return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "ကျောင်းအပ်ဖောင် ရှာမတွေ့ပါ။" });
         }
 
-        var allowedStatuses = new[] { "Pending", "Approved", "Rejected" };
-        if (!allowedStatuses.Contains(request.Status))
+        var requestedStatus = NormalizeRegistrationStatus(request.Status);
+        var allowedStatuses = new[] { PendingConfirmationStatus, ApprovedStatus, RejectedStatus };
+        if (!allowedStatuses.Contains(requestedStatus, StringComparer.OrdinalIgnoreCase))
         {
             return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "Status ပြောင်းလဲမှုပုံစံ မှားယွင်းနေပါသည်။" });
         }
 
-        item.Status = request.Status;
+        item.Status = requestedStatus;
         item.ModifiedBy = request.modified_by;
         item.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
@@ -475,7 +627,14 @@ public class StudentRegistrationsController : ControllerBase
         return Ok(new StudentRegistrationResponseModel
         {
             IsSuccess = result > 0,
-            Message = $"ကျောင်းအပ်ဖောင်ကို {request.Status} ပြုလုပ်ခြင်း အောင်မြင်ပါသည်။"
+            Message = $"ကျောင်းအပ်ဖောင်ကို {requestedStatus} ပြုလုပ်ခြင်း အောင်မြင်ပါသည်။",
+            Data = new
+            {
+                registrationId = item.RegistrationId,
+                userId = item.UserId,
+                status = item.Status,
+                canProceedToPayment = CanProceedToPayment(item.Status)
+            }
         });
     }
 }

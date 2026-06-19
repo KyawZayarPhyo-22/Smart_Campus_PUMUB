@@ -115,6 +115,7 @@ public class StudentRegistrationCreateRequestModel
     public string? created_by { get; set; }
     public string? nrc_state { get; set; }
     public string? nrc_township { get; set; }
+    public string? nrc_type { get; set; }
     public string? nrc_number { get; set; }
 }
 

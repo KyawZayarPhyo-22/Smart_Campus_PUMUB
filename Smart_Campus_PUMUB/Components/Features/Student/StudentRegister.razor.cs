@@ -9,13 +9,19 @@ using System.Text.Json;
 
 namespace Smart_Campus_PUMUB.Components.Features.Student
 {
-    public partial class StudentRegister : ComponentBase
+    public partial class StudentRegister : ComponentBase, IDisposable
     {
         [Inject] public HttpClientService HttpClientService { get; set; } = null!;
         [Inject] public NavigationManager Nav { get; set; } = null!;
         [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
 
         [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+        [Inject] public StudentRegistrationNotifierService NotifierService { get; set; } = null!;
+
+        private const string PendingConfirmationStatus = "Pending Confirmation";
+        private const string LegacyPendingStatus = "Pending";
+        private const string ApprovedStatus = "Approved";
+        private const string RejectedStatus = "Rejected";
 
         public StudentRegistrationCreateRequestModel RegModel { get; set; } = new()
         {
@@ -30,6 +36,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public bool ShowModal { get; set; } = false;
         public string ModalMessage { get; set; } = "";
         public bool IsSuccessModal { get; set; } = false;
+        public bool ShowRegistrationStatusPanel { get; set; } = false;
+        public string RegistrationReviewStatus { get; set; } = "";
+        public bool CanProceedToPayment { get; set; } = false;
+        public bool IsRefreshingStatus { get; set; } = false;
+        public int SubmittedRegistrationId { get; set; }
+        public int? SubmittedUserId { get; set; }
 
         //public void CloseModal()
         //{
@@ -89,6 +101,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
         protected override async Task OnInitializedAsync()
         {
+            NotifierService.OnRegistrationStatusChanged += HandleRegistrationStatusChanged;
+
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
 
@@ -149,6 +163,139 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 }
             }
             catch { LoadDefaultSemesters(); }
+        }
+
+        private static string NormalizeRegistrationStatus(string? status)
+        {
+            return string.Equals(status, LegacyPendingStatus, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(status)
+                ? PendingConfirmationStatus
+                : status;
+        }
+
+        private bool IsApproved => string.Equals(RegistrationReviewStatus, ApprovedStatus, StringComparison.OrdinalIgnoreCase);
+        private bool IsRejected => string.Equals(RegistrationReviewStatus, RejectedStatus, StringComparison.OrdinalIgnoreCase);
+
+        private string GetReviewStatusClass()
+        {
+            if (IsApproved) return "approved";
+            if (IsRejected) return "rejected";
+            return "pending";
+        }
+
+        private string GetReviewStatusMessage()
+        {
+            if (IsApproved)
+            {
+                return "Admin has approved your registration information. You can continue to payment.";
+            }
+
+            if (IsRejected)
+            {
+                return "Admin rejected this registration information. Please correct the form and submit a new registration.";
+            }
+
+            return "Your submitted information is under admin review. Payment will be available after approval.";
+        }
+
+        private void ApplyRegistrationStatus(int registrationId, int? userId, string? status, bool canProceedToPayment)
+        {
+            SubmittedRegistrationId = registrationId;
+            SubmittedUserId = userId;
+            RegistrationReviewStatus = NormalizeRegistrationStatus(status);
+            CanProceedToPayment = canProceedToPayment || IsApproved;
+            ShowRegistrationStatusPanel = registrationId > 0;
+
+            if (registrationId > 0)
+            {
+                StudentRegState.SetRegistrationIds(registrationId, userId ?? (RegModel.UserId ?? 0));
+            }
+        }
+
+        private void ApplyRegistrationResponseData(object? data)
+        {
+            if (data == null) return;
+
+            var jObj = data as Newtonsoft.Json.Linq.JObject ?? Newtonsoft.Json.Linq.JObject.FromObject(data);
+            var registrationId = jObj.Value<int?>("id")
+                ?? jObj.Value<int?>("registrationId")
+                ?? jObj.Value<int?>("RegistrationId")
+                ?? 0;
+            var userId = jObj.Value<int?>("userId")
+                ?? jObj.Value<int?>("UserId")
+                ?? RegModel.UserId;
+            var status = jObj.Value<string>("status")
+                ?? jObj.Value<string>("Status")
+                ?? PendingConfirmationStatus;
+            var canProceedToPayment = jObj.Value<bool?>("canProceedToPayment")
+                ?? jObj.Value<bool?>("CanProceedToPayment")
+                ?? false;
+
+            ApplyRegistrationStatus(registrationId, userId, status, canProceedToPayment);
+        }
+
+        private async Task RefreshRegistrationStatus()
+        {
+            if (SubmittedRegistrationId <= 0) return;
+
+            IsRefreshingStatus = true;
+            try
+            {
+                var regData = await HttpClientService.ExecuteAsync<Newtonsoft.Json.Linq.JObject>(
+                    $"StudentRegistrations/{SubmittedRegistrationId}",
+                    EnumHttpMethod.Get);
+
+                if (regData != null)
+                {
+                    var status = regData.Value<string>("status") ?? regData.Value<string>("Status");
+                    var canProceedToPayment = regData.Value<bool?>("canProceedToPayment")
+                        ?? regData.Value<bool?>("CanProceedToPayment")
+                        ?? false;
+
+                    ApplyRegistrationStatus(SubmittedRegistrationId, SubmittedUserId ?? RegModel.UserId, status, canProceedToPayment);
+                }
+            }
+            finally
+            {
+                IsRefreshingStatus = false;
+            }
+        }
+
+        private async Task HandleRegistrationStatusChanged(StudentRegistrationStatusChangedEventArgs args)
+        {
+            if (args.RegistrationId != SubmittedRegistrationId && args.UserId != SubmittedUserId)
+            {
+                return;
+            }
+
+            await InvokeAsync(() =>
+            {
+                ApplyRegistrationStatus(args.RegistrationId, args.UserId, args.Status, string.Equals(args.Status, ApprovedStatus, StringComparison.OrdinalIgnoreCase));
+                StateHasChanged();
+            });
+        }
+
+        private void ContinueToPayment()
+        {
+            if (CanProceedToPayment && SubmittedRegistrationId > 0)
+            {
+                Nav.NavigateTo($"/student/payment?regId={SubmittedRegistrationId}");
+            }
+        }
+
+        private void StartCorrectedRegistration()
+        {
+            ShowRegistrationStatusPanel = false;
+            RegistrationReviewStatus = "";
+            CanProceedToPayment = false;
+            SubmittedRegistrationId = 0;
+            SubmittedUserId = RegModel.UserId;
+            CurrentStep = 1;
+            StudentRegState.Clear();
+        }
+
+        public void Dispose()
+        {
+            NotifierService.OnRegistrationStatusChanged -= HandleRegistrationStatusChanged;
         }
 
         private void LoadDefaultSemesters()
@@ -344,19 +491,6 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public void CloseModal()
         {
             ShowModal = false;
-            if (IsSuccessModal)
-            {
-                // 💡 METHOD 1: AppState Service သုံးခြင်း (အကောင်းဆုံး)
-                StudentRegState.SetFromRegistrationModel(RegModel);
-
-                var targetUrl = "/student/payment";
-                if (StudentRegState.RegistrationId > 0)
-                {
-                    targetUrl += $"?regId={StudentRegState.RegistrationId}";
-                }
-
-                Nav.NavigateTo(targetUrl);
-            }
         }
 
         [Inject] public StudentRegistrationState StudentRegState { get; set; } = null!;
@@ -375,7 +509,10 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             RegModel.previous_year_roll_no = PastExamSemester;
 
             if (!string.IsNullOrEmpty(RegModel.nrc_state) && !string.IsNullOrEmpty(RegModel.nrc_township) && !string.IsNullOrEmpty(RegModel.nrc_number))
+            {
+                RegModel.nrc_type = NrcType;
                 RegModel.student_nrc_no = $"{RegModel.nrc_state}/{RegModel.nrc_township}{NrcType}{RegModel.nrc_number}";
+            }
             else
                 RegModel.student_nrc_no = "-";
 
@@ -464,6 +601,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             content.Add(new StringContent(RegModel.created_by ?? ""), "created_by");
             content.Add(new StringContent(RegModel.nrc_state ?? ""), "nrc_state");
             content.Add(new StringContent(RegModel.nrc_township ?? ""), "nrc_township");
+            content.Add(new StringContent(NrcType), "nrc_type");
             content.Add(new StringContent(RegModel.nrc_number ?? ""), "nrc_number");
 
             if (SelectedPhotoBytes != null && SelectedPhotoFile != null)
@@ -480,11 +618,21 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 if (response?.IsSuccess == true)
                 {
                     IsSuccessModal = true;
-                    ModalMessage = "မှတ်ပုံတင်ခြင်း အောင်မြင်ပါသည်။ ငွေပေးချေမှု ဆက်လက်လုပ်ဆောင်ပါ။";
+                    ModalMessage = "Registration submitted successfully. Your information is now pending admin confirmation.";
                     ShowModal = true;
                     
                     // Store registration data in state service for payment page
                     StudentRegState.SetFromRegistrationModel(RegModel);
+
+                    try
+                    {
+                        ApplyRegistrationResponseData(response.Data);
+                        await NotifierService.NotifyRegistrationSubmitted();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error processing registration status: {ex.Message}");
+                    }
                     
                     // If response has Registration ID, store it
                     if (response.Data != null)

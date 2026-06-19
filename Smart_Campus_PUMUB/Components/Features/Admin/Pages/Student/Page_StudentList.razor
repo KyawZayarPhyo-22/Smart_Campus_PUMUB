@@ -730,12 +730,12 @@
 
                     <div>
                         <button type="button" class="btn btn-danger btn-action me-2"
-                                disabled="@(SelectedDetail.Status != "Pending")"
+                                disabled="@(!CanReviewRegistration(SelectedDetail.Status))"
                                 @onclick="@(() => PromptConfirm("Rejected"))">
                             <i class="bi bi-x-circle me-1"></i> Reject
                         </button>
                         <button type="button" class="btn btn-success btn-action px-4"
-                                disabled="@(SelectedDetail.Status != "Pending")"
+                                disabled="@(!CanReviewRegistration(SelectedDetail.Status))"
                                 @onclick="@(() => PromptConfirm("Approved"))">
                             <i class="bi bi-check-circle me-1"></i> Approve
                         </button>

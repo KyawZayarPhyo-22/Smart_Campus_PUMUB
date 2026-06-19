@@ -333,6 +333,28 @@
     }
     else
     {
+        @if (!CanProceedToPayment)
+        {
+            <div class="payment-card animate-fade">
+                <div class="payment-header" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <h2><i class="fas fa-clock me-2"></i> Pending Confirmation</h2>
+                    <p>Registration information must be approved before payment.</p>
+                </div>
+
+                <div style="padding: 34px 40px; display: flex; flex-direction: column; gap: 18px;">
+                    <div style="background: #fffbeb; border: 1px solid #fbbf24; color: #92400e; padding: 16px; border-radius: 12px;">
+                        <strong>Status: @(string.IsNullOrWhiteSpace(RegistrationStatus) ? "Pending Confirmation" : RegistrationStatus)</strong>
+                        <p style="margin: 8px 0 0 0;">Your registration information is under admin review. The payment form will open after admin approval.</p>
+                    </div>
+
+                    <a class="btn-primary" style="max-width: 220px; text-align: center; text-decoration: none;" href="/Register">
+                        Back to Registration
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
         <div class="payment-card animate-fade">
             <div class="payment-header">
                 <h2><i class="fas fa-credit-card me-2"></i> ကျောင်းလခနှင့် စာမေးပွဲကြေး ပေးချေရန်</h2>
@@ -450,7 +472,7 @@
 
                     <div class="pay-form-group">
                         <label>ငွေပေးချေသည့် စနစ် (Payment Method)</label>
-                        <select class="pay-input" @bind="PaymentModel.PaymentMethod" disabled="@(PaymentModel.RegistrationId <= 0)">
+                        <select class="pay-input" @bind="PaymentModel.PaymentMethod" disabled="@(PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)">
                             <option value="KBZPay">KBZ Pay</option>
                             <option value="WavePay">Wave Pay</option>
                             <option value="KBZ Bank">KBZ Bank Transfer</option>
@@ -459,7 +481,7 @@
 
                     <div class="pay-form-group">
                         <label>ဘဏ်ပြေစာ/စလစ်ပုံ (Receipt Image) <span style="color:red;">*</span></label>
-                        <InputFile accept="image/*" class="pay-input" style="padding-top: 10px;" OnChange="OnReceiptSelected" disabled="@(PaymentModel.RegistrationId <= 0)" />
+                        <InputFile accept="image/*" class="pay-input" style="padding-top: 10px;" OnChange="OnReceiptSelected" disabled="@(PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)" />
 
                         @if (!string.IsNullOrEmpty(PreviewReceiptUrl))
                         {
@@ -469,7 +491,7 @@
                         }
                     </div>
 
-                    <button class="btn-primary" @onclick="SubmitPaymentData" disabled="@(IsSavingPayment || PaymentModel.RegistrationId <= 0)">
+                    <button class="btn-primary" @onclick="SubmitPaymentData" disabled="@(IsSavingPayment || PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)">
                         @if (IsSavingPayment)
                         {
                             <span>တင်သွင်းနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
@@ -482,6 +504,7 @@
                 </div>
             </div>
         </div>
+        }
     }
 
 </div>

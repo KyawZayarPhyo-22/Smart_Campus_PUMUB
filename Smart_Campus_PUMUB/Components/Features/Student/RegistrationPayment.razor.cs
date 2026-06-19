@@ -17,6 +17,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         [Inject] public StudentRegistrationState StudentRegState { get; set; } = null!; // 💡 Register မှ Data ကို လက်ခံမည့် State
         [Inject] public Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService NotifierService { get; set; } = null!;
 
+        private const string ApprovedStatus = "Approved";
 
         public RegistrationPaymentCreateRequestModel PaymentModel { get; set; } = new()
         {
@@ -33,6 +34,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
         public bool IsLoading { get; set; } = true;
         public bool IsSavingPayment { get; set; } = false;
+        public string RegistrationStatus { get; set; } = "";
+        public bool CanProceedToPayment { get; set; } = false;
 
         public string? PreviewReceiptUrl { get; set; }
         public IBrowserFile? SelectedReceiptFile { get; set; }
@@ -102,6 +105,10 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     InputStudentName = regData.Value<string>("studentNameMm") ?? regData.Value<string>("StudentNameMm") ?? "";
                     InputRollNo = regData.Value<string>("rollNo") ?? regData.Value<string>("RollNo") ?? "";
                     InputAcademicYear = regData.Value<string>("academicYearLevel") ?? regData.Value<string>("AcademicYearLevel") ?? "";
+                    RegistrationStatus = regData.Value<string>("status") ?? regData.Value<string>("Status") ?? "";
+                    CanProceedToPayment = regData.Value<bool?>("canProceedToPayment")
+                        ?? regData.Value<bool?>("CanProceedToPayment")
+                        ?? string.Equals(RegistrationStatus, ApprovedStatus, StringComparison.OrdinalIgnoreCase);
                 }
             }
             catch (Exception ex)
@@ -164,6 +171,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
         private async Task SubmitPaymentData()
         {
+            if (!CanProceedToPayment)
+            {
+                ShowError("Registration information is still under admin review. Payment can be submitted only after admin approval.");
+                return;
+            }
+
             if (PaymentModel.RegistrationId <= 0)
             {
                 ShowError("ကျောင်းအပ်နှံမှု မှတ်တမ်းအမှတ် မတွေ့ရှိပါ။ ကျေးဇူးပြု၍ ကျောင်းအပ်ဖောင်ကို အရင်ဖြည့်ပါ။");
