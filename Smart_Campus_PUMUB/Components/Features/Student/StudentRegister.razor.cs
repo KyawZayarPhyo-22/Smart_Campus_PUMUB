@@ -117,7 +117,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                         if (studentData != null)
                         {
                             LoggedInStudent = studentData;
-                            Console.WriteLine($"Loaded student details for user: {parsedUserId}. Sem3_Result: {LoggedInStudent.Sem3_Result}");
+                            RegModel.roll_no = LoggedInStudent.CurrentRollNo;
+                            Console.WriteLine($"Loaded student details for user: {parsedUserId}. Roll No auto-filled: {RegModel.roll_no}");
                         }
                     }
                     catch (Exception ex)

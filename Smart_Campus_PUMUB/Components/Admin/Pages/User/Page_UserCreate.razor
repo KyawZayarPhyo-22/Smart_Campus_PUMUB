@@ -34,6 +34,11 @@
                 <input type="password" class="form-control text-white" style="background: rgba(20, 24, 33, 0.6);" @bind="Request.Password" placeholder="******" />
             </div>
 
+            <div class="mb-3">
+                <label class="form-label text-light">Role No / Roll No</label>
+                <input type="text" class="form-control text-white" style="background: rgba(20, 24, 33, 0.6);" @bind="Request.RoleNo" placeholder="Enter roll number (e.g. MUB-1098)" />
+            </div>
+
             <div class="mb-4">
                 <label class="form-label text-light">Role</label>
                 <select class="form-select text-white" style="background: rgba(20, 24, 33, 0.6);" @bind="Request.RoleId">

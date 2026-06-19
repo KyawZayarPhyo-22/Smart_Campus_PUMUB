@@ -196,8 +196,6 @@
                     <th class="text-center">No.</th>
                     <th>Roll No</th>
                     <th>Full Name</th>
-                    <th>Class Year</th>
-                    <th>Major</th>
                     <th class="text-center">Status</th>
                     <th class="text-center">Sem 1</th>
                     <th class="text-center">Sem 2</th>
@@ -214,7 +212,7 @@
                 @if (IsLoading)
                 {
                     <tr>
-                        <td colspan="15" class="text-center py-5">
+                        <td colspan="13" class="text-center py-5">
                             <div class="spinner-border text-primary" role="status" style="width: 1.5rem; height: 1.5rem;">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -225,7 +223,7 @@
                 else if (!FilteredStudents.Any())
                 {
                     <tr>
-                        <td colspan="15" class="text-center py-4 text-muted">No students found.</td>
+                        <td colspan="13" class="text-center py-4 text-muted">No students found.</td>
                     </tr>
                 }
                 else
@@ -237,8 +235,6 @@
                             <td class="text-center text-muted fw-bold">@count</td>
                             <td class="fw-bold text-info">@(s.CurrentRollNo ?? "-")</td>
                             <td class="fw-bold text-white">@(s.FullName ?? "N/A")</td>
-                            <td>@s.CurrentClassYear</td>
-                            <td>@s.CurrentMajor</td>
                             <td class="text-center">
                                 <select class="status-select @(s.Status == "Active" ? "active" : "inactive")" 
                                         value="@s.Status"
