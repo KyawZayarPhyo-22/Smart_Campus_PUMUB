@@ -1,42 +1,36 @@
-<!-- 💡 Reusable Pagination Component -->
-<!-- ဂျူနီယာ Developer များပါ နားလည်လွယ်အောင် ရိုးရှင်းစွာ ရေးသားထားပြီး Bootstrap စတိုင်ကို အသုံးပြုထားပါသည် -->
-<div class="d-flex justify-content-between align-items-center mt-3 px-3">
-    <!-- လက်ရှိပြသနေသော အခြေအနေ စာသား -->
+<div class="d-flex justify-content-between align-items-center px-3" style="margin-top: 50px;">
     <div class="text-muted" style="font-size: 0.9rem;">
-        Page <span class="text-success fw-bold">@CurrentPage</span> of <span class="text-dark fw-bold">@TotalPages</span>
+        Page <span class="fw-bold" style="color: #5A4FCF;">@CurrentPage</span> of <span
+        class="text-dark fw-bold">@TotalPages</span>
     </div>
 
-    <!-- Page နံပါတ် ခလုတ်များ -->
     <nav aria-label="Page navigation">
         <ul class="pagination pagination-sm mb-0">
-            <!-- ⬅️ Previous Button -->
             <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
-                <button class="page-link border-secondary-subtle" 
-                        style="background-color: #ffffff; color: #1b8a5a; border: 1px solid #dee2e6;"
+                <button class="page-link border-secondary-subtle px-3"
+                        style="background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6; cursor: @(CurrentPage <= 1 ? "not-allowed" : "pointer");"
                         @onclick="() => ChangePage(CurrentPage - 1)">
-                    <i class="bi bi-chevron-left"></i>
+                    <span>&laquo; Prev</span>
                 </button>
             </li>
 
-            <!-- Page Number Buttons -->
             @for (int i = 1; i <= TotalPages; i++)
             {
                 var pageNumber = i;
                 <li class="page-item @(CurrentPage == pageNumber ? "active" : "")">
-                    <button class="page-link" 
-                            style="@(CurrentPage == pageNumber ? "background-color: #1b8a5a; border-color: #1b8a5a; color: #ffffff;" : "background-color: #ffffff; color: #1b8a5a; border: 1px solid #dee2e6;")"
+                    <button class="page-link px-3"
+                            style="@(CurrentPage == pageNumber ? "background-color: #5A4FCF; border-color:#5A4FCF; color: white;" : "background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6;")"
                             @onclick="() => ChangePage(pageNumber)">
                         @pageNumber
                     </button>
                 </li>
             }
 
-            <!-- ➡️ Next Button -->
             <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
-                <button class="page-link border-secondary-subtle" 
-                        style="background-color: #ffffff; color: #1b8a5a; border: 1px solid #dee2e6;"
+                <button class="page-link border-secondary-subtle px-3"
+                        style="background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6; cursor: @(CurrentPage >= TotalPages ? "not-allowed" : "pointer");"
                         @onclick="() => ChangePage(CurrentPage + 1)">
-                    <i class="bi bi-chevron-right"></i>
+                    <span>Next &raquo;</span>
                 </button>
             </li>
         </ul>

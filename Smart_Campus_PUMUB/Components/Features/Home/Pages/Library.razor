@@ -1,4 +1,4 @@
-@page "/Library"
+@* @page "/Library"
 @rendermode InteractiveServer
 @using Smart_Campus_PUMUB.Components.Pages
 @inherits LibraryBase
@@ -20,8 +20,11 @@
 <section id="library" style="margin:50px;">
     <div class="container">
         <div class="section-header">
-            <div class="section-tag"><i class="fas fa-book"></i> Knowledge Hub</div>
-            <h2 class="section-title">University <span>Library</span></h2>
+            <div>
+                <div class="section-tag"><i class="fas fa-book"></i> Knowledge Hub</div>
+                <h2 class="section-title">University <span>Library</span></h2>
+
+            </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
@@ -44,7 +47,7 @@
 
                 <div class="input-group rounded-pill shadow-sm bg-white"
                      style="max-width: 400px; border: 1px solid #e0e0e0; overflow: hidden;">
-                    <input type="text" class="form-control border-0 shadow-none px-4" placeholder="Search Books..."
+                    <input type="text" class="form-control border-0 shadow-none px-4" placeholder="Search Books"
                            @bind="searchQuery" />
                     <button class="btn border-0 shadow-none px-4" style="color: #5A4FCF;"
                             @onclick="isSearching ? ClearSearch : FilterData">
@@ -58,17 +61,18 @@
                 {
                     @foreach (var book in filteredBooks)
                     {
-                        <div class="book-card">
+                        <div class="book-card" style="overflow: hidden;">
                             <div class="book-cover">
-                                <img src="@book.Image" alt="@book.BookName"
+                                <img src="@($"https://localhost:7297{book.Image}")" alt="@book.BookName"
                                      onerror="this.src='https://via.placeholder.com/400x280'">
                             </div>
                             <div class="book-body">
-                                <div class="book-category">@book.CategoryName</div>
-                                <h4>@book.BookName</h4>
+                                <div class="book-category mb-2">Category: @book.CategoryName</div>
+                                <h4>Book Name: @book.BookName</h4>
                                 <p class="book-author">@book.Author</p>
 
-                                <a href="@book.FilePath" target="_blank" class="btn rounded-pill mt-2"
+                                <a href="https://www.gutenberg.org/cache/epub/78839/pg78839-images-3.epub" target="_blank"
+                                   class="btn rounded-pill mt-2"
                                    style="background-color: #5A4FCF; color: white; width: 100%; padding: 8px;">
                                     <i class="fas fa-download"></i> Download
                                 </a>
@@ -84,4 +88,109 @@
                 }
             </div>
         </div>
-    </section>
+    </section> *@
+    @page "/Library"
+@rendermode InteractiveServer
+@using Smart_Campus_PUMUB.Components.Pages
+@using Smart_Campus_PUMUB.Components.Shared @* 🌟 Shared Component ပါဝင်သော Namespace *@
+@inherits LibraryBase
+
+<style>
+    /* Dropdown item ကို hover လုပ်ရင် အရောင်ပြောင်းရန် */
+    .dropdown-item:hover {
+        background-color: #5A4FCF !important;
+        color: white !important;
+        cursor: pointer;
+    }
+
+    /* Download button hover effect */
+    .btn:hover {
+        filter: brightness(90%);
+    }
+</style>
+
+<section id="library" style="margin:50px;">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <div class="section-tag"><i class="fas fa-book"></i> Knowledge Hub</div>
+                <h2 class="section-title">University <span>Library</span></h2>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 15px;">
+            <div class="dropdown">
+                <button class="btn dropdown-toggle rounded-pill shadow-sm bg-white px-4 py-2" @onclick="ToggleMenu"
+                        style="border: 1px solid #e0e0e0; color: #495057;">
+                    @(SelectedCategoryId == 0 ? "Select Category" : Categories.FirstOrDefault(c => c.CategoryId == SelectedCategoryId)?.CategoryName)
+                </button>
+                <ul class="dropdown-menu shadow-sm border-0 mt-2 @(isOpen ? "show" : "")"
+                    style="display: @(isOpen ? "block" : "none")">
+                    <li><a class="dropdown-item" @onclick="() => OnCategorySelected(0)">All Categories</a></li>
+                    @foreach (var cat in Categories)
+                    {
+                        <li><a class="dropdown-item" @onclick="() => OnCategorySelected(cat.CategoryId)">@cat.CategoryName</a></li>
+                    }
+                </ul>
+            </div>
+
+            <div class="input-group rounded-pill shadow-sm bg-white"
+                 style="max-width: 400px; border: 1px solid #e0e0e0; overflow: hidden;">
+                <input type="text" class="form-control border-0 shadow-none px-4" placeholder="Search Books"
+                       @bind="searchQuery" />
+                <button class="btn border-0 shadow-none px-4" style="color: #5A4FCF;"
+                        @onclick="isSearching ? ClearSearch : () => { CurrentPage = 1; FilterData(); }">
+                    <i class="fas @(isSearching ? "fa-times" : "fa-search")"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="library-grid">
+            @* 🌟 filteredBooks နေရာတွင် Pagination ဖြတ်ပြီးသား pagedBooks ကို ပြောင်းလဲအသုံးပြုထားပါသည် *@
+            @if (pagedBooks != null && pagedBooks.Any())
+            {
+                @foreach (var book in pagedBooks)
+                {
+                    <div class="book-card" style="overflow: hidden;">
+                        <div class="book-cover">
+                            @if (!string.IsNullOrEmpty(book.Image) && !book.Image.Equals("string", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <img style="object-fit: cover; width: 100%; height: 250px;" 
+                                     src="@($"https://localhost:7297{book.Image}")" 
+                                     alt="@book.BookName"
+                                     onerror="this.src='https://via.placeholder.com/400x280'">
+                            }
+                            else
+                            {
+                                <img style="object-fit: cover; width: 100%; height: 250px;" 
+                                     src="https://via.placeholder.com/400x280" 
+                                     alt="Placeholder">
+                            }
+                        </div>
+                        <div class="book-body">
+                            <div class="book-category mb-2">Category: @book.CategoryName</div>
+                            <h4>Book Name: @book.BookName</h4>
+                            <p class="book-author">@book.Author</p>
+
+                            <a href="https://www.gutenberg.org/cache/epub/78839/pg78839-images-3.epub" target="_blank"
+                               class="btn rounded-pill mt-2"
+                               style="background-color: #5A4FCF; color: white; width: 100%; padding: 8px;">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center w-100 mt-5">
+                    <p class="text-muted">No books found matching your selection.</p>
+                </div>
+            }
+        </div>
+
+        <div class="mt-4">
+            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+        </div>
+    </div>
+</section>
