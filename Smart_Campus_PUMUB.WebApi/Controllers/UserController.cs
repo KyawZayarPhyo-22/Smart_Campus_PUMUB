@@ -127,8 +127,7 @@ public class UserController : ControllerBase
                 RoleName = x.role.RoleName,
                 RoleNo = x.user.RoleNo,
                 Password = "********",
-                CreatedDateTime = x.user.CreatedDateTime,
-                RoleNo = x.user.RoleNo
+                CreatedDateTime = x.user.CreatedDateTime
             })
             .ToList();
 
@@ -153,8 +152,7 @@ public class UserController : ControllerBase
             UserName = item.UserName,
             RoleNo = item.RoleNo,
             Password = "********",
-            CreatedDateTime = item.CreatedDateTime,
-            RoleNo = item.RoleNo
+            CreatedDateTime = item.CreatedDateTime
         };
 
         return Ok(userModel);
@@ -204,7 +202,6 @@ public class UserController : ControllerBase
             UserName = formattedUserName,
             RoleNo = request.RoleNo,
             Password = hashedPass,
-            RoleNo = request.RoleNo,
             IsDelete = false,
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         };
@@ -272,7 +269,6 @@ public class UserController : ControllerBase
         item.UserName = formattedUserName;
         item.RoleNo = request.RoleNo;
         item.Password = BCrypt.Net.BCrypt.HashPassword(request.Password); //🔒 Update တွင်လည်း Hash ပြုလုပ်သိမ်းဆည်းခြင်း
-        item.RoleNo = request.RoleNo;
 
         int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
@@ -295,8 +291,7 @@ public class UserController : ControllerBase
                 UserName = item.UserName,
                 RoleNo = item.RoleNo,
                 Password = "********",
-                CreatedDateTime = item.CreatedDateTime,
-                RoleNo = item.RoleNo
+                CreatedDateTime = item.CreatedDateTime
             }
         });
     }
@@ -319,11 +314,7 @@ public class UserController : ControllerBase
             updateCount++;
         }
 
-        if (request.RoleNo != null)
-        {
-            item.RoleNo = request.RoleNo;
-            updateCount++;
-        }
+
 
         if (!string.IsNullOrEmpty(request.FullName))
         {
@@ -400,8 +391,7 @@ public class UserController : ControllerBase
                 UserName = item.UserName,
                 RoleNo = item.RoleNo,
                 Password = "********",
-                CreatedDateTime = item.CreatedDateTime,
-                RoleNo = item.RoleNo
+                CreatedDateTime = item.CreatedDateTime
             }
         });
     }
