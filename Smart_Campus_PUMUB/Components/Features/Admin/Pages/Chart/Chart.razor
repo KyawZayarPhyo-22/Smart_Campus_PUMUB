@@ -5,6 +5,7 @@
 @rendermode InteractiveServer
 @using Newtonsoft.Json
 @inject IHttpClientFactory ClientFactory
+@inject NavigationManager NavigationManager
 @inject Smart_Campus_PUMUB.BlazorServer.Frontend.Services.HttpClientService HttpClientService
 <style>
     .stat-icon {
@@ -53,7 +54,8 @@
                     <i class="bi bi-people-fill text-info"></i>
                 </div>
 
-                <span class="badge @(percentage >= 0 ? "bg-info" : "bg-danger") bg-opacity-25 text-info border border-info border-opacity-25 stat-change">
+                <span
+                    class="badge @(percentage >= 0 ? "bg-info" : "bg-danger") bg-opacity-25 text-info border border-info border-opacity-25 stat-change">
                     <i class="bi @(percentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
                     @($"{percentage:+0;-0;0}%")
                 </span>
@@ -87,7 +89,8 @@
                 <div class="stat-icon" style="background:rgba(16,185,129,0.12);">
                     <i class="bi bi-book-fill text-success"></i>
                 </div>
-                <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 stat-change">
+                <span
+                    class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 stat-change">
                     <i class="bi @(bookPercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
                     @($"{bookPercentage:+0;-0;0}%")
                 </span>
@@ -114,7 +117,8 @@
             <div class="stat-icon" style="background:rgba(239,68,68,0.12);">
                 <i class="bi bi-megaphone-fill text-danger"></i>
             </div>
-            <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 stat-change">
+            <span
+                class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 stat-change">
                 <i class="bi bi-exclamation-circle"></i> Total
             </span>
         </div>
@@ -522,7 +526,7 @@
         _timer?.Dispose();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    @* protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
@@ -535,6 +539,44 @@
             {
                 await Task.Delay(250);
                 await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+            }
+        }
+    } *@
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // 🌟 ၁။ အရင်ဆုံး Session Storage ကို စစ်ပါမယ်
+            var isLogined = await JS.InvokeAsync<string>("sessionStorage.getItem", "islogined");
+            var roleName = await JS.InvokeAsync<string>("sessionStorage.getItem", "rolename");
+
+            // Login မဝင်ထားဘူး (သို့) Role က admin/tutor မဟုတ်ဘူးဆိုရင်
+            if (isLogined != "true" || (roleName?.ToLower() != "admin" && roleName?.ToLower() != "tutor"))
+            {
+                // Home page ဆီ ပြန်ကန်ချမယ်
+                NavigationManager.NavigateTo("/");
+                return; // ⚠️ အရေးကြီးသည် - အောက်က Chart ဆွဲတဲ့ Code တွေ ဆက်မလုပ်တော့ဘဲ ဒီမှာတင် ရပ်လိုက်ပါမယ်
+            }
+
+            // 🌟 ၂။ မင်းရဲ့ မူလ Chart Render လုပ်တဲ့ အပိုင်း
+            _isRendered = true;
+            try
+            {
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+            }
+            catch
+            {
+                // initCharts may not be loaded yet - wait and retry once
+                try
+                {
+                    await Task.Delay(500);
+                    await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+                }
+                catch (Exception ex)
+                {
+                    // If still not found, log and continue - do NOT let this kill the circuit
+                    Console.WriteLine($"initCharts JS error (chart will not render): {ex.Message}");
+                }
             }
         }
     }

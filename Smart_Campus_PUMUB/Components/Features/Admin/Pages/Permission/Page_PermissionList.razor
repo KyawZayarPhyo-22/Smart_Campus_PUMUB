@@ -1,0 +1,172 @@
+@page "/admin/permissions"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
+@using Smart_Campus_PUMUB.Components.Admin.Services
+@using Smart_Campus_PUMUB.Database.AppDbContext
+@inject PermissionService PermissionService
+@rendermode InteractiveServer
+
+@* သင်၏ Role Page တွင် သုံးထားသော Custom CSS အတိုင်း တူညီစွာသုံးထားပါသည် *@
+<style>
+    .custom-table { background: rgba(20, 24, 33, 0.6); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); }
+    .custom-table thead { background: rgba(13, 110, 253, 0.1); border-bottom: 2px solid rgba(13, 110, 253, 0.2); }
+    .custom-table th { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; color: #0d6efd; padding: 16px 20px; }
+    .custom-table td { padding: 16px 20px; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.2s ease; }
+    .table-row-hover:hover { background: rgba(255, 255, 255, 0.02); box-shadow: inset 4px 0 0 #0d6efd; }
+    .role-badge { font-size: 0.8rem; font-weight: 500; padding: 6px 12px; border-radius: 6px; background: rgba(13, 202, 240, 0.1) !important; color: #0dcaf0 !important; border: 1px solid rgba(13, 202, 240, 0.2); }
+    .btn-action-edit { background: rgba(13, 110, 253, 0.1); color: #39b5ff; border: 1px solid rgba(13, 110, 253, 0.3); border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; transition: all 0.2s ease; }
+    .btn-action-edit:hover { background: #0d6efd; color: #ffffff; box-shadow: 0 0 12px rgba(13, 110, 253, 0.4); }
+    .btn-action-delete { background: rgba(220, 53, 69, 0.1); color: #ff6b6b; border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; transition: all 0.2s ease; }
+    .btn-action-delete:hover { background: #dc3545; color: #ffffff; box-shadow: 0 0 12px rgba(220, 53, 69, 0.4); }
+    .btn-add-modern { background: linear-gradient(135deg, #0d6efd, #0052cc); border: none; border-radius: 8px; padding: 10px 20px; font-weight: 500; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2); transition: all 0.2s ease; }
+    .btn-add-modern:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4); }
+</style>
+
+<div class="tab-pane fade show active">
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="fw-bold mb-1" style="color: #ffffff;">Permission Directory</h3>
+            <p class="text-muted small mb-0">Manage system permissions (e.g., Create_Tutor, View_Student)</p>
+        </div>
+    </div>
+
+    <div class="tech-card p-4">
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-7 col-lg-6">
+                <div class="input-group">
+                    <span class="input-group-text search-icon-bg" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 text-white" style="background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.08);" placeholder="Search by Permission Name..." @bind="SearchInput" />
+                    <button class="btn btn-primary" type="button" @onclick="ApplyFilter"><i class="bi bi-search"></i> Search</button>
+                    <button class="btn btn-secondary" type="button" @onclick="ResetFilter"><i class="bi bi-arrow-clockwise"></i> Reset</button>
+                </div>
+            </div>
+
+            <div class="col-md-5 col-lg-6 text-end">
+                <NavLink href="/admin/permission/create" class="btn btn-add-modern text-white d-inline-flex align-items-center">
+                    <i class="bi bi-plus-lg me-2"></i> Add New Permission
+                </NavLink>
+            </div>
+        </div>
+        @if (IsLoading)
+        {
+            <div class="text-center my-5 text-muted">Loading permissions...</div>
+        }
+        else if (FilteredPermissions == null || !FilteredPermissions.Any())
+        {
+            <div class="text-center my-5 text-muted"><p>No permissions found.</p></div>
+        }
+        else
+        {
+            <div class="table-responsive custom-table">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">ID</th>
+                            <th style="width: 50%;">Permission Name</th>
+                            <th style="width: 35%; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int count = 1;
+                        }
+                        @foreach (var perm in FilteredPermissions)
+                        {
+                            <tr class="table-row-hover">
+                                <td class="fw-bold text-muted">@count</td>
+                                <td><span class="badge role-badge">@perm.PermissionName</span></td>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <NavLink href="@($"/admin/permission/edit/{perm.PermissionId}")" class="btn btn-action-edit">
+                                            <i class="bi bi-pencil me-1.5"></i> Edit
+                                        </NavLink>
+                                        <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(perm)">
+                                            <i class="bi bi-trash me-1.5"></i> Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            count++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* Modal *@
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+                <div class="modal-header border-0"><h5 class="text-danger">Confirm Delete</h5></div>
+                <div class="modal-body text-center text-white">
+                    Are you sure to delete <strong>@SelectedPermission?.PermissionName</strong>?
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary" @onclick="() => ShowModal = false">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeletePermission">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Permission>? AllPermissions;
+    private List<Permission>? FilteredPermissions;
+    private string SearchInput = "";
+    private bool IsLoading = true;
+    
+    // Modal state
+    private bool ShowModal = false;
+    private Permission? SelectedPermission;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        IsLoading = true;
+        AllPermissions = await PermissionService.GetPermissionsAsync();
+        FilteredPermissions = AllPermissions;
+        IsLoading = false;
+    }
+
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrWhiteSpace(SearchInput))
+        {
+            FilteredPermissions = AllPermissions;
+        }
+        else
+        {
+            FilteredPermissions = AllPermissions?.Where(p => p.PermissionName.Contains(SearchInput, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+
+    private void ResetFilter()
+    {
+        SearchInput = "";
+        FilteredPermissions = AllPermissions;
+    }
+    private void OpenDeleteModal(Permission permission)
+    {
+        SelectedPermission = permission;
+        ShowModal = true;
+    }
+
+    private async Task DeletePermission()
+    {
+        if (SelectedPermission != null)
+        {
+            await PermissionService.DeletePermissionAsync(SelectedPermission.PermissionId);
+            ShowModal = false;
+            await LoadData(); // Refresh table
+        }
+    }
+}

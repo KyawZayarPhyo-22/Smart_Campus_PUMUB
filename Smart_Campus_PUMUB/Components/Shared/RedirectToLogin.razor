@@ -1,0 +1,9 @@
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        // ဤ Component လေး အလုပ်လုပ်တာနဲ့ /login ဆီ ချက်ချင်း လွှဲချမည်
+        Nav.NavigateTo("/login");
+    }
+}

@@ -1,0 +1,47 @@
+@page "/admin/permission/edit/{Id:int}"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
+@using Smart_Campus_PUMUB.Components.Admin.Services
+@using Smart_Campus_PUMUB.Database.AppDbContext
+@inject PermissionService PermissionService
+@inject NavigationManager Nav
+
+<div class="tech-card p-4">
+    <h3 class="text-white mb-4">Edit Permission</h3>
+
+    @if (editPermission == null)
+    {
+        <p class="text-white">Loading...</p>
+    }
+    else
+    {
+        <div class="form-group mb-3">
+            <label class="text-muted mb-2">Permission Name</label>
+            <input type="text" class="form-control" @bind="editPermission.PermissionName" readonly />
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-primary" @onclick="UpdatePermission">Update</button>
+            <button class="btn btn-secondary ms-2" @onclick='() => Nav.NavigateTo("/admin/permissions")'>Cancel</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Permission? editPermission;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editPermission = await PermissionService.GetPermissionByIdAsync(Id);
+    }
+
+    private async Task UpdatePermission()
+    {
+        if (editPermission != null && !string.IsNullOrWhiteSpace(editPermission.PermissionName))
+        {
+            await PermissionService.UpdatePermissionAsync(editPermission);
+            Nav.NavigateTo("/admin/permissions");
+        }
+    }
+}
