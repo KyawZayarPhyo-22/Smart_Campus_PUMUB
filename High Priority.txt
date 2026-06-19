@@ -1,0 +1,8 @@
+**High Priority**
+
+* When a student submits the registration form, add a **"Pending Confirmation"** state so that the submitted information remains under review until it is approved by the Admin.
+* The student should not be able to proceed further until the Admin approves the submitted information.
+send noti or something back to student if admin is confirmed
+Medium
+* The **NRC (National Registration Card) field** should accept **Myanmar characters only**.
+
