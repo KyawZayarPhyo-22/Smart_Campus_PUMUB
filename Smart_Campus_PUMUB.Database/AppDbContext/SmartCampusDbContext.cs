@@ -46,6 +46,9 @@ public partial class SmartCampusDbContext : DbContext
     public virtual DbSet<Tutor> Tutors { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<Permission> Permissions { get; set; }
+    public virtual DbSet<RolePermission> RolePermissions { get; set; }
     public object Student_Registrations { get; set; }
 
 
@@ -107,7 +110,6 @@ public partial class SmartCampusDbContext : DbContext
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
             entity.Property(e => e.Status).HasDefaultValue("Active");
         });
-
         modelBuilder.Entity<Position>(entity =>
         {
             entity.HasKey(e => e.PositionId).HasName("PK__Position__3C3EAE062191C9DE");
@@ -199,7 +201,6 @@ public partial class SmartCampusDbContext : DbContext
 
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsDelete).HasDefaultValue(false);
-
             entity.HasOne(d => d.Department).WithMany(p => p.Tutors)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Tutor__Departmen__6EF57B66");

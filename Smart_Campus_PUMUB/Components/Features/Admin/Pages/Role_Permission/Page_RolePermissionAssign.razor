@@ -1,0 +1,131 @@
+@page "/admin/role/permissions/{RoleId:int}"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Role
+@using Smart_Campus_PUMUB.Components.Admin.Services
+@using Smart_Campus_PUMUB.Database.AppDbContext
+@inject PermissionService PermissionService
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<style>
+    .perm-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    .perm-card:hover {
+        background: rgba(13, 110, 253, 0.05);
+        border-color: rgba(13, 110, 253, 0.3);
+    }
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+</style>
+
+<div class="mb-4">
+    <h3 class="fw-bold mb-1" style="color: #ffffff;">Assign Permissions</h3>
+    <p class="text-muted small mb-0">Select the permissions you want to grant for this role.</p>
+</div>
+
+<div class="tech-card p-4">
+    @if (AllPermissions == null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="text-muted mt-3 small">Loading permissions...</div>
+        </div>
+    }
+    else if (!AllPermissions.Any())
+    {
+        <div class="text-center text-muted my-4">
+            <p>No permissions available in the system. Please create permissions first.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var p in AllPermissions)
+            {
+                var permId = p.PermissionId;
+                <div class="col-md-4 col-lg-3">
+                    <div class="perm-card p-3 h-100">
+                        <div class="form-check form-switch d-flex align-items-center">
+                            <input class="form-check-input fs-5 mt-0 me-3" type="checkbox" 
+                                   id="perm_@permId"
+                                   checked="@SelectedIds.Contains(permId)"
+                                   @onchange="@(e => TogglePermission(permId, e))" />
+                            <label class="form-check-label text-white" for="perm_@permId" style="cursor: pointer;">
+                                @p.PermissionName
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <hr class="my-4" style="border-color: rgba(255,255,255,0.1);" />
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary px-4" @onclick="SavePermissions" disabled="@IsProcessing">
+                @if (IsProcessing)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Saving...</span>
+                }
+                else
+                {
+                    <i class="bi bi-save me-2"></i> <span>Save Changes</span>
+                }
+            </button>
+            <button class="btn btn-secondary px-4" @onclick='() => Nav.NavigateTo("/admin/roles")' disabled="@IsProcessing">
+                Cancel
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int RoleId { get; set; }
+    
+    // DB ထဲက Permission Model ကို သုံးထားသည်
+    private List<Permission>? AllPermissions = null;
+    private List<int> SelectedIds = new();
+    private bool IsProcessing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Permission အားလုံးကို ဆွဲယူမည်
+        AllPermissions = await PermissionService.GetPermissionsAsync();
+        
+        // လက်ရှိ Role တွင် Assign လုပ်ထားပြီးသား ID များကို ဆွဲယူမည်
+        SelectedIds = await PermissionService.GetPermissionsByRoleIdAsync(RoleId);
+    }
+
+    private void TogglePermission(int id, ChangeEventArgs e)
+    {
+        bool isChecked = bool.TryParse(e.Value?.ToString(), out bool result) && result;
+        if (isChecked)
+        {
+            if (!SelectedIds.Contains(id)) SelectedIds.Add(id);
+        }
+        else
+        {
+            SelectedIds.Remove(id);
+        }
+    }
+
+    private async Task SavePermissions()
+    {
+        IsProcessing = true;
+        
+        // Service မှတဆင့် RolePermissions ဇယားထဲသို့ သွားရောက် Update လုပ်မည်
+        await PermissionService.UpdateRolePermissionsAsync(RoleId, SelectedIds);
+        
+        IsProcessing = false;
+        
+        // အောင်မြင်ပါက Role List သို့ ပြန်သွားမည်
+        Nav.NavigateTo("/admin/roles");
+    }
+}

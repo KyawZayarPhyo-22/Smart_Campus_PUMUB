@@ -3,6 +3,9 @@
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Tutor
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Linq
+@using Microsoft.AspNetCore.Components
 
 <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
     <div class="d-flex align-items-center">
@@ -13,10 +16,8 @@
     </div>
 </div>
 
-<!-- 🔹 Filter Section -->
 <div class="material-card p-3 mb-4">
     <div class="row g-3 align-items-center">
-        <!-- Search Input -->
         <div class="col">
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
@@ -24,18 +25,19 @@
             </div>
         </div>
 
-        <!-- Role Dropdown -->
         <div class="col-md-3">
             <select class="form-select material-input" @bind="SelectedRoleInput">
                 <option value="All">All Roles</option>
-                @foreach (var role in TutorList.Select(t => t.RoleName).Distinct().Where(r => !string.IsNullOrEmpty(r)))
+                @if (TutorList != null)
                 {
-                    <option value="@role">@role</option>
+                    @foreach (var role in TutorList.Select(t => t.RoleName).Distinct().Where(r => !string.IsNullOrEmpty(r)))
+                    {
+                        <option value="@role">@role</option>
+                    }
                 }
             </select>
         </div>
 
-        <!-- Search and Reset Buttons -->
         <div class="col-md-2 d-flex gap-2">
             <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
                 <i class="bi bi-search"></i>
@@ -45,18 +47,23 @@
             </button>
         </div>
 
-        <!-- Add Button -->
-        <div class="col-auto">
-            <NavLink href="/admin/tutor/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Tutor">
-                <i class="bi bi-plus-lg"></i>
-            </NavLink>
-        </div>
+        <AuthorizeView Policy="Create_Tutor">
+            <div class="col-auto">
+                <NavLink href="/admin/tutor/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Tutor">
+                    <i class="bi bi-plus-lg"></i>
+                </NavLink>
+            </div>
+        </AuthorizeView>
     </div>
 </div>
 
 <div class="tech-card p-4">
-
-    @if (IsLoading) { <div class="text-center text-white">Loading...</div> }
+    @if (IsLoading)
+    {
+        <div class="text-center text-white p-3">
+            <div class="spinner-border text-primary me-2" role="status"></div> Loading Tutors Directory...
+        </div>
+    }
     else
     {
         <div class="table-responsive">
@@ -69,29 +76,58 @@
                         <th>Role</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th class="text-center">Actions</th>
+                        @if (canManageTutor)
+                        {
+                            <th class="text-center">Actions</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
-                    @{ int count = (CurrentPage - 1) * PageSize + 1; }
-                    @foreach (var tutor in FilteredTutors)
+                    @{ 
+                        int count = (CurrentPage - 1) * PageSize + 1; 
+                    }
+                    @if (FilteredTutors != null && FilteredTutors.Any())
+                    {
+                        @foreach (var tutor in FilteredTutors)
+                        {
+                            <tr>
+                                <td>@count</td>
+                                <td>
+                                    <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
+                                         class="rounded-circle" width="50" height="50" style="object-fit: cover;">
+                                </td>
+                                <td>@tutor.TutorName</td>
+                                <td>@tutor.RoleName</td>
+                                <td>@tutor.Email</td>
+                                <td>@tutor.Phone</td>
+                                
+                                @if (canManageTutor)
+                                {
+                                    <td class="text-center">
+                                        <AuthorizeView Policy="Edit_Tutor">
+                                            <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2">
+                                                <i class="bi bi-pencil me-1.5"></i> Edit
+                                            </NavLink>
+                                        </AuthorizeView>
+                                        
+                                        <AuthorizeView Policy="Delete_Tutor">
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)">
+                                                <i class="bi bi-trash me-1.5"></i> Delete
+                                            </button>
+                                        </AuthorizeView>
+                                    </td>
+                                }
+                            </tr>
+                            count++;
+                        }
+                    }
+                    else
                     {
                         <tr>
-                            <td>@count</td>
-                            <td>
-                                <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
-                                     class="rounded-circle" width="50" height="50" style="object-fit: cover;">
-                            </td>
-                            <td>@tutor.TutorName</td>
-                            <td>@tutor.RoleName</td>
-                            <td>@tutor.Email</td>
-                            <td>@tutor.Phone</td>
-                            <td class="text-center">
-                                <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2"><i class="bi bi-pencil me-1.5"></i> Edit</NavLink>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)"><i class="bi bi-trash me-1.5"></i> Delete</button>
+                            <td colspan="@(canManageTutor ? 7 : 6)" class="text-center text-muted py-4">
+                                No tutors found matching the criteria.
                             </td>
                         </tr>
-                        count++;
                     }
                 </tbody>
             </table>
@@ -101,17 +137,26 @@
     }
 </div>
 
-@* Modal *@
 @if (ShowModal)
 {
     <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content tech-card">
-                <div class="modal-header border-0"><h5 class="text-danger">Confirm Delete</h5></div>
-                <div class="modal-body text-center">Are you sure to delete @SelectedTutor?.TutorName?</div>
+                <div class="modal-header border-0">
+                    <h5 class="text-danger fw-bold mb-0">Confirm Delete</h5>
+                </div>
+                <div class="modal-body text-center text-white py-3">
+                    Are you sure you want to delete <strong>@SelectedTutor?.TutorName</strong>?
+                </div>
                 <div class="modal-footer border-0">
                     <button class="btn btn-secondary" @onclick="() => ShowModal = false">Cancel</button>
-                    <button class="btn btn-danger" @onclick="DeleteTutor" disabled="@IsProcessing">Yes, Delete</button>
+                    <button class="btn btn-danger" @onclick="DeleteTutor" disabled="@IsProcessing">
+                        @if (IsProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        }
+                        Yes, Delete
+                    </button>
                 </div>
             </div>
         </div>
