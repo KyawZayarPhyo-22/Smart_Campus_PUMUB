@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Smart_Campus_PUMUB.Components.Features.Services
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
@@ -125,10 +125,12 @@
         </ul>
 
         <div class="nav-actions">
-            <NavLink href="register" class="btn-apply"><i class="fas fa-graduation-cap"></i> Apply Now</NavLink>
-
             <AuthorizeView>
                 <Authorized>
+                    @if (!context.User.IsInRole("Admin") && !context.User.IsInRole("admin") && !context.User.IsInRole("Tutor") && !context.User.IsInRole("tutor"))
+                    {
+                        <NavLink href="register" class="btn-apply"><i class="fas fa-graduation-cap"></i> Apply Now</NavLink>
+                    }
                     <div class="profile-trigger " @onclick="ToggleProfileMenu">
                         <div class="user-circle">
                             @context.User.Identity?.Name?.Substring(0, 1).ToUpper()
@@ -164,11 +166,14 @@
     <NavLink href="department" @onclick="ToggleMobile">🏛️ Faculties</NavLink>
     <NavLink href="activities" @onclick="ToggleMobile">📅 Activities</NavLink>
     <NavLink href="library" @onclick="ToggleMobile">📖 Library</NavLink>
-    <NavLink href="register" @onclick="ToggleMobile">👤 Register</NavLink>
     <NavLink href="rules" @onclick="ToggleMobile">⚖️ Rules</NavLink>
 
     <AuthorizeView>
         <Authorized>
+            @if (!context.User.IsInRole("Admin") && !context.User.IsInRole("admin") && !context.User.IsInRole("Tutor") && !context.User.IsInRole("tutor"))
+            {
+                <NavLink href="register" @onclick="ToggleMobile">👤 Register</NavLink>
+            }
             <button class="nav-link" @onclick="Logout"
                     style="background:none; border:none; color:inherit; text-align:left;">🚪 Logout</button>
         </Authorized>
