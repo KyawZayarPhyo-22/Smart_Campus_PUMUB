@@ -1,8 +1,11 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Smart_Campus_PUMUB.Components.Features.Services
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@implements IDisposable
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject StudentRegistrationNotifierService NotifierService
 @rendermode InteractiveServer
 
 <style>
@@ -88,6 +91,32 @@
         background-color: #ef4444 !important;
         color: white !important;
     }
+
+    .notification-trigger {
+        position: relative;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        transition: 0.3s;
+        margin-left: 8px;
+        margin-right: 8px;
+    }
+
+    #navbar.scrolled .notification-trigger {
+        color: #5a4fcf !important;
+        background: #eff6ff !important;
+    }
+
+    #navbar.scrolled .notification-trigger:hover {
+        background: #5a4fcf !important;
+        color: white !important;
+    }
 </style>
 
 <nav id="navbar" class="scrolled">
@@ -130,12 +159,59 @@
                     @if (!context.User.IsInRole("Admin") && !context.User.IsInRole("admin") && !context.User.IsInRole("Tutor") && !context.User.IsInRole("tutor"))
                     {
                         <NavLink href="register" class="btn-apply"><i class="fas fa-graduation-cap"></i> Apply Now</NavLink>
+
+                        <!-- 🔔 Notification Bell Icon -->
+                        <div class="notification-trigger" @onclick="ToggleNotificationMenu">
+                            <i class="fas fa-bell" style="font-size: 1.15rem;"></i>
+                            @if (unreadCount > 0)
+                            {
+                                <span class="notification-badge" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: #ef4444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; border: 2px solid #5a4fcf;">
+                                    @unreadCount
+                                </span>
+                            }
+                        </div>
+
+                        @if (isNotificationMenuOpen)
+                        {
+                            <div class="notification-dropdown" style="position: absolute; top: 70px; right: 80px; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); width: 320px; z-index: 1001; padding: 15px; text-align: left; animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                    <h6 class="fw-bold text-dark mb-0" style="font-size: 0.95rem;">Notifications</h6>
+                                    @if (unreadCount > 0)
+                                    {
+                                        <button class="btn btn-link p-0 text-decoration-none" style="font-size: 0.8rem; color: #2563eb;" @onclick="MarkNotificationsAsRead">Mark all as read</button>
+                                    }
+                                </div>
+                                <div class="notification-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                                    @if (!notifications.Any())
+                                    {
+                                        <div class="text-center text-muted py-4" style="font-size: 0.85rem;">
+                                            <i class="far fa-bell-slash d-block fs-4 mb-2"></i>
+                                            No notifications yet
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var noti in notifications.OrderByDescending(n => n.Timestamp))
+                                        {
+                                            <div class="rounded-3 d-flex gap-2 align-items-start" style="background-color: @(noti.IsRead ? "transparent" : "#f1f5f9"); font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; padding: 10px; transition: 0.2s;">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 28px; height: 28px; background-color: @(noti.Type == "success" ? "#10b981" : "#ef4444"); flex-shrink: 0; margin-top: 2px;">
+                                                    <i class="fas @(noti.Type == "success" ? "fa-check" : "fa-exclamation")" style="font-size: 0.75rem;"></i>
+                                                </div>
+                                                <div class="flex-grow-1 text-dark">
+                                                    <div style="font-weight: @(noti.IsRead ? "normal" : "bold");">@noti.Message</div>
+                                                    <small class="text-muted">@noti.Timestamp.ToString("hh:mm tt")</small>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
                     }
                     <div class="profile-trigger " @onclick="ToggleProfileMenu">
                         <div class="user-circle">
                             @context.User.Identity?.Name?.Substring(0, 1).ToUpper()
                         </div>
-                        @* <span style="margin-left: 10px;">@context.User.Identity?.Name</span> *@
                     </div>
                     @if (isProfileMenuOpen)
                     {
@@ -186,9 +262,128 @@
 @code {
     private bool isMobileMenuOpen = false;
     private bool isProfileMenuOpen = false;
+    private bool isNotificationMenuOpen = false;
+
+    private int currentUserId = 0;
+    private int unreadCount = 0;
+    private List<NotificationItem> notifications = new();
 
     private void ToggleMobile() => isMobileMenuOpen = !isMobileMenuOpen;
     private void ToggleProfileMenu() => isProfileMenuOpen = !isProfileMenuOpen;
+
+    private async Task ToggleNotificationMenu()
+    {
+        isNotificationMenuOpen = !isNotificationMenuOpen;
+        if (isNotificationMenuOpen)
+        {
+            isProfileMenuOpen = false; // close profile menu if open
+            await MarkNotificationsAsRead();
+        }
+    }
+
+    private async Task MarkNotificationsAsRead()
+    {
+        foreach (var noti in notifications)
+        {
+            noti.IsRead = true;
+        }
+        unreadCount = 0;
+        await SaveNotifications();
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var userIdClaim = user.FindFirst("UserId")?.Value;
+            if (int.TryParse(userIdClaim, out var id))
+            {
+                currentUserId = id;
+            }
+        }
+
+        NotifierService.OnRegistrationStatusChanged += HandleRegistrationStatusChanged;
+        NotifierService.OnPaymentStatusChanged += HandlePaymentStatusChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && currentUserId > 0)
+        {
+            try
+            {
+                var notiJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"notifications_{currentUserId}");
+                if (!string.IsNullOrEmpty(notiJson))
+                {
+                    notifications = System.Text.Json.JsonSerializer.Deserialize<List<NotificationItem>>(notiJson) ?? new();
+                    unreadCount = notifications.Count(n => !n.IsRead);
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading notifications: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task SaveNotifications()
+    {
+        try
+        {
+            var notiJson = System.Text.Json.JsonSerializer.Serialize(notifications);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"notifications_{currentUserId}", notiJson);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving notifications: {ex.Message}");
+        }
+    }
+
+    private async Task HandleRegistrationStatusChanged(StudentRegistrationStatusChangedEventArgs args)
+    {
+        if (args.UserId == currentUserId)
+        {
+            await InvokeAsync(async () =>
+            {
+                var newNoti = new NotificationItem
+                {
+                    Message = $"ကျောင်းအပ်နှံမှု အခြေအနေ: သင်၏ကျောင်းအပ်နှံမှုအချက်အလက်ကို Admin မှ {(args.Status == "Approved" ? "အတည်ပြုပြီးပါပြီ" : args.Status == "Rejected" ? "ငြင်းပယ်လိုက်ပါသည်" : args.Status)} ဖြစ်ပါသည်။",
+                    Type = args.Status == "Approved" ? "success" : "danger",
+                    Timestamp = DateTime.Now,
+                    IsRead = false
+                };
+                notifications.Add(newNoti);
+                unreadCount = notifications.Count(n => !n.IsRead);
+                await SaveNotifications();
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async Task HandlePaymentStatusChanged(StudentPaymentStatusChangedEventArgs args)
+    {
+        if (args.UserId == currentUserId)
+        {
+            await InvokeAsync(async () =>
+            {
+                var newNoti = new NotificationItem
+                {
+                    Message = $"ငွေပေးချေမှု အခြေအနေ: သင်၏ငွေပေးချေမှုပြေစာကို Admin မှ {(args.Status == "Approved" ? "အတည်ပြုပြီးပါပြီ" : args.Status == "Rejected" ? "ငြင်းပယ်လိုက်ပါသည်" : args.Status)} ဖြစ်ပါသည်။",
+                    Type = args.Status == "Approved" ? "success" : "danger",
+                    Timestamp = DateTime.Now,
+                    IsRead = false
+                };
+                notifications.Add(newNoti);
+                unreadCount = notifications.Count(n => !n.IsRead);
+                await SaveNotifications();
+                StateHasChanged();
+            });
+        }
+    }
 
     private async Task Logout()
     {
@@ -196,5 +391,19 @@
         await customAuth.MarkUserAsLoggedOut();
         await JSRuntime.InvokeVoidAsync("localStorage.setItem", "isLoggedIn", "false");
         NavigationManager.NavigateTo("/", true);
+    }
+
+    public void Dispose()
+    {
+        NotifierService.OnRegistrationStatusChanged -= HandleRegistrationStatusChanged;
+        NotifierService.OnPaymentStatusChanged -= HandlePaymentStatusChanged;
+    }
+
+    public class NotificationItem
+    {
+        public string Message { get; set; } = "";
+        public string Type { get; set; } = "info"; // "success" or "danger"
+        public DateTime Timestamp { get; set; } = DateTime.Now;
+        public bool IsRead { get; set; } = false;
     }
 }

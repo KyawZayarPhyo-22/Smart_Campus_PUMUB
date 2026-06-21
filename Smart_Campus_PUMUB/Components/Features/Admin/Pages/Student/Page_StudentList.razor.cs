@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using System;
@@ -12,6 +13,7 @@ public partial class Page_StudentList : ComponentBase, IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
     [Inject] public Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService NotifierService { get; set; } = null!;
 
     private List<StudentRegistrationDataModel> StudentList { get; set; } = new();
@@ -72,6 +74,7 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private bool ShowConfirmModal { get; set; } = false;
     private string ConfirmAction { get; set; } = "";
     private string ConfirmMessage { get; set; } = "";
+    private bool IsPaymentViewMode { get; set; } = false;
 
     // Pagination Variables
     private int CurrentPage { get; set; } = 1;
@@ -165,11 +168,25 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         finally { IsLoading = false; }
     }
 
-    private async Task OpenViewModal(int id)
+    private async Task OpenRegModal(int id)
     {
+        IsPaymentViewMode = false;
         SelectedDetail = await HttpClientService.ExecuteAsync<StudentRegistrationFullModel>($"StudentRegistrations/{id}", EnumHttpMethod.Get);
         ModalCurrentStep = 1;
         ShowDetailModal = true;
+    }
+
+    private async Task OpenPaymentModal(int id)
+    {
+        IsPaymentViewMode = true;
+        SelectedDetail = await HttpClientService.ExecuteAsync<StudentRegistrationFullModel>($"StudentRegistrations/{id}", EnumHttpMethod.Get);
+        ModalCurrentStep = 4;
+        ShowDetailModal = true;
+    }
+
+    private async Task OpenViewModal(int id)
+    {
+        await OpenRegModal(id);
     }
 
     private void CloseViewModal()
@@ -193,12 +210,28 @@ public partial class Page_StudentList : ComponentBase, IDisposable
             || string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
     }
 
+    private bool CanReviewPayment(string? status)
+    {
+        return string.Equals(status, "Pending Confirmation", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrEmpty(status);
+    }
+
     private void PromptConfirm(string action)
     {
         ConfirmAction = action;
-        ConfirmMessage = action == "Approved"
-            ? "Are you sure you want to approve this registration?"
-            : "Are you sure you want to reject this registration?";
+        if (IsPaymentViewMode)
+        {
+            ConfirmMessage = action == "Approved"
+                ? "Are you sure you want to approve this payment?"
+                : "Are you sure you want to reject this payment?";
+        }
+        else
+        {
+            ConfirmMessage = action == "Approved"
+                ? "Are you sure you want to approve this registration?"
+                : "Are you sure you want to reject this registration?";
+        }
         ShowConfirmModal = true;
     }
 
@@ -211,7 +244,50 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private async Task ExecuteConfirm()
     {
         ShowConfirmModal = false;
-        await UpdateRegistrationStatus(ConfirmAction);
+        if (IsPaymentViewMode)
+        {
+            await UpdatePaymentStatus(ConfirmAction);
+        }
+        else
+        {
+            await UpdateRegistrationStatus(ConfirmAction);
+        }
+    }
+
+    private async Task UpdatePaymentStatus(string newStatus)
+    {
+        if (SelectedDetail == null) return;
+        var payment = SelectedDetail.RegistrationPayments?.FirstOrDefault();
+        if (payment == null) return;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdClaim = authState.User.FindFirst("UserId")?.Value;
+            int verifyBy = int.TryParse(userIdClaim, out var parsedId) ? parsedId : 1;
+
+            var paymentPayload = new { Status = newStatus, VerifyBy = verifyBy };
+            await HttpClientService.ExecuteAsync<object>($"RegistrationPayment/{payment.PaymentId}/verify", EnumHttpMethod.Patch, paymentPayload);
+
+            payment.Status = newStatus;
+
+            var listItem = StudentList.FirstOrDefault(x => x.RegistrationId == SelectedDetail.RegistrationId);
+            if (listItem != null && listItem.RegistrationPayments.Any())
+            {
+                listItem.RegistrationPayments.First().Status = newStatus;
+            }
+
+            await NotifierService.NotifyPaymentStatusChanged(payment.PaymentId, SelectedDetail.UserId, newStatus);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating payment status: {ex.Message}");
+        }
+        finally
+        {
+            CloseViewModal();
+            StateHasChanged();
+        }
     }
 
     private async Task UpdateRegistrationStatus(string newStatus)

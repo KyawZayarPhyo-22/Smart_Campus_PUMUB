@@ -170,11 +170,13 @@
                 @if (IsLoading)
                 {
                     <tr>
-                        <td colspan="10" class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status" style="width: 1.5rem; height: 1.5rem;">
-                                <span class="visually-hidden">Loading...</span>
+                        <td colspan="10">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 250px;">
+                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="text-muted fs-6 font-semibold">Fetching data...</div>
                             </div>
-                            <div class="text-muted mt-2 fs-6">Fetching data...</div>
                         </td>
                     </tr>
                 }
@@ -213,9 +215,14 @@
                             </td>
 
                             <td class="text-center">
-                                <button class="btn btn-outline-info btn-action" style="padding: 0.25rem 0.6rem;" @onclick="() => OpenViewModal(s.RegistrationId)">
-                                    <i class="bi bi-eye me-1"></i> View
-                                </button>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button class="btn btn-outline-info btn-action" style="padding: 0.25rem 0.6rem;" @onclick="() => OpenRegModal(s.RegistrationId)" title="Register View">
+                                        <i class="bi bi-file-earmark-person me-1"></i> View
+                                    </button>
+                                    <button class="btn btn-outline-success btn-action" style="padding: 0.25rem 0.6rem;" @onclick="() => OpenPaymentModal(s.RegistrationId)" title="Payment Confirm">
+                                        <i class="bi bi-credit-card me-1"></i> View
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         count++;
@@ -241,8 +248,16 @@
                 <!-- Modal Header -->
                 <div class="modal-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between" style="background-color: #f8fafc; border-top-left-radius: 16px; border-top-right-radius: 16px;">
                     <h5 class="modal-title fw-bold text-dark d-flex align-items-center mb-0" style="font-size: 1.25rem;">
-                        <i class="bi bi-file-earmark-person-fill text-success me-2 fs-4"></i>
-                        ကျောင်းသား/သူ စာရင်းသွင်းမှုဖောင် အချက်အလက်များ (Registration Details)
+                        @if (IsPaymentViewMode)
+                        {
+                            <i class="bi bi-credit-card-fill text-success me-2 fs-4"></i>
+                            <text>ငွေသွင်းမှု ပြေစာအတည်ပြုခြင်း (Payment Receipt Verification)</text>
+                        }
+                        else
+                        {
+                            <i class="bi bi-file-earmark-person-fill text-success me-2 fs-4"></i>
+                            <text>ကျောင်းသား/သူ စာရင်းသွင်းမှုဖောင် အချက်အလက်များ (Registration Details)</text>
+                        }
                     </h5>
                     <button type="button" class="btn-close" style="filter: none; opacity: 0.8;" @onclick="CloseViewModal"></button>
                 </div>
@@ -250,27 +265,34 @@
                 <!-- Modal Body (Styled Form Layout) -->
                 <div class="modal-body p-4" style="background-color: #f1f5f9;">
                     <!-- Stepper Mockup (Shows completed state) -->
-                    <div class="d-flex justify-content-around align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-                        <div class="d-flex align-items-center gap-2" style="cursor: pointer;" @onclick="() => ModalCurrentStep = 1">
-                            <span class="rounded-circle @(ModalCurrentStep >= 1 ? "bg-success" : "bg-secondary") text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">1</span>
-                            <span class="fw-semibold @(ModalCurrentStep == 1 ? "text-primary" : "text-secondary")" style="font-size: 0.9rem;">Personal Info</span>
+                    @if (!IsPaymentViewMode)
+                    {
+                        <div class="d-flex justify-content-around align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+                            <div class="d-flex align-items-center gap-2" style="cursor: pointer;" @onclick="() => ModalCurrentStep = 1">
+                                <span class="rounded-circle @(ModalCurrentStep >= 1 ? "bg-success" : "bg-secondary") text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">1</span>
+                                <span class="fw-semibold @(ModalCurrentStep == 1 ? "text-primary" : "text-secondary")" style="font-size: 0.9rem;">Personal Info</span>
+                            </div>
+                            <div class="text-muted" style="font-size: 1.2rem;">➔</div>
+                            <div class="d-flex align-items-center gap-2" style="cursor: pointer;" @onclick="() => ModalCurrentStep = 2">
+                                <span class="rounded-circle @(ModalCurrentStep >= 2 ? "bg-success" : "bg-secondary") text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">2</span>
+                                <span class="fw-semibold @(ModalCurrentStep == 2 ? "text-primary" : "text-secondary")" style="font-size: 0.9rem;">Academic Info</span>
+                            </div>
+                            <div class="text-muted" style="font-size: 1.2rem;">➔</div>
+                            <div class="d-flex align-items-center gap-2" style="cursor: pointer;" @onclick="() => ModalCurrentStep = 3">
+                                <span class="rounded-circle @(ModalCurrentStep >= 3 ? "bg-success" : "bg-secondary") text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">3</span>
+                                <span class="fw-semibold @(ModalCurrentStep == 3 ? "text-primary" : "text-secondary")" style="font-size: 0.9rem;">Family & Guardian Info</span>
+                            </div>
                         </div>
-                        <div class="text-muted" style="font-size: 1.2rem;">➔</div>
-                        <div class="d-flex align-items-center gap-2" style="cursor: pointer;" @onclick="() => ModalCurrentStep = 2">
-                            <span class="rounded-circle @(ModalCurrentStep >= 2 ? "bg-success" : "bg-secondary") text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">2</span>
-                            <span class="fw-semibold @(ModalCurrentStep == 2 ? "text-primary" : "text-secondary")" style="font-size: 0.9rem;">Academic Info</span>
+                    }
+                    else
+                    {
+                        <div class="d-flex justify-content-around align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;"><i class="bi bi-credit-card"></i></span>
+                                <span class="fw-semibold text-primary" style="font-size: 0.95rem;">Payment Info & Verification</span>
+                            </div>
                         </div>
-                        <div class="text-muted" style="font-size: 1.2rem;">➔</div>
-                        <div class="d-flex align-items-center gap-2" style="cursor: pointer;" @onclick="() => ModalCurrentStep = 3">
-                            <span class="rounded-circle @(ModalCurrentStep >= 3 ? "bg-success" : "bg-secondary") text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">3</span>
-                            <span class="fw-semibold @(ModalCurrentStep == 3 ? "text-primary" : "text-secondary")" style="font-size: 0.9rem;">Family & Guardian Info</span>
-                        </div>
-                        <div class="text-muted" style="font-size: 1.2rem;">➔</div>
-                        <div class="d-flex align-items-center gap-2" style="cursor: pointer;" @onclick="() => ModalCurrentStep = 4">
-                            <span class="rounded-circle @(ModalCurrentStep >= 4 ? "bg-success" : "bg-secondary") text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px; font-size: 0.85rem;">4</span>
-                            <span class="fw-semibold @(ModalCurrentStep == 4 ? "text-primary" : "text-secondary")" style="font-size: 0.9rem;">Payment Info</span>
-                        </div>
-                    </div>
+                    }
 
                     <div class="row g-4">
                         <div class="col-12">
@@ -718,27 +740,47 @@
                 <!-- Modal Footer -->
                 <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
                     <div class="d-flex gap-2">
-                        @if (ModalCurrentStep > 1)
+                        @if (!IsPaymentViewMode)
                         {
-                            <button type="button" class="btn btn-outline-secondary" style="width: 100px; height: 38px;" @onclick="() => ModalCurrentStep--">Back</button>
-                        }
-                        @if (ModalCurrentStep < 4)
-                        {
-                            <button type="button" class="btn btn-outline-primary" style="width: 100px; height: 38px;" @onclick="() => ModalCurrentStep++">Next</button>
+                            @if (ModalCurrentStep > 1)
+                            {
+                                <button type="button" class="btn btn-outline-secondary" style="width: 110px !important; height: 38px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" @onclick="() => ModalCurrentStep--">Back</button>
+                            }
+                            @if (ModalCurrentStep < 3)
+                            {
+                                <button type="button" class="btn btn-outline-primary" style="width: 110px !important; height: 38px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" @onclick="() => ModalCurrentStep++">Next</button>
+                            }
                         }
                     </div>
 
                     <div>
-                        <button type="button" class="btn btn-danger btn-action me-2"
-                                disabled="@(!CanReviewRegistration(SelectedDetail.Status))"
-                                @onclick="@(() => PromptConfirm("Rejected"))">
-                            <i class="bi bi-x-circle me-1"></i> Reject
-                        </button>
-                        <button type="button" class="btn btn-success btn-action px-4"
-                                disabled="@(!CanReviewRegistration(SelectedDetail.Status))"
-                                @onclick="@(() => PromptConfirm("Approved"))">
-                            <i class="bi bi-check-circle me-1"></i> Approve
-                        </button>
+                        @if (IsPaymentViewMode)
+                        {
+                            var pay = SelectedDetail.RegistrationPayments?.FirstOrDefault();
+                            <button type="button" class="btn btn-danger btn-action me-2"
+                                    disabled="@(pay == null || !CanReviewPayment(pay.Status))"
+                                    @onclick="@(() => PromptConfirm("Rejected"))">
+                                <i class="bi bi-x-circle me-1"></i> Reject Payment
+                            </button>
+                            <button type="button" class="btn btn-success btn-action px-4"
+                                    disabled="@(pay == null || !CanReviewPayment(pay.Status))"
+                                    @onclick="@(() => PromptConfirm("Approved"))">
+                                <i class="bi bi-check-circle me-1"></i> Approve Payment
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-danger btn-action me-2"
+                                    disabled="@(!CanReviewRegistration(SelectedDetail.Status))"
+                                    @onclick="@(() => PromptConfirm("Rejected"))">
+                                <i class="bi bi-x-circle me-1"></i> Reject
+                            </button>
+                            <button type="button" class="btn btn-success btn-action px-4"
+                                    disabled="@(!CanReviewRegistration(SelectedDetail.Status))"
+                                    @onclick="@(() => PromptConfirm("Approved"))">
+                                <i class="bi bi-check-circle me-1"></i> Approve
+                            </button>
+                        }
                     </div>
                 </div>
             </div>

@@ -1,3 +1,70 @@
+<style>
+    .custom-pagination {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 0;
+    }
+
+    .custom-page-item {
+        display: inline-block;
+    }
+
+    /* Base styling for all pagination boxes (numbers, dots, arrows) */
+    .custom-page-btn, .custom-page-dots, .custom-page-nav-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background-color: #ffffff;
+        color: #1e293b;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* Hover effect for enabled elements */
+    .custom-page-btn:hover:not(:disabled), .custom-page-nav-btn:hover:not(:disabled) {
+        border-color: #cbd5e1;
+        background-color: #f8fafc;
+    }
+
+    /* Active page style: Purple border, Purple text, White background */
+    .custom-page-item.active .custom-page-btn {
+        background-color: #ffffff;
+        border: 2px solid #5A4FCF; /* Purple theme border */
+        color: #5A4FCF; /* Purple text */
+    }
+
+    /* Arrow icon color in active navigation buttons */
+    .custom-page-nav-btn {
+        color: #94a3b8; /* gray arrow color */
+        font-size: 1.1rem;
+    }
+
+    /* Disabled Prev/Next button styling (Solid light-gray background with white arrow) */
+    .custom-page-nav-btn:disabled {
+        background-color: #cbd5e1 !important;
+        border-color: #cbd5e1 !important;
+        color: #ffffff !important;
+        cursor: not-allowed;
+    }
+
+    /* Dots representation inside identical box format */
+    .custom-page-dots {
+        color: #1e293b;
+        cursor: default;
+    }
+</style>
+
 <div class="d-flex justify-content-between align-items-center px-3" style="margin-top: 50px;">
     <div class="text-muted" style="font-size: 0.9rem;">
         Page <span class="fw-bold" style="color: #5A4FCF;">@CurrentPage</span> of <span
@@ -5,41 +72,42 @@
     </div>
 
     <nav aria-label="Page navigation">
-        <ul class="pagination pagination-sm mb-0">
-            <li class="page-item @(CurrentPage <= 1 ? "disabled" : "")">
-                <button class="page-link border-secondary-subtle px-3"
-                        style="background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6; cursor: @(CurrentPage <= 1 ? "not-allowed" : "pointer");"
+        <ul class="custom-pagination">
+            <!-- Prev Button -->
+            <li class="custom-page-item">
+                <button class="custom-page-nav-btn"
+                        disabled="@(CurrentPage <= 1)"
                         @onclick="() => ChangePage(CurrentPage - 1)">
-                    <span>&laquo; Prev</span>
+                    <i class="bi bi-chevron-left" style="font-size: 0.85rem; -webkit-text-stroke: 1px;"></i>
                 </button>
             </li>
 
+            <!-- Page Numbers -->
             @foreach (var pageNumber in GetPageNumbers())
             {
                 if (pageNumber == null)
                 {
-                    <li class="page-item disabled">
-                        <span class="page-link px-3" style="background-color: #ffffff; color: #6c757d; border: 1px solid #dee2e6;">...</span>
+                    <li class="custom-page-item">
+                        <span class="custom-page-dots">...</span>
                     </li>
                 }
                 else
                 {
                     var p = pageNumber.Value;
-                    <li class="page-item @(CurrentPage == p ? "active" : "")">
-                        <button class="page-link px-3"
-                                style="@(CurrentPage == p ? "background-color: #5A4FCF; border-color:#5A4FCF; color: white;" : "background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6;")"
-                                @onclick="() => ChangePage(p)">
+                    <li class="custom-page-item @(CurrentPage == p ? "active" : "")">
+                        <button class="custom-page-btn" @onclick="() => ChangePage(p)">
                             @p
                         </button>
                     </li>
                 }
             }
 
-            <li class="page-item @(CurrentPage >= TotalPages ? "disabled" : "")">
-                <button class="page-link border-secondary-subtle px-3"
-                        style="background-color: #ffffff; color: #5A4FCF; border: 1px solid #dee2e6; cursor: @(CurrentPage >= TotalPages ? "not-allowed" : "pointer");"
+            <!-- Next Button -->
+            <li class="custom-page-item">
+                <button class="custom-page-nav-btn"
+                        disabled="@(CurrentPage >= TotalPages)"
                         @onclick="() => ChangePage(CurrentPage + 1)">
-                    <span>Next &raquo;</span>
+                    <i class="bi bi-chevron-right" style="font-size: 0.85rem; -webkit-text-stroke: 1px;"></i>
                 </button>
             </li>
         </ul>
@@ -62,7 +130,7 @@
     private List<int?> GetPageNumbers()
     {
         var pages = new List<int?>();
-        if (TotalPages <= 7)
+        if (TotalPages <= 5)
         {
             for (int i = 1; i <= TotalPages; i++)
             {
@@ -71,27 +139,32 @@
         }
         else
         {
-            pages.Add(1);
-
-            int start = Math.Max(2, CurrentPage - 1);
-            int end = Math.Min(TotalPages - 1, CurrentPage + 1);
-
-            if (start > 2)
+            if (CurrentPage <= 3)
             {
+                pages.Add(1);
+                pages.Add(2);
+                pages.Add(3);
                 pages.Add(null);
+                pages.Add(TotalPages);
             }
-
-            for (int i = start; i <= end; i++)
+            else if (CurrentPage >= TotalPages - 2)
             {
-                pages.Add(i);
-            }
-
-            if (end < TotalPages - 1)
-            {
+                pages.Add(1);
                 pages.Add(null);
+                pages.Add(TotalPages - 2);
+                pages.Add(TotalPages - 1);
+                pages.Add(TotalPages);
             }
-
-            pages.Add(TotalPages);
+            else
+            {
+                pages.Add(1);
+                pages.Add(null);
+                pages.Add(CurrentPage - 1);
+                pages.Add(CurrentPage);
+                pages.Add(CurrentPage + 1);
+                pages.Add(null);
+                pages.Add(TotalPages);
+            }
         }
         return pages;
     }
