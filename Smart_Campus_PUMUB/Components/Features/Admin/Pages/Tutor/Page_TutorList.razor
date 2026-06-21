@@ -9,7 +9,7 @@
 
 <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
     <div class="d-flex align-items-center">
-        <div class="bg-primary rounded p-2 me-3 shadow-sm">
+        <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
             <i class="bi bi-person-workspace fs-5 text-white"></i>
         </div>
         <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Tutor Directory</h4>
@@ -91,7 +91,7 @@
                         @foreach (var tutor in FilteredTutors)
                         {
                             <tr>
-                                <td>@count</td>
+                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
                                 <td>
                                     <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
                                          class="rounded-circle" width="50" height="50" style="object-fit: cover;">

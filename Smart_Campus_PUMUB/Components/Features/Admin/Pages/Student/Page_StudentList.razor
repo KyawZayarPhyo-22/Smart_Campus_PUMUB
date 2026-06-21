@@ -186,7 +186,7 @@
                     @foreach (var s in FilteredStudents)
                     {
                         <tr>
-                            <td class="text-center text-muted fw-bold">@count</td>
+                            <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
                             <td><i class="bi bi-calendar2-event me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
                             <td class="fw-bold text-info">@s.RollNo</td>
                             <td class="fw-bold text-white">@s.StudentNameMm</td>

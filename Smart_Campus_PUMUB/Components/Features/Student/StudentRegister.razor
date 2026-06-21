@@ -611,7 +611,7 @@
                         <option value="">တိုင်း</option>
                         @for (int i = 1; i <= 14; i++)
                         {
-                            <option value="@i" selected="@(RegModel.nrc_state == i.ToString())">@i</option>
+                            <option value="@i" selected="@(RegModel.nrc_state == i.ToString())">@ToMyanmarDigits(i.ToString())</option>
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
@@ -630,7 +630,7 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="RegModel.nrc_number" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)" required>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="RegModel.nrc_number" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)" required>
                 </div>
             </div>
 
@@ -859,7 +859,7 @@
                         <option value="">တိုင်း</option>
                         @for (int i = 1; i <= 14; i++)
                         {
-                            <option value="@i" selected="@(FatherNrcState == i.ToString())">@i</option>
+                            <option value="@i" selected="@(FatherNrcState == i.ToString())">@ToMyanmarDigits(i.ToString())</option>
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
@@ -878,7 +878,7 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="FatherNrcNumber" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="FatherNrcNumber" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)">
                 </div>
             </div>
 
@@ -973,7 +973,7 @@
                         <option value="">တိုင်း</option>
                         @for (int i = 1; i <= 14; i++)
                         {
-                            <option value="@i" selected="@(GuardianNrcState == i.ToString())">@i</option>
+                            <option value="@i" selected="@(GuardianNrcState == i.ToString())">@ToMyanmarDigits(i.ToString())</option>
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
@@ -992,7 +992,7 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="123456" @bind="GuardianNrcNumber" maxlength="6" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="GuardianNrcNumber" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)">
                 </div>
             </div>
 

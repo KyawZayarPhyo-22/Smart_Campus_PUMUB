@@ -345,6 +345,90 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             return true;
         }
 
+        public static string GetEnglishNrcTownship(string mmTownship)
+        {
+            if (string.IsNullOrEmpty(mmTownship)) return "";
+            
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in mmTownship)
+            {
+                switch (c)
+                {
+                    case 'က': sb.Append("Ka"); break;
+                    case 'ခ': sb.Append("Kha"); break;
+                    case 'ဂ': sb.Append("Ga"); break;
+                    case 'ဃ': sb.Append("Gha"); break;
+                    case 'င': sb.Append("Nga"); break;
+                    case 'စ': sb.Append("Sa"); break;
+                    case 'ဆ': sb.Append("Sa"); break;
+                    case 'ဇ': sb.Append("Za"); break;
+                    case 'ဈ': sb.Append("Zha"); break;
+                    case 'ည': sb.Append("Nya"); break;
+                    case 'ဋ': sb.Append("Ta"); break;
+                    case 'ဌ': sb.Append("Hta"); break;
+                    case 'ဍ': sb.Append("Da"); break;
+                    case 'ဎ': sb.Append("Dha"); break;
+                    case 'ဏ': sb.Append("Na"); break;
+                    case 'တ': sb.Append("Ta"); break;
+                    case 'ထ': sb.Append("Hta"); break;
+                    case 'ဒ': sb.Append("Da"); break;
+                    case 'ဓ': sb.Append("Dha"); break;
+                    case 'န': sb.Append("Na"); break;
+                    case 'ပ': sb.Append("Pa"); break;
+                    case 'ဖ': sb.Append("Pha"); break;
+                    case 'ဗ': sb.Append("Ba"); break;
+                    case 'ဘ': sb.Append("Ba"); break;
+                    case 'မ': sb.Append("Ma"); break;
+                    case 'ယ': sb.Append("Ya"); break;
+                    case 'ရ': sb.Append("Ya"); break;
+                    case 'လ': sb.Append("La"); break;
+                    case 'ဝ': sb.Append("Wa"); break;
+                    case 'သ': sb.Append("Tha"); break;
+                    case 'ဟ': sb.Append("Ha"); break;
+                    case 'ဠ': sb.Append("La"); break;
+                    case 'အ': sb.Append("Ah"); break;
+                    default: sb.Append(c); break;
+                }
+            }
+            return sb.ToString().ToUpper();
+        }
+
+        public static string ToMyanmarDigits(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in input)
+            {
+                if (c >= '0' && c <= '9')
+                {
+                    sb.Append((char)('၀' + (c - '0')));
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString();
+        }
+
+        public static string ToEnglishDigits(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in input)
+            {
+                if (c >= '၀' && c <= '၉')
+                {
+                    sb.Append((char)('0' + (c - '၀')));
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString();
+        }
+
         public void OnNrcStateChanged(ChangeEventArgs e)
         {
             RegModel.nrc_state = e.Value?.ToString();
@@ -471,7 +555,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
                     if (!string.IsNullOrEmpty(GuardianNrcState) && !string.IsNullOrEmpty(GuardianNrcTownship) && !string.IsNullOrEmpty(GuardianNrcNumber))
                     {
-                        RegModel.app_guardian_nrc = $"{GuardianNrcState}/{GuardianNrcTownship}{GuardianNrcType}{GuardianNrcNumber}";
+                        RegModel.app_guardian_nrc = $"{GuardianNrcState}/{GuardianNrcTownship}{GuardianNrcType}{ToEnglishDigits(GuardianNrcNumber)}";
                     }
                 }
                 CurrentStep++;
@@ -508,16 +592,19 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
             RegModel.previous_year_roll_no = PastExamSemester;
 
+            string studentNrcNumberEng = ToEnglishDigits(RegModel.nrc_number ?? "");
+            string guardianNrcNumberEng = ToEnglishDigits(GuardianNrcNumber ?? "");
+
             if (!string.IsNullOrEmpty(RegModel.nrc_state) && !string.IsNullOrEmpty(RegModel.nrc_township) && !string.IsNullOrEmpty(RegModel.nrc_number))
             {
                 RegModel.nrc_type = NrcType;
-                RegModel.student_nrc_no = $"{RegModel.nrc_state}/{RegModel.nrc_township}{NrcType}{RegModel.nrc_number}";
+                RegModel.student_nrc_no = $"{RegModel.nrc_state}/{RegModel.nrc_township}{NrcType}{studentNrcNumberEng}";
             }
             else
                 RegModel.student_nrc_no = "-";
 
             if (!string.IsNullOrEmpty(GuardianNrcState) && !string.IsNullOrEmpty(GuardianNrcTownship) && !string.IsNullOrEmpty(GuardianNrcNumber))
-                RegModel.app_guardian_nrc = $"{GuardianNrcState}/{GuardianNrcTownship}{GuardianNrcType}{GuardianNrcNumber}";
+                RegModel.app_guardian_nrc = $"{GuardianNrcState}/{GuardianNrcTownship}{GuardianNrcType}{guardianNrcNumberEng}";
             else if (string.IsNullOrEmpty(RegModel.app_guardian_nrc))
                 RegModel.app_guardian_nrc = "-";
 
@@ -602,7 +689,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             content.Add(new StringContent(RegModel.nrc_state ?? ""), "nrc_state");
             content.Add(new StringContent(RegModel.nrc_township ?? ""), "nrc_township");
             content.Add(new StringContent(NrcType), "nrc_type");
-            content.Add(new StringContent(RegModel.nrc_number ?? ""), "nrc_number");
+            content.Add(new StringContent(studentNrcNumberEng), "nrc_number");
 
             if (SelectedPhotoBytes != null && SelectedPhotoFile != null)
             {

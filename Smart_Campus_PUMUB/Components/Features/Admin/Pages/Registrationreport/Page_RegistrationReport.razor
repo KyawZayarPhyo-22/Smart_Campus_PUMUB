@@ -253,7 +253,7 @@
                         {
                             var currentStatus = string.IsNullOrEmpty(s.Status) ? "Pending" : s.Status;
                             <tr style="font-size: 0.9rem;">
-                                <td class="text-center text-muted fw-bold">@count</td>
+                                <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
                                 <td><i class="bi bi-calendar-check me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
                                 <td class="fw-bold text-info">@s.RollNo</td>
                                 <td class="text-white fw-bold">@s.StudentNameMm</td>
@@ -375,7 +375,7 @@
                         {
                             totalAmount += p.AmountPaid;
                             <tr style="font-size: 0.9rem;">
-                                <td class="text-center text-muted fw-bold">@count</td>
+                                <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
                                 <td><i class="bi bi-calendar-event me-2 text-muted"></i>@p.PaymentDate.ToString("dd-MM-yyyy")</td>
                                 <td class="fw-bold text-info">@p.RollNo</td>
                                 <td class="text-white fw-bold">

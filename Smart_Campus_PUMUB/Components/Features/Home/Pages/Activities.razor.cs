@@ -1,4 +1,4 @@
-﻿// using Microsoft.AspNetCore.Components;
+// using Microsoft.AspNetCore.Components;
 // using Smart_Campus_PUMUB.WebApi.Models;
 // using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 
@@ -118,7 +118,7 @@ namespace Smart_Campus_PUMUB.Components.Pages
 
         // 🌟 Pagination အတွက် လိုအပ်သော Variables များ
         public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 2; // 💡 တစ်မျက်နှာမှာ ၆ ခုပဲ ပြသမည် (စိတ်ကြိုက်ပြင်နိုင်သည်)
+        public int PageSize { get; set; } = 8; // 💡 တစ်မျက်နှာမှာ ၈ ခု ပြသမည် (စိတ်ကြိုက်ပြင်နိုင်သည်)
         public int TotalPages { get; set; } = 1;
 
         protected override async Task OnInitializedAsync()

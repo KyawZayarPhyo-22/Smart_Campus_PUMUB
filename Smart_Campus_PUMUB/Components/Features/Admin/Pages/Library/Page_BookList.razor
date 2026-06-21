@@ -20,7 +20,7 @@
 <div class="tab-pane fade show active" id="v-pills-books">
     <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
         <div class="d-flex align-items-center">
-            <div class="bg-primary rounded p-2 me-3 shadow-sm">
+            <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
                 <i class="bi bi-book-half fs-5 text-white"></i>
             </div>
             <div>
@@ -94,7 +94,7 @@
                         }
                         @foreach (var book in FilteredBooks) {
                             <tr class="table-row-hover">
-                                <td class="fw-bold text-muted">@count</td>
+                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
                                 <td>
                                     <img src="@($"https://localhost:7297{book.Image}")" class="rounded" style="width: 40px; height: 50px; object-fit: cover;" />
                                 </td>
