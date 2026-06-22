@@ -116,6 +116,9 @@ namespace Smart_Campus_PUMUB.Components.Pages
         public bool isPopupOpen { get; set; } = false;
         public ActivityModel? selectedActivity { get; set; }
 
+        // Loading state
+        public bool isLoading { get; set; } = true;
+
         // 🌟 Pagination အတွက် လိုအပ်သော Variables များ
         public int CurrentPage { get; set; } = 1;
         public int PageSize { get; set; } = 8; // 💡 တစ်မျက်နှာမှာ ၈ ခု ပြသမည် (စိတ်ကြိုက်ပြင်နိုင်သည်)
@@ -128,7 +131,10 @@ namespace Smart_Campus_PUMUB.Components.Pages
 
         public async Task LoadActivities()
         {
+            isLoading = true;
+            StateHasChanged();
             masterActivities = await HttpClientService.ExecuteAsync<List<ActivityModel>>("activity", EnumHttpMethod.Get) ?? new();
+            isLoading = false;
             ApplyFilters();
         }
 

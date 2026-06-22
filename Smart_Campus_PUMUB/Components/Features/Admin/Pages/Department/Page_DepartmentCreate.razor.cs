@@ -13,6 +13,7 @@ public partial class Page_DepartmentCreate : ComponentBase
 
     private DepartmentCreateRequestModel departmentModel = new();
     private bool isProcessing = false;
+    private bool IsLoading = true;
     
     // 💡 Status Message ကို UI မှာ ပြရန်အတွက်
     private string statusMessage = ""; 
@@ -25,6 +26,7 @@ public partial class Page_DepartmentCreate : ComponentBase
 
     private async Task LoadFaculties()
     {
+        IsLoading = true;
         try
         {
             var response = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get);
@@ -37,6 +39,10 @@ public partial class Page_DepartmentCreate : ComponentBase
         catch (Exception ex)
         {
             statusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 

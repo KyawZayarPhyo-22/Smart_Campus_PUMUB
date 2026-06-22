@@ -129,6 +129,7 @@ namespace Smart_Campus_PUMUB.Components.Pages
         public string searchQuery { get; set; } = "";
         public bool isSearching { get; set; } = false;
         public bool isOpen { get; set; } = false;
+        public bool isLoading { get; set; } = true;
 
         public int CurrentPage { get; set; } = 1;
         public int PageSize { get; set; } = 10; // 💡 တစ်မျက်နှာမှာ စာအုပ် ၁၀ အုပ်စီပဲ ပြသမည်
@@ -143,8 +144,11 @@ namespace Smart_Campus_PUMUB.Components.Pages
 
         public async Task LoadBooks()
         {
+            isLoading = true;
+            StateHasChanged();
             masterBooks = await HttpClientService.ExecuteAsync<List<BookModel>>("book", EnumHttpMethod.Get) ?? new();
             Categories = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get) ?? new();
+            isLoading = false;
             FilterData();
         }
 

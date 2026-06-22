@@ -46,7 +46,7 @@ public partial class Page_DepartmentList : ComponentBase
         }
     }
 
-    private string statusMessage;
+    private string? statusMessage;
 
     public bool IsSuccess { get; private set; }
     private bool ShowModal { get; set; } = false;

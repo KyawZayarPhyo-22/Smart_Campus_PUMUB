@@ -26,9 +26,12 @@ namespace Smart_Campus_PUMUB.Components.Pages
         public bool isPopupOpen { get; set; } = false;
         public RuleModel? selectedRule { get; set; }
 
+        // Loading state
+        public bool isLoading { get; set; } = true;
+
         // 🌟 Pagination အတွက် လိုအပ်သော Variables များ
         public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 2; // 💡 တစ်မျက်နှာမှာ Rule ၆ ခုစီပြသမည် (စိတ်ကြိုက်ပြင်နိုင်သည်)
+        public int PageSize { get; set; } = 6; // 💡 တစ်မျက်နှာမှာ Rule ၆ ခုစီပြသမည် (စိတ်ကြိုက်ပြင်နိုင်သည်)
         public int TotalPages { get; set; } = 1;
 
         protected override async Task OnInitializedAsync()
@@ -38,7 +41,10 @@ namespace Smart_Campus_PUMUB.Components.Pages
 
         public async Task LoadRules()
         {
+            isLoading = true;
+            StateHasChanged();
             masterRules = await HttpClientService.ExecuteAsync<List<RuleModel>>("rules", EnumHttpMethod.Get) ?? new();
+            isLoading = false;
             ApplyFilters();
         }
 

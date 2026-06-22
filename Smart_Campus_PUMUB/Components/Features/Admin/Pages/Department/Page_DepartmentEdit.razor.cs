@@ -16,12 +16,25 @@ public partial class Page_DepartmentEdit : ComponentBase
     private DepartmentUpdateRequestModel departmentModel = new();
     private List<FacultyModel> FacultyList { get; set; } = new();
     private bool isProcessing = false;
+    private bool IsLoading = true;
     private string statusMessage = "";
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadFaculties();
-        await LoadDepartment();
+        IsLoading = true;
+        try
+        {
+            await LoadFaculties();
+            await LoadDepartment();
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async Task LoadFaculties()

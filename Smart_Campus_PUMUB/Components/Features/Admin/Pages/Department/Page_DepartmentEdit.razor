@@ -5,35 +5,45 @@
 @rendermode InteractiveServer
 
 <div class="tech-card p-4">
-    @if (!string.IsNullOrEmpty(statusMessage))
+    @if (IsLoading)
     {
-        <div class="alert alert-info">@statusMessage</div>
+        <div class="text-center my-5">
+            <div class="spinner-border text-warning" role="status"></div>
+            <div class="text-muted mt-2">အချက်အလက်များကို ဆွဲယူနေပါသည်...</div>
+        </div>
     }
+    else
+    {
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div class="alert alert-info">@statusMessage</div>
+        }
 
-    <EditForm Model="departmentModel" OnValidSubmit="HandleUpdate" FormName="EditDepartmentForm">
-        <div class="row g-3">
-            <div class="col-12">
-                <label class="form-label">Faculty <span class="text-danger">*</span></label>
-                <InputSelect class="form-select" @bind-Value="departmentModel.FacultyId">
-                    <option value="0">-- Select Faculty --</option>
-                    @foreach (var faculty in FacultyList)
-                    {
-                        <option value="@faculty.FacultyId">@faculty.FacultyName</option>
-                    }
-                </InputSelect>
+        <EditForm Model="departmentModel" OnValidSubmit="HandleUpdate" FormName="EditDepartmentForm">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label">Faculty <span class="text-danger">*</span></label>
+                    <InputSelect class="form-select" @bind-Value="departmentModel.FacultyId">
+                        <option value="0">-- Select Faculty --</option>
+                        @foreach (var faculty in FacultyList)
+                        {
+                            <option value="@faculty.FacultyId">@faculty.FacultyName</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Department Name <span class="text-danger">*</span></label>
+                    <InputText class="form-control" @bind-Value="departmentModel.DepartmentName" />
+                </div>
             </div>
 
-            <div class="col-12">
-                <label class="form-label">Department Name <span class="text-danger">*</span></label>
-                <InputText class="form-control" @bind-Value="departmentModel.DepartmentName" />
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <NavLink href="/admin/departments" class="btn btn-secondary">Cancel</NavLink>
+                <button type="submit" class="btn btn-warning text-dark fw-semibold" disabled="@isProcessing">
+                    @(isProcessing ? "Saving..." : "Save Changes")
+                </button>
             </div>
-        </div>
-
-        <div class="d-flex justify-content-end gap-2 mt-4">
-            <NavLink href="/admin/departments" class="btn btn-secondary">Cancel</NavLink>
-            <button type="submit" class="btn btn-warning text-dark fw-semibold" disabled="@isProcessing">
-                @(isProcessing ? "Saving..." : "Save Changes")
-            </button>
-        </div>
-    </EditForm>
+        </EditForm>
+    }
 </div>

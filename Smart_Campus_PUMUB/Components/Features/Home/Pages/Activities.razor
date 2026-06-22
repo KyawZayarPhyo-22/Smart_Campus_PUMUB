@@ -73,304 +73,6 @@
 @using Smart_Campus_PUMUB.Components.Shared @* 🌟 Shared Component ရှိရာ Namespace *@
 @inherits ActivityBase
 
-<style>
-    .social-activity-card {
-        background: var(--card-bg);
-        border-radius: 28px;
-        padding: 24px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-        border: 1px solid var(--border);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        position: relative;
-        width: 100%;
-        margin: 0 auto;
-    }
-
-    .social-activity-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(90, 79, 207, 0.15);
-    }
-
-    .card-header-section {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .author-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .avatar-wrapper {
-        position: relative;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        padding: 2px;
-        border: 2px solid #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #ffffff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-
-    .author-avatar {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        object-fit: contain;
-    }
-
-    .author-meta {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .author-name-row {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    .author-name {
-        font-weight: 700;
-        font-size: 0.95rem;
-        color: var(--text);
-        margin: 0;
-    }
-
-    .verified-icon {
-        color: #3897f0;
-        font-size: 0.9rem;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    .post-time {
-        font-size: 0.78rem;
-        color: var(--text3);
-    }
-
-    .menu-btn {
-        background: none;
-        border: none;
-        color: var(--text3);
-        cursor: pointer;
-        padding: 4px;
-        font-size: 1.1rem;
-        transition: color 0.2s;
-    }
-
-    .menu-btn:hover {
-        color: var(--text);
-    }
-
-    .card-text-section {
-        font-size: 0.92rem;
-        color: var(--text2);
-        line-height: 1.5;
-    }
-
-    .card-text-section .more-link {
-        color: #5A4FCF;
-        font-weight: 700;
-        cursor: pointer;
-        text-decoration: none;
-        margin-left: 4px;
-    }
-
-    .card-media-section {
-        position: relative;
-        border-radius: 20px;
-        overflow: hidden;
-        aspect-ratio: 4 / 3;
-    }
-
-    .card-media-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-
-    .social-activity-card:hover .card-media-image {
-        transform: scale(1.03);
-    }
-
-    .card-footer-actions {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        margin-top: 8px;
-    }
-
-    .heart-pill {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        border-radius: 50px;
-        background: rgba(239, 68, 68, 0.08);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-        font-size: 0.88rem;
-        font-weight: 600;
-        color: #ef4444;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.05);
-    }
-
-    .heart-pill:hover {
-        background: #ef4444;
-        color: #ffffff;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(239, 68, 68, 0.2);
-    }
-
-    .heart-pill:hover i {
-        color: #ffffff !important;
-    }
-
-    .heart-pill.active {
-        background: #ef4444;
-        color: #ffffff;
-        border-color: #ef4444;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-    }
-
-    .heart-pill.active i {
-        color: #ffffff !important;
-    }
-
-    .card-title-text {
-        color: var(--text) !important;
-        font-size: 1.05rem !important;
-        margin-bottom: 8px;
-    }
-
-    .faculties-grid {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)) !important;
-        gap: 24px !important;
-    }
-
-    @@media (min-width: 1200px) {
-        .faculties-grid {
-            grid-template-columns: repeat(4, 1fr) !important;
-        }
-    }
-
-    /* Modal Styling */
-    .premium-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(10, 14, 22, 0.75);
-        backdrop-filter: blur(8px);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: fadeIn 0.25s ease-out;
-    }
-
-    .premium-modal-content {
-        background: var(--card-bg);
-        border: 1px solid var(--border);
-        border-radius: 28px;
-        width: 90%;
-        max-width: 600px;
-        max-height: 85vh;
-        overflow-y: auto;
-        box-shadow: var(--shadow-lg);
-        animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        display: flex;
-        flex-direction: column;
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-    }
-
-    .premium-modal-content::-webkit-scrollbar {
-        display: none; /* Chrome, Safari and Opera */
-    }
-
-    .premium-modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .premium-modal-title {
-        font-size: 1.25rem;
-        font-weight: 800;
-        color: var(--text);
-        margin: 0;
-    }
-
-    .premium-modal-close {
-        background: none;
-        border: none;
-        color: var(--text3);
-        font-size: 1.5rem;
-        cursor: pointer;
-        transition: color 0.2s;
-    }
-
-    .premium-modal-close:hover {
-        color: var(--text);
-    }
-
-    .premium-modal-body {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-
-    .premium-modal-img {
-        width: 100%;
-        border-radius: 20px;
-        object-fit: cover;
-        aspect-ratio: 16 / 9;
-    }
-
-    .premium-modal-description {
-        font-size: 0.98rem;
-        color: var(--text2);
-        line-height: 1.6;
-        white-space: pre-wrap;
-    }
-
-    .premium-modal-footer {
-        padding: 20px 24px;
-        border-top: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 12px;
-    }
-
-    @@keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @@keyframes slideUp {
-        from { transform: translateY(30px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-</style>
-
 <section id="events" style="background:var(--bg2); margin-top: 50px;">
     <div class="container">
         <div class="section-header">
@@ -395,70 +97,55 @@
         </div>
 
         <div class="faculties-grid">
-            @if (pagedActivities != null && pagedActivities.Any())
+            @if (isLoading)
+            {
+                @for (int i = 0; i < 8; i++)
+                {
+                    <div class="faculty-card act-skel-card">
+                        <div class="act-skel-img"></div>
+                        <div class="act-skel-body">
+                            <div class="act-skel-line act-skel-title"></div>
+                            <div class="act-skel-line" style="width:90%;"></div>
+                            <div class="act-skel-line" style="width:65%;"></div>
+                            <div class="act-skel-line act-skel-btn"></div>
+                        </div>
+                    </div>
+                }
+            }
+            else if (pagedActivities != null && pagedActivities.Any())
             {
                 @foreach (var item in pagedActivities)
                 {
-                    <div class="social-activity-card">
-                        <!-- Top Header Row -->
-                        <div class="card-header-section">
-                            <div class="author-info">
-                                <div class="avatar-wrapper">
-                                    <img class="author-avatar" src="/puu.png" alt="University Logo" />
-                                </div>
-                                <div class="author-meta">
-                                    <div class="author-name-row">
-                                        <span class="author-name">@(item.CreatedBy ?? "Smart Campus Admin")</span>
-                                        <i class="bi bi-patch-check-fill verified-icon"></i>
-                                    </div>
-                                    <span class="post-time">Posted @(item.CreatedAt.Year > 1 ? item.CreatedAt.ToString("MMM dd, yyyy") : "recently")</span>
-                                </div>
-                            </div>
-                            <button class="menu-btn" title="More options">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                        </div>
-
-                        <!-- Content Section (Title & Truncated Description) -->
-                        <div class="card-text-section">
-                            <h5 class="fw-bold mb-2 card-title-text">@item.ActivityTitle</h5>
-                            <p class="mb-0 text-muted">
-                                @(item.Description?.Length > 50 ? item.Description.Substring(0, 50) + "..." : item.Description)
-                                @if (item.Description?.Length > 50)
-                                {
-                                    <a class="more-link" @onclick="() => OpenPopup(item)">see more...</a>
-                                }
-                            </p>
-                        </div>
-
-                        <!-- Image Section -->
-                        <div class="card-media-section" @onclick="() => OpenPopup(item)" style="cursor: pointer;">
+                    <div class="faculty-card" style="overflow: hidden;">
+                        <div class="faculty-img">
                             @if (!string.IsNullOrEmpty(item.Image) && !item.Image.Equals("string", StringComparison.OrdinalIgnoreCase))
                             {
-                                <img class="card-media-image" 
+                                <img style="object-fit: cover; width: 100%; height: 200px;" 
                                      src="@($"https://localhost:7297{item.Image}")" 
                                      alt="@item.ActivityTitle" 
-                                     onerror="this.src='https://via.placeholder.com/600x450'">
+                                     onerror="this.src='https://via.placeholder.com/400x280'">
                             }
                             else
                             {
-                                <img class="card-media-image" 
-                                     src="https://via.placeholder.com/600x450" 
+                                <img style="object-fit: cover; width: 100%; height: 200px;" 
+                                     src="https://via.placeholder.com/400x280" 
                                      alt="Placeholder">
                             }
                         </div>
-
-                        <!-- Action footer bar (TTS Heart Button Only) -->
-                        <div class="card-footer-actions">
-                            @{
-                                var actId = item.ActivityId;
-                                var hasLiked = LikedActivities.ContainsKey(actId) && LikedActivities[actId];
-                                var initialLikes = (actId * 17) % 200 + 42;
-                                var currentLikes = initialLikes + (ExtraLikes.ContainsKey(actId) ? ExtraLikes[actId] : 0);
-                            }
-                            <button class="heart-pill @(hasLiked ? "active" : "")" @onclick="() => ToggleLike(actId)">
-                                <i class="@(hasLiked ? "fas fa-heart" : "far fa-heart") me-1"></i>
-                                <span>@currentLikes Likes</span>
+                        <div class="faculty-body">
+                            <h3>@item.ActivityTitle</h3>
+                            <p class="truncate-text">
+                                @(item.Description?.Length > 100 ? item.Description.Substring(0, 100) + "..." : item.Description)
+                            </p>
+                            <div class="event-meta">
+                                <span>
+                                    <i class="fas fa-calendar-day"></i>
+                                    @(item.CreatedAt.Year > 1 ? item.CreatedAt.ToString("yyyy-MM-dd") : "Not set")
+                                </span>
+                            </div>
+                            <button class="btn-sm" style="background:#5A4FCF; color:white; border:none; margin-top:10px;" 
+                                    @onclick="() => OpenPopup(item)">
+                                Learn More
                             </button>
                         </div>
                     </div>
@@ -481,68 +168,43 @@
 
 @if (isPopupOpen && selectedActivity != null)
 {
-    <div class="premium-modal-overlay" @onclick="ClosePopup">
-        <div class="premium-modal-content" @onclick:stopPropagation="true">
-            <div class="premium-modal-header">
-                <div class="d-flex align-items-center gap-2">
-                    <img src="/puu.png" alt="University Logo" style="width: 32px; height: 32px; object-fit: contain;" />
-                    <h5 class="premium-modal-title">Activity Details</h5>
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.6); z-index: 1050;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4">
+                <h3 class="mb-3">@selectedActivity.ActivityTitle</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <p>@selectedActivity.Description</p>
                 </div>
-                <button class="premium-modal-close" @onclick="ClosePopup">
-                    <i class="fas fa-times"></i>
+                <button class="btn mt-3" style="background:#5A4FCF; color:white;" @onclick="ClosePopup">
+                    Close
                 </button>
-            </div>
-            
-            <div class="premium-modal-body">
-                @if (!string.IsNullOrEmpty(selectedActivity.Image) && !selectedActivity.Image.Equals("string", StringComparison.OrdinalIgnoreCase))
-                {
-                    <img class="premium-modal-img" src="@($"https://localhost:7297{selectedActivity.Image}")" alt="@selectedActivity.ActivityTitle" />
-                }
-                else
-                {
-                    <img class="premium-modal-img" src="https://via.placeholder.com/600x450" alt="Placeholder" />
-                }
-                
-                <h4 class="fw-bold mt-2" style="color: var(--text);">@selectedActivity.ActivityTitle</h4>
-                <div class="text-muted small mb-2">
-                    <i class="far fa-calendar-alt me-1"></i> Posted on @(selectedActivity.CreatedAt.Year > 1 ? selectedActivity.CreatedAt.ToString("MMM dd, yyyy") : "recently")
-                </div>
-                
-                <p class="premium-modal-description">@selectedActivity.Description</p>
-            </div>
-            
-            <div class="premium-modal-footer">
-                @{
-                    var actId = selectedActivity.ActivityId;
-                    var hasLikedModal = LikedActivities.ContainsKey(actId) && LikedActivities[actId];
-                    var initialLikesModal = (actId * 17) % 200 + 42;
-                    var currentLikesModal = initialLikesModal + (ExtraLikes.ContainsKey(actId) ? ExtraLikes[actId] : 0);
-                }
-                <button class="heart-pill @(hasLikedModal ? "active" : "") me-auto" @onclick="() => ToggleLike(actId)">
-                    <i class="@(hasLikedModal ? "fas fa-heart" : "far fa-heart") me-1"></i>
-                    <span>@currentLikesModal Likes</span>
-                </button>
-                <button class="btn px-4" style="background:#5A4FCF; color:white; border-radius: 50px;" @onclick="ClosePopup">Got It</button>
             </div>
         </div>
     </div>
 }
 
-@code {
-    private Dictionary<int, bool> LikedActivities = new();
-    private Dictionary<int, int> ExtraLikes = new();
-
-    private void ToggleLike(int id)
-    {
-        if (LikedActivities.ContainsKey(id))
-        {
-            LikedActivities[id] = !LikedActivities[id];
-            ExtraLikes[id] = LikedActivities[id] ? 1 : 0;
-        }
-        else
-        {
-            LikedActivities[id] = true;
-            ExtraLikes[id] = 1;
-        }
+<style>
+    @@keyframes act-shimmer {
+        0%   { background-position: -600px 0; }
+        100% { background-position:  600px 0; }
     }
-}
+    .act-skel-card { pointer-events: none; overflow: hidden; }
+    .act-skel-img {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 600px 100%;
+        animation: act-shimmer 1.4s infinite linear;
+    }
+    .act-skel-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .act-skel-line {
+        height: 13px;
+        border-radius: 6px;
+        width: 100%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 600px 100%;
+        animation: act-shimmer 1.4s infinite linear;
+    }
+    .act-skel-title { height: 18px; width: 70%; }
+    .act-skel-btn   { height: 32px; width: 100px; border-radius: 20px; margin-top: 4px; }
+</style>

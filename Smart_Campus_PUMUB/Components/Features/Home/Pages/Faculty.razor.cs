@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using System;
@@ -22,6 +22,7 @@ namespace Smart_Campus_PUMUB.Components.Pages
         public int SelectedFacultyId { get; set; } = 0;
         public string searchQuery { get; set; } = "";
         public bool isSearching { get; set; } = false; // Icon ပြောင်းဖို့အတွက်
+        public bool isLoading  { get; set; } = true;  // Loading state
 
         // 🌟 Pagination အတွက် လိုအပ်သော Variables များ
         public int CurrentPage { get; set; } = 1;
@@ -30,8 +31,10 @@ namespace Smart_Campus_PUMUB.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            isLoading = true;
             Faculties = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get) ?? new();
             Departments = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get) ?? new();
+            isLoading = false;
             FilterData();
         }
 

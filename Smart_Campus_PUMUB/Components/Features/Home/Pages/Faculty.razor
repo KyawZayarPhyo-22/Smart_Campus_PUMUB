@@ -46,35 +46,47 @@
             </div>
         </div>
 
-        <div class="faculties-grid">
-            @* 🌟 FilteredDepartments နေရာတွင် Pagination ဖြတ်ပြီးသား PagedDepartments ကို ပြောင်းလဲအသုံးပြုထားပါသည် *@
-            @if (PagedDepartments != null && PagedDepartments.Any())
-            {
-                @foreach (var dept in PagedDepartments)
+        @if (isLoading)
+        {
+            <div class="text-center w-100 my-5 py-5">
+                <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="text-muted mt-3">Department စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else
+        {
+            <div class="faculties-grid">
+                @* 🌟 FilteredDepartments နေရာတွင် Pagination ဖြတ်ပြီးသား PagedDepartments ကို ပြောင်းလဲအသုံးပြုထားပါသည် *@
+                @if (PagedDepartments != null && PagedDepartments.Any())
                 {
-                    <div class="faculty-card">
-                        <div class="faculty-body">
-                            <h3>@dept.DepartmentName</h3>
-                            @* <p>@(dept.Description ?? "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quibusdam
-                    inventore dolores facilis? Ab facilis dolores autem aspernatur totam voluptas, corporis nihil ullam
-                    quas voluptatem cum recusandae ad quos numquam eum!")</p> *@
-                            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus est natus omnis incidunt vero
-                                laborum autem quidem velit minima maxime?</p>
+                    @foreach (var dept in PagedDepartments)
+                    {
+                        <div class="faculty-card">
+                            <div class="faculty-body">
+                                <h3>@dept.DepartmentName</h3>
+                                @* <p>@(dept.Description ?? "Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quibusdam
+                        inventore dolores facilis? Ab facilis dolores autem aspernatur totam voluptas, corporis nihil ullam
+                        quas voluptatem cum recusandae ad quos numquam eum!")</p> *@
+                                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus est natus omnis incidunt vero
+                                    laborum autem quidem velit minima maxime?</p>
+                                </div>
                             </div>
+                        }
+                    }
+                else
+                    {
+                        <div class="w-100 text-center mt-5">
+                            <p class="text-muted">No departments found matching your criteria.</p>
                         </div>
                     }
-                }
-            else
-                {
-                    <div class="w-100 text-center mt-5">
-                        <p class="text-muted">No departments found matching your criteria.</p>
-                    </div>
-                }
-            </div>
+                </div>
 
-            <div class="mt-4">
-                <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
-            </div>
+                <div class="mt-4">
+                    <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+                </div>
+        }
 
         </div>
     </section>

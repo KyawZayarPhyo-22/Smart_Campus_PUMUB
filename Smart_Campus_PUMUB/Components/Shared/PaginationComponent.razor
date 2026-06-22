@@ -46,8 +46,14 @@
 
     /* Arrow icon color in active navigation buttons */
     .custom-page-nav-btn {
-        color: #94a3b8; /* gray arrow color */
-        font-size: 1.1rem;
+        color: #4b5563;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .custom-page-nav-btn:not(:disabled):hover {
+        color: #5A4FCF;
+        border-color: #5A4FCF;
     }
 
     /* Disabled Prev/Next button styling (Solid light-gray background with white arrow) */
@@ -78,7 +84,7 @@
                 <button class="custom-page-nav-btn"
                         disabled="@(CurrentPage <= 1)"
                         @onclick="() => ChangePage(CurrentPage - 1)">
-                    <i class="bi bi-chevron-left" style="font-size: 0.85rem; -webkit-text-stroke: 1px;"></i>
+                    <i class="fas fa-chevron-left" style="font-size: 0.8rem;"></i>
                 </button>
             </li>
 
@@ -107,7 +113,7 @@
                 <button class="custom-page-nav-btn"
                         disabled="@(CurrentPage >= TotalPages)"
                         @onclick="() => ChangePage(CurrentPage + 1)">
-                    <i class="bi bi-chevron-right" style="font-size: 0.85rem; -webkit-text-stroke: 1px;"></i>
+                    <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
                 </button>
             </li>
         </ul>

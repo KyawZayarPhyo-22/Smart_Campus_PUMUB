@@ -145,6 +145,15 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         await LoadStudents();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initDatePicker", "fromDateInput");
+            await JSRuntime.InvokeVoidAsync("initDatePicker", "toDateInput");
+        }
+    }
+
     private async Task HandleRegistrationSubmitted()
     {
         await LoadStudents();

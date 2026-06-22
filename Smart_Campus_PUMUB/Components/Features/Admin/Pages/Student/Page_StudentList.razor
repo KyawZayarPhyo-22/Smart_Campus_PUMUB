@@ -125,13 +125,13 @@
         <div class="col-md-4">
             <div class="d-flex align-items-center gap-2">
                 <div class="flex-grow-1 position-relative">
-                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #ffffff; padding: 0 4px; color: #6b7280 !important;">From</span>
-                    <input type="date" class="form-control material-input w-100" @bind="FromDateInput" />
+                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #2b2b40; padding: 0 4px; color: #a1a5b7 !important;">From</span>
+                    <input type="text" id="fromDateInput" class="form-control material-input w-100" @bind="FromDateInput" @bind:format="dd-MM-yyyy" placeholder="dd-mm-yyyy" autocomplete="off" />
                 </div>
                 <span class="text-muted fw-bold">~</span>
                 <div class="flex-grow-1 position-relative">
-                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #ffffff; padding: 0 4px; color: #6b7280 !important;">To</span>
-                    <input type="date" class="form-control material-input w-100" @bind="ToDateInput" />
+                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #2b2b40; padding: 0 4px; color: #a1a5b7 !important;">To</span>
+                    <input type="text" id="toDateInput" class="form-control material-input w-100" @bind="ToDateInput" @bind:format="dd-MM-yyyy" placeholder="dd-mm-yyyy" autocomplete="off" />
                 </div>
             </div>
         </div>

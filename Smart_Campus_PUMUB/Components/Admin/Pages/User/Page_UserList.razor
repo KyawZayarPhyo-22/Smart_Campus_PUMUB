@@ -161,7 +161,7 @@
                                             @user.RoleName
                                         </span>
                                     </td>
-                                    <td class="text-secondary">@user.CreatedDateTime?.ToString("MMM dd, yyyy")</td>
+                                    <td class="text-secondary">@user.CreatedDateTime?.ToString("dd-MM-yyyy")</td>
                                     <td>
                                         <div class="d-flex justify-content-center align-items-center gap-2">
                                             <NavLink href="@($"/admin/user/edit/{user.UserId}")" class="btn btn-action-edit">

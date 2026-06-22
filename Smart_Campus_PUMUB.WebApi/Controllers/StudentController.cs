@@ -456,4 +456,4 @@ public class StudentController : ControllerBase
         var count = _db.Users.Count(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
         return Ok(new { Count = count });
     }
-}
+}
