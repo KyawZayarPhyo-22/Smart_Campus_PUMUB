@@ -13,10 +13,12 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 public class UserController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
+    private readonly JwtSettings _jwtSettings;
 
-    public UserController(SmartCampusDbContext db)
+    public UserController(SmartCampusDbContext db, JwtSettings jwtSettings)
     {
         _db = db;
+        _jwtSettings = jwtSettings;
     }
 
     // =========================================================================
@@ -58,6 +60,7 @@ public class UserController : ControllerBase
             UserName = formattedUserName,
             Password = hashedPass,
             IsDelete = false,
+            MustChangePassword = false,
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         };
 
@@ -89,11 +92,62 @@ public class UserController : ControllerBase
         }
 
         // 🔒 Hashed Password ကို ကိုက်ညီမှု ရှိမရှိ စစ်ဆေးခြင်း
-        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+        bool isPasswordValid = false;
+        try
+        {
+            if (user.Password != null && user.Password.StartsWith("$2"))
+            {
+                isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+            }
+            else
+            {
+                isPasswordValid = user.Password == request.Password;
+            }
+        }
+        catch
+        {
+            isPasswordValid = user.Password == request.Password;
+        }
+
         if (!isPasswordValid)
         {
             return Unauthorized(new { message = "Username သို့မဟုတ် Password မှားယွင်းနေပါသည်။" });
         }
+
+        var role = _db.Roles.FirstOrDefault(r => r.RoleId == user.RoleId);
+        var roleName = role?.RoleName ?? "Unknown";
+
+        var permissions = _db.RolePermissions
+            .Include(rp => rp.Permission)
+            .Where(rp => rp.RoleId == user.RoleId)
+            .Select(rp => rp.Permission.PermissionName)
+            .ToList();
+
+        var claims = new System.Collections.Generic.List<System.Security.Claims.Claim>
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, user.UserName),
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, roleName),
+            new System.Security.Claims.Claim("UserId", user.UserId.ToString()),
+            new System.Security.Claims.Claim("FullName", user.FullName ?? string.Empty)
+        };
+
+        foreach (var perm in permissions)
+        {
+            claims.Add(new System.Security.Claims.Claim("Permission", perm));
+        }
+
+        var key = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+        var creds = new Microsoft.IdentityModel.Tokens.SigningCredentials(key, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256);
+
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
+            claims: claims,
+            expires: System.DateTime.UtcNow.AddDays(7),
+            signingCredentials: creds
+        );
+
+        var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
 
         return Ok(new
         {
@@ -101,7 +155,10 @@ public class UserController : ControllerBase
             message = "Login ဝင်ရောက်ခြင်း အောင်မြင်ပါသည်။",
             userId = user.UserId,
             fullName = user.FullName,
-            roleId = user.RoleId
+            roleId = user.RoleId,
+            role = roleName,
+            token = jwtToken,
+            permissions = permissions
         });
     }
 
@@ -132,6 +189,33 @@ public class UserController : ControllerBase
             .ToList();
 
         return Ok(lst);
+    }
+
+    // 🎯 [NEW] GET: api/user/roleno/{roleNo} - RoleNo ဖြင့် User ရှာဖွေပြီး Tutor Profile စစ်ဆေးရန်
+    [HttpGet("roleno/{roleNo}")]
+    public IActionResult GetUserByRoleNo(string roleNo)
+    {
+        var user = _db.Users
+            .Include(u => u.Role)
+            .FirstOrDefault(u => u.RoleNo == roleNo && u.IsDelete == false);
+            
+        if (user == null)
+        {
+            return NotFound(new { IsSuccess = false, Message = "အသုံးပြုသူ ရှာမတွေ့ပါ။" });
+        }
+
+        // Check if tutor profile already exists in Tutor table
+        var isTutorExist = _db.Tutors.Any(t => t.UserId == user.UserId && t.IsDelete == false);
+
+        return Ok(new
+        {
+            IsSuccess = true,
+            UserId = user.UserId,
+            RoleId = user.RoleId,
+            RoleName = user.Role?.RoleName,
+            FullName = user.FullName,
+            IsTutorExist = isTutorExist
+        });
     }
 
     // ၂။ GET: User တစ်ဦးတည်း Profile ယူရန်
@@ -203,6 +287,7 @@ public class UserController : ControllerBase
             RoleNo = request.RoleNo,
             Password = hashedPass,
             IsDelete = false,
+            MustChangePassword = true,
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         };
 
@@ -448,6 +533,64 @@ public class UserController : ControllerBase
                 y = (double)g.Count(),
                 // color = g.Key == "Admin" ? "#22d3ee" : (g.Key == "Student" ? "#10b981" : "#8b5cf6")
             }).ToList();
+
+        return Ok(result);
+    }
+
+    [HttpGet("paginate")]
+    public IActionResult GetUsersPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? roleName = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _db.Users
+            .Where(x => x.IsDelete == false)
+            .Join(_db.Roles,
+                  user => user.RoleId,
+                  role => role.RoleId,
+                  (user, role) => new { user, role });
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(x => (x.user.FullName != null && x.user.FullName.Contains(searchTerm)) ||
+                                     (x.user.UserName != null && x.user.UserName.Contains(searchTerm)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(roleName) && !roleName.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.role.RoleName == roleName);
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .OrderByDescending(x => x.user.UserId)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new UserModel
+            {
+                UserId = x.user.UserId,
+                RoleId = x.user.RoleId,
+                FullName = x.user.FullName,
+                UserName = x.user.UserName,
+                RoleName = x.role.RoleName,
+                RoleNo = x.user.RoleNo,
+                Password = "********",
+                CreatedDateTime = x.user.CreatedDateTime
+            })
+            .ToList();
+
+        var result = new PagedResult<UserModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
 
         return Ok(result);
     }

@@ -71,16 +71,36 @@
 
 using Newtonsoft.Json;
 using System.Text;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Smart_Campus_PUMUB.Components.Features.Services;
 
 namespace Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 
 public class HttpClientService
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ProtectedSessionStorage _sessionStorage;
 
-    public HttpClientService(IHttpClientFactory httpClientFactory)
+    public HttpClientService(IHttpClientFactory httpClientFactory, ProtectedSessionStorage sessionStorage)
     {
         _httpClientFactory = httpClientFactory;
+        _sessionStorage = sessionStorage;
+    }
+
+    private async Task AttachTokenAsync(HttpClient client)
+    {
+        try
+        {
+            var userSessionResult = await _sessionStorage.GetAsync<UserSession>("UserSession");
+            if (userSessionResult.Success && userSessionResult.Value != null && !string.IsNullOrEmpty(userSessionResult.Value.Token))
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userSessionResult.Value.Token);
+            }
+        }
+        catch
+        {
+            // JS Interop not ready during pre-rendering or SSR
+        }
     }
 
     // 🔥 MAIN API CALL METHOD (SAFE VERSION)
@@ -95,6 +115,7 @@ public class HttpClientService
         }
 
         var client = _httpClientFactory.CreateClient("SmartCampusApi");
+        await AttachTokenAsync(client);
 
         HttpResponseMessage responseMessage = method switch
         {
@@ -129,6 +150,7 @@ public class HttpClientService
     public async Task<T?> ExecuteMultipartAsync<T>(string url, MultipartFormDataContent content)
     {
         var client = _httpClientFactory.CreateClient("SmartCampusApi");
+        await AttachTokenAsync(client);
 
         var responseMessage = await client.PostAsync(url, content);
 

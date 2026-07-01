@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Smart_Campus_PUMUB.WebApi.Models;
 
@@ -47,4 +48,42 @@ public class RegistrationPaymentModel
     public string? CreatedBy { get; set; }
     public DateTime? ModifiedDateTime { get; set; }
     public string? ModifiedBy { get; set; }
+}
+
+public class PaymentFeeModel
+{
+    public int FeesId { get; set; }
+    public string? ClassYear { get; set; }
+    public string? FeeName { get; set; }
+    public decimal MontlyAmount { get; set; }
+    public string? Status { get; set; }
+    public DateTime? CreatedDateTime { get; set; }
+    public DateTime? ModifiedDateTime { get; set; }
+}
+
+public class PaymentFeeCreateRequestModel
+{
+    [Required(ErrorMessage = "Class Year သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    public string? ClassYear { get; set; }
+    public string? FeeName { get; set; }
+    [Required(ErrorMessage = "Monthly Amount သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    public decimal MontlyAmount { get; set; }
+    public string? Status { get; set; } = "Active";
+    public string? CreatedBy { get; set; }
+}
+
+public class PaymentFeeUpdateRequestModel
+{
+    [Required(ErrorMessage = "Class Year သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    public string? ClassYear { get; set; }
+    public string? FeeName { get; set; }
+    [Required(ErrorMessage = "Monthly Amount သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    public decimal MontlyAmount { get; set; }
+    public string? Status { get; set; }
+    public string? ModifiedBy { get; set; }
+}
+
+public class PaymentFeeResponseModel : ActionResponseModel
+{
+    public PaymentFeeModel? Data { get; set; }
 }

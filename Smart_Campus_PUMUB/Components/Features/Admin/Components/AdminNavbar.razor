@@ -109,26 +109,27 @@
         <AuthorizeView>
             <Authorized>
                 <div class="dropdown">
-                    <a href="#"
-                       class="d-flex align-items-center text-white text-decoration-none gap-2"
-                       id="profileDropdown"
-                       data-bs-toggle="dropdown"
-                       aria-expanded="false">
+                    <button type="button"
+                            class="d-flex align-items-center text-white text-decoration-none gap-2 bg-transparent border-0 p-0"
+                            id="profileDropdown"
+                            @onclick="ToggleProfileMenu"
+                            @onfocusout="CloseProfileMenu"
+                            aria-expanded="@(isProfileMenuOpen ? "true" : "false")">
                         <img src="@($"https://ui-avatars.com/api/?name={context.User.Identity?.Name}&background=06b6d4&color=fff")"
                              alt="Admin"
                              width="36"
                              height="36"
                              class="rounded-circle border border-2 border-info" />
-                        <div class="d-none d-sm-block lh-1">
+                        <div class="d-none d-sm-block lh-1 text-start">
                             <span class="d-block fw-semibold" style="font-size:0.85rem;">@context.User.Identity?.Name</span>
                             <span class="text-muted text-uppercase" style="font-size:0.7rem;">@context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
                         </div>
                         <i class="bi bi-chevron-down d-none d-sm-inline" style="font-size:0.7rem;"></i>
-                    </a>
+                    </button>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2"
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 @(isProfileMenuOpen ? "show" : "")"
                         aria-labelledby="profileDropdown"
-                        style="min-width:200px;">
+                        style="min-width:200px; position: absolute; right: 0;">
                         <li><h6 class="dropdown-header text-uppercase fw-bold" style="font-size:0.7rem;">Account</h6></li>
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-2" href="#">
@@ -155,6 +156,19 @@
         </AuthorizeView>
 
 @code {
+    private bool isProfileMenuOpen = false;
+
+    private void ToggleProfileMenu()
+    {
+        isProfileMenuOpen = !isProfileMenuOpen;
+    }
+
+    private async Task CloseProfileMenu()
+    {
+        await Task.Delay(200);
+        isProfileMenuOpen = false;
+    }
+
     private async Task Logout()
     {
         var customAuth = (CustomAuthStateProvider)AuthStateProvider;

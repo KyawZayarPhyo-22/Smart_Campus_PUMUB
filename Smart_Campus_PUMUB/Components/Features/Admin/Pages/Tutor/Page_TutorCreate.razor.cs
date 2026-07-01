@@ -22,6 +22,11 @@ public partial class Page_TutorCreate
     private bool isProcessing = false;
     private string statusMessage = "";
 
+    private string roleNo = "";
+    private bool isValidatingRoleNo = false;
+    private string roleNoValidationMessage = "";
+    private bool isTutorProfileExists = false;
+
     protected override async Task OnInitializedAsync()
     {
         UserList = await HttpClientService.ExecuteAsync<List<UserModels>>("user", EnumHttpMethod.Get) ?? new();
@@ -32,8 +37,69 @@ public partial class Page_TutorCreate
 
     private void HandleFileSelected(InputFileChangeEventArgs e) => selectedFile = e.File;
 
+    private async Task OnRoleNoChanged(ChangeEventArgs e)
+    {
+        roleNo = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(roleNo))
+        {
+            roleNoValidationMessage = "";
+            isTutorProfileExists = false;
+            return;
+        }
+
+        isValidatingRoleNo = true;
+        roleNoValidationMessage = "Validating...";
+        isTutorProfileExists = false;
+
+        try
+        {
+            var result = await HttpClientService.ExecuteAsync<RoleNoLookupResult>($"user/roleno/{roleNo}", EnumHttpMethod.Get);
+            if (result != null && result.IsSuccess)
+            {
+                if (result.IsTutorExist)
+                {
+                    isTutorProfileExists = true;
+                    roleNoValidationMessage = "❌ This Tutor profile is already created.";
+                    statusMessage = "Tutor profile for this Role No already exists.";
+                }
+                else
+                {
+                    roleNoValidationMessage = $"✅ Found: {result.FullName} ({result.RoleName})";
+                    createModel.TutorName = result.FullName;
+                    createModel.UserId = result.UserId;
+                    createModel.RoleId = result.RoleId;
+                    statusMessage = "";
+                }
+            }
+            else
+            {
+                roleNoValidationMessage = "❌ Role No not found in User accounts.";
+            }
+        }
+        catch (Exception ex)
+        {
+            roleNoValidationMessage = "❌ Error validating Role No.";
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isValidatingRoleNo = false;
+        }
+    }
+
     private async Task SaveTutor()
     {
+        if (isTutorProfileExists)
+        {
+            statusMessage = "Cannot save: Tutor profile already exists for this Role No.";
+            return;
+        }
+        if (createModel.UserId == 0)
+        {
+            statusMessage = "Cannot save: Please assign a valid User or lookup by Role No.";
+            return;
+        }
+
         isProcessing = true;
         statusMessage = "Saving...";
 
@@ -81,5 +147,15 @@ public partial class Page_TutorCreate
         {
             isProcessing = false;
         }
+    }
+
+    private class RoleNoLookupResult
+    {
+        public bool IsSuccess { get; set; }
+        public int UserId { get; set; }
+        public int RoleId { get; set; }
+        public string? RoleName { get; set; }
+        public string? FullName { get; set; }
+        public bool IsTutorExist { get; set; }
     }
 }

@@ -16,6 +16,18 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Role No / Roll No</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="@roleNo" @onchange="OnRoleNoChanged" placeholder="Enter Role No (e.g. T-101) to auto-fill" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(roleNoValidationMessage))
+                        {
+                            <div class="form-text @(roleNoValidationMessage.Contains("✅") ? "text-success" : "text-danger") fw-bold mt-1">
+                                @roleNoValidationMessage
+                            </div>
+                        }
+                    </div>
+                    <div class="col-md-6 mb-3">
                         <label class="form-label">Tutor Name</label>
                         <InputText class="form-control" @bind-Value="createModel.TutorName" />
                     </div>

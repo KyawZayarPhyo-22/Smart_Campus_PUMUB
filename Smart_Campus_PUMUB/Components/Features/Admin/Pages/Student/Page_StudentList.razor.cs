@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,17 +34,17 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private DateTime? FromDateInput { get; set; }
     private DateTime? ToDateInput { get; set; } = DateTime.Today;
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         SelectedLevel = SelectedLevelInput;
         FromDate = FromDateInput;
         ToDate = ToDateInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadStudents();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SelectedLevelInput = "All";
@@ -55,14 +56,14 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         FromDate = null;
         ToDate = DateTime.Today;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadStudents();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
@@ -78,65 +79,16 @@ public partial class Page_StudentList : ComponentBase, IDisposable
 
     // Pagination Variables
     private int CurrentPage { get; set; } = 1;
-    private int PageSize { get; set; } = 10; // ၁ မျက်နှာလျှင် ပြသလိုသော size (ဥပမာ - ၁၀ ယောက်စီ ပြသမည်)
+    private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
+    private int TotalCount { get; set; } = 0;
 
-    private IEnumerable<StudentRegistrationDataModel> GetFilteredStudents()
-    {
-        var data = StudentList.AsEnumerable();
+    private IEnumerable<StudentRegistrationDataModel> FilteredStudents => StudentList;
 
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-            data = data.Where(s => (s.RollNo ?? "").Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                   (s.StudentNameMm ?? "").Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
-
-        if (SelectedLevel != "All")
-            data = data.Where(s => string.Equals(s.AcademicYearLevel, SelectedLevel, StringComparison.OrdinalIgnoreCase));
-
-        // 💡 1. From ရော To ရော ရွေးထားလျှင် (Range Filter)
-        if (FromDate.HasValue && ToDate.HasValue)
-        {
-            data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date && s.CreatedDatetime.Date <= ToDate.Value.Date);
-        }
-        // 💡 2. From တစ်ခုတည်း ရွေးထားလျှင် (From နောက်ပိုင်း အကုန်)
-        else if (FromDate.HasValue && !ToDate.HasValue)
-        {
-            data = data.Where(s => s.CreatedDatetime.Date >= FromDate.Value.Date);
-        }
-        // 💡 3. From မရွေးဘဲ To တစ်ခုတည်း ရွေးထားလျှင် (ToDate ထဲက ရက်စွဲ တစ်ရက်တည်းစာ ကွက်တိရှာမည်)
-        else if (!FromDate.HasValue && ToDate.HasValue)
-        {
-            data = data.Where(s => s.CreatedDatetime.Date == ToDate.Value.Date);
-        }
-
-        return data.OrderByDescending(s => s.RegistrationId).ToList();
-    }
-
-    private IEnumerable<StudentRegistrationDataModel> FilteredStudents
-    {
-        get
-        {
-            var allFiltered = GetFilteredStudents();
-
-            // Total Pages ကို တွက်ချက်ခြင်း
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-
-            // Filter ပြောင်းသွားလို့ လက်ရှိ Page က စာမျက်နှာစုစုပေါင်းထက် ကြီးသွားရင် ချိန်ညှိပေးခြင်း
-            if (CurrentPage > TotalPages)
-            {
-                CurrentPage = TotalPages;
-            }
-
-            // Skip နှင့် Take ကို အသုံးပြုပြီး သတ်မှတ်ထားသော စာမျက်နှာအတွက်သာ data ကို ဖြတ်ယူခြင်း
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadStudents();
     }
 
     protected override async Task OnInitializedAsync()
@@ -171,16 +123,125 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         IsLoading = true;
         try
         {
-            var response = await HttpClientService.ExecuteAsync<List<StudentRegistrationDataModel>>("StudentRegistrations", EnumHttpMethod.Get);
-            if (response != null) StudentList = response;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<StudentRegistrationDataModel>>(
+                $"StudentRegistrations/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&level={Uri.EscapeDataString(SelectedLevel)}",
+                EnumHttpMethod.Get
+            );
+
+            if (response != null)
+            {
+                StudentList = response.Items;
+                TotalCount = response.TotalCount;
+                TotalPages = response.TotalPages;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading student registrations: {ex.Message}");
         }
         finally { IsLoading = false; }
+    }
+
+    private List<PaymentFeeModel> PaymentFees { get; set; } = new();
+
+    private async Task LoadPaymentFeesForDetail(string classYear, RegistrationPaymentModel? payment)
+    {
+        try
+        {
+            string url = payment != null
+                ? $"payment-fees?classYear={Uri.EscapeDataString(classYear)}&status=All"
+                : $"payment-fees?classYear={Uri.EscapeDataString(classYear)}";
+
+            var fees = await HttpClientService.ExecuteAsync<List<PaymentFeeModel>>(url, EnumHttpMethod.Get);
+
+            if (fees != null && fees.Any())
+            {
+                if (payment != null)
+                {
+                    PaymentFees = FilterFeesForPayment(fees, payment.AmountPaid, payment.CreatedDateTime);
+                }
+                else
+                {
+                    PaymentFees = fees;
+                }
+            }
+            else
+            {
+                LoadFallbackFees(classYear);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading payment fees: {ex.Message}");
+            LoadFallbackFees(classYear);
+        }
+    }
+
+    private List<PaymentFeeModel> FilterFeesForPayment(List<PaymentFeeModel> fees, decimal amountPaid, DateTime? paymentCreatedTime)
+    {
+        if (paymentCreatedTime == null)
+        {
+            return fees.Where(f => f.Status == "Active").ToList();
+        }
+
+        var candidateFees = fees.Where(f => f.CreatedDateTime == null || f.CreatedDateTime <= paymentCreatedTime).ToList();
+
+        decimal currentSum = candidateFees.Sum(f => f.MontlyAmount);
+        if (currentSum == amountPaid)
+        {
+            return candidateFees;
+        }
+
+        if (currentSum > amountPaid)
+        {
+            var modifiedPostPayment = candidateFees.Where(f => f.ModifiedDateTime != null && f.ModifiedDateTime > paymentCreatedTime).ToList();
+            int n = modifiedPostPayment.Count;
+            
+            for (int i = 1; i < (1 << n); i++)
+            {
+                var subsetToRemove = new List<PaymentFeeModel>();
+                for (int j = 0; j < n; j++)
+                {
+                    if ((i & (1 << j)) != 0)
+                    {
+                        subsetToRemove.Add(modifiedPostPayment[j]);
+                    }
+                }
+
+                var tempFees = candidateFees.Except(subsetToRemove).ToList();
+                if (tempFees.Sum(f => f.MontlyAmount) == amountPaid)
+                {
+                    return tempFees;
+                }
+            }
+        }
+
+        return candidateFees.Where(f => f.Status == "Active").ToList();
+    }
+
+    private void LoadFallbackFees(string classYear)
+    {
+        PaymentFees = new List<PaymentFeeModel>
+        {
+            new PaymentFeeModel { FeeName = "မှတ်ပုံတင်ကြေး", MontlyAmount = 2000 },
+            new PaymentFeeModel { FeeName = "ကျောင်းဝင်ကြေး", MontlyAmount = 2000 },
+            new PaymentFeeModel { FeeName = "အားကစားကြေး", MontlyAmount = 2000 },
+            new PaymentFeeModel { FeeName = "ဓာတ်ခွဲခန်းကြေး", MontlyAmount = 6000 },
+            new PaymentFeeModel { FeeName = "စာမေးပွဲဝင်ကြေး", MontlyAmount = 5000 },
+            new PaymentFeeModel { FeeName = "စာကြည့်တိုက်ကြေး", MontlyAmount = 5000 },
+            new PaymentFeeModel { FeeName = $"ကျောင်းလခ ({classYear})", MontlyAmount = 30000 }
+        };
     }
 
     private async Task OpenRegModal(int id)
     {
         IsPaymentViewMode = false;
         SelectedDetail = await HttpClientService.ExecuteAsync<StudentRegistrationFullModel>($"StudentRegistrations/{id}", EnumHttpMethod.Get);
+        if (SelectedDetail != null && !string.IsNullOrEmpty(SelectedDetail.AcademicYearLevel))
+        {
+            var payment = SelectedDetail.RegistrationPayments?.FirstOrDefault();
+            await LoadPaymentFeesForDetail(SelectedDetail.AcademicYearLevel, payment);
+        }
         ModalCurrentStep = 1;
         ShowDetailModal = true;
     }
@@ -189,6 +250,11 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     {
         IsPaymentViewMode = true;
         SelectedDetail = await HttpClientService.ExecuteAsync<StudentRegistrationFullModel>($"StudentRegistrations/{id}", EnumHttpMethod.Get);
+        if (SelectedDetail != null && !string.IsNullOrEmpty(SelectedDetail.AcademicYearLevel))
+        {
+            var payment = SelectedDetail.RegistrationPayments?.FirstOrDefault();
+            await LoadPaymentFeesForDetail(SelectedDetail.AcademicYearLevel, payment);
+        }
         ModalCurrentStep = 4;
         ShowDetailModal = true;
     }
@@ -351,6 +417,7 @@ public class RegistrationPaymentModel
     public string? PaymentMethod { get; set; }
     public string? ReceiptImage { get; set; }
     public string? Status { get; set; }
+    public DateTime? CreatedDateTime { get; set; }
 }
 
 public class StudentRegistrationFullModel : StudentRegistrationDataModel

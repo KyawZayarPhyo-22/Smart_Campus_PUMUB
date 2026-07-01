@@ -140,6 +140,153 @@ public class StudentRegistrationsController : ControllerBase
         };
     }
 
+    [HttpGet("paginate")]
+    public IActionResult GetRegistrationsPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? level = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _db.StudentRegistrations
+            .AsNoTracking()
+            .Include(x => x.RegistrationPayments)
+            .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(s => (s.RollNo != null && s.RollNo.Contains(searchTerm)) ||
+                                   (s.StudentNameMm != null && s.StudentNameMm.Contains(searchTerm)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(level) && !level.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(s => s.AcademicYearLevel == level);
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .OrderByDescending(x => x.RegistrationId)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        foreach (var item in items)
+        {
+            item.Status = NormalizeRegistrationStatus(item.Status);
+        }
+
+        var result = new PagedResult<StudentRegistration>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
+
+    // ₉. GET: UserId ဖြင့် နောက်ဆုံး Registration တစ်ခု ရယူရန် (Auto-Fill အတွက်)
+    [HttpGet("latest/{userId}")]
+    public IActionResult GetLatestRegistrationByUser(int userId)
+    {
+        var item = _db.StudentRegistrations
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && (x.IsDelete == false || x.IsDelete == null))
+            .OrderByDescending(x => x.RegistrationId)
+            .FirstOrDefault();
+
+        if (item is null)
+        {
+            return NotFound(new { message = "ဤ User ၏ Registration မှတ်တမ်းမရှိပါ။" });
+        }
+
+        // Split stored NRC back into components for the form
+        string? nrcState = null, nrcTownship = null, nrcType = "(နိုင်)", nrcNumber = null;
+        if (!string.IsNullOrWhiteSpace(item.StudentNrcNo) && item.StudentNrcNo != "-")
+        {
+            var slashIdx = item.StudentNrcNo.IndexOf('/');
+            if (slashIdx > 0)
+            {
+                nrcState = item.StudentNrcNo[..slashIdx];
+                var rest = item.StudentNrcNo[(slashIdx + 1)..];
+                // Extract type (text inside parentheses)
+                var typeStart = rest.IndexOf('(');
+                var typeEnd = rest.IndexOf(')');
+                if (typeStart >= 0 && typeEnd > typeStart)
+                {
+                    nrcTownship = rest[..typeStart];
+                    nrcType = rest[typeStart..(typeEnd + 1)];
+                    nrcNumber = rest[(typeEnd + 1)..];
+                }
+                else
+                {
+                    nrcTownship = rest;
+                }
+            }
+        }
+
+        return Ok(new
+        {
+            item.RegistrationId,
+            item.UserId,
+            item.AdmissionSerialNo,
+            item.AcademicYearRange,
+            item.AcademicYearLevel,
+            item.Major,
+            item.RollNo,
+            item.UniversityRegNo,
+            item.AdmissionYear,
+            item.StudentNameMm,
+            item.StudentNameEn,
+            item.MotherName,
+            item.FatherName,
+            item.GenderRelation,
+            item.Ethnicity,
+            item.Religion,
+            item.Pob,
+            item.BirthPlaceRegion,
+            item.StudentNrcNo,
+            NrcState = nrcState,
+            NrcTownship = nrcTownship,
+            NrcType = nrcType,
+            NrcNumber = nrcNumber,
+            item.NationalityStatus,
+            item.Dob,
+            item.Email,
+            item.BloodType,
+            item.CovidVaccineStatus,
+            item.CurrentAddress,
+            item.PermanentAddressMm,
+            item.PermanentAddressEn,
+            item.MatricRollNo,
+            item.MatricPassedYear,
+            item.ExamCenter,
+            item.FatherOccupation,
+            item.MotherOccupation,
+            item.PastExamMajor,
+            item.PastExamRollNo,
+            item.PastExamYear,
+            item.PastExamStatus,
+            item.PreviousYearRollNo,
+            item.GuardianName,
+            item.GuardianRelationship,
+            item.GuardianOccupation,
+            item.GuardianAddressPhone,
+            item.AppGuardianName,
+            item.AppGuardianNrc,
+            item.AppGuardianPhone,
+            item.AppGuardianAddress,
+            item.AppStudentName,
+            item.AppStudentPhone,
+            item.StipendRequested
+        });
+    }
+
     // ၁။ GET: ဖောင်အားလုံး စာရင်းယူရန် (Read All)
     [HttpGet]
     public IActionResult GetRegistrations()
@@ -220,7 +367,89 @@ public class StudentRegistrationsController : ControllerBase
             });
         }
 
-        // --- (က) Email & Phone Formats Validation ---
+        // =========================================================
+        // Semester Progression Validation
+        // =========================================================
+        var studentRecord = _db.Students
+            .AsNoTracking()
+            .FirstOrDefault(x => x.UserId == request.UserId && (x.IsDelete == false || x.IsDelete == null));
+
+        if (studentRecord != null && !string.IsNullOrWhiteSpace(request.academic_year_level))
+        {
+            // Find the target semester in the DB to get its Sequence number
+            var targetSemester = _db.Semesters
+                .AsNoTracking()
+                .FirstOrDefault(x => x.SemesterName == request.academic_year_level && x.IsDelete == false);
+
+            if (targetSemester?.Sequence != null)
+            {
+                int targetSeq = targetSemester.Sequence.Value;
+
+                // Collect results array; index 0 = Sem1, index 8 = Sem9
+                var semResults = new string?[]
+                {
+                    studentRecord.Sem1_Result, studentRecord.Sem2_Result, studentRecord.Sem3_Result,
+                    studentRecord.Sem4_Result, studentRecord.Sem5_Result, studentRecord.Sem6_Result,
+                    studentRecord.Sem7_Result, studentRecord.Sem8_Result, studentRecord.Sem9_Result
+                };
+
+                // Determine allowed next semester:
+                // Find last 'Fail' result; that is the retake semester.
+                // Otherwise allowed = highestPassed + 1.
+                int highestPassed = 0;
+                int? failedSemSeq = null;
+                for (int i = 0; i < semResults.Length; i++)
+                {
+                    int seq = i + 1;
+                    if (string.Equals(semResults[i], "Pass", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(semResults[i], "Credit_Transferred", StringComparison.OrdinalIgnoreCase))
+                    {
+                        highestPassed = seq;
+                    }
+                    else if (string.Equals(semResults[i], "Fail", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Student must retake the first failed semester above passed ones
+                        if (failedSemSeq == null)
+                        {
+                            failedSemSeq = seq;
+                        }
+                    }
+                }
+
+                int allowedSeq = failedSemSeq ?? (highestPassed + 1);
+
+                // If student already passed all 9 semesters, block any new registration
+                if (highestPassed >= 9 && failedSemSeq == null)
+                {
+                    return BadRequest(new StudentRegistrationResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "ကျောင်းသားသည် Semester ၁ မှ ၉ အထိ အားလုံး Pass ဖြေဆိုပြီးဖြစ်သောကြောင့် ကျောင်းအပ်ဖောင် တင်သွင်း၍ မရတော့ပါ။"
+                    });
+                }
+
+                if (targetSeq != allowedSeq)
+                {
+                    string reason;
+                    if (targetSeq < allowedSeq)
+                    {
+                        reason = $"Semester {targetSeq} ကို ယခင်က Pass သတ်မှတ်ပြီးဖြစ်သောကြောင့် ထပ်မံ တင်သွင်း၍ မရပါ။ Semester {allowedSeq} သာ တင်သွင်းနိုင်ပါသည်။";
+                    }
+                    else
+                    {
+                        reason = $"Semester {allowedSeq} ကို ဦးစွာ Pass ရပမည်မဟုတ်မနေ တင်သွင်းရမည်ဖြစ်ပြီး Semester {targetSeq} ကို ကျော်လိုက်၍ မရပါ။";
+                    }
+
+                    return BadRequest(new StudentRegistrationResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = reason
+                    });
+                }
+            }
+        }
+        // =========================================================
+
         if (!string.IsNullOrEmpty(request.email))
         {
             if (!Regex.IsMatch(request.email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))

@@ -493,7 +493,29 @@
         <h2>Online Registration Form</h2>
     </div>
 
-    @if (ShowRegistrationStatusPanel)
+    @if (IsGraduated)
+    {
+        <!-- Premium Graduation Banner -->
+        <div style="text-align:center; padding: 60px 40px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0d3b6e 100%); border-radius: 20px; color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 32px;">
+            <div style="font-size:4rem; margin-bottom: 16px;">🎓</div>
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:12px; background: linear-gradient(90deg, #fbbf24, #f59e0b, #fde68a); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Congratulations, Graduate!</h2>
+            <p style="font-size:1.15rem; color:#cbd5e1; max-width:520px; margin:0 auto 28px auto; line-height:1.8;">
+                You have successfully completed <strong style="color:#fbbf24;">all 9 Semesters</strong>. Your academic journey is complete.
+                No further registration is required.
+            </p>
+            <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#fbbf24;">9 / 9</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Semesters Completed</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#34d399;">✓ Pass</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Final Status</div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (ShowRegistrationStatusPanel)
     {
         <div class="review-status-panel">
             <div class="review-status-top">
@@ -735,23 +757,36 @@
 
             <div class="input-group">
                 <label class="input-label">သင်တန်းနှစ် (Semester) <span style="color:red;">*</span></label>
-                <select class="modern-input" @bind="RegModel.academic_year_level" required>
-                    <option value="">-- သင်တန်းနှစ် ရွေးချယ်ပါ --</option>
-                    @if (SemesterList != null && SemesterList.Any())
-                    {
-                        @foreach (var sem in SemesterList)
+                @if (AllowedSemesterName != null)
+                {
+                    <!-- Locked to the student's allowed next semester -->
+                    <select class="modern-input" @bind="RegModel.academic_year_level" required disabled="@(AllowedSemesterSequence > 0)">
+                        <option value="@AllowedSemesterName">@AllowedSemesterName @(AllowedSemesterSequence > 0 ? "(Auto-Selected)" : "")</option>
+                    </select>
+                    <small style="color:#64748b; margin-top:4px; display:block;">
+                        <i class="bi bi-lock-fill me-1 text-warning"></i> Semester @AllowedSemesterSequence သည် သင်၏ academic progression အရ ကြိုတင်သတ်မှတ်ပြီးဖြစ်သည်။
+                    </small>
+                }
+                else
+                {
+                    <select class="modern-input" @bind="RegModel.academic_year_level" required>
+                        <option value="">-- သင်တန်းနှစ် ရွေးချယ်ပါ --</option>
+                        @if (SemesterList != null && SemesterList.Any())
                         {
-                            @if (IsSemesterAllowed(sem.SemesterName))
+                            @foreach (var sem in SemesterList)
                             {
-                                <option value="@sem.SemesterName">@sem.SemesterName</option>
-                            }
-                            else
-                            {
-                                <option value="@sem.SemesterName" disabled>@sem.SemesterName (🔒 Locked - Failed Previous Semester)</option>
+                                @if (IsSemesterAllowed(sem.SemesterName))
+                                {
+                                    <option value="@sem.SemesterName">@sem.SemesterName</option>
+                                }
+                                else
+                                {
+                                    <option value="@sem.SemesterName" disabled>@sem.SemesterName (🔒 Locked - Failed Previous Semester)</option>
+                                }
                             }
                         }
-                    }
-                </select>
+                    </select>
+                }
             </div>
 
             <div class="input-group">
@@ -840,7 +875,13 @@
                                 <td><input type="text" class="modern-input" @bind="RegModel.past_exam_major"></td>
                                 <td><input type="text" class="modern-input" @bind="RegModel.past_exam_roll_no"></td>
                                 <td><input type="date" class="modern-input" @bind="PastExamDate"></td>
-                                <td><input type="text" class="modern-input" @bind="RegModel.past_exam_status"></td>
+                                <td>
+                                    <select class="modern-input" @bind="RegModel.past_exam_status">
+                                        <option value="">-- ရွေးပါ --</option>
+                                        <option value="Pass">အောင်</option>
+                                        <option value="Fail">ကျ</option>
+                                    </select>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

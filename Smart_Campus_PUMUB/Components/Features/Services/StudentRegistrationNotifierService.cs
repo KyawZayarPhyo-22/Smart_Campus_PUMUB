@@ -8,6 +8,15 @@ namespace Smart_Campus_PUMUB.BlazorServer.Frontend.Services
         public event Func<Task>? OnRegistrationSubmitted;
         public event Func<StudentRegistrationStatusChangedEventArgs, Task>? OnRegistrationStatusChanged;
         public event Func<StudentPaymentStatusChangedEventArgs, Task>? OnPaymentStatusChanged;
+        public event Func<int, string, Task>? OnProfileImageChanged; // userId, newImageBase64
+
+        public async Task NotifyProfileImageChanged(int userId, string newImageBase64)
+        {
+            if (OnProfileImageChanged != null)
+            {
+                await OnProfileImageChanged.Invoke(userId, newImageBase64);
+            }
+        }
 
         public async Task NotifyRegistrationSubmitted()
         {

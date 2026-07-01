@@ -21,29 +21,29 @@ public partial class Page_UserList
     private string SelectedRoleInput = "All";
     private string SelectedRole = "All";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         SelectedRole = SelectedRoleInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadUsers();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         SelectedRoleInput = "All";
         SelectedRole = "All";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadUsers();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
@@ -55,43 +55,33 @@ public partial class Page_UserList
     private int CurrentPage { get; set; } = 1;
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
+    private int TotalCount { get; set; } = 0;
 
-    private IEnumerable<UserModel> GetFilteredUsers()
-    {
-        var list = UserList.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            list = list.Where(u => (u.FullName != null && u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                                   (u.UserName != null && u.UserName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
-        }
-        if (SelectedRole != "All")
-        {
-            list = list.Where(u => u.RoleName == SelectedRole);
-        }
-        return list;
-    }
+    private IEnumerable<UserModel> FilteredUsers => UserList;
+    private List<RoleModel> RoleList { get; set; } = new();
 
-    private IEnumerable<UserModel> FilteredUsers
-    {
-        get
-        {
-            var allFiltered = GetFilteredUsers();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadUsers();
+    }
+
+    private async Task LoadRoles()
+    {
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<List<RoleModel>>("role", EnumHttpMethod.Get);
+            if (response != null)
+            {
+                RoleList = response;
+            }
+        }
+        catch { }
     }
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadRoles();
         await LoadUsers();
     }
 
@@ -102,15 +92,16 @@ public partial class Page_UserList
         ErrorMessage = "";
         try
         {
-            // API route သည် သင့် Controller သတ်မှတ်ချက်အတိုင်း "user" သို့မဟုတ် "api/user" ဖြစ်ရပါမည်
-            var response = await HttpClientService.ExecuteAsync<List<UserModel>>(
-                "user",
+            var response = await HttpClientService.ExecuteAsync<PagedResult<UserModel>>(
+                $"user/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}",
                 EnumHttpMethod.Get
             );
 
             if (response != null)
             {
-                UserList = response;
+                UserList = response.Items;
+                TotalCount = response.TotalCount;
+                TotalPages = response.TotalPages;
             }
         }
         catch (Exception ex)

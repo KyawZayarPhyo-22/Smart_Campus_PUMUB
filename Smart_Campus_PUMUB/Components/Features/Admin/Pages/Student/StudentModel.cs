@@ -125,3 +125,62 @@ public class StudentRegistrationResponseModel
     public string? Message { get; set; }
     public object? Data { get; set; }
 }
+
+/// <summary>Response model for GET api/StudentRegistrations/latest/{userId} used to auto-fill the registration form.</summary>
+public class PreviousRegistrationModel
+{
+    public int RegistrationId { get; set; }
+    public int? UserId { get; set; }
+    public string? AdmissionSerialNo { get; set; }
+    public string? AcademicYearRange { get; set; }
+    public string? AcademicYearLevel { get; set; }
+    public string? Major { get; set; }
+    public string? RollNo { get; set; }
+    public string? UniversityRegNo { get; set; }
+    public int? AdmissionYear { get; set; }
+    public string? StudentNameMm { get; set; }
+    public string? StudentNameEn { get; set; }
+    public string? MotherName { get; set; }
+    public string? FatherName { get; set; }
+    public string? GenderRelation { get; set; }
+    public string? Ethnicity { get; set; }
+    public string? Religion { get; set; }
+    public string? Pob { get; set; }
+    public string? BirthPlaceRegion { get; set; }
+    public string? StudentNrcNo { get; set; }
+    // NRC split components returned by the API
+    public string? NrcState { get; set; }
+    public string? NrcTownship { get; set; }
+    public string? NrcType { get; set; }
+    public string? NrcNumber { get; set; }
+    public string? NationalityStatus { get; set; }
+    public DateOnly? Dob { get; set; }
+    public string? Email { get; set; }
+    public string? BloodType { get; set; }
+    public string? CovidVaccineStatus { get; set; }
+    public string? CurrentAddress { get; set; }
+    public string? PermanentAddressMm { get; set; }
+    public string? PermanentAddressEn { get; set; }
+    public string? MatricRollNo { get; set; }
+    public int? MatricPassedYear { get; set; }
+    public string? ExamCenter { get; set; }
+    public string? FatherOccupation { get; set; }
+    public string? MotherOccupation { get; set; }
+    public string? PastExamMajor { get; set; }
+    public string? PastExamRollNo { get; set; }
+    public int? PastExamYear { get; set; }
+    public string? PastExamStatus { get; set; }
+    public string? PreviousYearRollNo { get; set; }
+    public string? GuardianName { get; set; }
+    public string? GuardianRelationship { get; set; }
+    public string? GuardianOccupation { get; set; }
+    public string? GuardianAddressPhone { get; set; }
+    public string? AppGuardianName { get; set; }
+    public string? AppGuardianNrc { get; set; }
+    public string? AppGuardianPhone { get; set; }
+    public string? AppGuardianAddress { get; set; }
+    public string? AppStudentName { get; set; }
+    public string? AppStudentPhone { get; set; }
+    public bool? StipendRequested { get; set; }
+}
+

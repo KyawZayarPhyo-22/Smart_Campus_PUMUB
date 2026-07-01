@@ -1,0 +1,60 @@
+@page "/admin/payment-fee/create"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="modal-dialog modal-md mt-5">
+    <div class="modal-content tech-card">
+        <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold text-white">Add New Payment Fee</h5>
+        </div>
+        <EditForm Model="feeModel" OnValidSubmit="SaveFee" FormName="CreatePaymentFeeForm">
+            <DataAnnotationsValidator />
+            <div class="modal-body">
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Semester / Class Year <span class="text-danger">*</span></label>
+                    <select class="form-select" @bind="feeModel.ClassYear" required>
+                        <option value="">-- Choose Class Year / Semester --</option>
+                        @foreach (var sem in SemesterList)
+                        {
+                            <option value="@sem.SemesterName">@sem.SemesterName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Fee Name <span class="text-danger">*</span></label>
+                    <InputText @bind-Value="feeModel.FeeName" class="form-control" placeholder="Enter Fee Name (e.g., Tuition Fee, Library Fee)" required />
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Amount (MMK) <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">MMK</span>
+                        <InputNumber @bind-Value="feeModel.MontlyAmount" class="form-control" placeholder="0.00" required />
+                    </div>
+                </div>
+
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Status</label>
+                    <InputSelect @bind-Value="feeModel.Status" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </InputSelect>
+                </div>
+
+                @if (!string.IsNullOrEmpty(statusMessage))
+                {
+                    <div class="small text-info mt-2">@statusMessage</div>
+                }
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <NavLink href="/admin/payment-fees" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
+                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                    @(isProcessing ? "Creating..." : "Create Fee")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>

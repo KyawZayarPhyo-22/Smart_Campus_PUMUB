@@ -4,7 +4,10 @@ AOS.init({ duration: 700, once: true, easing: 'ease-out-cubic' });
 
 // LOADER
 window.addEventListener('load', () => {
-    setTimeout(() => { document.getElementById('loader').classList.add('hidden'); }, 1800);
+    const loader = document.getElementById('loader');
+    if (loader) {
+        setTimeout(() => { loader.classList.add('hidden'); }, 1800);
+    }
 });
 
 // THEME
@@ -31,6 +34,7 @@ function toggleMobile() {
 // PARTICLES
 (function () {
     const container = document.getElementById('particles');
+    if (!container) return;
     const colors = ['rgba(37,99,235,0.4)', 'rgba(6,182,212,0.4)', 'rgba(245,158,11,0.3)', 'rgba(255,255,255,0.2)'];
     for (let i = 0; i < 20; i++) {
         const p = document.createElement('div');
@@ -46,6 +50,7 @@ const phrases = ["Empowering Future Engineers", "Advancing Technology & Innovati
 let pi = 0, ci = 0, deleting = false;
 function typeText() {
     const el = document.getElementById('typingText');
+    if (!el) return;
     const current = phrases[pi];
     if (!deleting) {
         el.innerHTML = current.substring(0, ci + 1) + '<span class="typing-cursor">|</span>';
@@ -58,7 +63,9 @@ function typeText() {
     }
     setTimeout(typeText, deleting ? 60 : 90);
 }
-typeText();
+if (document.getElementById('typingText')) {
+    typeText();
+}
 
 // COUNT UP ANIMATION
 function animateCounters() {

@@ -6,6 +6,8 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject StudentRegistrationNotifierService NotifierService
+@inject IHttpClientFactory HttpClientFactory
+@inject HttpClientService HttpClientService
 @rendermode InteractiveServer
 
 <style>
@@ -208,16 +210,35 @@
                             </div>
                         }
                     }
-                    <div class="profile-trigger " @onclick="ToggleProfileMenu">
-                        <div class="user-circle">
-                            @context.User.Identity?.Name?.Substring(0, 1).ToUpper()
-                        </div>
+                    <div class="profile-trigger" @onclick="ToggleProfileMenu" style="cursor: pointer; display: flex; align-items: center;">
+                        @if (!string.IsNullOrEmpty(userProfileImage))
+                        {
+                            <img src="@userProfileImage" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.8);" />
+                        }
+                        else
+                        {
+                            <div class="user-circle">
+                                @context.User.Identity?.Name?.Substring(0, 1).ToUpper()
+                            </div>
+                        }
                     </div>
                     @if (isProfileMenuOpen)
                     {
                         <div class="profile-card">
                             <span class="user-name-text">@context.User.Identity?.Name</span>
                             <span class="status-text">Access Granted</span>
+                            @if (context.User.IsInRole("Student") || context.User.IsInRole("student"))
+                            {
+                                <a href="/profile" style="display:flex; align-items:center; gap:8px; padding:10px 15px; border-radius:12px; background:#f0f4ff; color:#5a4fcf; text-decoration:none; font-weight:600; font-size:0.88rem; margin-bottom:8px; transition:0.2s;" @onclick="ToggleProfileMenu">
+                                    <i class="fas fa-user-circle"></i> My Profile
+                                </a>
+                            }
+                            @if (context.User.IsInRole("Tutor") || context.User.IsInRole("tutor"))
+                            {
+                                <a href="/tutor/profile" style="display:flex; align-items:center; gap:8px; padding:10px 15px; border-radius:12px; background:#f0f4ff; color:#2563eb; text-decoration:none; font-weight:600; font-size:0.88rem; margin-bottom:8px; transition:0.2s;" @onclick="ToggleProfileMenu">
+                                    <i class="fas fa-id-badge"></i> My Profile
+                                </a>
+                            }
                             <button class="btn-logout-custom" @onclick="Logout">
                                 <i class="fas fa-sign-out-alt"></i> Log Out
                             </button>
@@ -267,6 +288,7 @@
     private int currentUserId = 0;
     private int unreadCount = 0;
     private List<NotificationItem> notifications = new();
+    private string? userProfileImage;
 
     private void ToggleMobile() => isMobileMenuOpen = !isMobileMenuOpen;
     private void ToggleProfileMenu() => isProfileMenuOpen = !isProfileMenuOpen;
@@ -307,6 +329,56 @@
 
         NotifierService.OnRegistrationStatusChanged += HandleRegistrationStatusChanged;
         NotifierService.OnPaymentStatusChanged += HandlePaymentStatusChanged;
+        NotifierService.OnProfileImageChanged += HandleProfileImageChanged;
+
+        if (currentUserId > 0)
+        {
+            await LoadUserProfileImage();
+        }
+    }
+
+    private async Task LoadUserProfileImage()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.IsInRole("Student") || user.IsInRole("student"))
+            {
+                var data = await HttpClientService.ExecuteAsync<StudentProfileResponse>(
+                    $"student/profile/{currentUserId}", EnumHttpMethod.Get);
+                if (data != null)
+                {
+                    userProfileImage = data.StudentImage;
+                }
+            }
+            else if (user.IsInRole("Tutor") || user.IsInRole("tutor"))
+            {
+                var data = await HttpClientService.ExecuteAsync<TutorProfileResponse>(
+                    $"tutor/profile/{currentUserId}", EnumHttpMethod.Get);
+                if (data != null)
+                {
+                    userProfileImage = data.Profile;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading navbar profile image: {ex.Message}");
+        }
+    }
+
+    private async Task HandleProfileImageChanged(int userId, string newImage)
+    {
+        if (userId == currentUserId)
+        {
+            await InvokeAsync(() =>
+            {
+                userProfileImage = newImage;
+                StateHasChanged();
+                return Task.CompletedTask;
+            });
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -397,6 +469,7 @@
     {
         NotifierService.OnRegistrationStatusChanged -= HandleRegistrationStatusChanged;
         NotifierService.OnPaymentStatusChanged -= HandlePaymentStatusChanged;
+        NotifierService.OnProfileImageChanged -= HandleProfileImageChanged;
     }
 
     public class NotificationItem
@@ -405,5 +478,15 @@
         public string Type { get; set; } = "info"; // "success" or "danger"
         public DateTime Timestamp { get; set; } = DateTime.Now;
         public bool IsRead { get; set; } = false;
+    }
+
+    private class StudentProfileResponse
+    {
+        public string? StudentImage { get; set; }
+    }
+
+    private class TutorProfileResponse
+    {
+        public string? Profile { get; set; }
     }
 }

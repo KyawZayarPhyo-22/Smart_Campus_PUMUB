@@ -61,6 +61,86 @@ public class TutorController : ControllerBase
         return Ok(lst);
     }
 
+    [HttpGet("paginate")]
+    public IActionResult GetTutorsPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? roleName = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = from t in _db.Tutors
+                    join d in _db.Departments on t.DepartmentId equals d.DepartmentId
+                    join p in _db.Positions on t.PositionId equals p.PositionId
+                    join u in _db.Users on t.UserId equals u.UserId
+                    join r in _db.Roles on u.RoleId equals r.RoleId
+                    where t.IsDelete == false
+                    select new
+                    {
+                        t.TutorId,
+                        t.TutorName,
+                        t.Email,
+                        t.Phone,
+                        t.Profile,
+                        t.About,
+                        t.DepartmentId,
+                        t.PositionId,
+                        t.UserId,
+                        d.DepartmentName,
+                        p.PositionName,
+                        u.UserName,
+                        t.CreatedDateTime,
+                        r.RoleName
+                    };
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(t => t.TutorName != null && t.TutorName.Contains(searchTerm));
+        }
+
+        if (!string.IsNullOrWhiteSpace(roleName) && !roleName.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(t => t.RoleName == roleName);
+        }
+
+        var totalCount = query.Count();
+
+        var rawList = query
+            .OrderByDescending(t => t.TutorId)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var items = rawList.Select(t => new TutorModel
+        {
+            TutorId = t.TutorId,
+            TutorName = t.TutorName,
+            Email = t.Email,
+            Phone = t.Phone,
+            Profile = t.Profile,
+            About = t.About,
+            DepartmentId = t.DepartmentId,
+            Department_Id = t.DepartmentId,
+            PositionId = t.PositionId,
+            Position_Id = t.PositionId,
+            UserId = t.UserId,
+            RoleName = t.RoleName,
+            CreatedDateTime = t.CreatedDateTime.HasValue ? t.CreatedDateTime.Value.AddHours(6).AddMinutes(30) : (DateTime?)null
+        }).ToList();
+
+        var result = new PagedResult<TutorModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
+
     // ၂။ GET: Tutor တစ်ဦးတည်း Profile ရှာရန်
     [HttpGet("{id}")]
     public IActionResult GetTutor(int id)
@@ -473,4 +553,76 @@ public class TutorController : ControllerBase
 
         return Ok(new { Count = count });
     }
+
+    // GET: api/tutor/profile/{userId} - Tutor Profile ကြည့်ရန်
+    [HttpGet("profile/{userId}")]
+    public IActionResult GetTutorProfile(int userId)
+    {
+        var tutor = _db.Tutors
+            .Include(t => t.User)
+            .Include(t => t.Department)
+            .Include(t => t.Position)
+            .FirstOrDefault(t => t.UserId == userId && (t.IsDelete == false || t.IsDelete == null));
+
+        if (tutor == null)
+            return NotFound(new { IsSuccess = false, Message = "Tutor ကို ရှာမတွေ့ပါ။" });
+
+        return Ok(new
+        {
+            TutorId        = tutor.TutorId,
+            UserId         = tutor.UserId,
+            TutorName      = tutor.TutorName,
+            UserName       = tutor.User?.UserName,
+            Email          = tutor.Email,
+            Phone          = tutor.Phone,
+            Profile        = tutor.Profile,
+            About          = tutor.About,
+            DepartmentName = tutor.Department?.DepartmentName,
+            PositionName   = tutor.Position?.PositionName,
+        });
+    }
+
+    // PUT: api/tutor/profile/{userId}/image - Tutor Profile ဓာတ်ပုံ ပြောင်းရန်
+    [HttpPut("profile/{userId}/image")]
+    public IActionResult UpdateTutorProfileImage(int userId, [FromBody] TutorProfileImageRequest request)
+    {
+        var tutor = _db.Tutors
+            .FirstOrDefault(t => t.UserId == userId && (t.IsDelete == false || t.IsDelete == null));
+
+        if (tutor == null)
+            return NotFound(new { IsSuccess = false, Message = "Tutor ကို ရှာမတွေ့ပါ။" });
+
+        tutor.Profile = request.ImageBase64;
+        tutor.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+        _db.SaveChanges();
+
+        return Ok(new { IsSuccess = true, Message = "Profile ဓာတ်ပုံ ပြောင်းလဲခြင်း အောင်မြင်ပါသည်။" });
+    }
+
+    // PUT: api/tutor/profile/{userId}/about - Tutor About ပြောင်းရန်
+    [HttpPut("profile/{userId}/about")]
+    public IActionResult UpdateTutorAbout(int userId, [FromBody] TutorAboutRequest request)
+    {
+        var tutor = _db.Tutors
+            .FirstOrDefault(t => t.UserId == userId && (t.IsDelete == false || t.IsDelete == null));
+
+        if (tutor == null)
+            return NotFound(new { IsSuccess = false, Message = "Tutor ကို ရှာမတွေ့ပါ။" });
+
+        tutor.About = request.About;
+        tutor.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+        _db.SaveChanges();
+
+        return Ok(new { IsSuccess = true, Message = "About section ပြောင်းလဲခြင်း အောင်မြင်ပါသည်။" });
+    }
+}
+
+public class TutorProfileImageRequest
+{
+    public string? ImageBase64 { get; set; }
+}
+
+public class TutorAboutRequest
+{
+    public string? About { get; set; }
 }

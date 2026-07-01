@@ -1,4 +1,4 @@
-﻿namespace Smart_Campus_PUMUB.WebApi.Models;
+namespace Smart_Campus_PUMUB.WebApi.Models;
 
 using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
@@ -64,6 +64,9 @@ public class PaymentFeeCreateRequestModel
     [StringLength(50, ErrorMessage = "Class Year သည် စာလုံးရေ ၅၀ ထက် မကျော်ရပါ။")]
     public string? ClassYear { get; set; }
 
+    [StringLength(100, ErrorMessage = "Fee Name သည် စာလုံးရေ ၁၀၀ ထက် မကျော်ရပါ။")]
+    public string? FeeName { get; set; }
+
     [Required(ErrorMessage = "Monthly Amount သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [Range(0.00, 99999999.99, ErrorMessage = "Amount သည် တရားဝင်သော ပမာဏ ဖြစ်ရပါမည်။")]
     public decimal MontlyAmount { get; set; }
@@ -79,8 +82,11 @@ public class PaymentFeeUpdateRequestModel
     [StringLength(50, ErrorMessage = "Class Year သည် စာလုံးရေ ၅၀ ထက် မကျော်ရပါ။")]
     public string? ClassYear { get; set; }
 
+    [StringLength(100, ErrorMessage = "Fee Name သည် စာလုံးရေ ၁၀၀ ထက် မကျော်ရပါ။")]
+    public string? FeeName { get; set; }
+
     [Required(ErrorMessage = "Monthly Amount သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
-    [Range(0.00, 99999999.99, ErrorMessage = "Amount သည် တရားဝင်သော ပမာဏ ဖြစ်ရပါမည်。")]
+    [Range(0.00, 99999999.99, ErrorMessage = "Amount သည် တရားဝင်သော ပမာဏ ဖြစ်ရပါမည်။")]
     public decimal MontlyAmount { get; set; }
 
     [StringLength(20, ErrorMessage = "Status သည် စာလုံးရေ ၂၀ ထက် မကျော်ရပါ။")]
@@ -97,8 +103,11 @@ public class PaymentFeeModel
 {
     public int FeesId { get; set; }
     public string? ClassYear { get; set; }
+    public string? FeeName { get; set; }
     public decimal MontlyAmount { get; set; }
     public string? Status { get; set; }
+    public DateTime? CreatedDateTime { get; set; }
+    public DateTime? ModifiedDateTime { get; set; }
 }
 
 // ==========================================

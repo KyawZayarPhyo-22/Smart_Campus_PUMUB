@@ -48,6 +48,9 @@ public partial class User
 
     public bool? IsDelete { get; set; }
 
+    [Column("MustChangePassword")]
+    public bool? MustChangePassword { get; set; }
+
     [InverseProperty("VerifyByNavigation")]
     public virtual ICollection<RegistrationPayment> RegistrationPayments { get; set; } = new List<RegistrationPayment>();
 

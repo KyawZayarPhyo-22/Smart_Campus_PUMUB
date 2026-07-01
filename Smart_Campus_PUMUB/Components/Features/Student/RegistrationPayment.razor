@@ -418,34 +418,22 @@
                         <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 20px 0;" />
 
                         <div class="fee-list">
-                            <div class="fee-item">
-                                <span>မှတ်ပုံတင်ကြေး</span>
-                                <span>၂၀၀၀ Ks</span>
-                            </div>
-                            <div class="fee-item">
-                                <span>ကျောင်းဝင်ကြေး</span>
-                                <span>၂၀၀၀ Ks</span>
-                            </div>
-                            <div class="fee-item">
-                                <span>အားကစားကြေး</span>
-                                <span>၂၀၀၀ Ks</span>
-                            </div>
-                            <div class="fee-item">
-                                <span>ဓာတ်ခွဲခန်းကြေး</span>
-                                <span>၆၀၀၀ Ks</span>
-                            </div>
-                            <div class="fee-item">
-                                <span>စာမေးပွဲဝင်ကြေး</span>
-                                <span>၅၀၀၀ Ks</span>
-                            </div>
-                            <div class="fee-item">
-                                <span>စာကြည့်တိုက်ကြေး</span>
-                                <span>၅၀၀၀ Ks</span>
-                            </div>
-                            <div class="fee-item">
-                                <span>ကျောင်းလခ (@(string.IsNullOrEmpty(InputAcademicYear) ? "-" : InputAcademicYear))</span>
-                                <span>၃၀၀၀၀ Ks</span>
-                            </div>
+                            @if (PaymentFees != null && PaymentFees.Any())
+                            {
+                                @foreach (var fee in PaymentFees)
+                                {
+                                    <div class="fee-item">
+                                        <span>@fee.FeeName</span>
+                                        <span>@fee.MontlyAmount.ToString("N0") Ks</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted small py-2">
+                                    ကျောင်းကြေး အသေးစိတ် မရှိသေးပါ။
+                                </div>
+                            }
                         </div>
 
                         <div class="fee-total">

@@ -142,6 +142,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
         {
             "Pass" => "pass",
             "Fail" => "fail",
+            "Credit_Transferred" => "credit",
             _ => "none"
         };
 

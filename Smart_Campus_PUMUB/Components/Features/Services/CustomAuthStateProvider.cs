@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using System.Security.Claims;
 using System.Collections.Generic;
@@ -121,4 +121,5 @@ public class UserSession
     public string Role { get; set; } = string.Empty;
     public int UserId { get; set; }
     public List<string> Permissions { get; set; } = new List<string>();
+    public string Token { get; set; } = string.Empty;
 }

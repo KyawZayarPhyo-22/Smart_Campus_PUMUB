@@ -48,12 +48,15 @@ public class TutorModel
 {
     public int TutorId { get; set; }
     public int DepartmentId { get; set; }
+    public int Department_Id { get; set; }
     public int PositionId { get; set; }
+    public int Position_Id { get; set; }
     public int UserId { get; set; }
     public string? TutorName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? Profile { get; set; }
+    public string? About { get; set; }
     public string? RoleName { get; set; }
     public DateTime? CreatedDateTime { get; set; }
 }

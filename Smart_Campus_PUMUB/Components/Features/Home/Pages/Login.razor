@@ -41,59 +41,136 @@
 
         <div class="split-right-panel">
             <div class="right-panel-content">
-                <h3 class="form-main-headline">Sign In to Account</h3>
-                <p class="form-sub-headline">Please enter your campus credentials below.</p>
+                @if (isChangePasswordMode)
+                {
+                    <h3 class="form-main-headline">Change Password Required</h3>
+                    <p class="form-sub-headline">Please update your temporary password to secure your account.</p>
 
-                <div class="m3-form-engine">
-                    <div class="modern-field-container">
-                        <label class="modern-field-label">Username Identity</label>
-                        <div class="modern-input-capsule">
-                            <i class="fas fa-user-shield field-icon-accent"></i>
-                            <input type="text" class="bootstrap-destroyer-input"
-                                   placeholder="Enter your account username" @bind="username" @bind:event="oninput"
-                                   @onkeydown="HandleKeyDown" />
+                    <div class="m3-form-engine">
+                        <div class="modern-field-container">
+                            <label class="modern-field-label">New Password</label>
+                            <div class="modern-input-capsule">
+                                <i class="fas fa-key field-icon-accent"></i>
+                                <input type="@NewPasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
+                                       placeholder="Enter new secure password" @bind="newPassword" @bind:event="oninput"
+                                       @onkeydown="HandleChangePasswordKeyDown" />
+
+                                <button type="button" class="field-eye-toggler-btn" @onclick="ToggleNewPasswordVisibility"
+                                        tabindex="-1">
+                                    <i class="fas @(isNewPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="modern-field-container">
-                        <label class="modern-field-label">Security Credentials</label>
-                        <div class="modern-input-capsule">
-                            <i class="fas fa-key field-icon-accent"></i>
-                            <input type="@PasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
-                                   placeholder="Enter secure password" @bind="password" @bind:event="oninput"
-                                   @onkeydown="HandleKeyDown" />
+                        <div class="modern-field-container">
+                            <label class="modern-field-label">Confirm New Password</label>
+                            <div class="modern-input-capsule">
+                                <i class="fas fa-key field-icon-accent"></i>
+                                <input type="@ConfirmPasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
+                                       placeholder="Re-enter new password to confirm" @bind="confirmPassword" @bind:event="oninput"
+                                       @onkeydown="HandleChangePasswordKeyDown" />
 
-                            <button type="button" class="field-eye-toggler-btn" @onclick="TogglePasswordVisibility"
-                                    tabindex="-1">
-                                <i class="fas @(isPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
-                            </button>
+                                <button type="button" class="field-eye-toggler-btn" @onclick="ToggleConfirmPasswordVisibility"
+                                        tabindex="-1">
+                                    <i class="fas @(isConfirmPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    @if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        <div class="luxury-error-banner alert-bounce">
-                            <div class="error-accent-edge"></div>
-                            <i class="fas fa-circle-exclamation"></i>
-                            <span>@errorMessage</span>
-                        </div>
-                    }
-                    <div class="action-button-layer">
-                        @if (isLoggingIn)
+                        @if (!string.IsNullOrEmpty(errorMessage))
                         {
-                            <button class="modern-action-btn-processing" disabled>
-                                <div class="btn-spinner-loader"></div> Authenticating user session...
-                            </button>
+                            <div class="luxury-error-banner alert-bounce">
+                                <div class="error-accent-edge"></div>
+                                <i class="fas fa-circle-exclamation"></i>
+                                <span>@errorMessage</span>
+                            </div>
                         }
-                        else
-                        {
-                            <button class="modern-action-btn" @onclick="HandleLogin">
-                                <span>Sign In Portal</span>
-                                <i class="fas fa-arrow-right-long arrow-slide-motion"></i>
-                            </button>
-                        }
+
+                        <div class="action-button-layer" style="display: flex; gap: 12px;">
+                            @if (isChangingPassword)
+                            {
+                                <button class="modern-action-btn-processing" disabled style="flex: 1;">
+                                    <div class="btn-spinner-loader"></div> Changing password...
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="modern-action-btn" @onclick="HandleChangePassword" style="flex: 1;">
+                                    <span>Update Password</span>
+                                    <i class="fas fa-check-circle"></i>
+                                </button>
+                                <button class="modern-action-btn" @onclick="CancelChangePassword" style="flex: 1; background: #64748b !important; box-shadow: none !important;">
+                                    <span>Cancel</span>
+                                </button>
+                            }
+                        </div>
                     </div>
-                </div>
+                }
+                else
+                {
+                    <h3 class="form-main-headline">Sign In to Account</h3>
+                    <p class="form-sub-headline">Please enter your campus credentials below.</p>
+
+                    <div class="m3-form-engine">
+                        <div class="modern-field-container">
+                            <label class="modern-field-label">Username Identity</label>
+                            <div class="modern-input-capsule">
+                                <i class="fas fa-user-shield field-icon-accent"></i>
+                                <input type="text" class="bootstrap-destroyer-input"
+                                       placeholder="Enter your account username" @bind="username" @bind:event="oninput"
+                                       @onkeydown="HandleKeyDown" />
+                            </div>
+                        </div>
+
+                        <div class="modern-field-container">
+                            <label class="modern-field-label">Security Credentials</label>
+                            <div class="modern-input-capsule">
+                                <i class="fas fa-key field-icon-accent"></i>
+                                <input type="@PasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
+                                       placeholder="Enter secure password" @bind="password" @bind:event="oninput"
+                                       @onkeydown="HandleKeyDown" />
+
+                                <button type="button" class="field-eye-toggler-btn" @onclick="TogglePasswordVisibility"
+                                        tabindex="-1">
+                                    <i class="fas @(isPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(successMessage))
+                        {
+                            <div class="luxury-error-banner alert-bounce" style="background: #ecfdf5 !important; border-color: #10b981 !important; color: #065f46 !important;">
+                                <div class="error-accent-edge" style="background: #10b981 !important;"></div>
+                                <i class="fas fa-check-circle" style="color: #10b981 !important;"></i>
+                                <span>@successMessage</span>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="luxury-error-banner alert-bounce">
+                                <div class="error-accent-edge"></div>
+                                <i class="fas fa-circle-exclamation"></i>
+                                <span>@errorMessage</span>
+                            </div>
+                        }
+                        <div class="action-button-layer">
+                            @if (isLoggingIn)
+                            {
+                                <button class="modern-action-btn-processing" disabled>
+                                    <div class="btn-spinner-loader"></div> Authenticating user session...
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="modern-action-btn" @onclick="HandleLogin">
+                                    <span>Sign In Portal</span>
+                                    <i class="fas fa-arrow-right-long arrow-slide-motion"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
 
                 <div class="split-right-footer">
                     <p>&copy; @DateTime.Now.Year PUMUB Subsystem. All Rights Reserved.</p>
@@ -486,18 +563,50 @@
     }
 </style>
 
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@inject HttpClientService HttpClientService
+
 @code {
     private string username = "";
     private string password = "";
+    private string newPassword = "";
+    private string confirmPassword = "";
     private string errorMessage = "";
+    private string successMessage = "";
     private bool isLoggingIn = false;
+    private bool isChangePasswordMode = false;
+    private bool isChangingPassword = false;
+
     // PASSWORD VISIBILITY ENGINE STATE
     private bool isPasswordRenderedText = false;
+    private bool isNewPasswordRenderedText = false;
+    private bool isConfirmPasswordRenderedText = false;
+
     private string PasswordInputType => isPasswordRenderedText ? "text" : "password";
+    private string NewPasswordInputType => isNewPasswordRenderedText ? "text" : "password";
+    private string ConfirmPasswordInputType => isConfirmPasswordRenderedText ? "text" : "password";
 
     private void TogglePasswordVisibility()
     {
         isPasswordRenderedText = !isPasswordRenderedText;
+    }
+
+    private void ToggleNewPasswordVisibility()
+    {
+        isNewPasswordRenderedText = !isNewPasswordRenderedText;
+    }
+
+    private void ToggleConfirmPasswordVisibility()
+    {
+        isConfirmPasswordRenderedText = !isConfirmPasswordRenderedText;
+    }
+
+    private void CancelChangePassword()
+    {
+        isChangePasswordMode = false;
+        errorMessage = "";
+        newPassword = "";
+        confirmPassword = "";
     }
 
     // 🌟 Page စပွင့်တာနဲ့ Login ဝင်ပြီးသားလား စစ်ဆေးမည့် အပိုင်း
@@ -522,12 +631,26 @@
         }
     }
 
+    public class LoginResponseModel
+    {
+        public bool IsSuccess { get; set; }
+        public bool MustChangePassword { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public int UserId { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public int RoleId { get; set; }
+        public string Role { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
+        public List<string> Permissions { get; set; } = new();
+    }
+
     private async Task HandleLogin()
     {
         if (isLoggingIn) return;
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
             errorMessage = "Please enter your username and security key.";
+            successMessage = "";
             return;
         }
 
@@ -535,35 +658,42 @@
         {
             isLoggingIn = true;
             errorMessage = "";
+            successMessage = "";
 
-            var user = await DbContext.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserName == username && u.IsDelete != true);
+            var requestModel = new { UserName = username, Password = password };
+            var response = await HttpClientService.ExecuteAsync<LoginResponseModel>(
+                "auth/login",
+                EnumHttpMethod.Post,
+                requestModel
+            );
 
-            if (user != null && user.Password == password)
+            if (response != null && response.IsSuccess)
             {
-                var permissions = await DbContext.RolePermissions
-                    .Where(rp => rp.RoleId == user.RoleId)
-                    .Select(rp => rp.Permission.PermissionName)
-                    .ToListAsync();
+                if (response.MustChangePassword)
+                {
+                    isChangePasswordMode = true;
+                    errorMessage = response.Message;
+                    return;
+                }
 
-                Console.WriteLine($"====== ဒီ User ရဲ့ RoleId က {user.RoleId} ပါ ======");
-                Console.WriteLine($"====== DB ထဲကနေ Permission ({permissions.Count}) ခု တွေ့ပါတယ် ======");
+                Console.WriteLine($"====== ဒီ User ရဲ့ Role က {response.Role} ပါ ======");
+                Console.WriteLine($"====== DB ထဲကနေ Permission ({response.Permissions.Count}) ခု တွေ့ပါတယ် ======");
 
                 var customAuth = (CustomAuthStateProvider)AuthStateProvider;
                 await customAuth.UpdateAuthenticationState(new UserSession
                 {
-                    UserId = user.UserId,
-                    Username = user.UserName,
-                    Role = user.Role.RoleName,
-                    Permissions = permissions 
+                    UserId = response.UserId,
+                    Username = username,
+                    Role = response.Role,
+                    Permissions = response.Permissions,
+                    Token = response.Token
                 });
 
-                // 🌟 မင်း လိုချင်တဲ့ sessionStorage ထဲမှာ မှတ်မည့်အပိုင်း
+                // 🌟 sessionStorage ထဲမှာ မှတ်မည့်အပိုင်း
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "islogined", "true");
-                await JS.InvokeVoidAsync("sessionStorage.setItem", "rolename", user.Role.RoleName);
+                await JS.InvokeVoidAsync("sessionStorage.setItem", "rolename", response.Role);
 
-                string roleName = user.Role.RoleName.ToLower();
+                string roleName = response.Role.ToLower();
                 if (roleName.Contains("admin") || roleName.Contains("tutor"))
                 {
                     NavigationManager.NavigateTo("/admin/dashboard");
@@ -575,7 +705,7 @@
             }
             else
             {
-                errorMessage = "Invalid login credentials. Please re-check.";
+                errorMessage = response?.Message ?? "Invalid login credentials. Please re-check.";
             }
         }
         catch (Exception ex)
@@ -588,8 +718,76 @@
         }
     }
 
+    private async Task HandleChangePassword()
+    {
+        if (isChangingPassword) return;
+        if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
+        {
+            errorMessage = "Please enter and confirm your new password.";
+            return;
+        }
+
+        if (newPassword != confirmPassword)
+        {
+            errorMessage = "Passwords do not match.";
+            return;
+        }
+
+        if (newPassword.Length < 8)
+        {
+            errorMessage = "Password သည် အနည်းဆုံး ၈ လုံး ရှိရမည်။";
+            return;
+        }
+
+        try
+        {
+            isChangingPassword = true;
+            errorMessage = "";
+            successMessage = "";
+
+            var changeRequest = new
+            {
+                UserName = username,
+                CurrentPassword = password,
+                NewPassword = newPassword
+            };
+
+            var changeResponse = await HttpClientService.ExecuteAsync<LoginResponseModel>(
+                "auth/change-password",
+                EnumHttpMethod.Post,
+                changeRequest
+            );
+
+            if (changeResponse != null && changeResponse.IsSuccess)
+            {
+                successMessage = changeResponse.Message;
+                isChangePasswordMode = false;
+                password = "";
+                newPassword = "";
+                confirmPassword = "";
+            }
+            else
+            {
+                errorMessage = changeResponse?.Message ?? "Failed to change password. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"System Error: {ex.Message}";
+        }
+        finally
+        {
+            isChangingPassword = false;
+        }
+    }
+
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter") await HandleLogin();
+    }
+
+    private async Task HandleChangePasswordKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleChangePassword();
     }
 }

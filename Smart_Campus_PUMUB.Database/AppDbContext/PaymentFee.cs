@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +16,10 @@ public partial class PaymentFee
     [Column("Class_Year")]
     [StringLength(50)]
     public string ClassYear { get; set; } = null!;
+
+    [Column("Fee_Name")]
+    [StringLength(100)]
+    public string? FeeName { get; set; }
 
     [Column("Montly_Amount", TypeName = "decimal(10, 2)")]
     public decimal MontlyAmount { get; set; }

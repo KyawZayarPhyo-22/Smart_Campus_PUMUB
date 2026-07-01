@@ -1,0 +1,203 @@
+@page "/admin/payment-fees"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<style>
+    .custom-table {
+        background: rgba(20, 24, 33, 0.6);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+        .custom-table thead {
+            background: rgba(13, 110, 253, 0.1);
+            border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+        }
+
+        .custom-table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: #0d6efd;
+            padding: 16px 20px;
+        }
+
+        .custom-table td {
+            padding: 16px 20px;
+            color: #e2e8f0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+    .table-row-hover:hover {
+        background: rgba(255, 255, 255, 0.02);
+        box-shadow: inset 4px 0 0 #0d6efd;
+    }
+
+    .btn-action-edit {
+        background: rgba(13, 110, 253, 0.1);
+        color: #39b5ff;
+        border: 1px solid rgba(13, 110, 253, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-action-edit:hover {
+            background: #0d6efd;
+            color: #ffffff;
+        }
+
+    .btn-action-delete {
+        background: rgba(220, 53, 69, 0.1);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-action-delete:hover {
+            background: #dc3545;
+            color: #ffffff;
+        }
+</style>
+
+<div class="tab-pane fade show active" id="v-pills-payment-fee">
+    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+        <div class="d-flex align-items-center">
+            <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
+                <i class="bi bi-cash-stack fs-5 text-white"></i>
+            </div>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Payment Fee Directory</h4>
+        </div>
+    </div>
+
+    <!-- 🔹 Filter Section -->
+    <div class="material-card p-3 mb-4">
+        <div class="row g-3 align-items-center">
+            <!-- Search Input -->
+            <div class="col">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
+                    <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Semester or Fee Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                </div>
+            </div>
+
+            <!-- Search and Reset Buttons -->
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+
+            <!-- Add Button -->
+            <div class="col-auto">
+                <NavLink href="/admin/payment-fee/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Payment Fee">
+                    <i class="bi bi-plus-lg"></i>
+                </NavLink>
+            </div>
+        </div>
+    </div>
+
+    <div class="tech-card p-4">
+        @if (IsLoading)
+        {
+            <div class="text-center my-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="text-muted mt-2">နှုန်းထားစာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive custom-table">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Semester (Class Year)</th>
+                            <th>Fee Name</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!FilteredFees.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">သတ်မှတ်ထားသော နှုန်းထားစာရင်းများ မရှိသေးပါ။</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            int count = (CurrentPage - 1) * PageSize + 1;
+                            @foreach (var fee in FilteredFees)
+                            {
+                                <tr class="table-row-hover">
+                                    <td class="fw-bold text-muted">@count.ToString("D2")</td>
+                                    <td class="fw-semibold">@fee.ClassYear</td>
+                                    <td>@(string.IsNullOrEmpty(fee.FeeName) ? "ကျောင်းလခ" : fee.FeeName)</td>
+                                    <td class="fw-bold text-primary">@fee.MontlyAmount.ToString("N0") Ks</td>
+                                    <td>
+                                        <span class="badge @(fee.Status == "Active" ? "bg-success" : "bg-secondary")">
+                                            @fee.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                            <NavLink href="@($"/admin/payment-fee/edit/{fee.FeesId}")" class="btn btn-action-edit"><i class="bi bi-pencil me-1.5"></i> Edit</NavLink>
+                                            <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(fee)"><i class="bi bi-trash me-1.5"></i> Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                count++;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+        }
+    </div>
+</div>
+
+@* Delete Confirmation Modal *@
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+                <div class="modal-header border-0">
+                    <h5 class="text-danger">Confirm Delete</h5>
+                </div>
+                <div class="modal-body text-center">
+                    Are you sure you want to delete <strong>@(SelectedFee?.ClassYear) - @(SelectedFee?.FeeName)</strong>?
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="mt-3 p-3 rounded"
+                             style="background: @(IsSuccess ? "rgba(25, 135, 84, 0.15)" : "rgba(220, 53, 69, 0.15)");
+                            border: 1px solid @(IsSuccess ? "#198754" : "#dc3545");">
+                            <span style="color: @(IsSuccess ? "#75b798" : "#ea868f"); font-size: 0.9rem;">
+                                <i class="bi @(IsSuccess ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+                                @statusMessage
+                            </span>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary" @onclick="CloseDeleteModal" disabled="@IsProcessing">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeleteFee" disabled="@(IsProcessing || IsSuccess)">
+                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

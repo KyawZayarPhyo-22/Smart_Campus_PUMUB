@@ -1,0 +1,574 @@
+@page "/tutor/profile"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Smart_Campus_PUMUB.Components.Features.Services
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject HttpClientService HttpClientService
+@inject StudentRegistrationNotifierService NotifierService
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Tutor,tutor")]
+@rendermode InteractiveServer
+
+<PageTitle>My Profile – Smart Campus</PageTitle>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    .tp-root {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f172a 0%, #1a1f35 60%, #0f172a 100%);
+        font-family: 'Inter', sans-serif;
+        padding: 90px 1rem 4rem;
+    }
+
+    /* Hero */
+    .tp-hero {
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 45%, #4f46e5 100%);
+        border-radius: 24px;
+        padding: 2.5rem 2rem 1.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(37, 99, 235, 0.35);
+        text-align: center;
+    }
+
+    .tp-hero::before {
+        content: ''; position:absolute;
+        top: -50px; right: -50px;
+        width: 200px; height: 200px;
+        background: rgba(255,255,255,0.07);
+        border-radius: 50%;
+    }
+
+    /* Avatar */
+    .tp-avatar-wrap {
+        position: relative;
+        width: 110px; height: 110px;
+        margin: 0 auto 1rem;
+        cursor: pointer;
+    }
+
+    .tp-avatar-img {
+        width: 110px; height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid rgba(255,255,255,0.55);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .tp-avatar-placeholder {
+        width: 110px; height: 110px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        border: 4px solid rgba(255,255,255,0.55);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.5rem; font-weight: 700; color: white;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        transition: transform 0.3s;
+    }
+
+    .tp-avatar-wrap:hover .tp-avatar-img,
+    .tp-avatar-wrap:hover .tp-avatar-placeholder { transform: scale(1.05); }
+
+    .tp-edit-btn {
+        position: absolute; bottom: 4px; right: 4px;
+        width: 30px; height: 30px;
+        background: #f59e0b; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-size: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        border: 2px solid white;
+        transition: background 0.2s, transform 0.2s;
+    }
+    .tp-edit-btn:hover { background: #d97706; transform: scale(1.1); }
+
+    .tp-name { color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.15rem; }
+    .tp-role { color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 1.2rem; }
+
+    .tp-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; }
+
+    .tp-chip {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.25);
+        color: white;
+        padding: 4px 14px;
+        border-radius: 999px;
+        font-size: 0.8rem; font-weight: 500;
+        display: flex; align-items: center; gap: 5px;
+    }
+
+    /* Cards */
+    .tp-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    @@media (max-width: 640px) { .tp-grid { grid-template-columns: 1fr; } }
+
+    .tp-card {
+        background: rgba(255,255,255,0.04);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        padding: 1.5rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .tp-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+    .tp-card.full  { grid-column: 1 / -1; }
+
+    .tp-card-head {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 1.2rem; padding-bottom: 0.8rem;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .tp-icon {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem;
+    }
+
+    .tp-icon.blue   { background: linear-gradient(135deg,#2563eb,#1d4ed8); }
+    .tp-icon.green  { background: linear-gradient(135deg,#10b981,#059669); }
+    .tp-icon.purple { background: linear-gradient(135deg,#7c3aed,#5a4fcf); }
+    .tp-icon.amber  { background: linear-gradient(135deg,#f59e0b,#d97706); }
+
+    .tp-card-title { font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.9); }
+
+    .tp-row {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        gap: 1rem;
+    }
+    .tp-row:last-child { border-bottom: none; }
+
+    .tp-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; flex-shrink: 0; }
+    .tp-value { font-size: 0.85rem; color: rgba(255,255,255,0.9); font-weight: 500; text-align: right; word-break: break-word; }
+
+    /* About section */
+    .tp-about-text {
+        color: rgba(255,255,255,0.7);
+        font-size: 0.88rem;
+        line-height: 1.7;
+        margin-bottom: 1rem;
+    }
+
+    .tp-about-edit {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 12px;
+        color: white;
+        padding: 10px 14px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.88rem;
+        width: 100%;
+        resize: vertical;
+        min-height: 90px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .tp-about-edit:focus { border-color: #2563eb; }
+
+    /* Upload modal */
+    .tp-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(6px);
+        z-index: 9000;
+        display: flex; align-items: center; justify-content: center;
+        padding: 1rem;
+    }
+
+    .tp-modal {
+        background: #1e293b;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 24px;
+        padding: 2rem;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+    }
+
+    .tp-modal h5 { color: white; font-weight: 700; margin-bottom: 1rem; }
+
+    .tp-preview {
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 auto 1rem;
+        display: block;
+        border: 3px solid #2563eb;
+    }
+
+    .tp-upload-area {
+        border: 2px dashed rgba(255,255,255,0.2);
+        border-radius: 16px;
+        padding: 1.5rem;
+        cursor: pointer;
+        margin-bottom: 1rem;
+        transition: border-color 0.2s;
+    }
+    .tp-upload-area:hover { border-color: #2563eb; }
+    .tp-upload-area p { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin: 0; }
+
+    .tp-btn-primary {
+        background: linear-gradient(135deg,#2563eb,#1d4ed8);
+        color: white; border: none; border-radius: 12px;
+        padding: 10px 24px; font-weight: 600; cursor: pointer;
+        transition: opacity 0.2s; width: 100%; margin-bottom: 0.5rem;
+    }
+    .tp-btn-primary:hover { opacity: 0.88; }
+    .tp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .tp-btn-ghost {
+        background: transparent;
+        color: rgba(255,255,255,0.6);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 12px; padding: 8px 24px;
+        font-weight: 500; cursor: pointer; width: 100%;
+        transition: background 0.2s;
+    }
+    .tp-btn-ghost:hover { background: rgba(255,255,255,0.06); }
+
+    .tp-btn-sm {
+        background: rgba(37,99,235,0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(37,99,235,0.3);
+        border-radius: 8px; padding: 5px 14px;
+        font-size: 0.8rem; cursor: pointer;
+        transition: background 0.2s;
+    }
+    .tp-btn-sm:hover { background: rgba(37,99,235,0.35); }
+
+    .loading-spin {
+        display: inline-block; width: 16px; height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white; border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 6px; vertical-align: middle;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast-msg {
+        position: fixed; bottom: 24px; left: 50%;
+        transform: translateX(-50%);
+        background: #10b981; color: white;
+        padding: 10px 24px; border-radius: 999px;
+        font-size: 0.85rem; font-weight: 600;
+        z-index: 9999; box-shadow: 0 8px 24px rgba(16,185,129,0.4);
+        animation: fadeUp 0.4s ease;
+    }
+
+    @@keyframes fadeUp {
+        from { opacity:0; transform: translateX(-50%) translateY(20px); }
+        to   { opacity:1; transform: translateX(-50%) translateY(0); }
+    }
+</style>
+
+<div class="tp-root">
+    @if (isLoading)
+    {
+        <div style="text-align:center; padding:5rem 1rem;">
+            <div class="loading-spin" style="width:40px;height:40px;border-width:4px;"></div>
+            <p style="color:rgba(255,255,255,0.5); margin-top:1rem;">Loading profile...</p>
+        </div>
+    }
+    else if (profile == null)
+    {
+        <div style="text-align:center; padding:5rem 1rem; color:rgba(255,255,255,0.5);">
+            <i class="fas fa-user-slash" style="font-size:3rem; display:block; margin-bottom:1rem;"></i>
+            <p>Profile data could not be loaded.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Hero -->
+        <div class="tp-hero">
+            <div class="tp-avatar-wrap" @onclick="OpenUploadModal">
+                @if (!string.IsNullOrEmpty(profile.Profile))
+                {
+                    <img class="tp-avatar-img" src="@profile.Profile" alt="Profile" />
+                }
+                else
+                {
+                    <div class="tp-avatar-placeholder">@(profile.TutorName?.Substring(0, 1).ToUpper() ?? "T")</div>
+                }
+                <div class="tp-edit-btn"><i class="fas fa-camera"></i></div>
+            </div>
+
+            <div class="tp-name">@profile.TutorName</div>
+            <div class="tp-role">@@&nbsp;@profile.UserName</div>
+
+            <div class="tp-chips">
+                @if (!string.IsNullOrEmpty(profile.PositionName))
+                {
+                    <span class="tp-chip"><i class="fas fa-briefcase"></i> @profile.PositionName</span>
+                }
+                @if (!string.IsNullOrEmpty(profile.DepartmentName))
+                {
+                    <span class="tp-chip"><i class="fas fa-building"></i> @profile.DepartmentName</span>
+                }
+            </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="tp-grid">
+
+            <!-- Contact Info -->
+            <div class="tp-card">
+                <div class="tp-card-head">
+                    <div class="tp-icon blue"><i class="fas fa-address-card" style="color:white;"></i></div>
+                    <span class="tp-card-title">Contact Info</span>
+                </div>
+                <div class="tp-row">
+                    <span class="tp-label">Username</span>
+                    <span class="tp-value">@profile.UserName</span>
+                </div>
+                @if (!string.IsNullOrEmpty(profile.Email))
+                {
+                    <div class="tp-row">
+                        <span class="tp-label">Email</span>
+                        <span class="tp-value">@profile.Email</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(profile.Phone))
+                {
+                    <div class="tp-row">
+                        <span class="tp-label">Phone</span>
+                        <span class="tp-value">@profile.Phone</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Department -->
+            <div class="tp-card">
+                <div class="tp-card-head">
+                    <div class="tp-icon green"><i class="fas fa-university" style="color:white;"></i></div>
+                    <span class="tp-card-title">Department</span>
+                </div>
+                <div class="tp-row">
+                    <span class="tp-label">Department</span>
+                    <span class="tp-value">@(profile.DepartmentName ?? "—")</span>
+                </div>
+                <div class="tp-row">
+                    <span class="tp-label">Position</span>
+                    <span class="tp-value">@(profile.PositionName ?? "—")</span>
+                </div>
+            </div>
+
+            <!-- About -->
+            <div class="tp-card full">
+                <div class="tp-card-head">
+                    <div class="tp-icon purple"><i class="fas fa-pen-nib" style="color:white;"></i></div>
+                    <span class="tp-card-title">About Me</span>
+                    <button class="tp-btn-sm ms-auto" @onclick="ToggleAboutEdit">
+                        <i class="fas @(isEditingAbout ? "fa-times" : "fa-pencil-alt") me-1"></i>
+                        @(isEditingAbout ? "Cancel" : "Edit")
+                    </button>
+                </div>
+
+                @if (isEditingAbout)
+                {
+                    <textarea class="tp-about-edit" @bind="aboutDraft" placeholder="Tell students something about yourself..."></textarea>
+                    <button class="tp-btn-primary mt-2" style="max-width:180px;" @onclick="SaveAbout" disabled="@isSaving">
+                        @if (isSaving) { <span class="loading-spin"></span> } Save
+                    </button>
+                }
+                else
+                {
+                    <p class="tp-about-text">
+                        @(string.IsNullOrWhiteSpace(profile.About) ? "No bio added yet. Click Edit to introduce yourself." : profile.About)
+                    </p>
+                }
+            </div>
+
+        </div>
+    }
+</div>
+
+<!-- Upload Modal -->
+@if (showUploadModal)
+{
+    <div class="tp-overlay" @onclick="CloseUploadModal">
+        <div class="tp-modal" @onclick:stopPropagation="true">
+            <h5><i class="fas fa-camera me-2"></i>Change Profile Photo</h5>
+
+            @if (!string.IsNullOrEmpty(previewBase64))
+            {
+                <img class="tp-preview" src="@previewBase64" alt="Preview" />
+            }
+            else if (!string.IsNullOrEmpty(profile?.Profile))
+            {
+                <img class="tp-preview" src="@profile!.Profile" alt="Current" />
+            }
+            else
+            {
+                <div class="tp-preview" style="background:linear-gradient(135deg,#2563eb,#1d4ed8); display:flex; align-items:center; justify-content:center; color:white; font-size:2.5rem; font-weight:700;">
+                    @(profile?.TutorName?.Substring(0, 1).ToUpper() ?? "T")
+                </div>
+            }
+
+            <div class="tp-upload-area" @onclick="TriggerFilePicker">
+                <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem; color:rgba(255,255,255,0.4); display:block; margin-bottom:8px;"></i>
+                <p>Click to select a photo (JPG, PNG, max 2MB)</p>
+            </div>
+
+            <InputFile id="tutorFileInput" OnChange="OnFileSelected" accept="image/*" style="display:none;" />
+
+            <button class="tp-btn-primary" @onclick="SaveProfileImage" disabled="@(string.IsNullOrEmpty(previewBase64) || isSaving)">
+                @if (isSaving) { <span class="loading-spin"></span> } Confirm & Save
+            </button>
+            <button class="tp-btn-ghost" @onclick="CloseUploadModal">Cancel</button>
+        </div>
+    </div>
+}
+
+@if (showToast)
+{
+    <div class="toast-msg"><i class="fas fa-check me-2"></i>@toastMessage</div>
+}
+
+@code {
+    private int currentUserId = 0;
+    private bool isLoading = true;
+    private TutorProfileDto? profile;
+
+    private bool showUploadModal = false;
+    private bool isSaving = false;
+    private string? previewBase64;
+
+    private bool isEditingAbout = false;
+    private string? aboutDraft;
+
+    private bool showToast = false;
+    private string toastMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            NavigationManager.NavigateTo("/login", true);
+            return;
+        }
+        var idClaim = user.FindFirst("UserId")?.Value;
+        int.TryParse(idClaim, out currentUserId);
+        await LoadProfile();
+    }
+
+    private async Task LoadProfile()
+    {
+        isLoading = true;
+        try
+        {
+            var data = await HttpClientService.ExecuteAsync<TutorProfileDto>(
+                $"tutor/profile/{currentUserId}", EnumHttpMethod.Get);
+            if (data != null)
+            {
+                profile = data;
+                aboutDraft = profile.About;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Profile load error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenUploadModal() { previewBase64 = null; showUploadModal = true; }
+    private void CloseUploadModal() { showUploadModal = false; previewBase64 = null; }
+
+    private async Task TriggerFilePicker()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('tutorFileInput').click()");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+        if (file.Size > 2 * 1024 * 1024) { await ShowToast("File is too large (max 2 MB)"); return; }
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream(2 * 1024 * 1024).ReadAsync(buffer);
+        previewBase64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    }
+
+    private async Task SaveProfileImage()
+    {
+        if (string.IsNullOrEmpty(previewBase64)) return;
+        isSaving = true;
+        try
+        {
+            await HttpClientService.ExecuteAsync<object>(
+                $"tutor/profile/{currentUserId}/image", EnumHttpMethod.Put, new { imageBase64 = previewBase64 });
+            if (profile != null) 
+            {
+                profile.Profile = previewBase64;
+                await NotifierService.NotifyProfileImageChanged(currentUserId, previewBase64);
+            }
+            showUploadModal = false;
+            previewBase64 = null;
+            await ShowToast("Profile photo updated!");
+        }
+        catch (Exception ex) { Console.WriteLine($"Image save error: {ex.Message}"); }
+        finally { isSaving = false; }
+    }
+
+    private void ToggleAboutEdit()
+    {
+        isEditingAbout = !isEditingAbout;
+        if (isEditingAbout) aboutDraft = profile?.About;
+    }
+
+    private async Task SaveAbout()
+    {
+        isSaving = true;
+        try
+        {
+            await HttpClientService.ExecuteAsync<object>(
+                $"tutor/profile/{currentUserId}/about", EnumHttpMethod.Put, new { about = aboutDraft });
+            if (profile != null) profile.About = aboutDraft;
+            isEditingAbout = false;
+            await ShowToast("About section updated!");
+        }
+        catch (Exception ex) { Console.WriteLine($"About save error: {ex.Message}"); }
+        finally { isSaving = false; }
+    }
+
+    private async Task ShowToast(string msg)
+    {
+        toastMessage = msg;
+        showToast = true;
+        StateHasChanged();
+        await Task.Delay(3000);
+        showToast = false;
+        StateHasChanged();
+    }
+
+    public class TutorProfileDto
+    {
+        public int TutorId { get; set; }
+        public int UserId { get; set; }
+        public string? TutorName { get; set; }
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Profile { get; set; }
+        public string? About { get; set; }
+        public string? DepartmentName { get; set; }
+        public string? PositionName { get; set; }
+    }
+}

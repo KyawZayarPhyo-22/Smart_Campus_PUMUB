@@ -1,0 +1,774 @@
+@page "/profile"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Smart_Campus_PUMUB.Components.Features.Services
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject HttpClientService HttpClientService
+@inject StudentRegistrationNotifierService NotifierService
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Student,student")]
+@rendermode InteractiveServer
+
+<PageTitle>My Profile – Smart Campus</PageTitle>
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    .profile-root {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        font-family: 'Inter', sans-serif;
+        padding: 90px 1rem 4rem;
+    }
+
+    /* ─── Hero Banner ─── */
+    .profile-hero {
+        background: linear-gradient(135deg, #5a4fcf 0%, #7c3aed 50%, #4f46e5 100%);
+        border-radius: 24px;
+        padding: 2.5rem 2rem 1rem;
+        margin-bottom: 0;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(90, 79, 207, 0.35);
+    }
+
+    .profile-hero::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 220px; height: 220px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 50%;
+    }
+
+    .profile-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -40px; left: -40px;
+        width: 160px; height: 160px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+    }
+
+    /* ─── Avatar ─── */
+    .avatar-wrapper {
+        position: relative;
+        width: 110px;
+        height: 110px;
+        margin: 0 auto 1rem;
+        cursor: pointer;
+    }
+
+    .avatar-img {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid rgba(255,255,255,0.5);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .avatar-placeholder {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
+        border: 4px solid rgba(255,255,255,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        transition: transform 0.3s;
+    }
+
+    .avatar-wrapper:hover .avatar-img,
+    .avatar-wrapper:hover .avatar-placeholder {
+        transform: scale(1.05);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+
+    .avatar-edit-btn {
+        position: absolute;
+        bottom: 4px; right: 4px;
+        width: 30px; height: 30px;
+        background: #f59e0b;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer;
+        border: 2px solid white;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+    .avatar-edit-btn:hover { background: #d97706; transform: scale(1.1); }
+
+    .hero-name { color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.2rem; text-align:center; }
+    .hero-sub  { color: rgba(255,255,255,0.75); font-size: 0.9rem; text-align:center; margin-bottom: 1.2rem; }
+
+    .hero-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .chip {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.25);
+        color: white;
+        padding: 4px 14px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .chip.green { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.4); }
+
+    /* ─── Cards ─── */
+    .cards-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    @@media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
+
+    .info-card {
+        background: rgba(255,255,255,0.04);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        padding: 1.5rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .info-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+
+    .info-card.full { grid-column: 1 / -1; }
+
+    .card-header-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.8rem;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .card-icon {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem;
+    }
+
+    .card-icon.purple { background: linear-gradient(135deg, #5a4fcf, #7c3aed); }
+    .card-icon.green  { background: linear-gradient(135deg, #10b981, #059669); }
+    .card-icon.amber  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .card-icon.blue   { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+    .card-title { font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.9); }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        gap: 1rem;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; flex-shrink: 0; }
+    .info-value { font-size: 0.85rem; color: rgba(255,255,255,0.9); font-weight: 500; text-align: right; word-break: break-word; }
+
+    /* ─── Semester Results ─── */
+    .sem-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    @@media (max-width: 480px) { .sem-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .sem-pill {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 14px;
+        padding: 10px;
+        text-align: center;
+        transition: background 0.2s;
+    }
+
+    .sem-pill:hover { background: rgba(255,255,255,0.1); }
+
+    .sem-label { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+    .sem-value { font-size: 0.85rem; font-weight: 600; color: #10b981; }
+    .sem-value.pending { color: rgba(255,255,255,0.35); }
+
+    /* ─── Notifications ─── */
+    .noti-item {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 14px;
+        margin-bottom: 8px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+        transition: background 0.2s;
+    }
+
+    .noti-item:hover { background: rgba(255,255,255,0.08); }
+
+    .noti-dot {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .noti-dot.success { background: rgba(16,185,129,0.2); color: #10b981; }
+    .noti-dot.pending { background: rgba(245,158,11,0.2); color: #f59e0b; }
+    .noti-dot.danger  { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+    .noti-title { font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.9); }
+    .noti-sub   { font-size: 0.75rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+    /* ─── Upload modal overlay ─── */
+    .upload-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(6px);
+        z-index: 9000;
+        display: flex; align-items: center; justify-content: center;
+        padding: 1rem;
+    }
+
+    .upload-modal {
+        background: #1e293b;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 24px;
+        padding: 2rem;
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+    }
+
+    .upload-modal h5 { color: white; font-weight: 700; margin-bottom: 1rem; }
+
+    .upload-preview {
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 0 auto 1rem;
+        display: block;
+        border: 3px solid #5a4fcf;
+    }
+
+    .upload-area {
+        border: 2px dashed rgba(255,255,255,0.2);
+        border-radius: 16px;
+        padding: 1.5rem;
+        cursor: pointer;
+        margin-bottom: 1rem;
+        transition: border-color 0.2s;
+    }
+
+    .upload-area:hover { border-color: #5a4fcf; }
+    .upload-area p { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin: 0; }
+
+    .btn-primary-grad {
+        background: linear-gradient(135deg, #5a4fcf, #7c3aed);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 24px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-primary-grad:hover { opacity: 0.88; }
+    .btn-primary-grad:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-ghost {
+        background: transparent;
+        color: rgba(255,255,255,0.6);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 12px;
+        padding: 8px 24px;
+        font-weight: 500;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+    }
+
+    .btn-ghost:hover { background: rgba(255,255,255,0.06); }
+
+    .loading-spin {
+        display: inline-block;
+        width: 16px; height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast-msg {
+        position: fixed;
+        bottom: 24px; left: 50%;
+        transform: translateX(-50%);
+        background: #10b981;
+        color: white;
+        padding: 10px 24px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        z-index: 9999;
+        box-shadow: 0 8px 24px rgba(16,185,129,0.4);
+        animation: fadeUp 0.4s ease;
+    }
+
+    @@keyframes fadeUp {
+        from { opacity:0; transform: translateX(-50%) translateY(20px); }
+        to   { opacity:1; transform: translateX(-50%) translateY(0); }
+    }
+</style>
+
+<div class="profile-root">
+    @if (isLoading)
+    {
+        <div style="text-align:center; padding:5rem 1rem;">
+            <div class="loading-spin" style="width:40px;height:40px;border-width:4px;"></div>
+            <p style="color:rgba(255,255,255,0.5); margin-top:1rem;">Loading profile...</p>
+        </div>
+    }
+    else if (profile == null)
+    {
+        <div style="text-align:center; padding:5rem 1rem; color:rgba(255,255,255,0.5);">
+            <i class="fas fa-user-slash" style="font-size:3rem; margin-bottom:1rem; display:block;"></i>
+            <p>Profile data could not be loaded. Please log in and try again.</p>
+        </div>
+    }
+    else
+    {
+        <!-- Hero -->
+        <div class="profile-hero">
+            <div class="avatar-wrapper" @onclick="OpenUploadModal">
+                @if (!string.IsNullOrEmpty(profile.StudentImage))
+                {
+                    <img class="avatar-img" src="@profile.StudentImage" alt="Profile" />
+                }
+                else
+                {
+                    <div class="avatar-placeholder">
+                        @(profile.FullName?.Substring(0, 1).ToUpper() ?? "S")
+                    </div>
+                }
+                <div class="avatar-edit-btn"><i class="fas fa-camera"></i></div>
+            </div>
+
+            <div class="hero-name">@profile.FullName</div>
+            <div class="hero-sub">@@&nbsp;@profile.UserName</div>
+
+            <div class="hero-chips">
+                @if (!string.IsNullOrEmpty(profile.RollNo))
+                {
+                    <span class="chip"><i class="fas fa-id-badge"></i> @profile.RollNo</span>
+                }
+                @if (!string.IsNullOrEmpty(profile.CurrentSemester))
+                {
+                    <span class="chip"><i class="fas fa-clock"></i> @profile.CurrentSemester</span>
+                }
+                <span class="chip"><i class="fas fa-book-open"></i> @profile.CurrentMajor</span>
+                <span class="chip green"><i class="fas fa-circle" style="font-size:0.5rem;"></i> @(profile.Status ?? "Active")</span>
+            </div>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="cards-grid">
+
+            <!-- Personal Info -->
+            <div class="info-card">
+                <div class="card-header-row">
+                    <div class="card-icon purple"><i class="fas fa-user" style="color:white;"></i></div>
+                    <span class="card-title">Personal Info</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-value">@profile.FullName</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Username</span>
+                    <span class="info-value">@profile.UserName</span>
+                </div>
+                @if (!string.IsNullOrEmpty(profile.Email))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value">@profile.Email</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(profile.Dob))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Date of Birth</span>
+                        <span class="info-value">@profile.Dob</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Academic Info -->
+            <div class="info-card">
+                <div class="card-header-row">
+                    <div class="card-icon blue"><i class="fas fa-university" style="color:white;"></i></div>
+                    <span class="card-title">Academic Info</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Roll No</span>
+                    <span class="info-value">@(profile.RollNo ?? "—")</span>
+                </div>
+
+                @if (!string.IsNullOrEmpty(profile.CurrentSemester))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Semester</span>
+                        <span class="info-value">@profile.CurrentSemester</span>
+                    </div>
+                }
+                <div class="info-row">
+                    <span class="info-label">Major</span>
+                    <span class="info-value">@profile.CurrentMajor</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status</span>
+                    <span class="info-value" style="color:#10b981;">@(profile.Status ?? "Active")</span>
+                </div>
+            </div>
+
+            <!-- Semester Results -->
+            <div class="info-card full">
+                <div class="card-header-row">
+                    <div class="card-icon green"><i class="fas fa-chart-bar" style="color:white;"></i></div>
+                    <span class="card-title">Semester Results</span>
+                </div>
+                <div class="sem-grid">
+                    @{ var semResults = new[] { profile.Sem1_Result, profile.Sem2_Result, profile.Sem3_Result, profile.Sem4_Result, profile.Sem5_Result, profile.Sem6_Result, profile.Sem7_Result, profile.Sem8_Result, profile.Sem9_Result }; }
+                    @for (int i = 0; i < semResults.Length; i++)
+                    {
+                        var semNum = i + 1;
+                        var result = semResults[i];
+                        <div class="sem-pill">
+                            <div class="sem-label">Semester @semNum</div>
+                            <div class="sem-value @(string.IsNullOrEmpty(result) ? "pending" : "")">
+                                @(string.IsNullOrEmpty(result) ? "—" : result)
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Notifications / Messages -->
+            <div class="info-card full">
+                <div class="card-header-row">
+                    <div class="card-icon amber"><i class="fas fa-bell" style="color:white;"></i></div>
+                    <span class="card-title">Registration & Payment History</span>
+                </div>
+
+                @if (allNotifications.Count == 0)
+                {
+                    <div style="text-align:center; padding:2rem; color:rgba(255,255,255,0.3); font-size:0.85rem;">
+                        <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
+                        No registration records found.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var noti in allNotifications)
+                    {
+                        var dotClass = noti.Type == "success" ? "success" : noti.Type == "pending" ? "pending" : "danger";
+                        <div class="noti-item">
+                            <div class="noti-dot @dotClass">
+                                <i class="fas @(noti.Type == "success" ? "fa-check" : noti.Type == "pending" ? "fa-clock" : "fa-times")"></i>
+                            </div>
+                            <div>
+                                <div class="noti-title">@noti.Title</div>
+                                <div class="noti-sub">@noti.Sub</div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+        </div><!-- /cards-grid -->
+    }
+</div>
+
+<!-- Upload Modal -->
+@if (showUploadModal)
+{
+    <div class="upload-overlay" @onclick="CloseUploadModal">
+        <div class="upload-modal" @onclick:stopPropagation="true">
+            <h5><i class="fas fa-camera me-2"></i>Change Profile Photo</h5>
+
+            @if (!string.IsNullOrEmpty(previewBase64))
+            {
+                <img class="upload-preview" src="@previewBase64" alt="Preview" />
+            }
+            else if (!string.IsNullOrEmpty(profile?.StudentImage))
+            {
+                <img class="upload-preview" src="@profile!.StudentImage" alt="Current" />
+            }
+            else
+            {
+                <div class="upload-preview" style="background:linear-gradient(135deg,#5a4fcf,#7c3aed); display:flex; align-items:center; justify-content:center; color:white; font-size:2.5rem; font-weight:700;">
+                    @(profile?.FullName?.Substring(0, 1).ToUpper() ?? "S")
+                </div>
+            }
+
+            <label class="upload-area" for="profileFileInput" style="display: block; cursor: pointer;">
+                <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem; color:rgba(255,255,255,0.4); display:block; margin-bottom:8px;"></i>
+                <p>Click to select a photo (JPG, PNG, max 2MB)</p>
+            </label>
+
+            <InputFile id="profileFileInput" OnChange="OnFileSelected" accept="image/*" style="opacity: 0; position: absolute; width: 1px; height: 1px; z-index: -1;" />
+
+            <button class="btn-primary-grad" @onclick="SaveProfileImage" disabled="@(string.IsNullOrEmpty(previewBase64) || isSaving)">
+                @if (isSaving) { <span class="loading-spin"></span> } Confirm & Save
+            </button>
+            <button class="btn-ghost" @onclick="CloseUploadModal">Cancel</button>
+        </div>
+    </div>
+}
+
+@if (showToast)
+{
+    <div class="toast-msg"><i class="fas fa-check me-2"></i>@toastMessage</div>
+}
+
+@code {
+    private int currentUserId = 0;
+    private bool isLoading = true;
+    private StudentProfileDto? profile;
+    private List<NotifRow> allNotifications = new();
+
+    private bool showUploadModal = false;
+    private bool isSaving = false;
+    private string? previewBase64;
+    private bool showToast = false;
+    private string toastMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            NavigationManager.NavigateTo("/login", true);
+            return;
+        }
+        var idClaim = user.FindFirst("UserId")?.Value;
+        int.TryParse(idClaim, out currentUserId);
+        await LoadProfile();
+    }
+
+    private async Task LoadProfile()
+    {
+        isLoading = true;
+        try
+        {
+            var data = await HttpClientService.ExecuteAsync<StudentProfileDto>(
+                $"student/profile/{currentUserId}", EnumHttpMethod.Get);
+            if (data != null)
+            {
+                profile = data;
+                BuildNotifications();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Profile load error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void BuildNotifications()
+    {
+        allNotifications.Clear();
+        if (profile?.Registrations == null) return;
+
+        foreach (var reg in profile.Registrations)
+        {
+            var regStatus = reg.Status ?? "Pending";
+            var type = regStatus == "Approved" ? "success" : regStatus == "Rejected" ? "danger" : "pending";
+            allNotifications.Add(new NotifRow
+            {
+                Title = $"Registration ({reg.AcademicYearRange} · {reg.AcademicYearLevel}): {regStatus}",
+                Sub   = reg.CreatedDatetime.HasValue ? reg.CreatedDatetime.Value.ToString("dd MMM yyyy") : "",
+                Type  = type
+            });
+
+            foreach (var pay in reg.Payments ?? new())
+            {
+                var payType = pay.Status == "Approved" ? "success" : pay.Status == "Rejected" ? "danger" : "pending";
+                allNotifications.Add(new NotifRow
+                {
+                    Title = $"Payment #{pay.PaymentId}: {pay.Status ?? "Pending"}  {(pay.AmountPaid.HasValue ? $"(MMK {pay.AmountPaid:N0})" : "")}",
+                    Sub   = pay.CreatedDateTime.HasValue ? pay.CreatedDateTime.Value.ToString("dd MMM yyyy") : "",
+                    Type  = payType
+                });
+            }
+        }
+    }
+
+    private void OpenUploadModal()
+    {
+        previewBase64 = null;
+        showUploadModal = true;
+    }
+
+    private void CloseUploadModal()
+    {
+        showUploadModal = false;
+        previewBase64 = null;
+    }
+
+    private async Task TriggerFilePicker()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('profileFileInput').click()");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+        if (file.Size > 2 * 1024 * 1024)
+        {
+            await ShowToast("File is too large (max 2 MB)");
+            return;
+        }
+
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream(2 * 1024 * 1024).ReadAsync(buffer);
+        var base64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        previewBase64 = base64;
+    }
+
+    private async Task SaveProfileImage()
+    {
+        if (string.IsNullOrEmpty(previewBase64)) return;
+        isSaving = true;
+        try
+        {
+            var payload = new { imageBase64 = previewBase64 };
+            var result = await HttpClientService.ExecuteAsync<object>(
+                $"student/profile/{currentUserId}/image", EnumHttpMethod.Put, payload);
+            if (profile != null) 
+            {
+                profile.StudentImage = previewBase64;
+                await NotifierService.NotifyProfileImageChanged(currentUserId, previewBase64);
+            }
+            showUploadModal = false;
+            previewBase64 = null;
+            await ShowToast("Profile photo updated!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Image save error: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task ShowToast(string msg)
+    {
+        toastMessage = msg;
+        showToast = true;
+        StateHasChanged();
+        await Task.Delay(3000);
+        showToast = false;
+        StateHasChanged();
+    }
+
+    // ─── DTOs ───
+    public class StudentProfileDto
+    {
+        public int StudentId { get; set; }
+        public int UserId { get; set; }
+        public string? FullName { get; set; }
+        public string? UserName { get; set; }
+        public string? RollNo { get; set; }
+        public string? CurrentClassYear { get; set; }
+        public string? CurrentSemester { get; set; }
+        public string? CurrentMajor { get; set; }
+        public string? Status { get; set; }
+        public string? Dob { get; set; }
+        public string? Email { get; set; }
+        public string? StudentImage { get; set; }
+        public string? Sem1_Result { get; set; }
+        public string? Sem2_Result { get; set; }
+        public string? Sem3_Result { get; set; }
+        public string? Sem4_Result { get; set; }
+        public string? Sem5_Result { get; set; }
+        public string? Sem6_Result { get; set; }
+        public string? Sem7_Result { get; set; }
+        public string? Sem8_Result { get; set; }
+        public string? Sem9_Result { get; set; }
+        public List<RegDto>? Registrations { get; set; }
+    }
+
+    public class RegDto
+    {
+        public int RegistrationId { get; set; }
+        public string? Status { get; set; }
+        public string? AcademicYearRange { get; set; }
+        public string? AcademicYearLevel { get; set; }
+        public DateTime? CreatedDatetime { get; set; }
+        public List<PayDto>? Payments { get; set; }
+    }
+
+    public class PayDto
+    {
+        public int PaymentId { get; set; }
+        public string? Status { get; set; }
+        public DateTime? CreatedDateTime { get; set; }
+        public decimal? AmountPaid { get; set; }
+    }
+
+    public class NotifRow
+    {
+        public string Title { get; set; } = "";
+        public string Sub   { get; set; } = "";
+        public string Type  { get; set; } = "pending";
+    }
+}

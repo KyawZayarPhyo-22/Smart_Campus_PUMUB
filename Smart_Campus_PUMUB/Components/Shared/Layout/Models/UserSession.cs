@@ -6,4 +6,5 @@ public class UserSession
     
     // 💡 ဤစာကြောင်း အတိအကျ ပါရပါမည်
     public List<string> Permissions { get; set; } = new List<string>(); 
+    public string Token { get; set; } = string.Empty;
 }

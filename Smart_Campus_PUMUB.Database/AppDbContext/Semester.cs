@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +16,12 @@ public partial class Semester
     [Column("Semester_Name")]
     [StringLength(100)]
     public string SemesterName { get; set; } = null!;
+
+    /// <summary>
+    /// Ordinal position of this semester (1 = first, 9 = last). Used for progression validation.
+    /// </summary>
+    [Column("Sequence")]
+    public int? Sequence { get; set; }
 
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }

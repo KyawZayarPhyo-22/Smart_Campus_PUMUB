@@ -5,11 +5,13 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class StudentController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -21,6 +23,7 @@ public class StudentController : ControllerBase
 
     // 🎯 ၁။ GET: api/student (ကျောင်းသားအားလုံးစာရင်း - Soft Delete မဖြစ်သေးတာပဲပြမည်)
     [HttpGet]
+    [Authorize(Roles = "Admin,admin")]
     public IActionResult GetStudents()
     {
         // 1. Get all active users who are students
@@ -84,6 +87,7 @@ public class StudentController : ControllerBase
 
     // 🎯 ၂။ GET: api/student/{id} (ကျောင်းသားတစ်ဦးချင်းစီ၏ အသေးစိတ်ကြည့်ရန်)
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,admin")]
     public IActionResult GetStudent(int id)
     {
         var item = _db.Students.Include(s => s.User).FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
@@ -116,6 +120,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
+    [Authorize(Roles = "Admin,admin,Student,student")]
     public IActionResult GetStudentByUserId(int userId)
     {
         var userCheck = _db.Users.FirstOrDefault(u => u.UserId == userId && u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
@@ -173,6 +178,7 @@ public class StudentController : ControllerBase
 
     // 🎯 ၃။ POST: api/student (ကျောင်းသားအသစ် စာရင်းသွင်းရန် - Validation ပါဝင်သည်)
     [HttpPost]
+    [Authorize(Roles = "Admin,admin")]
     public IActionResult CreateStudent(StudentCreateRequestModel request)
     {
         // Validation: မဖြစ်မနေလိုအပ်သော အချက်အလက်များ ရှိမရှိ စစ်ဆေးခြင်း
@@ -249,6 +255,7 @@ public class StudentController : ControllerBase
 
     // 🎯 ၄။ PUT: api/student/{id} (ကျောင်းသား အတန်းတက်ခြင်း/ခုံအမှတ် ပြောင်းခြင်း ပြင်ရန်)
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,admin")]
     public IActionResult UpdateStudent(int id, StudentUpdateRequestModel request)
     {
         var item = _db.Students.FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
@@ -311,6 +318,7 @@ public class StudentController : ControllerBase
         });
     }
     [HttpPatch("{id}")]
+    [Authorize(Roles = "Admin,admin")]
     public IActionResult PatchStudent(int id, StudentPatchRequestModel request)
     {
         // ၁။ ပြင်ဆင်မည့် ကျောင်းသား ရှိမရှိ အရင်စစ်မည်
@@ -420,6 +428,7 @@ public class StudentController : ControllerBase
 
     // 🎯 ၅။ DELETE: api/student/{id} (ကျောင်းသားအဖြစ်မှ ရပ်စဲရန် - Soft Delete)
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin,admin")]
     public IActionResult DeleteStudent(int id)
     {
         var item = _db.Students.FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
@@ -451,9 +460,96 @@ public class StudentController : ControllerBase
 
     // 🎯 ၆။ GET: api/student/count/active (တက်ကြွဆဲ ကျောင်းသားအရေအတွက်)
     [HttpGet("count/active")]
+    [Authorize(Roles = "Admin,admin")]
     public IActionResult GetActiveStudentCount()
     {
         var count = _db.Users.Count(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
         return Ok(new { Count = count });
     }
+
+    // 🎯 ၇။ GET: api/student/profile/{userId} - ကျောင်းသား Profile ကြည့်ရန်
+    [HttpGet("profile/{userId}")]
+    [Authorize(Roles = "Admin,admin,Student,student")]
+    public IActionResult GetStudentProfile(int userId)
+    {
+        var student = _db.Students
+            .Include(s => s.User)
+            .FirstOrDefault(s => s.UserId == userId && (s.IsDelete == false || s.IsDelete == null));
+
+        if (student == null)
+            return NotFound(new { IsSuccess = false, Message = "ကျောင်းသားကို ရှာမတွေ့ပါ။" });
+
+        var reg = _db.StudentRegistrations
+            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
+            .OrderByDescending(r => r.RegistrationId)
+            .FirstOrDefault();
+
+        var notifications = _db.StudentRegistrations
+            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
+            .Select(r => new
+            {
+                r.RegistrationId,
+                r.Status,
+                r.AcademicYearRange,
+                r.AcademicYearLevel,
+                r.CreatedDatetime,
+                Payments = r.RegistrationPayments
+                    .Where(p => p.IsDelete == false || p.IsDelete == null)
+                    .Select(p => new { p.PaymentId, p.Status, p.CreatedDateTime, p.AmountPaid })
+                    .ToList()
+            })
+            .ToList();
+
+        return Ok(new
+        {
+            StudentId     = student.StudentId,
+            UserId        = student.UserId,
+            FullName      = student.User?.FullName,
+            UserName      = student.User?.UserName,
+            RollNo        = student.User?.RoleNo ?? student.CurrentRollNo,
+            CurrentClassYear = string.IsNullOrWhiteSpace(student.CurrentClassYear) || student.CurrentClassYear == "N/A" ? reg?.AcademicYearLevel ?? "N/A" : student.CurrentClassYear,
+            CurrentSemester = reg?.AcademicYearLevel,
+            CurrentMajor  = string.IsNullOrWhiteSpace(student.CurrentMajor) || student.CurrentMajor == "N/A" ? reg?.Major ?? "N/A" : student.CurrentMajor,
+            Status        = student.Status,
+            Dob           = reg?.Dob,
+            Email         = reg?.Email,
+            Phone         = (string?)null,
+            StudentImage  = reg?.StudentImage,
+            Sem1_Result   = student.Sem1_Result,
+            Sem2_Result   = student.Sem2_Result,
+            Sem3_Result   = student.Sem3_Result,
+            Sem4_Result   = student.Sem4_Result,
+            Sem5_Result   = student.Sem5_Result,
+            Sem6_Result   = student.Sem6_Result,
+            Sem7_Result   = student.Sem7_Result,
+            Sem8_Result   = student.Sem8_Result,
+            Sem9_Result   = student.Sem9_Result,
+            Registrations = notifications
+        });
+    }
+
+    // 🎯 ၈။ PUT: api/student/profile/{userId}/image - Profile ဓာတ်ပုံ ပြောင်းရန်
+    [HttpPut("profile/{userId}/image")]
+    [Authorize(Roles = "Admin,admin,Student,student")]
+    public IActionResult UpdateStudentProfileImage(int userId, [FromBody] StudentProfileImageRequest request)
+    {
+        var reg = _db.StudentRegistrations
+            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
+            .OrderByDescending(r => r.RegistrationId)
+            .FirstOrDefault();
+
+        if (reg == null)
+            return NotFound(new { IsSuccess = false, Message = "ကျောင်းအပ်နှံမှု မှတ်တမ်းကို ရှာမတွေ့ပါ။" });
+
+        reg.StudentImage = request.ImageBase64;
+        reg.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+        _db.SaveChanges();
+
+        return Ok(new { IsSuccess = true, Message = "Profile ဓာတ်ပုံ ပြောင်းလဲခြင်း အောင်မြင်ပါသည်။" });
+    }
+}
+
+public class StudentProfileImageRequest
+{
+    public string? ImageBase64 { get; set; }
 }

@@ -658,35 +658,17 @@
                                                                 <div class="p-3 bg-white rounded-3 border">
                                                                     <h6 class="fw-bold mb-3 pb-2 border-bottom text-dark" style="font-size: 0.85rem;">ကျောင်းလခနှင့် အခြားကြေးများစာရင်း</h6>
                                                                     <div class="d-flex flex-column gap-2" style="font-size: 0.85rem; color: #475569;">
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <span>မှတ်ပုံတင်ကြေး</span>
-                                                                            <span>၂,၀၀၀ MMK</span>
-                                                                        </div>
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <span>ကျောင်းဝင်ကြေး</span>
-                                                                            <span>၂,၀၀၀ MMK</span>
-                                                                        </div>
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <span>အားကစားကြေး</span>
-                                                                            <span>၂,၀၀၀ MMK</span>
-                                                                        </div>
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <span>ဓာတ်ခွဲခန်းကြေး</span>
-                                                                            <span>၆,၀၀၀ MMK</span>
-                                                                        </div>
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <span>စာမေးပွဲဝင်ကြေး</span>
-                                                                            <span>၅,၀၀၀ MMK</span>
-                                                                        </div>
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <span>စာကြည့်တိုက်ကြေး</span>
-                                                                            <span>၅,၀၀၀ MMK</span>
-                                                                        </div>
-                                                                        <div class="d-flex justify-content-between">
-                                                                            <span>ကျောင်းလခ (@SelectedDetail.AcademicYearLevel)</span>
-                                                                            <span>၃၀,၀၀၀ MMK</span>
-                                                                        </div>
-                                                                        <div class="d-flex justify-content-between fw-bold pt-2 border-top mt-2 text-dark" style="font-size: 0.95rem;">
+                                                                         @if (PaymentFees != null && PaymentFees.Any())
+                                                                         {
+                                                                             @foreach (var fee in PaymentFees)
+                                                                             {
+                                                                                 <div class="d-flex justify-content-between">
+                                                                                     <span>@fee.FeeName</span>
+                                                                                     <span>@fee.MontlyAmount.ToString("N0") MMK</span>
+                                                                                 </div>
+                                                                             }
+                                                                         }
+                                                                         <div class="d-flex justify-content-between fw-bold pt-2 border-top mt-2 text-dark" style="font-size: 0.95rem;">
                                                                             <span>စုစုပေါင်း ပေးချေရန်</span>
                                                                             <span class="text-primary">@payment.AmountPaid.ToString("N0") MMK</span>
                                                                         </div>

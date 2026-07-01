@@ -43,6 +43,11 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public int SubmittedRegistrationId { get; set; }
         public int? SubmittedUserId { get; set; }
 
+        // --- Graduation / Semester Progression ---
+        public bool IsGraduated { get; set; } = false;
+        public int AllowedSemesterSequence { get; set; } = 1;
+        public string? AllowedSemesterName { get; set; }
+
         //public void CloseModal()
         //{
         //    ShowModal = false;
@@ -163,6 +168,15 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 }
             }
             catch { LoadDefaultSemesters(); }
+
+            // --- Compute allowed semester based on academic history ---
+            ComputeAllowedSemester();
+
+            // --- Auto-fill from previous registration ---
+            if (RegModel.UserId.HasValue && RegModel.UserId > 0)
+            {
+                await AutoFillFromPreviousRegistration(RegModel.UserId.Value);
+            }
         }
 
         private static string NormalizeRegistrationStatus(string? status)
@@ -302,12 +316,219 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         {
             SemesterList = new List<SemesterModel>
             {
-                new SemesterModel { SemesterName = "First Year" },
-                new SemesterModel { SemesterName = "Second Year" },
-                new SemesterModel { SemesterName = "Third Year" },
-                new SemesterModel { SemesterName = "Fourth Year" },
-                new SemesterModel { SemesterName = "Fifth Year" }
+                new SemesterModel { SemesterId = 1, SemesterName = "First Year",  Sequence = 1 },
+                new SemesterModel { SemesterId = 2, SemesterName = "Second Year", Sequence = 2 },
+                new SemesterModel { SemesterId = 3, SemesterName = "Third Year",  Sequence = 3 },
+                new SemesterModel { SemesterId = 4, SemesterName = "Fourth Year", Sequence = 4 },
+                new SemesterModel { SemesterId = 5, SemesterName = "Fifth Year",  Sequence = 5 }
             };
+        }
+
+        // ---- Compute the allowed semester number from the student's result history ----
+        private void ComputeAllowedSemester()
+        {
+            if (LoggedInStudent == null)
+            {
+                AllowedSemesterSequence = 1;
+                AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == 1)?.SemesterName;
+                return;
+            }
+
+            var semResults = new string?[]
+            {
+                LoggedInStudent.Sem1_Result, LoggedInStudent.Sem2_Result, LoggedInStudent.Sem3_Result,
+                LoggedInStudent.Sem4_Result, LoggedInStudent.Sem5_Result, LoggedInStudent.Sem6_Result,
+                LoggedInStudent.Sem7_Result, LoggedInStudent.Sem8_Result, LoggedInStudent.Sem9_Result
+            };
+
+            int highestPassed = 0;
+            int? firstFailedSeq = null;
+
+            for (int i = 0; i < semResults.Length; i++)
+            {
+                int seq = i + 1;
+                if (string.Equals(semResults[i], "Pass", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(semResults[i], "Credit_Transferred", StringComparison.OrdinalIgnoreCase))
+                {
+                    highestPassed = seq;
+                }
+                else if (string.Equals(semResults[i], "Fail", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (firstFailedSeq == null) firstFailedSeq = seq;
+                }
+            }
+
+            if (highestPassed >= 9 && firstFailedSeq == null)
+            {
+                IsGraduated = true;
+                AllowedSemesterSequence = 9;
+                AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == 9)?.SemesterName;
+                return;
+            }
+
+            AllowedSemesterSequence = firstFailedSeq ?? (highestPassed + 1);
+            AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == AllowedSemesterSequence)?.SemesterName
+                ?? SemesterList.FirstOrDefault()?.SemesterName;
+
+            // Pre-select the allowed semester in the form model
+            RegModel.academic_year_level = AllowedSemesterName;
+
+            // Auto-fill "ဖြေဆိုခဲ့သောစာမေးပွဲ" with the last PASSED semester from student directory
+            if (highestPassed > 0)
+            {
+                var lastPassedSemName = SemesterList.FirstOrDefault(s => s.Sequence == highestPassed)?.SemesterName;
+                if (!string.IsNullOrEmpty(lastPassedSemName))
+                    PastExamSemester = lastPassedSemName;
+
+                // Auto-fill "အောင် / က်" status for that semester
+                // The last-passed semester is always "Pass"; if there's a failed sem, use that result
+                if (firstFailedSeq.HasValue && firstFailedSeq.Value <= highestPassed)
+                    RegModel.past_exam_status = "Fail";
+                else
+                    RegModel.past_exam_status = "Pass";
+            }
+            else if (firstFailedSeq.HasValue)
+            {
+                // No passed semester at all, but there is a failed one
+                var failedSemName = SemesterList.FirstOrDefault(s => s.Sequence == firstFailedSeq.Value)?.SemesterName;
+                if (!string.IsNullOrEmpty(failedSemName))
+                    PastExamSemester = failedSemName;
+                RegModel.past_exam_status = "Fail";
+            }
+        }
+
+        // ---- Auto-fill personal data from previous registration ----
+        private async Task AutoFillFromPreviousRegistration(int userId)
+        {
+            try
+            {
+                var prev = await HttpClientService.ExecuteAsync<PreviousRegistrationModel>(
+                    $"StudentRegistrations/latest/{userId}", EnumHttpMethod.Get);
+
+                if (prev == null) return;
+
+                // Personal info (safe to auto-fill — semester is handled separately)
+                RegModel.student_name_mm      = prev.StudentNameMm;
+                RegModel.student_name_en      = prev.StudentNameEn;
+                RegModel.mother_name          = prev.MotherName;
+                RegModel.father_name          = prev.FatherName;
+                RegModel.gender_relation      = prev.GenderRelation;
+                RegModel.ethnicity            = prev.Ethnicity;
+                RegModel.religion             = prev.Religion;
+                RegModel.pob                  = prev.Pob;
+                RegModel.birth_place_region   = prev.BirthPlaceRegion;
+                RegModel.nationality_status   = prev.NationalityStatus;
+                RegModel.email                = prev.Email;
+                RegModel.blood_type           = prev.BloodType;
+                RegModel.current_address      = prev.CurrentAddress;
+                RegModel.permanent_address_mm = prev.PermanentAddressMm;
+                RegModel.permanent_address_en = prev.PermanentAddressEn;
+                RegModel.matric_roll_no       = prev.MatricRollNo;
+                RegModel.matric_passed_year   = prev.MatricPassedYear;
+                RegModel.exam_center          = prev.ExamCenter;
+                RegModel.father_occupation    = prev.FatherOccupation;
+                RegModel.mother_occupation    = prev.MotherOccupation;
+                RegModel.covid_vaccine_status = prev.CovidVaccineStatus;
+                RegModel.guardian_name        = prev.GuardianName;
+                RegModel.guardian_relationship= prev.GuardianRelationship;
+                RegModel.guardian_occupation  = prev.GuardianOccupation;
+                RegModel.guardian_address_phone = prev.GuardianAddressPhone;
+                RegModel.app_guardian_name    = prev.AppGuardianName;
+                RegModel.app_guardian_nrc     = prev.AppGuardianNrc;
+                RegModel.app_guardian_phone   = prev.AppGuardianPhone;
+                RegModel.app_guardian_address = prev.AppGuardianAddress;
+                RegModel.app_student_name     = prev.AppStudentName;
+                RegModel.app_student_phone    = prev.AppStudentPhone;
+                RegModel.stipend_requested    = prev.StipendRequested;
+                RegModel.university_reg_no    = prev.UniversityRegNo;
+                RegModel.AdmissionSerialNo    = prev.AdmissionSerialNo;
+
+                // အထူးပြူဘာသာ အမာစာ auto-fill (semester locked separately in ComputeAllowedSemester)
+                if (!string.IsNullOrEmpty(prev.Major))
+                    RegModel.major = prev.Major;
+
+                if (prev.Dob.HasValue)
+                    DobDate = prev.Dob.Value.ToDateTime(TimeOnly.MinValue);
+
+                // COVID vaccine date — parse stored "dd-MM-yyyy" string back into CovidDate
+                if (!string.IsNullOrEmpty(prev.CovidVaccineStatus) && prev.CovidVaccineStatus != "-")
+                {
+                    if (DateTime.TryParseExact(prev.CovidVaccineStatus, "dd-MM-yyyy",
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            System.Globalization.DateTimeStyles.None, out var covidParsed))
+                    {
+                        CovidDate = covidParsed;
+                    }
+                    else if (DateTime.TryParse(prev.CovidVaccineStatus, out var covidParsed2))
+                    {
+                        CovidDate = covidParsed2;
+                    }
+                }
+
+                // NRC components (student)
+                if (!string.IsNullOrEmpty(prev.NrcState))
+                {
+                    RegModel.nrc_state    = prev.NrcState;
+                    RegModel.nrc_township = prev.NrcTownship;
+                    NrcType               = prev.NrcType ?? "(နိုင်)";
+                    RegModel.nrc_number   = ToMyanmarDigits(prev.NrcNumber ?? "");
+
+                    if (!string.IsNullOrEmpty(prev.NrcState) && NrcTownshipsByState.ContainsKey(prev.NrcState))
+                        CurrentTownshipList = NrcTownshipsByState[prev.NrcState];
+                }
+
+                // Guardian & Father NRC — parse stored "state/township(type)number" back into component fields (use app_guardian_nrc for both)
+                if (!string.IsNullOrEmpty(prev.AppGuardianNrc) && prev.AppGuardianNrc != "-")
+                {
+                    var gNrcRaw = prev.AppGuardianNrc;
+                    var slashIdx = gNrcRaw.IndexOf('/');
+                    if (slashIdx > 0)
+                    {
+                        var state = gNrcRaw[..slashIdx];
+                        var rest = gNrcRaw[(slashIdx + 1)..];
+                        string? township = null;
+                        string type = "(နိုင်)";
+                        string? number = null;
+
+                        var openParen  = rest.IndexOf('(');
+                        var closeParen = rest.IndexOf(')');
+                        if (openParen >= 0 && closeParen > openParen)
+                        {
+                            township = rest[..openParen];
+                            type     = rest[openParen..(closeParen + 1)];
+                            number   = rest[(closeParen + 1)..];
+                        }
+                        else
+                        {
+                            township = rest;
+                        }
+
+                        GuardianNrcState = state;
+                        GuardianNrcTownship = township;
+                        GuardianNrcType = type;
+                        GuardianNrcNumber = ToMyanmarDigits(number ?? "");
+
+                        FatherNrcState = state;
+                        FatherNrcTownship = township;
+                        FatherNrcType = type;
+                        FatherNrcNumber = ToMyanmarDigits(number ?? "");
+
+                        if (!string.IsNullOrEmpty(state) && NrcTownshipsByState.ContainsKey(state))
+                        {
+                            var list = NrcTownshipsByState[state];
+                            GuardianTownshipList = list;
+                            FatherTownshipList = list;
+                        }
+                    }
+                }
+
+                Console.WriteLine($"Auto-filled registration data from previous registration #{prev.RegistrationId}");
+            }
+            catch (Exception ex)
+            {
+                // It's OK if the student has no previous registration
+                Console.WriteLine($"No previous registration found (or error): {ex.Message}");
+            }
         }
 
         public int GetSemesterNumberFromName(string? name)
@@ -659,7 +880,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             content.Add(new StringContent(RegModel.permanent_address_mm ?? "-"), "permanent_address_mm");
             content.Add(new StringContent(RegModel.permanent_address_en ?? "-"), "permanent_address_en");
             content.Add(new StringContent(RegModel.matric_roll_no ?? "-"), "matric_roll_no");
-            content.Add(new StringContent(RegModel.matric_passed_year.ToString()), "matric_passed_year");
+            content.Add(new StringContent(RegModel.matric_passed_year?.ToString() ?? "0"), "matric_passed_year");
             content.Add(new StringContent(RegModel.exam_center ?? "-"), "exam_center");
             content.Add(new StringContent(RegModel.father_occupation ?? ""), "father_occupation");
             content.Add(new StringContent(RegModel.mother_occupation ?? ""), "mother_occupation");

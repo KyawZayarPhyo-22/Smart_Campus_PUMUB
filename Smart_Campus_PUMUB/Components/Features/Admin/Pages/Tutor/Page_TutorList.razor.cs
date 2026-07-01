@@ -176,10 +176,12 @@ public partial class Page_TutorList
     private int CurrentPage { get; set; } = 1;
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
+    private List<RoleModels> RoleList = new();
 
     protected override async Task OnInitializedAsync()
     {
         // Only load data here - auth state is NOT yet readable during SSR
+        await LoadRoles();
         await LoadTutors();
     }
 
@@ -206,77 +208,80 @@ public partial class Page_TutorList
         }
     }
 
+    private async Task LoadRoles()
+    {
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<List<RoleModels>>("role", EnumHttpMethod.Get);
+            if (response != null)
+            {
+                RoleList = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading roles: {ex.Message}");
+        }
+    }
+
     private async Task LoadTutors()
     {
         IsLoading = true;
-        TutorList = await HttpClientService.ExecuteAsync<List<TutorModel>>("tutor", EnumHttpMethod.Get) ?? new();
-        IsLoading = false;
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<PagedResult<TutorModel>>(
+                $"tutor/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}",
+                EnumHttpMethod.Get
+            );
+
+            if (response != null)
+            {
+                TutorList = response.Items;
+                TotalPages = response.TotalPages;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading tutors: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         SelectedRole = SelectedRoleInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadTutors();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         SelectedRoleInput = "All";
         SelectedRole = "All";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadTutors();
     }
 
-    private void HandleKeyUp(KeyboardEventArgs e)
+    private async Task HandleKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
-    // 🌟 Filter Logic နှစ်ခုစလုံးကို အချိုးကျ ပေါင်းစပ်ထားသော Method
-    private IEnumerable<TutorModel> GetFilteredTutors()
-    {
-        var list = TutorList.AsEnumerable();
-        
-        // ၁။ Name Search Query စစ်ခြင်း
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            list = list.Where(t => t.TutorName != null && t.TutorName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
-        }
-        
-        // ၂။ Selected Role Filter စစ်ခြင်း
-        if (SelectedRole != "All")
-        {
-            list = list.Where(t => t.RoleName == SelectedRole);
-        }
-        
-        return list;
-    }
+    private IEnumerable<TutorModel> FilteredTutors => TutorList;
 
-    // 🌟 Filtered ပြထားသော Data ကို Pagination ဖြတ်ထုတ်ပေးသည့် နေရာ
-    private IEnumerable<TutorModel> FilteredTutors
-    {
-        get
-        {
-            var allFiltered = GetFilteredTutors();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadTutors();
     }
 
     private void OpenDeleteModal(TutorModel tutor)

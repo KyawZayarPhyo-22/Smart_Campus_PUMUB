@@ -224,12 +224,10 @@ public partial class StudentRegistration
     [Column("is_delete")]
     public bool? IsDelete { get; set; }
 
-    [Column("student_image")]
-    [StringLength(500)]
+    [Column("student_image", TypeName = "nvarchar(MAX)")]
     public string? StudentImage { get; set; }
 
-    [Column("signature_image")]
-    [StringLength(500)]
+    [Column("signature_image", TypeName = "nvarchar(MAX)")]
     public string? SignatureImage { get; set; }
 
     [InverseProperty("Registration")]

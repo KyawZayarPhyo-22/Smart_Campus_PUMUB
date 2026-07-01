@@ -22,9 +22,11 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public RegistrationPaymentCreateRequestModel PaymentModel { get; set; } = new()
         {
             RegistrationId = 0,
-            AmountPaid = 52000,
+            AmountPaid = 0,
             PaymentMethod = "KBZPay"
         };
+
+        public List<PaymentFeeModel> PaymentFees { get; set; } = new();
 
         public string InputStudentName { get; set; } = "";
         public string InputRollNo { get; set; } = "";
@@ -122,6 +124,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     InputRollNo = StudentRegState.RollNo;
                     InputAcademicYear = StudentRegState.AcademicYear;
                 }
+            }
+
+            // ၃.၇။ Fetch dynamically configured payment fees for this Semester/ClassYear
+            if (!string.IsNullOrEmpty(InputAcademicYear))
+            {
+                await LoadPaymentFees(InputAcademicYear);
             }
 
             // ၄။ Semester (အတန်း) Data ကို API မှ လှမ်းယူခြင်း
@@ -272,6 +280,47 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 // ID မရှိ၍ Error ပြပါက ကျောင်းအပ်ဖောင်သို့ ပြန်လွှတ်မည်
                 Nav.NavigateTo("/Register");
             }
+        }
+
+        private async Task LoadPaymentFees(string classYear)
+        {
+            try
+            {
+                var fees = await HttpClientService.ExecuteAsync<List<PaymentFeeModel>>(
+                    $"payment-fees?classYear={Uri.EscapeDataString(classYear)}", 
+                    EnumHttpMethod.Get
+                );
+
+                if (fees != null && fees.Any())
+                {
+                    PaymentFees = fees;
+                    PaymentModel.AmountPaid = PaymentFees.Sum(x => x.MontlyAmount);
+                }
+                else
+                {
+                    LoadFallbackFees(classYear);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading payment fees: {ex.Message}");
+                LoadFallbackFees(classYear);
+            }
+        }
+
+        private void LoadFallbackFees(string classYear)
+        {
+            PaymentFees = new List<PaymentFeeModel>
+            {
+                new PaymentFeeModel { FeeName = "မှတ်ပုံတင်ကြေး", MontlyAmount = 2000 },
+                new PaymentFeeModel { FeeName = "ကျောင်းဝင်ကြေး", MontlyAmount = 2000 },
+                new PaymentFeeModel { FeeName = "အားကစားကြေး", MontlyAmount = 2000 },
+                new PaymentFeeModel { FeeName = "ဓာတ်ခွဲခန်းကြေး", MontlyAmount = 6000 },
+                new PaymentFeeModel { FeeName = "စာမေးပွဲဝင်ကြေး", MontlyAmount = 5000 },
+                new PaymentFeeModel { FeeName = "စာကြည့်တိုက်ကြေး", MontlyAmount = 5000 },
+                new PaymentFeeModel { FeeName = $"ကျောင်းလခ ({classYear})", MontlyAmount = 30000 }
+            };
+            PaymentModel.AmountPaid = PaymentFees.Sum(x => x.MontlyAmount);
         }
     }
 }
