@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,6 +50,8 @@ public partial class SmartCampusDbContext : DbContext
     public virtual DbSet<Permission> Permissions { get; set; }
     public virtual DbSet<RolePermission> RolePermissions { get; set; }
     public object Student_Registrations { get; set; }
+
+    public virtual DbSet<RegisterAccount> RegisterAccounts { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -224,6 +226,13 @@ public partial class SmartCampusDbContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__User__Role_id__68487DD7");
+        });
+
+        modelBuilder.Entity<RegisterAccount>(entity =>
+        {
+            entity.HasKey(e => e.RegisterAccId);
+            entity.Property(e => e.Status).HasDefaultValue("Pending");
+            entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
         });
 
         OnModelCreatingPartial(modelBuilder);

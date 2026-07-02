@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
@@ -6,6 +7,7 @@ using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
     public class ActivityController : ControllerBase
@@ -28,6 +30,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             _db.SaveChanges();
         }
 
+        //[Authorize]
         // GET /api/activities
         [HttpGet]
         public IActionResult GetActivities()

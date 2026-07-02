@@ -1,0 +1,449 @@
+@page "/admin/acc-register"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.RegisterAcc
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Smart_Campus_PUMUB.Components.Features.Admin.Layout
+@rendermode InteractiveServer
+
+<style>
+    /* ── Status Badges ─────────────────────────────── */
+    .badge-approved {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 50px;
+        padding: 4px 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    .badge-rejected {
+        background: rgba(239, 68, 68, 0.12);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-radius: 50px;
+        padding: 4px 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    .badge-pending {
+        background: rgba(234, 179, 8, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(234, 179, 8, 0.3);
+        border-radius: 50px;
+        padding: 4px 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    /* ── Action Buttons ────────────────────────────── */
+    .btn-approve {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 8px;
+        padding: 5px 14px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-approve:hover {
+        background: #10b981;
+        color: #fff;
+    }
+
+    .btn-approve:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-reject {
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-radius: 8px;
+        padding: 5px 14px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-reject:hover {
+        background: #ef4444;
+        color: #fff;
+    }
+
+    .btn-reject:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ── Table ─────────────────────────────────────── */
+    .acc-table {
+        background: rgba(20, 24, 33, 0.6);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .acc-table thead {
+        background: rgba(13, 110, 253, 0.1);
+        border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+    }
+
+    .acc-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.78rem;
+        color: #0d6efd;
+        padding: 14px 16px;
+        letter-spacing: 0.04em;
+    }
+
+    .acc-table td {
+        padding: 14px 16px;
+        color: #e2e8f0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-size: 0.88rem;
+    }
+
+    .acc-table tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+        box-shadow: inset 4px 0 0 #0d6efd;
+    }
+
+    /* ── Toast ─────────────────────────────────────── */
+    .acc-toast {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        min-width: 300px;
+        max-width: 440px;
+        padding: 16px 20px;
+        border-radius: 14px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 9999;
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+    .acc-toast.success {
+        background: #064e3b;
+        border: 1px solid #065f46;
+        color: #6ee7b7;
+    }
+
+    .acc-toast.error {
+        background: #7f1d1d;
+        border: 1px solid #991b1b;
+        color: #fca5a5;
+    }
+
+    @@keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* ── Modal fields ──────────────────────────────── */
+    .reject-textarea {
+        background: rgba(30, 35, 50, 0.8) !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 10px !important;
+        color: #e2e8f0 !important;
+        font-size: 0.9rem !important;
+        resize: vertical;
+    }
+
+    .reject-textarea:focus {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important;
+        outline: none !important;
+    }
+
+    /* info row inside modals */
+    .modal-info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        font-size: 0.87rem;
+    }
+
+    .modal-info-row:last-child { border-bottom: none; }
+    .modal-info-label { color: #64748b; font-weight: 500; }
+    .modal-info-val { color: #e2e8f0; font-weight: 600; }
+</style>
+
+<!-- ── Page Header ──────────────────────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="rounded p-2 shadow-sm" style="background: linear-gradient(135deg,#5a4fcf,#2563eb);">
+            <i class="bi bi-person-check-fill fs-5 text-white"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder text-white mb-0">Account Register Requests</h4>
+            <small class="text-secondary">Semester I ကျောင်းသားများ Account Request စီမံချက်</small>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge-pending" style="font-size:0.82rem; padding:6px 16px;">
+            Total: @TotalCount records
+        </span>
+    </div>
+</div>
+
+<!-- ── Filter Row ───────────────────────────────────────────────────── -->
+<div class="material-card p-3 mb-4">
+    <div class="row g-3 align-items-center">
+
+        <!-- Search -->
+        <div class="col">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute text-muted" style="top:50%;left:12px;transform:translateY(-50%);"></i>
+                <input type="text" class="form-control material-input" style="padding-left:2.2rem;"
+                       placeholder="Search by name, email, form no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+            </div>
+        </div>
+
+        <!-- Status filter -->
+        <div class="col-md-2">
+            <select class="form-select material-input" @bind="SelectedStatusInput">
+                <option value="All">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" @onclick="ApplyFilter" title="Search">
+                <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" @onclick="ResetFilter" title="Reset">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Table ────────────────────────────────────────────────────────── -->
+<div class="tech-card p-4">
+    @if (IsLoading)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="text-secondary mt-2" style="font-size:0.85rem;">Data ဆွဲယူနေပါသည်...</p>
+        </div>
+    }
+    else if (!Items.Any())
+    {
+        <div class="text-center my-5 text-secondary">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            <p>Request တစ်ခုမှ မတွေ့ပါ</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive acc-table">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email / Phone</th>
+                        <th>Form No</th>
+                        <th>Exam Seat No</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int rowNo = (CurrentPage - 1) * PageSize + 1;
+                    }
+                    @foreach (var item in Items)
+                    {
+                        <tr>
+                            <td class="fw-bold text-muted">@rowNo.ToString("D2")</td>
+                            <td>
+                                <div class="fw-semibold text-white">@item.FullName</div>
+                            </td>
+                            <td>
+                                <div style="font-size:0.83rem; color:#93c5fd;">@item.Email</div>
+                                @if (!string.IsNullOrEmpty(item.Phone))
+                                {
+                                    <div style="font-size:0.78rem; color:#64748b;">@item.Phone</div>
+                                }
+                            </td>
+                            <td><code class="text-info">@(item.FormNo ?? "-")</code></td>
+                            <td><code class="text-warning">@(item.ExamSeatNo ?? "-")</code></td>
+                            <td>
+                                <span class="@StatusBadgeClass(item.Status)">@item.Status</span>
+                                @if (item.Status == "Rejected" && !string.IsNullOrEmpty(item.RejectionReason))
+                                {
+                                    <div style="font-size:0.74rem; color:#94a3b8; margin-top:3px; max-width:180px;" title="@item.RejectionReason">
+                                        @(item.RejectionReason.Length > 40 ? item.RejectionReason[..40] + "…" : item.RejectionReason)
+                                    </div>
+                                }
+                            </td>
+                            <td class="text-secondary">@item.CreatedDateTime?.ToString("dd-MM-yyyy HH:mm")</td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    @if (item.Status == "Pending")
+                                    {
+                                        <button class="btn-approve" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-check-lg me-1"></i> Approve
+                                        </button>
+                                        <button class="btn-reject" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-x-lg me-1"></i> Reject
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span style="font-size:0.78rem; color:#475569;">
+                                            @item.ReviewedBy — @item.ReviewedDateTime?.ToString("dd-MM-yyyy")
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                        rowNo++;
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+    }
+</div>
+
+<!-- ── Approve Confirmation Modal ──────────────────────────────────── -->
+@if (ShowApproveModal && SelectedItem != null)
+{
+    <div class="modal show d-block" style="background:rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:36px;height:36px;background:rgba(16,185,129,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                        </div>
+                        <h5 class="text-success mb-0">Confirm Approve</h5>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <p class="text-secondary mb-3" style="font-size:0.87rem;">
+                        ဤ Request ကို Approve လုပ်မည်။ Student Account အသစ် auto-create ဖြစ်ပြီး Login credentials ကို Email ဖြင့် ပေးပို့မည်။
+                    </p>
+                    <div class="p-3" style="background:rgba(255,255,255,0.03);border-radius:10px;">
+                        <div class="modal-info-row">
+                            <span class="modal-info-label">Name</span>
+                            <span class="modal-info-val">@SelectedItem.FullName</span>
+                        </div>
+                        <div class="modal-info-row">
+                            <span class="modal-info-label">Email</span>
+                            <span class="modal-info-val" style="color:#93c5fd;">@SelectedItem.Email</span>
+                        </div>
+                        <div class="modal-info-row">
+                            <span class="modal-info-label">Form No</span>
+                            <span class="modal-info-val">@SelectedItem.FormNo</span>
+                        </div>
+                        <div class="modal-info-row">
+                            <span class="modal-info-label">Exam Seat No</span>
+                            <span class="modal-info-val">@SelectedItem.ExamSeatNo</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button class="btn btn-secondary" @onclick="CloseApproveModal" disabled="@IsProcessing">Cancel</button>
+                    <button class="btn btn-success" @onclick="ConfirmApprove" disabled="@IsProcessing">
+                        @if (IsProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            <span>Processing...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span>Yes, Approve</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ── Reject Modal ─────────────────────────────────────────────────── -->
+@if (ShowRejectModal && SelectedItem != null)
+{
+    <div class="modal show d-block" style="background:rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:36px;height:36px;background:rgba(239,68,68,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-x-circle-fill text-danger"></i>
+                        </div>
+                        <h5 class="text-danger mb-0">Confirm Reject</h5>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 p-3" style="background:rgba(255,255,255,0.03);border-radius:10px;">
+                        <div class="modal-info-row">
+                            <span class="modal-info-label">Name</span>
+                            <span class="modal-info-val">@SelectedItem.FullName</span>
+                        </div>
+                        <div class="modal-info-row">
+                            <span class="modal-info-label">Email</span>
+                            <span class="modal-info-val" style="color:#93c5fd;">@SelectedItem.Email</span>
+                        </div>
+                    </div>
+                    <label class="form-label text-secondary mb-1" style="font-size:0.85rem; font-weight:600;">
+                        Rejection Reason <span style="color:#64748b;">(Optional)</span>
+                    </label>
+                    <textarea class="form-control reject-textarea" rows="3"
+                              placeholder="ငြင်းပယ်ရတဲ့ အကြောင်းရင်းကို ဖော်ပြနိုင်ပါသည်..."
+                              @bind="RejectReason"></textarea>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button class="btn btn-secondary" @onclick="CloseRejectModal" disabled="@IsProcessing">Cancel</button>
+                    <button class="btn btn-danger" @onclick="ConfirmReject" disabled="@IsProcessing">
+                        @if (IsProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            <span>Processing...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-x-lg me-1"></i>
+                            <span>Yes, Reject</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ── Toast Notification ──────────────────────────────────────────── -->
+@if (!string.IsNullOrEmpty(ToastMessage))
+{
+    <div class="acc-toast @(ToastIsSuccess ? "success" : "error")">
+        <i class="bi @(ToastIsSuccess ? "bi-check-circle-fill" : "bi-x-circle-fill") fs-5"></i>
+        <span>@ToastMessage</span>
+    </div>
+}

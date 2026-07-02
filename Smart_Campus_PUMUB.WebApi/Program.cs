@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
+using Smart_Campus_PUMUB.WebApi.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -45,6 +46,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddDbContext<SmartCampusDbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Mail Service
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("Jwt").Bind(jwtSettings);
