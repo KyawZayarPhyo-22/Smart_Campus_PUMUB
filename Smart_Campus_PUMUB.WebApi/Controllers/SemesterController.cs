@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers
@@ -19,6 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/semesters
         [HttpGet]
+        [Permission("Semester.View")]
         public IActionResult GetSemesters()
         {
             var lst = _db.Semesters
@@ -139,3 +142,5 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
     }
 }
+
+

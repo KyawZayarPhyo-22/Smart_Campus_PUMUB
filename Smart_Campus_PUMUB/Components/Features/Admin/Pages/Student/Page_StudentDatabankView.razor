@@ -1,0 +1,30 @@
+@page "/admin/student-databank/view/{UserId:int}"
+@page "/admin/student-databank/view/{UserId:int}/{NewStudentAccId:int}"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using Smart_Campus_PUMUB.Components.Features.Student
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title m-0" style="color: #3f4254; font-weight: 600;">
+            <i class="bi bi-file-person me-2" style="color: #696cff;"></i>
+            View Student Personal Info
+        </h2>
+        <a href="/admin/student-databank" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+
+    <div class="material-card" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.05); padding: 1rem;">
+        <!-- We reuse the existing form component but pass AdminViewUserId and AdminViewNewStudentAccId -->
+        <Page_StudentPersonalInfo AdminViewUserId="@UserId" AdminViewNewStudentAccId="@NewStudentAccId" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    [Parameter]
+    public int NewStudentAccId { get; set; }
+}

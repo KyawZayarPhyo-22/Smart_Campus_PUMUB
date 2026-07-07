@@ -119,11 +119,13 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-auto">
-                <NavLink href="/admin/rule/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Rule">
-                    <i class="bi bi-plus-lg"></i>
-                </NavLink>
-            </div>
+            <AuthorizeView Policy="Rules.Create">
+                <div class="col-auto">
+                    <NavLink href="/admin/rule/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Rule">
+                        <i class="bi bi-plus-lg"></i>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
         </div>
 
             @if (IsLoading)
@@ -154,7 +156,10 @@
                                 <th style="width: 40%;">Rule Title</th>
                                 <th style="width: 25%;">Penalty</th>
                                 <th style="width: 25%;">Description</th>
-                                <th style="width: 25%; text-align: center;">Actions</th>
+                                @if (canManageRule)
+                                {
+                                    <th style="width: 25%; text-align: center;">Actions</th>
+                                }
                             </tr>
                         </thead>
                         <tbody>
@@ -182,16 +187,23 @@
                                     </span>
                                 </td>
 
-                                    <td>
-                                        <div class="d-flex justify-content-center align-items-center gap-2">
-                                            <NavLink href="@($"/admin/rule/edit/{rule.RuleId}")" class="btn btn-action-edit">
-                                                <i class="bi bi-pencil me-1.5"></i> Edit
-                                            </NavLink>
-                                            <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(rule)">
-                                                <i class="bi bi-trash me-1.5"></i> Delete
-                                            </button>
-                                        </div>
-                                    </td>
+                                    @if (canManageRule)
+                                    {
+                                        <td>
+                                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                                <AuthorizeView Policy="Rules.Edit">
+                                                    <NavLink href="@($"/admin/rule/edit/{rule.RuleId}")" class="btn btn-action-edit">
+                                                        <i class="bi bi-pencil me-1.5"></i> Edit
+                                                    </NavLink>
+                                                </AuthorizeView>
+                                                <AuthorizeView Policy="Rules.Delete">
+                                                    <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(rule)">
+                                                        <i class="bi bi-trash me-1.5"></i> Delete
+                                                    </button>
+                                                </AuthorizeView>
+                                            </div>
+                                        </td>
+                                    }
                                 </tr>
                                 count++;
                             }

@@ -48,6 +48,10 @@ public partial class User
 
     public bool? IsDelete { get; set; }
 
+    [StringLength(50)]
+    [Unicode(false)]
+    public string Status { get; set; } = "Active";
+
     [Column("MustChangePassword")]
     public bool? MustChangePassword { get; set; }
 

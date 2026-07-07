@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +21,7 @@ public class TutorController : ControllerBase
 
     // ၁။ GET: Tutor အားလုံးစာရင်းယူရန် (Profile ဓာတ်ပုံလမ်းကြောင်း ပါဝင်သည်)
     [HttpGet]
+    [Permission("Tutor.View")]
     public IActionResult GetTutors()
     {
         var rawList = (from t in _db.Tutors
@@ -62,6 +65,7 @@ public class TutorController : ControllerBase
     }
 
     [HttpGet("paginate")]
+    [Permission("Tutor.View")]
     public IActionResult GetTutorsPaginated(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
@@ -143,6 +147,7 @@ public class TutorController : ControllerBase
 
     // ၂။ GET: Tutor တစ်ဦးတည်း Profile ရှာရန်
     [HttpGet("{id}")]
+    [Permission("Tutor.View")]
     public IActionResult GetTutor(int id)
     {
         var item = (from t in _db.Tutors
@@ -194,6 +199,7 @@ public class TutorController : ControllerBase
 
     // ၃။ POST: Tutor Profile အသစ်ထည့်ရန် (ဓာတ်ပုံဖိုင် Upload Logic ပါဝင်သည်)
     [HttpPost]
+    [Permission("Tutor.Create")]
     public IActionResult CreateTutor([FromForm] TutorCreateRequestModel request) // File ပါ၍ [FromForm] သုံးရပါမည်
     {
         // --- Validation စစ်ဆေးခြင်း ---
@@ -301,6 +307,7 @@ public class TutorController : ControllerBase
 
     // ၄။ PUT: Tutor Profile ပြင်ရန် (ဓာတ်ပုံပါ လဲလှယ်နိုင်သည်)
     [HttpPost("{id}")]
+    [Permission("Tutor.Edit")]
     public IActionResult UpdateTutor(int id, [FromForm] TutorUpdateRequestModel request)
     {
         var item = _db.Tutors.FirstOrDefault(x => x.TutorId == id && x.IsDelete == false);
@@ -364,6 +371,7 @@ public class TutorController : ControllerBase
     }
     // ၅။ PATCH: Tutor Profile တစ်စိတ်တစ်ပိုင်းစီ လိုက်ပြင်ရန် (ဓာတ်ပုံ သို့မဟုတ် အချက်အလက် သီးသန့်ပြင်နိုင်သည်)
     [HttpPatch("{id}")]
+    [Permission("Tutor.Edit")]
     public IActionResult PatchTutor(int id, [FromForm] TutorUpdateRequestModel request) // ဖိုင်ပါဝင်နိုင်၍ [FromForm] ကိုသုံးသည်
     {
         // အရင်ဦးဆုံး ပြင်မည့် Tutor ရှိမရှိ ရှာမည်
@@ -511,6 +519,7 @@ public class TutorController : ControllerBase
 
     // ၅။ DELETE: Tutor Profile ဖြုတ်ရန် (Soft Delete)
     [HttpDelete("{id}")]
+    [Permission("Tutor.Delete")]
     public IActionResult DeleteTutor(int id)
     {
         var item = _db.Tutors.FirstOrDefault(x => x.TutorId == id && x.IsDelete == false);
@@ -626,3 +635,4 @@ public class TutorAboutRequest
 {
     public string? About { get; set; }
 }
+

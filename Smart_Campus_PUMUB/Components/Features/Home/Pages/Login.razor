@@ -845,14 +845,8 @@
                 Console.WriteLine($"====== DB ထဲကနေ Permission ({response.Permissions.Count}) ခု တွေ့ပါတယ် ======");
 
                 var customAuth = (CustomAuthStateProvider)AuthStateProvider;
-                await customAuth.UpdateAuthenticationState(new UserSession
-                {
-                    UserId = response.UserId,
-                    Username = username,
-                    Role = response.Role,
-                    Permissions = response.Permissions,
-                    Token = response.Token
-                });
+                await JS.InvokeVoidAsync("authFunctions.setSecureCookie", "authToken", response.Token, 10080); // 7 days (10080 mins)
+                customAuth.NotifyUserAuthentication(response.Token);
 
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "islogined", "true");
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "rolename", response.Role);

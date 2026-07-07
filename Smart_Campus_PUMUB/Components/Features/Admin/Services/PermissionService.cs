@@ -43,6 +43,9 @@ namespace Smart_Campus_PUMUB.Components.Admin.Services
             var permission = await _context.Permissions.FindAsync(id);
             if (permission != null)
             {
+                var relatedRolePermissions = _context.RolePermissions.Where(rp => rp.PermissionId == id);
+                _context.RolePermissions.RemoveRange(relatedRolePermissions);
+                
                 _context.Permissions.Remove(permission);
                 await _context.SaveChangesAsync();
             }

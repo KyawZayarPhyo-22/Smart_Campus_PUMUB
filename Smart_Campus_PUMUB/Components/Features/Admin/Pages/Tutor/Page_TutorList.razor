@@ -47,7 +47,7 @@
             </button>
         </div>
 
-        <AuthorizeView Policy="Create_Tutor">
+        <AuthorizeView Policy="Tutor.Create">
             <div class="col-auto">
                 <NavLink href="/admin/tutor/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Tutor">
                     <i class="bi bi-plus-lg"></i>
@@ -104,13 +104,13 @@
                                 @if (canManageTutor)
                                 {
                                     <td class="text-center">
-                                        <AuthorizeView Policy="Edit_Tutor">
+                                        <AuthorizeView Policy="Tutor.Edit">
                                             <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2">
                                                 <i class="bi bi-pencil me-1.5"></i> Edit
                                             </NavLink>
                                         </AuthorizeView>
                                         
-                                        <AuthorizeView Policy="Delete_Tutor">
+                                        <AuthorizeView Policy="Tutor.Delete">
                                             <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)">
                                                 <i class="bi bi-trash me-1.5"></i> Delete
                                             </button>

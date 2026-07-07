@@ -2,9 +2,12 @@
 @layout AdminLayout
 @using Smart_Campus_PUMUB.WebApi.Models
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Subject
+@using Microsoft.AspNetCore.Components.Authorization
 @rendermode InteractiveServer
 
-<div class="page-header">
+<AuthorizeView Policy="Subject.Create" Context="authContext">
+    <Authorized>
+        <div class="page-header">
     <h3><i class="bi bi-plus-lg me-2 text-info"></i>ဘာသာရပ် အသစ်ထည့်ရန်</h3>
 </div>
 
@@ -53,3 +56,15 @@
         </div>
     </EditForm>
 </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center mt-5 p-5 tech-card">
+            <i class="bi bi-shield-slash text-danger fs-1"></i>
+            <h2 class="text-danger fw-bold mt-3">Access Denied</h2>
+            <p class="text-muted">သင့်တွင် ဤစာမျက်နှာကို ဝင်ရောက်ကြည့်ရှုရန် ခွင့်ပြုချက် (Subject.Create Policy) မရှိပါ။</p>
+            <NavLink href="/admin/subjects" class="btn btn-primary mt-2">
+                <i class="bi bi-arrow-left"></i> Back to Directory
+            </NavLink>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

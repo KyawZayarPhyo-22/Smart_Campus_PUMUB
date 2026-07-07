@@ -5,7 +5,9 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Position;
 
@@ -17,12 +19,19 @@ public partial class Page_PositionList
     [Inject]
     public IJSRuntime JSRuntime { get; set; } = null!;
 
+    [Inject]
+    public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
     private List<PositionModel> PositionList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
     
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+
+    // Permissions Variables
+    private List<string> userPermissions = new();
+    private bool canManagePosition = true;
 
     private string SearchInput = "";
 
@@ -88,6 +97,26 @@ public partial class Page_PositionList
     protected override async Task OnInitializedAsync()
     {
         await LoadPositions();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userPermissions = user.Claims
+                                  .Where(c => c.Type == "Permission")
+                                  .Select(c => c.Value)
+                                  .ToList();
+                                  
+            canManagePosition = userPermissions.Contains("Position.Edit") || userPermissions.Contains("Position.Delete");
+
+            StateHasChanged();
+        }
     }
 
     // 🚀 GET Method ဖြင့် API မှ Positions စာရင်းအားလုံးအား ဆွဲယူခြင်း

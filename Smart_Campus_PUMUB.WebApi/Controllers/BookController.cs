@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using System.IO;
+using System.Security.Permissions;
 
 namespace NLADotNetInternshipTraining.WebApi.Controllers;
 
@@ -20,6 +23,7 @@ public class BookController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("Book.View")]
     public IActionResult GetBooks()
     {
         var lst = _db.Books
@@ -49,6 +53,7 @@ public class BookController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Book.Create")]
     public IActionResult CreateBook([FromForm] BookCreateRequestModel request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -104,6 +109,7 @@ public class BookController : ControllerBase
     }
 
     [HttpPost("update/{id}")]
+    [Permission("Book.Edit")]
     public IActionResult UpdateBook(int id, [FromForm] BookUpdateRequestModel request)
     {
         var item = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
@@ -147,6 +153,7 @@ public class BookController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("Book.Delete")]
     public IActionResult DeleteBook(int id)
     {
         var item = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
@@ -171,3 +178,4 @@ public class BookController : ControllerBase
         return Ok(new { Count = count });
     }
 }
+

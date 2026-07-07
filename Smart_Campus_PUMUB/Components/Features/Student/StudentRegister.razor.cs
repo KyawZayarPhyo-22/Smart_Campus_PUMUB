@@ -72,6 +72,100 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public string NrcType { get; set; } = "(နိုင်)";
         public List<string> CurrentTownshipList { get; set; } = new();
 
+        // --- Roll No Auto-Fill ---
+        private string _rollNoInput = "";
+        public string RollNoInput
+        {
+            get => _rollNoInput;
+            set
+            {
+                _rollNoInput = value;
+                RegModel.roll_no = value;
+            }
+        }
+        public bool IsAutoFilling { get; set; } = false;
+        public string AutoFillStatus { get; set; } = "";
+        public bool AutoFillSuccess { get; set; } = false;
+
+        public async Task OnRollNoChanged(ChangeEventArgs e)
+        {
+            var val = e.Value?.ToString() ?? "";
+            _rollNoInput = val;
+            RegModel.roll_no = val;
+
+            if (string.IsNullOrWhiteSpace(val)) { AutoFillStatus = ""; return; }
+
+            IsAutoFilling = true;
+            AutoFillStatus = "";
+            StateHasChanged();
+
+            try
+            {
+                var info = await HttpClientService.ExecuteAsync<StudentPersonalInfoResponse>($"studentpersonalinfo/by-roll/{Uri.EscapeDataString(val)}", EnumHttpMethod.Get);
+                if (info != null)
+                {
+                    RegModel.student_name_mm = info.student_name_mm;
+                    RegModel.student_name_en = info.student_name_en;
+                    RegModel.father_name = info.father_name;
+                    RegModel.mother_name = info.mother_name;
+                    RegModel.gender_relation = info.gender_relation ?? RegModel.gender_relation;
+                    RegModel.ethnicity = info.ethnicity;
+                    RegModel.religion = info.religion;
+                    RegModel.pob = info.pob;
+                    RegModel.birth_place_region = info.birth_place_region;
+                    RegModel.student_nrc_no = info.student_nrc_no;
+                    RegModel.nationality_status = info.nationality_status ?? RegModel.nationality_status;
+                    if (info.dob.HasValue) { RegModel.dob = info.dob.Value; DobDate = info.dob.Value.Date; }
+                    RegModel.email = info.email;
+                    RegModel.blood_type = info.blood_type ?? RegModel.blood_type;
+                    RegModel.current_address = info.current_address;
+                    RegModel.permanent_address_mm = info.permanent_address_mm;
+                    RegModel.permanent_address_en = info.permanent_address_en;
+                    RegModel.matric_roll_no = info.matric_roll_no;
+                    RegModel.matric_passed_year = info.matric_passed_year;
+                    RegModel.exam_center = info.exam_center;
+                    RegModel.father_occupation = info.father_occupation;
+                    RegModel.mother_occupation = info.mother_occupation;
+                    RegModel.guardian_name = info.guardian_name;
+                    RegModel.guardian_relationship = info.guardian_relationship;
+                    RegModel.guardian_occupation = info.guardian_occupation;
+                    RegModel.guardian_address_phone = info.guardian_address_phone;
+                    RegModel.app_guardian_name = info.app_guardian_name;
+                    RegModel.app_guardian_nrc = info.app_guardian_nrc;
+                    RegModel.app_guardian_phone = info.app_guardian_phone;
+                    RegModel.app_guardian_address = info.app_guardian_address;
+                    RegModel.app_student_name = info.app_student_name;
+                    RegModel.app_student_phone = info.app_student_phone;
+                    RegModel.nrc_state = info.nrc_state;
+                    RegModel.nrc_township = info.nrc_township;
+                    RegModel.nrc_type = info.nrc_type;
+                    RegModel.nrc_number = info.nrc_number;
+                    RegModel.university_reg_no = info.university_reg_no;
+                    if (info.dob.HasValue) DobDate = info.dob.Value.Date;
+                    if (!string.IsNullOrEmpty(info.nrc_type)) NrcType = info.nrc_type;
+                    if (!string.IsNullOrEmpty(info.nrc_state) && NrcTownshipsByState.TryGetValue(info.nrc_state, out var towns))
+                        CurrentTownshipList = towns;
+
+                    AutoFillSuccess = true;
+                    AutoFillStatus = "✔ ကျောင်းသားအချက်အလက် အလိုအလျောက် ဖြည့်ပြီးပါပြီ";
+                }
+                else
+                {
+                    AutoFillSuccess = false;
+                    AutoFillStatus = "⚠ ဤ Roll No. နှင့် Databank ထဲတွင် Data မတွေ့ပါ";
+                }
+            }
+            catch
+            {
+                AutoFillSuccess = false;
+                AutoFillStatus = "⚠ ဤ Roll No. နှင့် Databank ထဲတွင် Data မတွေ့ပါ";
+            }
+
+            IsAutoFilling = false;
+            StateHasChanged();
+        }
+
+
         public string? GuardianNrcState { get; set; }
         public string? GuardianNrcTownship { get; set; }
         public string GuardianNrcType { get; set; } = "(နိုင်)";
@@ -119,13 +213,21 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                                 ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                                 ?? user.FindFirst("id")?.Value;
 
+                var newStudentAccIdString = user.FindFirst("NewStudentAccId")?.Value;
+
                 Console.WriteLine("User Claims:");
                 foreach (var claim in user.Claims)
                 {
                     Console.WriteLine($"Claim Type: {claim.Type}, Value: {claim.Value}");
                 }
 
-                if (int.TryParse(userIdString, out int parsedUserId))
+                if (user.IsInRole("NewStudent") && int.TryParse(newStudentAccIdString, out int parsedNewStudentAccId))
+                {
+                    RegModel.NewStudentAccId = parsedNewStudentAccId;
+                    RegModel.UserId = 0;
+                    Console.WriteLine($"Logged in as NewStudent with AccId: {parsedNewStudentAccId}");
+                }
+                else if (int.TryParse(userIdString, out int parsedUserId))
                 {
                     RegModel.UserId = parsedUserId;
                     Console.WriteLine($"Auto-filled UserId: {parsedUserId}");
@@ -147,7 +249,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 }
                 else
                 {
-                    Console.WriteLine($"Failed to parse UserId from string: '{userIdString}'");
+                    Console.WriteLine($"Failed to parse UserId or NewStudentAccId from claims");
                 }
             }
             else
@@ -701,9 +803,9 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             if (CurrentStep == 1)
             {
                 // 💡 User ID ကို Token မှ ဆွဲမရခဲ့ပါက API Error မတက်ခင် ဤနေရာတွင် တားပေးမည်
-                if (RegModel.UserId == null || RegModel.UserId <= 0)
+                if ((RegModel.UserId == null || RegModel.UserId <= 0) && (RegModel.NewStudentAccId == null || RegModel.NewStudentAccId <= 0))
                 {
-                    ShowError("စနစ်အတွင်း User ID အား ရှာမတွေ့ပါ။ ကျေးဇူးပြု၍ Logout ထွက်ပြီး Login အသစ်ပြန်ဝင်ပေးပါ။");
+                    ShowError("စနစ်အတွင်း User ID သို့မဟုတ် New Student ID အား ရှာမတွေ့ပါ။ ကျေးဇူးပြု၍ Logout ထွက်ပြီး Login အသစ်ပြန်ဝင်ပေးပါ။");
                     return;
                 }
 
@@ -849,6 +951,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
             if (RegModel.UserId.HasValue)
                 content.Add(new StringContent(RegModel.UserId.Value.ToString()), "UserId");
+            if (RegModel.NewStudentAccId.HasValue && RegModel.NewStudentAccId.Value > 0)
+                content.Add(new StringContent(RegModel.NewStudentAccId.Value.ToString()), "NewStudentAccId");
             if (!string.IsNullOrEmpty(RegModel.AdmissionSerialNo))
                 content.Add(new StringContent(RegModel.AdmissionSerialNo), "AdmissionSerialNo");
 

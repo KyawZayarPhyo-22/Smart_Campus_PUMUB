@@ -5,7 +5,9 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Category;
 
@@ -13,12 +15,17 @@ public partial class Page_CategoryList
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<CategoryModel> CategoryList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+
+    // Permissions Variables
+    private List<string> userPermissions = new();
+    private bool canManageCategory = true;
 
     private string SearchInput = "";
 
@@ -82,6 +89,26 @@ public partial class Page_CategoryList
     protected override async Task OnInitializedAsync()
     {
         await LoadCategories();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userPermissions = user.Claims
+                                  .Where(c => c.Type == "Permission")
+                                  .Select(c => c.Value)
+                                  .ToList();
+                                  
+            canManageCategory = userPermissions.Contains("Category.Edit") || userPermissions.Contains("Category.Delete");
+
+            StateHasChanged();
+        }
     }
 
     private async Task LoadCategories()

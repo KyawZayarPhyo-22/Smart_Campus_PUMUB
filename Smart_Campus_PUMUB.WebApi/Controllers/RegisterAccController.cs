@@ -1,14 +1,18 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using System.Net;
 using System.Net.Mail;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
+
 [ApiController]
 [Route("api/[controller]")]
+//[Authorize]
 [Microsoft.AspNetCore.Mvc.Infrastructure.DefaultStatusCode(200)]
 public class RegisterAccController : ControllerBase
 {
@@ -25,6 +29,9 @@ public class RegisterAccController : ControllerBase
     // GET /api/registeracc/test-email — SMTP Diagnosis
     // ─────────────────────────────────────────────────────────────────────────
     [HttpGet("test-email")]
+    //[AllowAnonymous]
+    [Permission("RegisterAcc.View")]
+
     public async Task<IActionResult> TestEmail([FromQuery] string to)
     {
         try
@@ -44,6 +51,8 @@ public class RegisterAccController : ControllerBase
     // POST /api/registeracc — Student submits registration request
     // ─────────────────────────────────────────────────────────────────────────
     [HttpPost]
+    [AllowAnonymous]
+
     public async Task<IActionResult> Submit([FromBody] RegisterAccCreateRequest request)
     {
         if (!ModelState.IsValid)
@@ -85,6 +94,9 @@ public class RegisterAccController : ControllerBase
     // GET /api/registeracc — Admin: paged list with optional status filter
     // ─────────────────────────────────────────────────────────────────────────
     [HttpGet]
+    //[Authorize]
+    [Permission("RegisterAcc.View")]
+
     public async Task<IActionResult> GetAll(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
@@ -106,25 +118,29 @@ public class RegisterAccController : ControllerBase
         int totalCount = await query.CountAsync();
         int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        var items = await query
-            .OrderByDescending(r => r.CreatedDateTime)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .Select(r => new RegisterAccListItem
-            {
-                RegisterAccId = r.RegisterAccId,
-                FullName = r.FullName,
-                Email = r.Email,
-                Phone = r.Phone,
-                FormNo = r.FormNo,
-                ExamSeatNo = r.ExamSeatNo,
-                Status = r.Status,
-                RejectionReason = r.RejectionReason,
-                CreatedDateTime = r.CreatedDateTime,
-                ReviewedDateTime = r.ReviewedDateTime,
-                ReviewedBy = r.ReviewedBy
-            })
-            .ToListAsync();
+        var items = await (from r in query
+                           join n in _db.NewStudentAccs on r.RegisterAccId equals n.RegisterAccId into joined
+                           from n in joined.DefaultIfEmpty()
+                           orderby r.CreatedDateTime descending
+                           select new RegisterAccListItem
+                           {
+                               RegisterAccId = r.RegisterAccId,
+                               FullName = r.FullName,
+                               Email = r.Email,
+                               Phone = r.Phone,
+                               FormNo = r.FormNo,
+                               ExamSeatNo = r.ExamSeatNo,
+                               Status = r.Status,
+                               RejectionReason = r.RejectionReason,
+                               CreatedDateTime = r.CreatedDateTime,
+                               ReviewedDateTime = r.ReviewedDateTime,
+                               ReviewedBy = r.ReviewedBy,
+                               NewStudentAccId = n != null ? n.NewStudentAccId : (int?)null,
+                               AccountStatus = n != null ? n.AccountStatus : null
+                           })
+                           .Skip((pageNumber - 1) * pageSize)
+                           .Take(pageSize)
+                           .ToListAsync();
 
         return Ok(new RegisterAccPagedResponse
         {
@@ -140,6 +156,8 @@ public class RegisterAccController : ControllerBase
     // GET /api/registeracc/{id}
     // ─────────────────────────────────────────────────────────────────────────
     [HttpGet("{id}")]
+    [Permission("RegisterAcc.Edit")]
+
     public async Task<IActionResult> GetById(int id)
     {
         var entity = await _db.RegisterAccounts.FindAsync(id);
@@ -166,6 +184,8 @@ public class RegisterAccController : ControllerBase
     // POST /api/registeracc/{id}/approve — Admin approves & auto-creates user
     // ─────────────────────────────────────────────────────────────────────────
     [HttpPost("{id}/approve")]
+    [Permission("RegisterAcc.Edit")]
+
     public async Task<IActionResult> Approve(int id, [FromBody] RegisterAccActionRequest request)
     {
         var entity = await _db.RegisterAccounts.FindAsync(id);
@@ -175,39 +195,30 @@ public class RegisterAccController : ControllerBase
         if (entity.Status != "Pending")
             return BadRequest(new RegisterAccActionResponse { IsSuccess = false, Message = "ဤ Request ကို ဆောင်ရွက်ပြီးသားဖြစ်ပါသည်။" });
 
-        // --- Find Student role ---
-        var studentRole = await _db.Roles.FirstOrDefaultAsync(r =>
-            r.RoleName == "Student" || r.RoleName == "student");
-
-        if (studentRole == null)
-            return StatusCode(500, new RegisterAccActionResponse
-            {
-                IsSuccess = false,
-                Message = "Student Role ကို ဒေတာဘေ့စ်မှာ ရှာမတွေ့ပါ။ Admin မှ Role ထပ်ဆောင်းပေးပါ။"
-            });
-
         // --- Auto-generate username from FullName + seat no ---
         string baseUsername = GenerateUsername(entity.FullName, entity.ExamSeatNo ?? entity.RegisterAccId.ToString());
-        string finalUsername = await EnsureUniqueUsername(baseUsername);
+        string finalUsername = await EnsureUniqueUsernameInNewStudentAcc(baseUsername);
 
         // --- Auto-generate random password ---
         string plainPassword = GeneratePassword();
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(plainPassword);
 
-        // --- Create User account ---
-        var newUser = new User
+        // --- Create NewStudentAcc record (NOT in User table) ---
+        var newStudentAcc = new NewStudentAcc
         {
-            RoleId = studentRole.RoleId,
+            RegisterAccId = entity.RegisterAccId,
             FullName = entity.FullName,
-            UserName = finalUsername,
-            Password = hashedPassword,
+            Email = entity.Email,
+            Phone = entity.Phone,
+            Username = finalUsername,
+            PasswordHash = hashedPassword,
+            AccountStatus = "Active",
             MustChangePassword = true,
-            IsDelete = false,
             CreatedDateTime = DateTime.Now,
             CreatedBy = request.ReviewedBy ?? "System"
         };
 
-        _db.Users.Add(newUser);
+        _db.NewStudentAccs.Add(newStudentAcc);
 
         // --- Mark RegisterAcc as Approved ---
         entity.Status = "Approved";
@@ -241,6 +252,8 @@ public class RegisterAccController : ControllerBase
     // POST /api/registeracc/{id}/reject — Admin rejects with optional reason
     // ─────────────────────────────────────────────────────────────────────────
     [HttpPost("{id}/reject")]
+    [Permission("RegisterAcc.Edit")]
+
     public async Task<IActionResult> Reject(int id, [FromBody] RegisterAccActionRequest request)
     {
         var entity = await _db.RegisterAccounts.FindAsync(id);
@@ -294,6 +307,19 @@ public class RegisterAccController : ControllerBase
         string candidate = baseUsername;
         int suffix = 1;
         while (await _db.Users.AnyAsync(u => u.UserName == candidate))
+        {
+            candidate = $"{baseUsername}{suffix}";
+            suffix++;
+        }
+        return candidate;
+    }
+
+    /// <summary>NewStudentAcc table တွင် username ထပ်မနေရ</summary>
+    private async Task<string> EnsureUniqueUsernameInNewStudentAcc(string baseUsername)
+    {
+        string candidate = baseUsername;
+        int suffix = 1;
+        while (await _db.NewStudentAccs.AnyAsync(a => a.Username == candidate))
         {
             candidate = $"{baseUsername}{suffix}";
             suffix++;
@@ -473,3 +499,5 @@ Smart Campus PUMUB
 Polytechnic University Maubin";
     }
 }
+
+

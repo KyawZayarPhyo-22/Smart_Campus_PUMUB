@@ -5,7 +5,9 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Rules;
 
@@ -13,6 +15,7 @@ public partial class Page_RulesList
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<RuleModel> RulesList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -21,6 +24,10 @@ public partial class Page_RulesList
     private bool IsProcessing { get; set; } = false;
     private bool ShowModal { get; set; } = false;
     private RuleModel? SelectedRule { get; set; }
+
+    // Permissions Variables
+    private List<string> userPermissions = new();
+    private bool canManageRule = true;
 
     private string SearchInput = "";
 
@@ -78,6 +85,26 @@ public partial class Page_RulesList
     protected override async Task OnInitializedAsync()
     {
         await LoadRules();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userPermissions = user.Claims
+                                  .Where(c => c.Type == "Permission")
+                                  .Select(c => c.Value)
+                                  .ToList();
+                                  
+            canManageRule = userPermissions.Contains("Rule.Edit") || userPermissions.Contains("Rule.Delete");
+
+            StateHasChanged();
+        }
     }
 
     private async Task LoadRules()

@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace NLADotNetInternshipTraining.WebApi.Controllers;
@@ -17,6 +19,7 @@ public class SubjectController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("Subject.View")]
     public IActionResult GetAll()
     {
         // .Include(s => s.Semester) သုံးပြီး Semester Name ကိုပါ ဆွဲထုတ်ပါ
@@ -35,6 +38,7 @@ public class SubjectController : ControllerBase
         return Ok(subjects);
     }
     [HttpGet("{id}")]
+    [Permission("Subject.View")]
     public IActionResult GetSubject(int id)
     {
         // Role 1: ID Validation (ID သည် သုည သို့မဟုတ် အနှုတ်ကိန်း မဖြစ်ရ)
@@ -49,6 +53,7 @@ public class SubjectController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Subject.Create")]
     public IActionResult CreateSubject([FromBody] SubjectCreateRequestModel request) // Role 2: Swagger [FromBody] သေချာစေရန်
     {
         // Role 3: Model State Validations
@@ -96,6 +101,7 @@ public class SubjectController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Permission("Subject.Edit")]
     public IActionResult UpdateSubject(int id, [FromBody] SubjectUpdateRequestModel request) // Role 2: Swagger [FromBody] သေချာစေရန်
     {
         // Role 1: ID Validation
@@ -153,6 +159,7 @@ public class SubjectController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("Subject.Delete")]
     public IActionResult DeleteSubject(int id)
     {
         // Role 1: ID Validation
@@ -176,3 +183,4 @@ public class SubjectController : ControllerBase
         return Ok(new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Delete Successfully" : "Delete Failed" });
     }
 }
+

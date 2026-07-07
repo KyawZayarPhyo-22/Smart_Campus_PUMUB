@@ -97,11 +97,13 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-auto">
-                <NavLink href="/admin/category/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Category">
-                    <i class="bi bi-plus-lg"></i>
-                </NavLink>
-            </div>
+            <AuthorizeView Policy="Category.Create">
+                <div class="col-auto">
+                    <NavLink href="/admin/category/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Category">
+                        <i class="bi bi-plus-lg"></i>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
         </div>
     </div>
 
@@ -122,7 +124,10 @@
                         <tr>
                             <th>No.</th>
                             <th>Category Name</th>
-                            <th class="text-center">Actions</th>
+                            @if (canManageCategory)
+                            {
+                                <th class="text-center">Actions</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -134,12 +139,19 @@
                             <tr class="table-row-hover">
                                 <td class="fw-bold text-muted">@count.ToString("D2")</td>
                                 <td class="fw-semibold">@category.CategoryName</td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <NavLink href="@($"/admin/category/edit/{category.CategoryId}")" class="btn btn-action-edit"><i class="bi bi-pencil me-1.5"></i> Edit</NavLink>
-                                        <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(category)"><i class="bi bi-trash me-1.5"></i> Delete</button>
-                                    </div>
-                                </td>
+                                @if (canManageCategory)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                            <AuthorizeView Policy="Category.Edit">
+                                                <NavLink href="@($"/admin/category/edit/{category.CategoryId}")" class="btn btn-action-edit"><i class="bi bi-pencil me-1.5"></i> Edit</NavLink>
+                                            </AuthorizeView>
+                                            <AuthorizeView Policy="Category.Delete">
+                                                <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(category)"><i class="bi bi-trash me-1.5"></i> Delete</button>
+                                            </AuthorizeView>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                             count++;
                         }

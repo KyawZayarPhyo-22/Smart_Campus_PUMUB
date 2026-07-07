@@ -90,11 +90,13 @@
         </div>
 
         <!-- Add Button -->
-        <div class="col-auto">
-            <NavLink href="/admin/faculty/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Faculty">
-                <i class="bi bi-plus-lg"></i>
-            </NavLink>
-        </div>
+        <AuthorizeView Policy="Faculty.Create">
+            <div class="col-auto">
+                <NavLink href="/admin/faculty/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Faculty">
+                    <i class="bi bi-plus-lg"></i>
+                </NavLink>
+            </div>
+        </AuthorizeView>
     </div>
 </div>
 
@@ -126,7 +128,10 @@
                         <tr>
                             <th style="width: 15%;">No.</th>
                             <th style="width: 50%;">Faculty Name</th>
-                            <th style="width: 35%; text-align: center;">Actions</th>
+                            @if (canManageFaculty)
+                            {
+                                <th style="width: 35%; text-align: center;">Actions</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -136,16 +141,23 @@
                             <tr class="table-row-hover">
                                 <td class="fw-bold text-muted">@count.ToString("D2")</td>
                                 <td class="fw-semibold">@faculty.FacultyName</td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <NavLink href="@($"/admin/faculty/edit/{faculty.FacultyId}")" class="btn btn-action-edit d-inline-flex align-items-center">
-                                            <i class="bi bi-pencil me-1.5"></i> Edit
-                                        </NavLink>
-                                        <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(faculty)">
-                                            <i class="bi bi-trash me-1.5"></i> Delete
-                                        </button>
-                                    </div>
-                                </td>
+                                @if (canManageFaculty)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                            <AuthorizeView Policy="Faculty.Edit">
+                                                <NavLink href="@($"/admin/faculty/edit/{faculty.FacultyId}")" class="btn btn-action-edit d-inline-flex align-items-center">
+                                                    <i class="bi bi-pencil me-1.5"></i> Edit
+                                                </NavLink>
+                                            </AuthorizeView>
+                                            <AuthorizeView Policy="Faculty.Delete">
+                                                <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(faculty)">
+                                                    <i class="bi bi-trash me-1.5"></i> Delete
+                                                </button>
+                                            </AuthorizeView>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                             count++;
                         }

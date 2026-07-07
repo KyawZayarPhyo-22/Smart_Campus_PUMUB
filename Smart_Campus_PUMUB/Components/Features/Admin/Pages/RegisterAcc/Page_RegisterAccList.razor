@@ -268,6 +268,7 @@
                         <th>Status</th>
                         <th>Submitted</th>
                         <th class="text-center">Actions</th>
+                        <th class="text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -302,22 +303,43 @@
                             <td class="text-secondary">@item.CreatedDateTime?.ToString("dd-MM-yyyy HH:mm")</td>
                             <td>
                                 <div class="d-flex justify-content-center gap-2">
-                                    @if (item.Status == "Pending")
+                                     @if (item.Status == "Pending")
+                                     {
+                                         <button class="btn-approve" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
+                                             <i class="bi bi-check-lg me-1"></i> Approve
+                                         </button>
+                                         <button class="btn-reject" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
+                                             <i class="bi bi-x-lg me-1"></i> Reject
+                                         </button>
+                                     }
+                                     else
+                                     {
+                                         <span style="font-size:0.78rem; color:#475569;">
+                                             @item.ReviewedBy — @item.ReviewedDateTime?.ToString("dd-MM-yyyy")
+                                         </span>
+                                     }
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                @if (item.NewStudentAccId.HasValue && item.NewStudentAccId > 0)
+                                {
+                                    @if (item.AccountStatus == "Active")
                                     {
-                                        <button class="btn-approve" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
-                                            <i class="bi bi-check-lg me-1"></i> Approve
-                                        </button>
-                                        <button class="btn-reject" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
-                                            <i class="bi bi-x-lg me-1"></i> Reject
+                                        <button class="btn btn-sm btn-success" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => ToggleStudentAccountStatus(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-shield-check me-1"></i> Active
                                         </button>
                                     }
                                     else
                                     {
-                                        <span style="font-size:0.78rem; color:#475569;">
-                                            @item.ReviewedBy — @item.ReviewedDateTime?.ToString("dd-MM-yyyy")
-                                        </span>
+                                        <button class="btn btn-sm btn-danger" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => ToggleStudentAccountStatus(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-shield-slash me-1"></i> Inactive
+                                        </button>
                                     }
-                                </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" style="font-size:0.78rem;">-</span>
+                                }
                             </td>
                         </tr>
                         rowNo++;

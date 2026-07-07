@@ -48,6 +48,26 @@
                 el.dispatchEvent(new Event('input', { bubbles: true }));
             });
         };
+
+        window.authFunctions = {
+            setSecureCookie: function (name, value, expiryInMinutes) {
+                let maxAgeSeconds = expiryInMinutes * 60;
+                document.cookie = `${name}=${value}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax; Secure`;
+            },
+            logout: function () {
+                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure";
+                document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure";
+            }
+        };
+
+        window.cookieHelper = {
+            get: function(name) {
+                var value = "; " + document.cookie;
+                var parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
+                return null;
+            }
+        };
     </script>
 </body>
 

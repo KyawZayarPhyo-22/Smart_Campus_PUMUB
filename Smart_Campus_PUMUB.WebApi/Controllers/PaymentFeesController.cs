@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -7,6 +9,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
 [Route("api/payment-fees")]
+[Authorize]
 public class PaymentFeesController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -17,6 +20,8 @@ public class PaymentFeesController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("PaymentFee.View")]
+
     public IActionResult GetPaymentFees([FromQuery] string? classYear = null, [FromQuery] string? status = null)
     {
         var query = _db.PaymentFees
@@ -45,6 +50,8 @@ public class PaymentFeesController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    //[Permission("PaymentFee.View")]
+
     public IActionResult GetPaymentFee(int id)
     {
         // Role: ID Validation (ID သည် သုည သို့မဟုတ် အနှုတ်ကိန်း မဖြစ်ရ)
@@ -59,6 +66,8 @@ public class PaymentFeesController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("PaymentFee.Create")]
+
     public IActionResult CreatePaymentFee([FromBody] PaymentFeeCreateRequestModel request) // Role: [FromBody] ပါဝင်မှု သေချာစေရန်
     {
         // Role: Model Attributes Validation (Required, Range စတာတွေ စစ်ဆေးခြင်း)
@@ -95,6 +104,8 @@ public class PaymentFeesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Permission("PaymentFee.Edit")]
+
     public IActionResult UpdatePaymentFee(int id, [FromBody] PaymentFeeUpdateRequestModel request) // Role: [FromBody] ပါဝင်မှု သေချာစေရန်
     {
         // Role: ID Validation
@@ -136,6 +147,8 @@ public class PaymentFeesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("PaymentFee.Delete")]
+
     public IActionResult DeletePaymentFee(int id)
     {
         // Role: ID Validation
@@ -174,3 +187,4 @@ public class PaymentFeesController : ControllerBase
         return Ok(new { ClassYear = classYear, TotalCalculatedFee = totalAmount, CalculatedAt = DateTime.Now });
     }
 }
+

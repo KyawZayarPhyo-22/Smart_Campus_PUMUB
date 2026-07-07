@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
 [Route("api/rules")]
+[Authorize]
 public class RulesRegulationsController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -15,6 +18,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("Rules.View")]
     public IActionResult GetRules()
     {
          var lst = _db.RulesRegulations
@@ -31,6 +35,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Permission("Rules.View")]
     public IActionResult GetRule(int id)
     {
         if (id <= 0)
@@ -44,6 +49,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Rules.Create")]
     public IActionResult CreateRule([FromBody] RuleCreateRequestModel request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -68,6 +74,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Permission("Rules.Edit")]
     public IActionResult UpdateRule(int id,[FromBody] RuleUpdateRequestModel request)
     {
         if (id <= 0)
@@ -101,6 +108,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("Rules.Delete")]
     public IActionResult DeleteRule(int id)
     {
         if (id <= 0)
@@ -120,3 +128,5 @@ public class RulesRegulationsController : ControllerBase
         });
     }
 }
+
+

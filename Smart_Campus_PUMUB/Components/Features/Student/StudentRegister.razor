@@ -592,9 +592,42 @@
             <!-- 💡 User ID ကို ဖောင်တွင် မပြတော့ဘဲ နောက်ကွယ်မှ Auto ခေါ်ယူရန် ပြန်ဖျောက်ထားပါသည် 💡 -->
             <input type="hidden" @bind="RegModel.UserId" />
 
+            <!-- Roll No Auto-Fill Field (at top) -->
+            <div class="input-group" style="grid-column: span 2;">
+                <label class="input-label" style="font-size: 1rem; font-weight: 700; color: #1e40af;">
+                    <i class="fas fa-id-badge me-2" style="color: #2563eb;"></i>
+                    Roll No. (ဖြည့်လျှင် Data အလိုအလျောက် ဖြည့်ပေးမည်)
+                    <span style="color:red;">*</span>
+                </label>
+                <div style="position: relative;">
+                    <input type="text"
+                           class="modern-input"
+                           placeholder="Roll No. ထည့်ပါ..."
+                           value="@RollNoInput"
+                           @onchange="OnRollNoChanged"
+                           style="padding-right: 48px; font-weight: 600; font-size: 1rem;" />
+                    @if (IsAutoFilling)
+                    {
+                        <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #2563eb;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(AutoFillStatus))
+                {
+                    <div style="margin-top: 8px; padding: 10px 14px; border-radius: 8px;
+                                background: @(AutoFillSuccess ? "#f0fdf4" : "#fef9c3");
+                                border: 1px solid @(AutoFillSuccess ? "#86efac" : "#fde047");
+                                color: @(AutoFillSuccess ? "#166534" : "#854d0e");
+                                font-size: 0.88rem; font-weight: 600;">
+                        @AutoFillStatus
+                    </div>
+                }
+            </div>
+
             <!-- User ID Status Display -->
             <div class="input-group" style="grid-column: span 2;">
-                @if (RegModel.UserId.HasValue && RegModel.UserId > 0)
+                @if ((RegModel.UserId.HasValue && RegModel.UserId > 0) || (RegModel.NewStudentAccId.HasValue && RegModel.NewStudentAccId > 0))
                 {
                     <div style="background: #f0f9ff; padding: 12px 16px; border-radius: 10px; border: 1px solid #0ea5e9; color: #0369a1; font-size: 0.85rem; display: flex; align-items: center;">
                         <i class="fas fa-user-check me-2"></i>
@@ -618,12 +651,12 @@
 
             <div class="input-group">
                 <label class="input-label">အမည် (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
-                <input type="text" class="modern-input" placeholder="ကိုအောင်မင်း" @bind="RegModel.student_name_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required disabled="@(!(RegModel.UserId.HasValue && RegModel.UserId > 0))">
+                <input type="text" class="modern-input" placeholder="ကိုအောင်မင်း" @bind="RegModel.student_name_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required disabled="@(!((RegModel.UserId.HasValue && RegModel.UserId > 0) || (RegModel.NewStudentAccId.HasValue && RegModel.NewStudentAccId > 0)))">
             </div>
 
             <div class="input-group">
                 <label class="input-label">အမည် (အင်္ဂလိပ်စာဖြင့်)</label>
-                <input type="text" class="modern-input" placeholder="Ko Aung Min" @bind="RegModel.student_name_en" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')" disabled="@(!(RegModel.UserId.HasValue && RegModel.UserId > 0))">
+                <input type="text" class="modern-input" placeholder="Ko Aung Min" @bind="RegModel.student_name_en" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')" disabled="@(!((RegModel.UserId.HasValue && RegModel.UserId > 0) || (RegModel.NewStudentAccId.HasValue && RegModel.NewStudentAccId > 0)))">
             </div>
 
             <div class="input-group">

@@ -19,6 +19,7 @@ public partial class Page_UserCreate
 
     protected override async Task OnInitializedAsync()
     {
+        Request.Status = "Active";
         RoleList = await HttpClientService.ExecuteAsync<List<RoleModel>>("role", EnumHttpMethod.Get) ?? new();
     }
 

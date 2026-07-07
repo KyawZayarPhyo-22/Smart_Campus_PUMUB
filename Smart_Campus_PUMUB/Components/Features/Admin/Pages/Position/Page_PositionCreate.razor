@@ -2,10 +2,13 @@
 @layout AdminLayout
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Position
 @using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @rendermode InteractiveServer
 
-<div class="tab-pane fade show active" id="addPositionContainer" tabindex="-1">
-    <div class="modal-dialog modal-md">
+<AuthorizeView Policy="Position.Create" Context="authContext">
+    <Authorized>
+        <div class="tab-pane fade show active" id="addPositionContainer" tabindex="-1">
+            <div class="modal-dialog modal-md">
         <div class="modal-content tech-card">
 
             <div class="modal-header border-0 pb-0">
@@ -45,3 +48,15 @@
         </div>
     </div>
 </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center mt-5 p-5 tech-card">
+            <i class="bi bi-shield-slash text-danger fs-1"></i>
+            <h2 class="text-danger fw-bold mt-3">Access Denied</h2>
+            <p class="text-muted">သင့်တွင် ဤစာမျက်နှာကို ဝင်ရောက်ကြည့်ရှုရန် ခွင့်ပြုချက် (Position.Create Policy) မရှိပါ။</p>
+            <NavLink href="/admin/positions" class="btn btn-primary mt-2">
+                <i class="bi bi-arrow-left"></i> Back to Directory
+            </NavLink>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

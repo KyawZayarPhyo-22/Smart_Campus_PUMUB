@@ -16,6 +16,9 @@ public partial class StudentRegistration
     [Column("user_id")]
     public int? UserId { get; set; }
 
+    [Column("NewStudentAccId")]
+    public int? NewStudentAccId { get; set; }
+
     [Column("admission_serial_no")]
     [StringLength(50)]
     [Unicode(false)]

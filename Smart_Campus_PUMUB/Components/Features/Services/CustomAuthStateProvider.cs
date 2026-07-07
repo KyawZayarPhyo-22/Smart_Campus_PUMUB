@@ -1,125 +1,222 @@
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.Http;
+using Microsoft.JSInterop;
 using System.Security.Claims;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text.Json;
+using System.Threading;
+using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Components;
+using Smart_Campus_PUMUB.Database.AppDbContext;
 
 namespace Smart_Campus_PUMUB.Components.Features.Services;
 
-public class CustomAuthStateProvider : AuthenticationStateProvider
+public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
 {
-    private readonly ProtectedSessionStorage _sessionStorage;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IJSRuntime _jsRuntime;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly NavigationManager _navigationManager;
     private readonly ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
+    private System.Threading.Timer? _validationTimer;
 
-    public CustomAuthStateProvider(ProtectedSessionStorage sessionStorage)
+    private ClaimsPrincipal _currentUser;
+
+    public CustomAuthStateProvider(
+        IHttpContextAccessor httpContextAccessor, 
+        IJSRuntime jsRuntime,
+        IServiceScopeFactory scopeFactory,
+        NavigationManager navigationManager)
     {
-        _sessionStorage = sessionStorage;
+        _httpContextAccessor = httpContextAccessor;
+        _jsRuntime = jsRuntime;
+        _scopeFactory = scopeFactory;
+        _navigationManager = navigationManager;
+        _currentUser = _anonymous;
+
+        // Run validation check every 5 seconds (5000ms)
+        _validationTimer = new System.Threading.Timer(ValidateSessionState, null, 5000, 5000);
     }
 
-    // 🔐 Browser Session ထဲကနေ Login အခြေအနေကို ဖတ်ပေးမယ့် Method ပါ
-    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    private void ValidateSessionState(object? state)
+    {
+        if (_currentUser == null || !_currentUser.Identity?.IsAuthenticated == true)
+        {
+            return;
+        }
+
+        try
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<SmartCampusDbContext>();
+
+                // Check for New Student Accounts first
+                var newStudentAccIdClaim = _currentUser.FindFirst("NewStudentAccId")?.Value;
+                if (!string.IsNullOrEmpty(newStudentAccIdClaim) && int.TryParse(newStudentAccIdClaim, out int newStudentAccId))
+                {
+                    var acc = db.NewStudentAccs.FirstOrDefault(x => x.NewStudentAccId == newStudentAccId);
+                    if (acc == null || acc.AccountStatus != "Active")
+                    {
+                        ForceLogoutSession();
+                        return;
+                    }
+                }
+                else
+                {
+                    // Check for standard Users
+                    var userIdClaim = _currentUser.FindFirst("UserId")?.Value
+                                   ?? _currentUser.FindFirst("User_Id")?.Value
+                                   ?? _currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                   ?? _currentUser.FindFirst("id")?.Value;
+
+                    if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int userId))
+                    {
+                        var user = db.Users.FirstOrDefault(x => x.UserId == userId);
+                        if (user == null || user.IsDelete == true || user.Status != "Active")
+                        {
+                            ForceLogoutSession();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during background session validation: {ex.Message}");
+        }
+    }
+
+    private async void ForceLogoutSession()
     {
         try
         {
-            // Pre-rendering အချိန်မှာ Storage ဖတ်လို့မရရင် Error တက်ပြီး Catch ထဲရောက်သွားပါမယ်
-            var userSessionResult = await _sessionStorage.GetAsync<UserSession>("UserSession");
-            var userSession = userSessionResult.Success ? userSessionResult.Value : null;
+            // Suspend timer
+            _validationTimer?.Change(Timeout.Infinite, Timeout.Infinite);
 
-            if (userSession == null)
-                return await Task.FromResult(new AuthenticationState(_anonymous));
+            // Reset current user state and notify views
+            _currentUser = _anonymous;
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
 
-            var claims = new List<Claim>
+            // Clear browser cookies
+            await _jsRuntime.InvokeVoidAsync("authFunctions.logout");
+
+            // Perform page redirection to refresh UI
+            _navigationManager.NavigateTo("/login", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to force logout session: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _validationTimer?.Dispose();
+    }
+
+    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    {
+        try
+        {
+            var token = _httpContextAccessor.HttpContext?.Request.Cookies["authToken"];
+
+            if (!string.IsNullOrEmpty(token))
             {
-                new Claim(ClaimTypes.Name, userSession.Username ?? string.Empty),
-                new Claim(ClaimTypes.Role, userSession.Role ?? string.Empty),
-                new Claim("UserId", userSession.UserId.ToString())
-            };
-
-            // 💡 Null Reference Exception ကို ကာကွယ်ရန် Permissions ကို စစ်ပြီးမှ ထည့်ခြင်း
-            if (userSession.Permissions != null && userSession.Permissions.Any())
-            {
-                foreach (var permission in userSession.Permissions)
-                {
-                    if (!string.IsNullOrEmpty(permission))
-                    {
-                        claims.Add(new Claim("Permission", permission));
-                    }
-                }
+                var claims = ParseClaimsFromJwt(token);
+                var identity = new ClaimsIdentity(claims, "Cookies");
+                _currentUser = new ClaimsPrincipal(identity);
             }
 
-            var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuth"));
-            return await Task.FromResult(new AuthenticationState(claimsPrincipal));
+            return Task.FromResult(new AuthenticationState(_currentUser));
         }
         catch
         {
-            // JS Interop အလုပ်မလုပ်သေးတဲ့ Pre-rendering အချိန်မှာ Anonymous အဖြစ် ယာယီသတ်မှတ်မည်
-            return await Task.FromResult(new AuthenticationState(_anonymous));
+            return Task.FromResult(new AuthenticationState(_currentUser));
         }
     }
 
-    // 🔄 Login ဝင်ချိန် သို့မဟုတ် အခြေအနေပြောင်းလဲချိန် Session ကို Update လုပ်ပေးမယ့် Method ပါ
-    public async Task UpdateAuthenticationState(UserSession? userSession)
+    public void NotifyUserAuthentication(string token)
     {
-        ClaimsPrincipal claimsPrincipal;
-
-        if (userSession != null)
-        {
-            await _sessionStorage.SetAsync("UserSession", userSession);
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, userSession.Username ?? string.Empty),
-                new Claim(ClaimTypes.Role, userSession.Role ?? string.Empty),
-                new Claim("UserId", userSession.UserId.ToString())
-            };
-
-            // 💡 Permissions ပါဝင်လာပါက Claims ထဲသို့ ထည့်သွင်းခြင်း
-            if (userSession.Permissions != null && userSession.Permissions.Any())
-            {
-                foreach (var permission in userSession.Permissions)
-                {
-                    if (!string.IsNullOrEmpty(permission))
-                    {
-                        claims.Add(new Claim("Permission", permission));
-                    }
-                }
-            }
-
-            claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "CustomAuth"));
-        }
-        else
-        {
-            await _sessionStorage.DeleteAsync("UserSession");
-            claimsPrincipal = _anonymous;
-        }
-
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
+        var claims = ParseClaimsFromJwt(token);
+        var identity = new ClaimsIdentity(claims, "Cookies");
+        var authenticatedUser = new ClaimsPrincipal(identity);
+        _currentUser = authenticatedUser;
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(authenticatedUser)));
     }
 
-    // 🚪 Logout ထွက်သည့်အချိန်တွင် Session ကိုဖျက်ပြီး Anonymous အဖြစ် သတ်မှတ်ပေးမယ့် Method ပါ
-    public async Task MarkUserAsLoggedOut()
+    public void NotifyUserLogout()
     {
-        // ၁။ Session ကို တကယ် ဖျက်ပစ်ရပါမည်
-        await _sessionStorage.DeleteAsync("UserSession");
-
-        // ၂။ Anonymous အခြေအနေကို App တစ်ခုလုံးသိအောင် Notify လုပ်ပါ
+        _currentUser = _anonymous;
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
     }
 
-    // 🔄 လက်ရှိ Auth State ကို အတင်းအကျပ် Manual ပြန်လည်စစ်ဆေးခိုင်းရန် (လိုအပ်လျှင် သုံးနိုင်သည်)
     public async Task NotifyAuthStateChangedAsync()
     {
         var state = await GetAuthenticationStateAsync();
         NotifyAuthenticationStateChanged(Task.FromResult(state));
     }
-}
 
-public class UserSession
-{
-    public string Username { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
-    public int UserId { get; set; }
-    public List<string> Permissions { get; set; } = new List<string>();
-    public string Token { get; set; } = string.Empty;
+    // 🚪 Clear cookies on logout
+    public async Task MarkUserAsLoggedOut()
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("authFunctions.logout");
+        }
+        catch
+        {
+            // Fallback for SSR/Prerender when JS is not available
+        }
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
+    }
+
+    private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
+    {
+        var claims = new List<Claim>();
+        try
+        {
+            var payload = jwt.Split('.')[1];
+            var jsonBytes = ParseBase64WithoutPadding(payload);
+            var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
+
+            if (keyValuePairs != null)
+            {
+                foreach (var kvp in keyValuePairs)
+                {
+                    string type = kvp.Key;
+                    if (type == "unique_name" || type == "name") type = ClaimTypes.Name;
+                    if (type == "role" || type == "roles") type = ClaimTypes.Role;
+
+                    if (kvp.Value is JsonElement element && element.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var item in element.EnumerateArray())
+                        {
+                            claims.Add(new Claim(type, item.ToString()!));
+                        }
+                    }
+                    else
+                    {
+                        claims.Add(new Claim(type, kvp.Value.ToString()!));
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing JWT: {ex.Message}");
+        }
+        return claims;
+    }
+
+    private byte[] ParseBase64WithoutPadding(string base64)
+    {
+        switch (base64.Length % 4)
+        {
+            case 2: base64 += "=="; break;
+            case 3: base64 += "="; break;
+        }
+        return Convert.FromBase64String(base64);
+    }
 }

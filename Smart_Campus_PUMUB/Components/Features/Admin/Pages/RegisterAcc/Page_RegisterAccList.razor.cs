@@ -215,6 +215,55 @@ public partial class Page_RegisterAccList
         }
     }
 
+    private async Task ToggleStudentAccountStatus(RegisterAccListItem item)
+    {
+        if (item.NewStudentAccId == null || item.NewStudentAccId <= 0) return;
+        IsProcessing = true;
+        try
+        {
+            var currentStatus = (item.AccountStatus ?? "Active").Trim();
+            var nextStatus = string.Equals(currentStatus, "Active", StringComparison.OrdinalIgnoreCase) ? "Inactive" : "Active";
+
+            var payload = new NewStudentAccUpdateStatusRequest
+            {
+                AccountStatus = nextStatus,
+                ModifiedBy = CurrentAdminName
+            };
+
+            var response = await HttpClientService.ExecuteAsync<NewStudentAccActionResponse>(
+                $"newstudentacc/{item.NewStudentAccId}/status",
+                EnumHttpMethod.Put,
+                payload
+            );
+
+            if (response != null)
+            {
+                if (response.IsSuccess)
+                {
+                    item.AccountStatus = nextStatus;
+                    ShowToast(response.Message ?? $"Account status updated to {nextStatus}", true);
+                    StateHasChanged();
+                }
+                else
+                {
+                    ShowToast(response.Message ?? "Status update failed", false);
+                }
+            }
+            else
+            {
+                ShowToast("Server returned invalid response or connection failed.", false);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"Error: {ex.Message}", false);
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
+    }
+
     // ── Toast ──────────────────────────────────────────────────────────────
     private System.Threading.CancellationTokenSource? _toastCts;
 

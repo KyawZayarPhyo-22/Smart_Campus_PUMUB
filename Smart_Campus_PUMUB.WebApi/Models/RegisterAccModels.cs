@@ -44,6 +44,8 @@ public class RegisterAccListItem
     public DateTime? CreatedDateTime { get; set; }
     public DateTime? ReviewedDateTime { get; set; }
     public string? ReviewedBy { get; set; }
+    public int? NewStudentAccId { get; set; }
+    public string? AccountStatus { get; set; }
 }
 
 /// <summary>Approve or Reject action payload</summary>

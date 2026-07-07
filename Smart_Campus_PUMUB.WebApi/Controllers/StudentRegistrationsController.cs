@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -141,6 +143,7 @@ public class StudentRegistrationsController : ControllerBase
     }
 
     [HttpGet("paginate")]
+    [Permission("StudentRegistrations.View")]
     public IActionResult GetRegistrationsPaginated(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
@@ -192,6 +195,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ₉. GET: UserId ဖြင့် နောက်ဆုံး Registration တစ်ခု ရယူရန် (Auto-Fill အတွက်)
     [HttpGet("latest/{userId}")]
+    [Permission("StudentRegistrations.View")]
     public IActionResult GetLatestRegistrationByUser(int userId)
     {
         var item = _db.StudentRegistrations
@@ -289,6 +293,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၁။ GET: ဖောင်အားလုံး စာရင်းယူရန် (Read All)
     [HttpGet]
+    [Permission("StudentRegistrations.View")]
     public IActionResult GetRegistrations()
     {
         var lst = _db.StudentRegistrations
@@ -308,6 +313,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၂။ GET: ဖောင်တစ်ခုချင်းစီ အသေးစိတ်ကြည့်ရန် (Read One)
     [HttpGet("{id}")]
+    [Permission("StudentRegistrations.View")]
     public IActionResult GetRegistration(int id)
     {
         var item = _db.StudentRegistrations
@@ -324,47 +330,44 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၃။ POST: ကျောင်းအပ်ဖောင် အသစ်တင်သွင်းရန် (Create)
     [HttpPost]
+    [Permission("StudentRegistrations.Create")]
     public IActionResult CreateRegistration([FromForm] StudentRegistrationCreateRequestModel request)
     {
-        // 💡 Fix: UserId သည် int? ဖြစ်သွားသဖြင့် null စစ်ရန် ထည့်သွင်းထားသည်
-        if (request.UserId == null || request.UserId <= 0)
+        bool isNewStudent = request.NewStudentAccId.HasValue && request.NewStudentAccId > 0;
+
+        if (!isNewStudent && (request.UserId == null || request.UserId <= 0))
         {
-            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအိုင်ဒီ (UserId) ထည့်သွင်းရန် လိုအပ်သည်။" });
+            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအိုင်ဒီ (UserId သို့မဟုတ် NewStudentAccId) ထည့်သွင်းရန် လိုအပ်သည်။" });
         }
 
-        //var userCheck = _db.Users.FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
-
-        //if (userCheck is null)
-        //{
-        //    return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအကောင့်ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
-        //}
-
-        //if (userCheck.RoleId != 3)
-        //{
-        //    return BadRequest(new StudentRegistrationResponseModel
-        //    {
-        //        IsSuccess = false,
-        //        Message = "ကျောင်းသားအကောင့်များသာ ကျောင်းအပ်ဖောင် တင်သွင်းခွင့်ရှိသည်။ (Admin သို့မဟုတ် Tutor အကောင့်များ တင်၍မရပါ)"
-        //    });
-        //}
-
-        var userCheck = _db.Users
-          .Include(x => x.Role)
-          .FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
-
-        if (userCheck is null)
+        if (isNewStudent)
         {
-            return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအကောင့်ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
-        }
-
-        // ၂။ RoleName ကို အခြေခံ၍ စစ်ဆေးပါ
-        if (userCheck.Role?.RoleName != "Student")
-        {
-            return BadRequest(new StudentRegistrationResponseModel
+            var newStudentCheck = _db.NewStudentAccs.FirstOrDefault(x => x.NewStudentAccId == request.NewStudentAccId);
+            if (newStudentCheck == null)
             {
-                IsSuccess = false,
-                Message = "ကျောင်းသားအကောင့်များသာ ကျောင်းအပ်ဖောင် တင်သွင်းခွင့်ရှိသည်။"
-            });
+                return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "ကျောင်းသားအသစ်အကောင့်ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
+            }
+        }
+        else
+        {
+            var userCheck = _db.Users
+              .Include(x => x.Role)
+              .FirstOrDefault(x => x.UserId == request.UserId && x.IsDelete == false);
+
+            if (userCheck is null)
+            {
+                return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအကောင့်ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
+            }
+
+            // ၂။ RoleName ကို အခြေခံ၍ စစ်ဆေးပါ
+            if (userCheck.Role?.RoleName != "Student")
+            {
+                return BadRequest(new StudentRegistrationResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "ကျောင်းသားအကောင့်များသာ ကျောင်းအပ်ဖောင် တင်သွင်းခွင့်ရှိသည်။"
+                });
+            }
         }
 
         // =========================================================
@@ -593,6 +596,7 @@ public class StudentRegistrationsController : ControllerBase
         var newReg = new StudentRegistration
         {
             UserId = request.UserId,
+            NewStudentAccId = request.NewStudentAccId,
             AdmissionSerialNo = request.AdmissionSerialNo,
             AcademicYearRange = request.academic_year_range,
             AcademicYearLevel = request.academic_year_level,
@@ -668,6 +672,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၄။ PUT: ဖောင်အချက်အလက် ပြင်ရန် (Update)
     [HttpPut("{id}")]
+    [Permission("StudentRegistrations.Edit")]
     public IActionResult UpdateRegistration(int id, [FromForm] StudentRegistrationUpdateRequestModel request)
     {
         var item = _db.StudentRegistrations
@@ -694,6 +699,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၅။ DELETE: ဖောင်ကို ဖျက်ရန် (Soft Delete)
     [HttpDelete("{id}")]
+    [Permission("StudentRegistrations.Delete")]
     public IActionResult DeleteRegistration(int id)
     {
         var item = _db.StudentRegistrations
@@ -712,6 +718,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၆။ GET: Roll No ဖြင့် အချက်အလက်ဟောင်း အားလုံး Auto ရှာရန် (Special API - All Fields)
     [HttpGet("search-past-student")]
+    [Permission("StudentRegistrations.View")]
     public IActionResult SearchPastStudent([FromQuery] string rollNo)
     {
         if (string.IsNullOrEmpty(rollNo))
@@ -782,6 +789,7 @@ public class StudentRegistrationsController : ControllerBase
     }
 
     [HttpGet("majors")]
+    [Permission("StudentRegistrations.View")]
     public IActionResult GetMajors()
     {
         var majors = new List<string> { "Computer Science", "Computer Technology", "Information Technology" };
@@ -790,6 +798,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၈။ GET: ကျောင်းသား Registration ကို UserId ဖြင့် ရှာရန် (Payment အတွက် Data ယူဖို့)
     [HttpGet("GetByUserId/{userId}")]
+    [Permission("StudentRegistrations.View")]
     public IActionResult GetRegistrationByUserId(int userId)
     {
         var registration = _db.StudentRegistrations
@@ -867,3 +876,5 @@ public class StudentRegistrationsController : ControllerBase
         });
     }
 }
+
+

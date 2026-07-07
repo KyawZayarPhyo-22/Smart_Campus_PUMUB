@@ -6,6 +6,7 @@ namespace Smart_Campus_PUMUB.WebApi.Models;
 public class StudentRegistrationCreateRequestModel
 {
     public int? UserId { get; set; }
+    public int? NewStudentAccId { get; set; }
     public string? AdmissionSerialNo { get; set; }
     public string? academic_year_range { get; set; }
     public string? academic_year_level { get; set; }

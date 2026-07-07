@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
@@ -8,6 +9,7 @@ namespace NLADotNetInternshipTraining.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+
 public class HomeController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -17,7 +19,7 @@ public class HomeController : ControllerBase
         _db = db;
     }
 
-    // ဒီနေရာမှာ ထည့်ပါ
+    // ????????? ??????
     [HttpGet("summary")]
     public IActionResult GetSystemSummary()
     {
@@ -34,3 +36,4 @@ public class HomeController : ControllerBase
         return Ok(summary);
     }
 }
+

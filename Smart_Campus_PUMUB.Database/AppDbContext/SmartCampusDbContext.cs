@@ -52,6 +52,8 @@ public partial class SmartCampusDbContext : DbContext
     public object Student_Registrations { get; set; }
 
     public virtual DbSet<RegisterAccount> RegisterAccounts { get; set; }
+    public virtual DbSet<StudentPersonalInfo> StudentPersonalInfos { get; set; }
+    public virtual DbSet<NewStudentAcc> NewStudentAccs { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -232,6 +234,15 @@ public partial class SmartCampusDbContext : DbContext
         {
             entity.HasKey(e => e.RegisterAccId);
             entity.Property(e => e.Status).HasDefaultValue("Pending");
+            entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
+        });
+
+        modelBuilder.Entity<NewStudentAcc>(entity =>
+        {
+            entity.HasKey(e => e.NewStudentAccId);
+            entity.HasIndex(e => e.Username).IsUnique().HasDatabaseName("UQ_NewStudentAcc_Username");
+            entity.Property(e => e.AccountStatus).HasDefaultValue("Active");
+            entity.Property(e => e.MustChangePassword).HasDefaultValue(true);
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
         });
 

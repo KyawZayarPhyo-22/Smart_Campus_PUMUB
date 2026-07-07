@@ -1,0 +1,172 @@
+@page "/admin/student-databank"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+
+<style>
+    .material-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .material-input {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        color: #495057;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .material-input:focus {
+        background-color: #ffffff;
+        border-color: #696cff;
+        box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.15);
+        color: #495057;
+        outline: none;
+    }
+
+    .table-container {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .custom-table {
+        margin-bottom: 0;
+    }
+
+    .custom-table thead th {
+        background-color: #696cff;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: none;
+        padding: 1rem;
+        white-space: nowrap;
+    }
+
+    .custom-table tbody tr {
+        border-bottom: 1px solid #f0f0f5;
+        transition: all 0.2s ease;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .custom-table td {
+        padding: 0.85rem 1rem;
+        color: #495057;
+        vertical-align: middle;
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    .page-title {
+        color: #3f4254;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title m-0">
+            <i class="bi bi-database me-2" style="color: #696cff;"></i>
+            Student Databank
+        </h2>
+    </div>
+
+    <div class="material-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex gap-3 align-items-center">
+                <div class="input-group" style="width: 300px;">
+                    <span class="input-group-text bg-transparent border-end-0 material-input text-muted" style="border-color: #323248;">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control material-input border-start-0" placeholder="Search students..." @bind="SearchTerm" @bind:event="oninput">
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-primary" style="background-color: #696cff; border-color: #696cff; border-radius: 8px;">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive table-container">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student Name</th>
+                        <th>Roll No.</th>
+                        <th>Major</th>
+                        <th>Academic Year</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (FilteredStudents != null && FilteredStudents.Any())
+                    {
+                        var index = 1;
+                        foreach (var student in FilteredStudents)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold">@student.student_name_mm</span>
+                                        <span class="text-muted small">@student.student_name_en</span>
+                                    </div>
+                                </td>
+                                <td>@student.roll_no</td>
+                                <td>
+                                    <span class="badge" style="background-color: rgba(105, 108, 255, 0.1); color: #696cff;">
+                                        @student.major
+                                    </span>
+                                </td>
+                                <td>@student.academic_year_range</td>
+                                <td>@student.email</td>
+                                <td>@student.app_student_phone</td>
+                                <td class="text-center">
+                                    <a href="/admin/student-databank/view/@(student.UserId ?? 0)/@(student.NewStudentAccId ?? 0)" class="btn btn-sm btn-outline-primary" style="border-radius: 6px;">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else if (IsLoading)
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No records found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

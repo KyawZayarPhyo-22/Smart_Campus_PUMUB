@@ -116,11 +116,13 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-auto">
-                <NavLink href="/admin/position/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Position">
-                    <i class="bi bi-plus-lg"></i>
-                </NavLink>
-            </div>
+            <AuthorizeView Policy="Position.Create">
+                <div class="col-auto">
+                    <NavLink href="/admin/position/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Position">
+                        <i class="bi bi-plus-lg"></i>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
         </div>
     </div>
 
@@ -156,7 +158,10 @@
                         <tr>
                             <th style="width: 15%;">No.</th>
                             <th style="width: 50%;">Position Name</th>
-                            <th style="width: 35%; text-align: center;">Actions</th>
+                            @if (canManagePosition)
+                            {
+                                <th style="width: 35%; text-align: center;">Actions</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -168,19 +173,26 @@
                             <tr class="table-row-hover">
                                 <td class="fw-bold text-muted">@count.ToString("D2")</td>
                                 <td class="fw-semibold position-text">@position.PositionName</td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <NavLink href="@($"/admin/position/edit/{position.PositionId}")"
-                                                 class="btn btn-action-edit d-inline-flex align-items-center">
-                                            <i class="bi bi-pencil me-1.5"></i> Edit
-                                        </NavLink>
+                                @if (canManagePosition)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                            <AuthorizeView Policy="Position.Edit">
+                                                <NavLink href="@($"/admin/position/edit/{position.PositionId}")"
+                                                         class="btn btn-action-edit d-inline-flex align-items-center">
+                                                    <i class="bi bi-pencil me-1.5"></i> Edit
+                                                </NavLink>
+                                            </AuthorizeView>
 
-                                        <button class="btn btn-action-delete d-inline-flex align-items-center"
-                                                @onclick="() => OpenDeleteModal(position)">
-                                            <i class="bi bi-trash me-1.5"></i> Delete
-                                        </button>
-                                    </div>
-                                </td>
+                                            <AuthorizeView Policy="Position.Delete">
+                                                <button class="btn btn-action-delete d-inline-flex align-items-center"
+                                                        @onclick="() => OpenDeleteModal(position)">
+                                                    <i class="bi bi-trash me-1.5"></i> Delete
+                                                </button>
+                                            </AuthorizeView>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                             count++;
                         }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Subject;
 
@@ -9,6 +10,7 @@ public partial class Page_SubjectList
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<SubjectModel> SubjectList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -16,6 +18,10 @@ public partial class Page_SubjectList
     private bool IsProcessing { get; set; } = false;
     private bool ShowModal { get; set; } = false;
     private SubjectModel? SelectedSubject { get; set; }
+
+    // Permissions Variables
+    private List<string> userPermissions = new();
+    private bool canManageSubject = true;
 
     private string SearchInput = "";
     private string SelectedSemesterInput = "All";
@@ -87,6 +93,26 @@ public partial class Page_SubjectList
     }
 
     protected override async Task OnInitializedAsync() => await LoadSubjects();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userPermissions = user.Claims
+                                  .Where(c => c.Type == "Permission")
+                                  .Select(c => c.Value)
+                                  .ToList();
+                                  
+            canManageSubject = userPermissions.Contains("Subject.Edit") || userPermissions.Contains("Subject.Delete");
+
+            StateHasChanged();
+        }
+    }
 
     private async Task LoadSubjects()
     {

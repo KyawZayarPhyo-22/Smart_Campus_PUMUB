@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Smart_Campus_PUMUB.WebApi.Services;
+using Microsoft.AspNetCore.Authorization;
+using Smart_Campus_PUMUB.WebApi.Filters;
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -72,8 +74,12 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings.Secret))
     };
 });
+// Dynamic Policy Provider
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicPolicyProvider>();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -81,11 +87,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseHttpsRedirection();
+
 app.UseStaticFiles(); 
 
 app.UseRouting();
 
-app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

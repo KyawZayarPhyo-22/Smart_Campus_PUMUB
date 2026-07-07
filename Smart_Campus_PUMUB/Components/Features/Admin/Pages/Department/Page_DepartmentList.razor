@@ -128,11 +128,13 @@
         </div>
 
         <!-- Add Button -->
-        <div class="col-auto">
-            <NavLink href="/admin/department/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Department">
-                <i class="bi bi-plus-lg"></i>
-            </NavLink>
-        </div>
+        <AuthorizeView Policy="Department.Create">
+            <div class="col-auto">
+                <NavLink href="/admin/department/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Department">
+                    <i class="bi bi-plus-lg"></i>
+                </NavLink>
+            </div>
+        </AuthorizeView>
     </div>
 </div>
 
@@ -154,7 +156,10 @@
                             <th style="width: 10%;">No.</th>
                             <th style="width: 45%;">Department Name</th>
                             <th style="width: 25%;">Faculty</th>
-                            <th style="width: 20%; text-align: center;">Actions</th>
+                            @if (canManageDepartment)
+                            {
+                                <th style="width: 20%; text-align: center;">Actions</th>
+                            }
                         </tr>
                     </thead>
                     @* <tbody>
@@ -192,17 +197,26 @@
                                 @* 💡 Faculty Name ကို text-info သို့ ပြောင်းထားပါသည် *@
                                 <td><span class="badge bg-info bg-opacity-10 text-info">@item.FacultyName</span></td>
 
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <NavLink href="@($"/admin/department/edit/{item.DepartmentId}")"
-                                                 class="btn btn-action-edit">
-                                            <i class="bi bi-pencil me-1"></i> Edit
-                                        </NavLink>
-                                        <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(item)">
-                                            <i class="bi bi-trash me-1"></i> Delete
-                                        </button>
-                                    </div>
-                                </td>
+                                @* <td><span class="badge bg-info bg-opacity-10 text-info">@item.FacultyName</span></td> *@
+
+                                @if (canManageDepartment)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                            <AuthorizeView Policy="Department.Edit">
+                                                <NavLink href="@($"/admin/department/edit/{item.DepartmentId}")"
+                                                         class="btn btn-action-edit">
+                                                    <i class="bi bi-pencil me-1"></i> Edit
+                                                </NavLink>
+                                            </AuthorizeView>
+                                            <AuthorizeView Policy="Department.Delete">
+                                                <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(item)">
+                                                    <i class="bi bi-trash me-1"></i> Delete
+                                                </button>
+                                            </AuthorizeView>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                             count++;
                         }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Department;
 
@@ -10,11 +11,16 @@ public partial class Page_DepartmentList : ComponentBase
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<DepartmentModel> DepartmentList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
     private bool IsLoading { get; set; } = true;
     private bool IsProcessing { get; set; } = false;
+
+    // Permissions Variables
+    private List<string> userPermissions = new();
+    private bool canManageDepartment = true;
 
     private string SearchInput = "";
     private string SelectedFacultyInput = "All";
@@ -91,6 +97,26 @@ public partial class Page_DepartmentList : ComponentBase
     }
 
     protected override async Task OnInitializedAsync() => await LoadDepartments();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userPermissions = user.Claims
+                                  .Where(c => c.Type == "Permission")
+                                  .Select(c => c.Value)
+                                  .ToList();
+                                  
+            canManageDepartment = userPermissions.Contains("Department.Edit") || userPermissions.Contains("Department.Delete");
+
+            StateHasChanged();
+        }
+    }
 
     private async Task LoadDepartments()
     {

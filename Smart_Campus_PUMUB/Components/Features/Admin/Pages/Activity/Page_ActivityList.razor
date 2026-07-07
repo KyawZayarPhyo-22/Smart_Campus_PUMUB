@@ -94,11 +94,13 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-auto">
-                <NavLink href="/admin/activity/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Activity">
-                    <i class="bi bi-plus-lg"></i>
-                </NavLink>
-            </div>
+            <AuthorizeView Policy="Activity.Create">
+                <div class="col-auto">
+                    <NavLink href="/admin/activity/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Activity">
+                        <i class="bi bi-plus-lg"></i>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
         </div>
     </div>
 
@@ -132,7 +134,10 @@
                             <th style="width: 15%;">Image</th>
                             <th style="width: 30%;">Activity Title</th>
                             <th style="width: 20%;">Location</th>
-                            <th style="width: 25%; text-align: center;">Actions</th>
+                            @if (canManageActivity)
+                            {
+                                <th style="width: 25%; text-align: center;">Actions</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -155,16 +160,23 @@
                                 </td>
                                 <td class="fw-semibold">@activity.ActivityTitle</td>
                                 <td>@activity.Location</td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <NavLink href="@($"/admin/activity/edit/{activity.ActivityId}")" class="btn btn-action-edit d-inline-flex align-items-center">
-                                            <i class="bi bi-pencil me-1.5"></i> Edit
-                                        </NavLink>
-                                        <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(activity)">
-                                            <i class="bi bi-trash me-1.5"></i> Delete
-                                        </button>
-                                    </div>
-                                </td>
+                                @if (canManageActivity)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                            <AuthorizeView Policy="Activity.Edit">
+                                                <NavLink href="@($"/admin/activity/edit/{activity.ActivityId}")" class="btn btn-action-edit d-inline-flex align-items-center">
+                                                    <i class="bi bi-pencil me-1.5"></i> Edit
+                                                </NavLink>
+                                            </AuthorizeView>
+                                            <AuthorizeView Policy="Activity.Delete">
+                                                <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(activity)">
+                                                    <i class="bi bi-trash me-1.5"></i> Delete
+                                                </button>
+                                            </AuthorizeView>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                             count++;
                         }

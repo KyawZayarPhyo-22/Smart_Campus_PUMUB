@@ -387,7 +387,7 @@
                 else
                 {
                     <div class="avatar-placeholder">
-                        @(profile.FullName?.Substring(0, 1).ToUpper() ?? "S")
+                        @(string.IsNullOrEmpty(profile.FullName) ? "S" : profile.FullName.Substring(0, 1).ToUpper())
                     </div>
                 }
                 <div class="avatar-edit-btn"><i class="fas fa-camera"></i></div>
@@ -408,6 +408,7 @@
                 <span class="chip"><i class="fas fa-book-open"></i> @profile.CurrentMajor</span>
                 <span class="chip green"><i class="fas fa-circle" style="font-size:0.5rem;"></i> @(profile.Status ?? "Active")</span>
             </div>
+            
         </div>
 
         <!-- Cards Grid -->
@@ -547,7 +548,7 @@
             else
             {
                 <div class="upload-preview" style="background:linear-gradient(135deg,#5a4fcf,#7c3aed); display:flex; align-items:center; justify-content:center; color:white; font-size:2.5rem; font-weight:700;">
-                    @(profile?.FullName?.Substring(0, 1).ToUpper() ?? "S")
+                    @(string.IsNullOrEmpty(profile?.FullName) ? "S" : profile.FullName.Substring(0, 1).ToUpper())
                 </div>
             }
 
@@ -592,7 +593,11 @@
             NavigationManager.NavigateTo("/login", true);
             return;
         }
-        var idClaim = user.FindFirst("UserId")?.Value;
+        var idClaim = user.FindFirst("UserId")?.Value
+                      ?? user.FindFirst("User_Id")?.Value
+                      ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                      ?? user.FindFirst("id")?.Value
+                      ?? user.FindFirst("uid")?.Value;
         int.TryParse(idClaim, out currentUserId);
         await LoadProfile();
     }

@@ -63,11 +63,13 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-auto">
-                <NavLink href="/admin/book/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Book">
-                    <i class="bi bi-plus-lg"></i>
-                </NavLink>
-            </div>
+            <AuthorizeView Policy="Book.Create">
+                <div class="col-auto">
+                    <NavLink href="/admin/book/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Book">
+                        <i class="bi bi-plus-lg"></i>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
         </div>
     </div>
 
@@ -85,7 +87,10 @@
                             <th style="width: 15%;">Cover</th>
                             <th style="width: 40%;">Book Name</th>
                             @* <th style="width: 40%;">Fith Path</th> *@
-                            <th style="width: 35%; text-align: center;">Actions</th>
+                            @if (canManageBook)
+                            {
+                                <th style="width: 35%; text-align: center;">Actions</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -101,16 +106,23 @@
                                 <td class="fw-semibold">
                                     <a href="@book.FilePath" target="_blank" download class="text-info text-decoration-none">@book.BookName</a>
                                 </td>
-                                <td>
-                                    <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <NavLink href="@($"/admin/book/edit/{book.BookId}")" class="btn btn-action-edit">
-                                            <i class="bi bi-pencil me-1"></i> Edit
-                                        </NavLink>
-                                        <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(book)">
-                                            <i class="bi bi-trash me-1"></i> Delete
-                                        </button>
-                                    </div>
-                                </td>
+                                @if (canManageBook)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                            <AuthorizeView Policy="Book.Edit">
+                                                <NavLink href="@($"/admin/book/edit/{book.BookId}")" class="btn btn-action-edit">
+                                                    <i class="bi bi-pencil me-1"></i> Edit
+                                                </NavLink>
+                                            </AuthorizeView>
+                                            <AuthorizeView Policy="Book.Delete">
+                                                <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(book)">
+                                                    <i class="bi bi-trash me-1"></i> Delete
+                                                </button>
+                                            </AuthorizeView>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                             count++;
                         }

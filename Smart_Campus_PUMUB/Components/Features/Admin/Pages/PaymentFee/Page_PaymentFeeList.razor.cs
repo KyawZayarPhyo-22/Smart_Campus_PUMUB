@@ -5,7 +5,9 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
 {
@@ -13,12 +15,17 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
     {
         [Inject] public HttpClientService HttpClientService { get; set; } = null!;
         [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+        [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
         private List<PaymentFeeModel> FeeList { get; set; } = new();
         private string SearchTerm { get; set; } = "";
         private bool IsLoading { get; set; } = true;
         private string ErrorMessage { get; set; } = "";
         private bool IsProcessing { get; set; } = false;
+
+        // Permissions Variables
+        private List<string> userPermissions = new();
+        private bool canManagePaymentFee = true;
 
         private string SearchInput = "";
 
@@ -90,6 +97,26 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
         protected override async Task OnInitializedAsync()
         {
             await LoadFees();
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender) return;
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                userPermissions = user.Claims
+                                      .Where(c => c.Type == "Permission")
+                                      .Select(c => c.Value)
+                                      .ToList();
+                                      
+                canManagePaymentFee = userPermissions.Contains("PaymentFee.Edit") || userPermissions.Contains("PaymentFee.Delete");
+
+                StateHasChanged();
+            }
         }
 
         private async Task LoadFees()

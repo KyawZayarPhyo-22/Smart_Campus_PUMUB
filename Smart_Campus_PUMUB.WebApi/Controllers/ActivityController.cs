@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers
@@ -10,6 +11,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
+    //[Authorize]
+
     public class ActivityController : ControllerBase
     {
         private readonly SmartCampusDbContext _db;
@@ -33,6 +36,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         //[Authorize]
         // GET /api/activities
         [HttpGet]
+        [Permission("Activity.View")]
+        [AllowAnonymous]
         public IActionResult GetActivities()
         {
             // Database ကနေ Data အရင်ဆွဲထုတ်ပြီး မှတ်ဉာဏ်ထဲမှာ စစ်မယ်
@@ -85,6 +90,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
 
         [HttpPost]
+        [Permission("Activity.Create")]
         public async Task<IActionResult> CreateActivity([FromForm] ActivityCreateRequestModel request)
         {
             // 💡 Title တူတာကို စစ်ဆေးတဲ့ if condition မပါတော့တဲ့အတွက် 
@@ -127,6 +133,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
 
         [HttpPost("update/{id}")] // Route ကိုသီးသန့်ခွဲထားပါ
+        [Permission("Activity.Edit")]
         public async Task<IActionResult> UpdateActivity(int id, [FromForm] ActivityUpdateRequestModel request)
         {
             var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
@@ -159,6 +166,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // DELETE /api/activities/{id}
         [HttpDelete("{id}")]
+        [Permission("Activity.Delete")]
         public IActionResult DeleteActivity(int id)
         {
             var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);

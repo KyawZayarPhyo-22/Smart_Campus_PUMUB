@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers
@@ -18,6 +20,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/positions (Read All - ဖျက်ထားတာမပါ)
         [HttpGet]
+        [Permission("Position.View")]
         public IActionResult GetPositions()
         {
             var lst = _db.Positions
@@ -29,6 +32,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/positions/{id} (Read One)
         [HttpGet("{id}")]
+        [Permission("Position.View")]
         public IActionResult GetPosition(int id)
         {
             var item = _db.Positions.FirstOrDefault(x => x.PositionId == id && x.IsDelete == false);
@@ -38,6 +42,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // POST /api/positions (Create)
         [HttpPost]
+        [Permission("Position.Create")]
         public IActionResult CreatePosition(PositionCreateRequestModel request)
         {
             // Validation: နာမည်တူရှိမရှိ စစ်ဆေးခြင်း
@@ -61,6 +66,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // PUT /api/positions/{id} (Update)
         [HttpPut("{id}")]
+        [Permission("Position.Edit")]
         public IActionResult UpdatePosition(int id, PositionUpdateRequestModel request)
         {
             var item = _db.Positions.FirstOrDefault(x => x.PositionId == id && x.IsDelete == false);
@@ -92,6 +98,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // DELETE /api/positions/{id} (Soft Delete)
         [HttpDelete("{id}")]
+        [Permission("Position.Delete")]
         public IActionResult DeletePosition(int id)
         {
             // Position ရှိမရှိ စစ်ဆေး
@@ -140,3 +147,4 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
     }
 }
+

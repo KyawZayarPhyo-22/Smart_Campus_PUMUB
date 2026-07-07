@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Smart_Campus_PUMUB.WebApi.Services;
 
@@ -6,6 +8,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
 [Route("api/mail")]
+[Authorize]
 public class MailController : ControllerBase
 {
     private readonly IEmailService _emailService;
@@ -20,6 +23,7 @@ public class MailController : ControllerBase
     /// Send a single email to one recipient.
     /// </summary>
     [HttpPost("send")]
+    [Permission("Mail.Send")]
     public async Task<IActionResult> Send([FromBody] SendMailRequestModel request)
     {
         if (!ModelState.IsValid)
@@ -46,6 +50,7 @@ public class MailController : ControllerBase
     /// Send the same email to multiple recipients.
     /// </summary>
     [HttpPost("send-bulk")]
+    [Permission("Mail.Send")]
     public async Task<IActionResult> SendBulk([FromBody] SendBulkMailRequestModel request)
     {
         if (!ModelState.IsValid)
@@ -75,6 +80,7 @@ public class MailController : ControllerBase
     /// Quick SMTP connection test — sends a test email to the given address.
     /// </summary>
     [HttpPost("test")]
+    [Permission("Mail.Send")]
     public async Task<IActionResult> Test([FromQuery][System.ComponentModel.DataAnnotations.EmailAddress] string toEmail)
     {
         if (string.IsNullOrWhiteSpace(toEmail))
@@ -95,3 +101,5 @@ public class MailController : ControllerBase
             : StatusCode(500, new ActionResponseModel { IsSuccess = false, Message = "Test email မပို့နိုင်ပါ။ SMTP setting စစ်ဆေးပေးပါ။" });
     }
 }
+
+

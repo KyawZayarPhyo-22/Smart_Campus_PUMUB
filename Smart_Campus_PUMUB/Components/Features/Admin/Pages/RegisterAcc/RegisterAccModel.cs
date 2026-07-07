@@ -17,6 +17,20 @@ public class RegisterAccListItem
     public DateTime? CreatedDateTime { get; set; }
     public DateTime? ReviewedDateTime { get; set; }
     public string? ReviewedBy { get; set; }
+    public int? NewStudentAccId { get; set; }
+    public string? AccountStatus { get; set; }
+}
+
+public class NewStudentAccUpdateStatusRequest
+{
+    public string AccountStatus { get; set; } = null!;
+    public string? ModifiedBy { get; set; }
+}
+
+public class NewStudentAccActionResponse
+{
+    public bool IsSuccess { get; set; }
+    public string? Message { get; set; }
 }
 
 public class RegisterAccActionRequest

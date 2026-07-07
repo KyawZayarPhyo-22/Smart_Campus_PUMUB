@@ -1,0 +1,910 @@
+@page "/student/personal-info"
+@layout MainLayout
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    .modern-form-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        padding: 40px 50px;
+        margin-bottom: 50px;
+        box-sizing: border-box;
+    }
+
+    .form-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 40px;
+    }
+
+        .form-header i {
+            color: #2563EB;
+            font-size: 1.5rem;
+        }
+
+        .form-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+    .stepper-wrapper {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 50px;
+        position: relative;
+    }
+
+        .stepper-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+    .stepper-progress {
+        position: absolute;
+        top: 18px;
+        left: 5%;
+        height: 2px;
+        background: #2563EB;
+        z-index: 2;
+        transition: width 0.3s ease;
+    }
+
+    .step-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        z-index: 3;
+        width: 120px;
+    }
+
+    .step-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #94a3b8;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .step-block.active .step-circle {
+        background: #2563EB;
+        border-color: #2563EB;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
+    }
+
+    .step-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .step-block.active .step-label {
+        color: #2563EB;
+    }
+
+    .photo-upload-wrapper {
+        grid-column: span 2;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 24px;
+    }
+
+    .photo-box {
+        width: 130px;
+        height: 160px;
+        border: 2px dashed #94a3b8;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8fafc;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+
+        .photo-box:hover {
+            border-color: #2563EB;
+            background-color: #f0f9ff;
+        }
+
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-box i {
+            font-size: 2rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+    .photo-text {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-align: center;
+        padding: 0 8px;
+        line-height: 1.4;
+    }
+
+    .input-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        animation: fadeIn 0.4s ease-in-out;
+    }
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+        .input-group.full-width {
+            grid-column: span 2;
+        }
+
+    .input-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #334155;
+    }
+
+    .modern-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        color: #0f172a;
+        font-family: inherit;
+        background: #ffffff;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .modern-input::placeholder {
+            color: #94a3b8;
+        }
+
+    select.modern-input {
+        cursor: pointer;
+    }
+
+    textarea.modern-input {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 20px;
+        margin-top: 5px;
+    }
+
+    .radio-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: #475569;
+        cursor: pointer;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        margin-top: 10px;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+        .modern-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modern-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+            .modern-table td .modern-input {
+                padding: 8px 12px;
+                border-radius: 6px;
+            }
+
+    .form-footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-next, .btn-submit {
+        background: #2563EB;
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 220px;
+        height: 48px;
+        gap: 8px;
+        transition: background 0.2s;
+    }
+
+        .btn-next:hover, .btn-submit:hover {
+            background: #0284c7;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+    .btn-prev {
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        padding: 12px 28px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        margin-right: auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 220px;
+        height: 48px;
+        transition: background 0.2s;
+    }
+
+        .btn-prev:hover {
+            background: #e2e8f0;
+        }
+
+    /* Modal CSS */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        max-width: 400px;
+        width: 90%;
+        animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-icon {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+    }
+
+        .modal-icon.error {
+            color: #ef4444;
+        }
+
+        .modal-icon.success {
+            color: #10b981;
+        }
+
+    .modal-content h3 {
+        margin: 0 0 10px 0;
+        color: #0f172a;
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .modal-content p {
+        color: #475569;
+        margin-bottom: 24px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .btn-modal {
+        background: #2563EB;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.2s;
+        width: 100%;
+    }
+
+        .btn-modal:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-modal.success {
+            background: #10b981;
+        }
+
+            .btn-modal.success:hover {
+                background: #059669;
+            }
+
+    .review-status-panel {
+        border: 1px solid #dbeafe;
+        border-radius: 14px;
+        background: #f8fafc;
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .review-status-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 700;
+        font-size: 0.88rem;
+    }
+
+        .status-badge.pending {
+            color: #92400e;
+            background: #fef3c7;
+        }
+
+        .status-badge.approved {
+            color: #065f46;
+            background: #d1fae5;
+        }
+
+        .status-badge.rejected {
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+    .review-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+        .review-actions button {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+    .btn-review-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-review-secondary {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    @@keyframes popIn {
+        0% {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .modern-form-card {
+            padding: 30px 20px;
+        }
+
+        .input-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .input-group.full-width {
+            grid-column: span 1;
+        }
+
+        .form-header h2 {
+            font-size: 1.2rem;
+        }
+
+        .btn-prev, .btn-next, .btn-submit {
+            width: 100%;
+            min-width: unset;
+            margin-bottom: 10px;
+        }
+
+        .form-footer {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="modern-form-card" style="margin-top: 80px;">
+
+    @if (IsGraduated)
+    {
+        <!-- Premium Graduation Banner -->
+        <div style="text-align:center; padding: 60px 40px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0d3b6e 100%); border-radius: 20px; color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 32px;">
+            <div style="font-size:4rem; margin-bottom: 16px;">🎓</div>
+            <h2 style="font-size:2rem; font-weight:800; margin-bottom:12px; background: linear-gradient(90deg, #fbbf24, #f59e0b, #fde68a); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Congratulations, Graduate!</h2>
+            <p style="font-size:1.15rem; color:#cbd5e1; max-width:520px; margin:0 auto 28px auto; line-height:1.8;">
+                You have successfully completed <strong style="color:#fbbf24;">all 9 Semesters</strong>. Your academic journey is complete.
+                No further registration is required.
+            </p>
+            <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#fbbf24;">9 / 9</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Semesters Completed</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
+                    <div style="font-size:1.8rem; font-weight:800; color:#34d399;">✓ Pass</div>
+                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Final Status</div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (ShowRegistrationStatusPanel)
+    {
+        <div class="review-status-panel">
+            <div class="review-status-top">
+                <div>
+                    <h3 style="margin: 0 0 8px 0; color: #0f172a; font-size: 1.25rem;">Registration Review</h3>
+                    <p style="margin: 0; color: #475569;">@GetReviewStatusMessage()</p>
+                </div>
+                <span class="status-badge @GetReviewStatusClass()">
+                    <i class="fas @(IsApproved ? "fa-check-circle" : IsRejected ? "fa-times-circle" : "fa-clock")"></i>
+                    @RegistrationReviewStatus
+                </span>
+            </div>
+
+            @if (SubmittedRegistrationId > 0)
+            {
+                <div style="color: #64748b; font-size: 0.9rem;">Registration ID: <strong>@SubmittedRegistrationId</strong></div>
+            }
+
+            <div class="review-actions">
+                @if (CanProceedToPayment)
+                {
+                    <button type="button" class="btn-review-primary" @onclick="ContinueToPayment">
+                        Continue to Payment <i class="fas fa-credit-card ms-1"></i>
+                    </button>
+                }
+                else if (IsRejected)
+                {
+                    <button type="button" class="btn-review-primary" @onclick="StartCorrectedRegistration">
+                        Submit Corrected Form <i class="fas fa-edit ms-1"></i>
+                    </button>
+                }
+
+                <button type="button" class="btn-review-secondary" disabled="@IsRefreshingStatus" @onclick="RefreshRegistrationStatus">
+                    @if (IsRefreshingStatus)
+                    {
+                        <span>Checking... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                    }
+                    else
+                    {
+                        <span>Refresh Status <i class="fas fa-sync-alt ms-1"></i></span>
+                    }
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+    <fieldset disabled="@IsFormDisabled" style="border: none; padding: 0; margin: 0; display: block; width: 100%;">
+    <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">၁။ ကိုယ်ရေးအချက်အလက်</h3>
+        <div class="input-grid">
+            <!-- 💡 User ID ကို ဖောင်တွင် မပြတော့ဘဲ နောက်ကွယ်မှ Auto ခေါ်ယူရန် ပြန်ဖျောက်ထားပါသည် 💡 -->
+            <input type="hidden" @bind="requestModel.UserId" />
+
+            <!-- User ID Status Display (Only for student view, hide in admin view) -->
+            @if (!IsAdminView)
+            {
+                <div class="input-group" style="grid-column: span 2;">
+                    @if ((requestModel.UserId.HasValue && requestModel.UserId > 0) || (requestModel.NewStudentAccId.HasValue && requestModel.NewStudentAccId > 0))
+                    {
+                        <div style="background: #f0f9ff; padding: 12px 16px; border-radius: 10px; border: 1px solid #0ea5e9; color: #0369a1; font-size: 0.85rem; display: flex; align-items: center;">
+                            <i class="fas fa-user-check me-2"></i>
+                            <div>
+                                <strong>User ID auto-filled successfully</strong><br>
+                                <small style="opacity: 0.8;">Logged in user ID automatically loaded</small>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="background: #fef2f2; padding: 12px 16px; border-radius: 10px; border: 1px solid #ef4444; color: #991b1b; font-size: 0.85rem; display: flex; align-items: center;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>
+                                <strong>User ID not found</strong><br>
+                                <small>Please <a href="/login" style="color: #dc2626; text-decoration: underline;">login</a> first to access registration form.</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="input-group">
+                <label class="input-label">အမည် (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="ကိုအောင်မင်း" @bind="requestModel.student_name_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required disabled="@(!((requestModel.UserId.HasValue && requestModel.UserId > 0) || (requestModel.NewStudentAccId.HasValue && requestModel.NewStudentAccId > 0)))">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အမည် (အင်္ဂလိပ်စာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="Ko Aung Min" @bind="requestModel.student_name_en" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')" disabled="@(!((requestModel.UserId.HasValue && requestModel.UserId > 0) || (requestModel.NewStudentAccId.HasValue && requestModel.NewStudentAccId > 0)))">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မှတ်ပုံတင် (NRC) <span style="color:red;">*</span></label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnNrcStateChanged" required>
+                        <option value="">တိုင်း</option>
+                        @for (int i = 1; i <= 14; i++)
+                        {
+                            <option value="@i" selected="@(requestModel.nrc_state == i.ToString())">@ToMyanmarDigits(i.ToString())</option>
+                        }
+                    </select>
+                    <span style="font-weight:bold; color:#334155;">/</span>
+                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="requestModel.nrc_township" required>
+                        <option value="">မြို့နယ်</option>
+                        @foreach (var town in CurrentTownshipList)
+                        {
+                            <option value="@town">@town</option>
+                        }
+                    </select>
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="NrcType">
+                        <option value="(နိုင်)">(နိုင်)</option>
+                        <option value="(ဧည့်)">(ဧည့်)</option>
+                        <option value="(ပြု)">(ပြု)</option>
+                        <option value="(စ)">(စ)</option>
+                        <option value="(သီ)">(သီ)</option>
+                        <option value="(သ)">(သ)</option>
+                    </select>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="requestModel.nrc_number" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မွေးသက္ကရာဇ် <span style="color:red;">*</span></label>
+                <input type="date" class="modern-input" @bind="DobDate" required>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ကျား / မ</label>
+                <select class="modern-input" @bind="requestModel.gender_relation">
+                    <option value="ကျား">ကျား</option>
+                    <option value="မ">မ</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label class="input-label">သွေးအုပ်စု</label>
+                <select class="modern-input" @bind="requestModel.blood_type">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="AB">AB</option>
+                    <option value="O">O</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">လူမျိုး နှင့် ကိုးကွယ်သည့်ဘာသာ</label>
+                <div style="display: flex; gap:10px;">
+                    <select class="modern-input" @bind="requestModel.ethnicity">
+                        <option value="">-- လူမျိုး ရွေးပါ --</option>
+                        <option value="ဗမာ">ဗမာ</option>
+                        <option value="ကချင်">ကချင်</option>
+                        <option value="ကယား">ကယား</option>
+                        <option value="ကရင်">ကရင်</option>
+                        <option value="ချင်း">ချင်း</option>
+                        <option value="မွန်">မွန်</option>
+                        <option value="ရခိုင်">ရခိုင်</option>
+                        <option value="ရှမ်း">ရှမ်း</option>
+                    </select>
+                    <select class="modern-input" @bind="requestModel.religion">
+                        <option value="">-- ဘာသာ ရွေးပါ --</option>
+                        <option value="ဗုဒ္ဓဘာသာ">ဗုဒ္ဓဘာသာ</option>
+                        <option value="ခရစ်ယာန်ဘာသာ">ခရစ်ယာန်ဘာသာ</option>
+                        <option value="အစ္စလာမ်ဘာသာ">အစ္စလာမ်ဘာသာ</option>
+                        <option value="ဟိန္ဒူဘာသာ">ဟိန္ဒူဘာသာ</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label class="input-label">နိုင်ငံသား အမျိုးအစား</label>
+                <div class="radio-group" style="padding: 10px 0;">
+                    <label class="radio-item"><input type="radio" name="nationality" checked="@(requestModel.nationality_status == "တိုင်းရင်းသား")" @onchange='() => requestModel.nationality_status = "တိုင်းရင်းသား"'> တိုင်းရင်းသား</label>
+                    <label class="radio-item"><input type="radio" name="nationality" checked="@(requestModel.nationality_status == "နိုင်ငံခြားသား")" @onchange='() => requestModel.nationality_status = "နိုင်ငံခြားသား"'> နိုင်ငံခြားသား</label>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">မွေးဖွားရာ ဇာတိမြို့နယ်</label>
+                <input type="text" class="modern-input" placeholder="မွေးဖွားရာဇာတိမြို့" @bind="requestModel.pob">
+            </div>
+            <div class="input-group">
+                <label class="input-label">မွေးဖွားရာ တိုင်းဒေသကြီး/ပြည်နယ်</label>
+                <input type="text" class="modern-input" placeholder="ဥပမာ - ရန်ကုန်တိုင်း" @bind="requestModel.birth_place_region">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ဖုန်းနံပါတ် (09XXXXXXXXX) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="09765432100" @bind="requestModel.app_student_phone" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+            </div>
+            <div class="input-group">
+                <label class="input-label">Email</label>
+                <input type="email" class="modern-input" placeholder="student@example.com" @bind="requestModel.email">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ကိုဗစ်ကာကွယ်ရေးထိုးနှံမှုပြီးစီးသည့်ရက်</label>
+                <input type="date" class="modern-input" @bind="CovidDate">
+            </div>
+        </div>
+        
+        <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px;">၂။ ပညာရေးအချက်အလက်</h3>
+        <div class="input-grid">
+            <div class="input-group full-width">
+                <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
+                <textarea class="modern-input" placeholder="နေရပ်လိပ်စာ အပြည့်အစုံ ရေးရန်..." @bind="requestModel.permanent_address_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F0-9\s.,/-]/g, '')" required></textarea>
+            </div>
+            <div class="input-group full-width">
+                <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (အင်္ဂလိပ်စာဖြင့်)</label>
+                <textarea class="modern-input" placeholder="Full permanent address..." @bind="requestModel.permanent_address_en" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\s.,/-]/g, '')"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">ပညာသင်နှစ် (Academic Year Range) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="ဥပမာ - 2023-2024" @bind="requestModel.academic_year_range" required>
+            </div>
+
+
+
+            <div class="input-group">
+                <label class="input-label">အထူးပြုဘာသာ</label>
+                <select class="modern-input" @bind="requestModel.major">
+                    <option value="">-- အထူးပြုဘာသာ ရွေးချယ်ပါ --</option>
+                    <optgroup label="Computer University (ကွန်ပျူတာတက္ကသိုလ်)">
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Computer Technology">Computer Technology</option>
+                        <option value="Information Technology">Information Technology</option>
+                    </optgroup>
+                    <optgroup label="GTC / Polytechnic (နည်းပညာတက္ကသိုလ်)">
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="Electronic Engineering">Electronic Engineering</option>
+                        <option value="Electrical Power Engineering">Electrical Power Engineering</option>
+                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                        <option value="Information Technology Engineering">Information Technology Engineering</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="input-group">
+                <label class="input-label">ခုံအမှတ်</label>
+                <input type="text" class="modern-input" placeholder="ခုံအမှတ် ရိုတ်ထည့်ပါ" @bind="requestModel.roll_no">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်မှတ်ပုံတင်အမှတ်</label>
+                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် ရိုက်ထည့်ပါ" @bind="requestModel.university_reg_no">
+            </div>
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်ဝင်ရောက်သည့်နှစ် (ခုနှစ်)</label>
+                <input type="number" class="modern-input" placeholder="e.g. 2024" @bind="requestModel.admission_year">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အောင်မြင်သည့် ခုနှစ်</label>
+                <input type="number" class="modern-input" placeholder="e.g. 2022" @bind="requestModel.matric_passed_year">
+            </div>
+            <div class="input-group">
+                <label class="input-label">တက္ကသိုလ်ဝင်တန်း ခုံအမှတ်</label>
+                <input type="text" class="modern-input" placeholder="e.g. အမ-၁၂၃၄" @bind="requestModel.matric_roll_no">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">စာစစ်ဌာန</label>
+                <input type="text" class="modern-input" placeholder="စာစစ်ဌာန အမည်" @bind="requestModel.exam_center">
+            </div>
+        </div>
+        
+        <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px;">၃။ မိသားစုအချက်အလက်</h3>
+        <div class="input-grid">
+
+            <div class="input-group">
+                <label class="input-label">အဘ အမည် (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
+                <input type="text" class="modern-input" placeholder="အဘ အမည်" @bind="requestModel.father_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အဘ မှတ်ပုံတင်အမှတ် (NRC)</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnFatherNrcStateChanged">
+                        <option value="">တိုင်း</option>
+                        @for (int i = 1; i <= 14; i++)
+                        {
+                            <option value="@i" selected="@(FatherNrcState == i.ToString())">@ToMyanmarDigits(i.ToString())</option>
+                        }
+                    </select>
+                    <span style="font-weight:bold; color:#334155;">/</span>
+                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="FatherNrcTownship">
+                        <option value="">မြို့နယ်</option>
+                        @foreach (var town in FatherTownshipList)
+                        {
+                            <option value="@town">@town</option>
+                        }
+                    </select>
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="FatherNrcType">
+                        <option value="(နိုင်)">(နိုင်)</option>
+                        <option value="(ဧည့်)">(ဧည့်)</option>
+                        <option value="(ပြု)">(ပြု)</option>
+                        <option value="(စ)">(စ)</option>
+                        <option value="(သီ)">(သီ)</option>
+                        <option value="(သ)">(သ)</option>
+                    </select>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="FatherNrcNumber" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">အဘ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="requestModel.father_occupation">
+            </div>
+            <div class="input-group"></div>
+
+            <div class="input-group">
+                <label class="input-label">အမိ အမည် (မြန်မာစာဖြင့်)</label>
+                <input type="text" class="modern-input" placeholder="အမိ အမည်" @bind="requestModel.mother_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')">
+            </div>
+            <div class="input-group">
+                <label class="input-label">အမိ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="requestModel.mother_occupation">
+            </div>
+
+        </div>
+    </fieldset>
+        
+        <div class="form-footer">
+            @if (!IsAdminView)
+            {
+                @if (IsFormDisabled)
+                {
+                    <button class="btn-submit" style="background: #2563eb;" type="button" @onclick="EnableEditing">
+                        <span>Edit Profile <i class="fas fa-edit ms-1"></i></span>
+                    </button>
+                }
+                else
+                {
+                    <button class="btn-submit" style="background: #10b981;" disabled="@IsSubmitting" type="button" @onclick="SavePersonalInfoForm">
+                        @if (IsSubmitting)
+                        {
+                            <span>Submitting... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                        }
+                        else
+                        {
+                            <span>Submit Form <i class="fas fa-save ms-1"></i></span>
+                        }
+                    </button>
+                }
+            }
+        </div>
+    }
+</div>
+
+@if (ShowModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            @if (IsSuccessModal)
+            {
+                <i class="fas fa-check-circle modal-icon success"></i>
+                <h3>အောင်မြင်ပါသည်</h3>
+            }
+            else
+            {
+                <i class="fas fa-exclamation-circle modal-icon error"></i>
+                <h3>အသိပေးချက်</h3>
+            }
+
+            <p>@ModalMessage</p>
+            <button class="btn-modal @(IsSuccessModal ? "success" : "")" @onclick="CloseModal">အိုကေ</button>
+        </div>
+    </div>
+}

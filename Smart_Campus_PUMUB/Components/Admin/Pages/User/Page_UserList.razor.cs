@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.User;
 
@@ -9,6 +11,7 @@ public partial class Page_UserList
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<UserModel> UserList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -16,6 +19,10 @@ public partial class Page_UserList
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
     private bool IsProcessing { get; set; } = false;
+
+    // Permissions Variables
+    private List<string> userPermissions = new();
+    private bool canManageUser = true;
 
     private string SearchInput = "";
     private string SelectedRoleInput = "All";
@@ -51,6 +58,11 @@ public partial class Page_UserList
     private bool ShowModal { get; set; } = false;
     private UserModel? SelectedUser { get; set; }
 
+    // Status Modal Controls
+    private bool ShowStatusModal { get; set; } = false;
+    private UserModel? SelectedUserForStatus { get; set; }
+    private string TargetStatusString => (SelectedUserForStatus?.Status == "Active") ? "Inactive" : "Active";
+
     // Pagination Variables
     private int CurrentPage { get; set; } = 1;
     private int PageSize { get; set; } = 10;
@@ -83,6 +95,26 @@ public partial class Page_UserList
     {
         await LoadRoles();
         await LoadUsers();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userPermissions = user.Claims
+                                  .Where(c => c.Type == "Permission")
+                                  .Select(c => c.Value)
+                                  .ToList();
+                                  
+            canManageUser = userPermissions.Contains("User.Edit") || userPermissions.Contains("User.Delete");
+
+            StateHasChanged();
+        }
     }
 
     // 🚀 GET Method ဖြင့် API မှ User စာရင်းအားလုံး ဆွဲယူခြင်း
@@ -158,5 +190,53 @@ public partial class Page_UserList
         {
             IsProcessing = false;
         }
+    }
+
+    private void ToggleUserStatus(UserModel user)
+    {
+        SelectedUserForStatus = user;
+        ShowStatusModal = true;
+    }
+
+    private void CloseStatusModal()
+    {
+        SelectedUserForStatus = null;
+        ShowStatusModal = false;
+    }
+
+    private async Task ConfirmToggleUserStatus()
+    {
+        if (SelectedUserForStatus == null) return;
+        IsProcessing = true;
+
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<ToggleStatusResponse>(
+                $"user/toggle-status/{SelectedUserForStatus.UserId}",
+                EnumHttpMethod.Patch
+            );
+
+            if (response != null && response.IsSuccess)
+            {
+                SelectedUserForStatus.Status = response.Status;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling user status: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+            CloseStatusModal();
+        }
+    }
+
+    public class ToggleStatusResponse
+    {
+        public bool IsSuccess { get; set; }
+        public string? Message { get; set; }
+        public string? Status { get; set; }
     }
 }

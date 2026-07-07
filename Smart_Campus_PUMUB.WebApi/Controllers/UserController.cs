@@ -61,7 +61,8 @@ public class UserController : ControllerBase
             Password = hashedPass,
             IsDelete = false,
             MustChangePassword = false,
-            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+            Status = "Active"
         };
 
         _db.Users.Add(newUser);
@@ -184,7 +185,8 @@ public class UserController : ControllerBase
                 RoleName = x.role.RoleName,
                 RoleNo = x.user.RoleNo,
                 Password = "********",
-                CreatedDateTime = x.user.CreatedDateTime
+                CreatedDateTime = x.user.CreatedDateTime,
+                Status = x.user.Status
             })
             .ToList();
 
@@ -236,7 +238,8 @@ public class UserController : ControllerBase
             UserName = item.UserName,
             RoleNo = item.RoleNo,
             Password = "********",
-            CreatedDateTime = item.CreatedDateTime
+            CreatedDateTime = item.CreatedDateTime,
+            Status = item.Status
         };
 
         return Ok(userModel);
@@ -288,7 +291,8 @@ public class UserController : ControllerBase
             Password = hashedPass,
             IsDelete = false,
             MustChangePassword = true,
-            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+            Status = string.IsNullOrEmpty(request.Status) ? "Active" : request.Status
         };
 
         _db.Users.Add(newUser);
@@ -354,6 +358,10 @@ public class UserController : ControllerBase
         item.UserName = formattedUserName;
         item.RoleNo = request.RoleNo;
         item.Password = BCrypt.Net.BCrypt.HashPassword(request.Password); //🔒 Update တွင်လည်း Hash ပြုလုပ်သိမ်းဆည်းခြင်း
+        if (!string.IsNullOrEmpty(request.Status))
+        {
+            item.Status = request.Status;
+        }
 
         int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
@@ -376,7 +384,8 @@ public class UserController : ControllerBase
                 UserName = item.UserName,
                 RoleNo = item.RoleNo,
                 Password = "********",
-                CreatedDateTime = item.CreatedDateTime
+                CreatedDateTime = item.CreatedDateTime,
+                Status = item.Status
             }
         });
     }
@@ -508,6 +517,31 @@ public class UserController : ControllerBase
             Message = result > 0 ? "အကောင့်ကို ပိတ်သိမ်း (Delete) ခြင်း အောင်မြင်ပါသည်။" : "အကောင့်ပိတ်ခြင်း မအောင်မြင်ပါ။"
         });
     }
+
+    [HttpPatch("toggle-status/{id}")]
+    [Smart_Campus_PUMUB.WebApi.Filters.Permission("User.Edit")]
+    public IActionResult ToggleStatus(int id)
+    {
+        var item = _db.Users.FirstOrDefault(x => x.UserId == id && x.IsDelete == false);
+        if (item is null)
+        {
+            return NotFound(new { isSuccess = false, message = "အသုံးပြုသူကို ရှာမတွေ့ပါ။" });
+        }
+
+        string newStatus = (item.Status == "Inactive") ? "Active" : "Inactive";
+        item.Status = newStatus;
+        int result = _db.SaveChanges();
+
+        _db.Activities.Add(new Activity
+        {
+            ActivityTitle = "User Status Toggled",
+            Description = $"User '{item.UserName}' status was changed to '{newStatus}'.",
+            CreatedDateTime = DateTime.UtcNow
+        });
+        _db.SaveChanges();
+
+        return Ok(new { isSuccess = result > 0, message = $"အသုံးပြုသူအဆင့်အတန်းအား {newStatus} သို့ ပြောင်းလဲပြီးပါပြီ။", status = newStatus });
+    }
     //[HttpGet("count/by-role")]
     //public IActionResult GetCountByRole()
     //{
@@ -580,7 +614,8 @@ public class UserController : ControllerBase
                 RoleName = x.role.RoleName,
                 RoleNo = x.user.RoleNo,
                 Password = "********",
-                CreatedDateTime = x.user.CreatedDateTime
+                CreatedDateTime = x.user.CreatedDateTime,
+                Status = x.user.Status
             })
             .ToList();
 

@@ -2,10 +2,13 @@
 @layout AdminLayout
 @namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
 @using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @rendermode InteractiveServer
 
-<div class="page-header">
-    <div class="d-flex align-items-center gap-2">
+<AuthorizeView Policy="Student.Create" Context="authContext">
+    <Authorized>
+        <div class="page-header">
+            <div class="d-flex align-items-center gap-2">
         <NavLink href="/admin/student" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></NavLink>
         <h3>Add New Student</h3>
     </div>
@@ -55,3 +58,15 @@
         </EditForm>
     </div>
 </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center mt-5 p-5 tech-card">
+            <i class="bi bi-shield-slash text-danger fs-1"></i>
+            <h2 class="text-danger fw-bold mt-3">Access Denied</h2>
+            <p class="text-muted">သင့်တွင် ဤစာမျက်နှာကို ဝင်ရောက်ကြည့်ရှုရန် ခွင့်ပြုချက် (Student.Create Policy) မရှိပါ။</p>
+            <NavLink href="/admin/student" class="btn btn-primary mt-2">
+                <i class="bi bi-arrow-left"></i> Back to Directory
+            </NavLink>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

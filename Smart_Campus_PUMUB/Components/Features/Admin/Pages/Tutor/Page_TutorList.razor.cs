@@ -170,7 +170,7 @@ public partial class Page_TutorList
 
     // Permissions Variables
     private List<string> userPermissions = new();
-    private bool canManageTutor = false;
+    private bool canManageTutor = true;
 
     // Pagination Variables
     private int CurrentPage { get; set; } = 1;
@@ -201,7 +201,7 @@ public partial class Page_TutorList
                                   .ToList();
                                   
             // 💡 Permission ကို စစ်ဆေးပြီး Action Buttons များကို ထိန်းချုပ်ရန်
-            canManageTutor = userPermissions.Contains("Edit_Tutor") || userPermissions.Contains("Delete_Tutor");
+            canManageTutor = userPermissions.Contains("Tutor.Edit") || userPermissions.Contains("Tutor.Delete");
 
             // Trigger re-render so the table header and action buttons update
             StateHasChanged();

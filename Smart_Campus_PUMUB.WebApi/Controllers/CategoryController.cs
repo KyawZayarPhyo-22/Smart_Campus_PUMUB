@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers
@@ -19,6 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/categories
         [HttpGet]
+        [Permission("Category.View")]
         public IActionResult GetCategories()
         {
             var data = _db.Categories
@@ -44,6 +47,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/categories/{id}
         [HttpGet("{id}")]
+        [Permission("Category.View")]
         public IActionResult GetCategory(int id)
         {
             var item = _db.Categories.Include(c => c.Books).FirstOrDefault(x => x.CategoryId == id && x.IsDelete == false);
@@ -53,6 +57,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // POST /api/categories
         [HttpPost]
+        [Permission("Category.Create")]
         public IActionResult CreateCategory(CategoryCreateRequestModel request)
         {
             // Validation: Category Name တူနေခြင်း ရှိ/မရှိ စစ်ဆေးခြင်း
@@ -76,6 +81,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // PUT /api/categories/{id}
         [HttpPut("{id}")]
+        [Permission("Category.Edit")]
         public IActionResult UpdateCategory(int id, CategoryUpdateRequestModel request)
         {
             var item = _db.Categories.FirstOrDefault(x => x.CategoryId == id && x.IsDelete == false);
@@ -126,6 +132,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // DELETE /api/categories/{id}
         [HttpDelete("{id}")]
+        [Permission("Category.Delete")]
         public IActionResult DeleteCategory(int id)
         {
             var item = _db.Categories
@@ -175,3 +182,5 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
     }
 }
+
+

@@ -243,13 +243,14 @@
                             <td class="text-center">
                                 <select class="status-select @(s.Status == "Active" ? "active" : "inactive")" 
                                         value="@s.Status"
+                                        disabled="@(!canManageStudent)"
                                         @onchange="@(async (e) => await UpdateStatus(s, e.Value?.ToString()))">
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem1_Result)" value="@(s.Sem1_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 1, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem1_Result)" value="@(s.Sem1_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 1, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -257,7 +258,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem2_Result)" value="@(s.Sem2_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 2, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem2_Result)" value="@(s.Sem2_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 2, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -265,7 +266,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem3_Result)" value="@(s.Sem3_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 3, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem3_Result)" value="@(s.Sem3_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 3, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -273,7 +274,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem4_Result)" value="@(s.Sem4_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 4, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem4_Result)" value="@(s.Sem4_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 4, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -281,7 +282,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem5_Result)" value="@(s.Sem5_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 5, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem5_Result)" value="@(s.Sem5_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 5, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -289,7 +290,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem6_Result)" value="@(s.Sem6_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 6, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem6_Result)" value="@(s.Sem6_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 6, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -297,7 +298,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem7_Result)" value="@(s.Sem7_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 7, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem7_Result)" value="@(s.Sem7_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 7, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -305,7 +306,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem8_Result)" value="@(s.Sem8_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 8, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem8_Result)" value="@(s.Sem8_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 8, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>
@@ -313,7 +314,7 @@
                                 </select>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem9_Result)" value="@(s.Sem9_Result ?? "None")" @onchange="@(async (e) => await UpdateResult(s, 9, e.Value?.ToString()))">
+                                <select class="result-dropdown @GetDropdownClass(s.Sem9_Result)" value="@(s.Sem9_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 9, e.Value?.ToString()))">
                                     <option value="None">မရှိ</option>
                                     <option value="Pass">အောင်</option>
                                     <option value="Fail">ကျ</option>

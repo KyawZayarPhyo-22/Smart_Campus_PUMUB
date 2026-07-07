@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext; // ကိုကို့ DbContext နာမည်အတိုင်း ပြောင်းထားပါတယ်
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
@@ -17,6 +19,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("Department.View")]
     public IActionResult GetDepartments()
     {
         var lst = _db.Departments
@@ -35,6 +38,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Permission("Department.View")]
     public IActionResult GetDepartment(int id)
     {
         // Role: ID Validation
@@ -49,6 +53,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Department.Create")]
     public IActionResult CreateDepartment([FromBody] DepartmentCreateRequestModel request) // Role: [FromBody] သေချာစေရန်
     {
         // Role: Model State Validation
@@ -93,6 +98,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Permission("Department.Edit")]
     public IActionResult UpdateDepartment(int id, [FromBody] DepartmentUpdateRequestModel request) // Role: [FromBody] သေချာစေရန်
     {
         // Role: ID Validation
@@ -145,6 +151,7 @@ public class DepartmentController : ControllerBase
         });
     }
     [HttpDelete("{id}")]
+    [Permission("Department.Delete")]
     public IActionResult DeleteDepartment(int id)
     {
         // 1. ID validation
@@ -198,3 +205,4 @@ public class DepartmentController : ControllerBase
         });
     }
 }
+

@@ -71,35 +71,52 @@
 
 using Newtonsoft.Json;
 using System.Text;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Smart_Campus_PUMUB.Components.Features.Services;
+using Microsoft.JSInterop;
 
 namespace Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 
 public class HttpClientService
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ProtectedSessionStorage _sessionStorage;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IJSRuntime _jsRuntime;
 
-    public HttpClientService(IHttpClientFactory httpClientFactory, ProtectedSessionStorage sessionStorage)
+    public HttpClientService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, IJSRuntime jsRuntime)
     {
         _httpClientFactory = httpClientFactory;
-        _sessionStorage = sessionStorage;
+        _httpContextAccessor = httpContextAccessor;
+        _jsRuntime = jsRuntime;
     }
 
     private async Task AttachTokenAsync(HttpClient client)
     {
         try
         {
-            var userSessionResult = await _sessionStorage.GetAsync<UserSession>("UserSession");
-            if (userSessionResult.Success && userSessionResult.Value != null && !string.IsNullOrEmpty(userSessionResult.Value.Token))
+            string? token = null;
+
+            if (_httpContextAccessor.HttpContext != null)
             {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userSessionResult.Value.Token);
+                token = _httpContextAccessor.HttpContext.Request.Cookies["authToken"];
+            }
+
+            if (string.IsNullOrEmpty(token) && _jsRuntime != null)
+            {
+                try
+                {
+                    token = await _jsRuntime.InvokeAsync<string>("cookieHelper.get", "authToken");
+                }
+                catch { }
+            }
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             }
         }
         catch
         {
-            // JS Interop not ready during pre-rendering or SSR
+            // Ignore errors
         }
     }
 
@@ -129,6 +146,14 @@ public class HttpClientService
 
         // 🔥 IMPORTANT: always read response body (even 400/500)
         var resJson = await responseMessage.Content.ReadAsStringAsync();
+
+        try
+        {
+            var debugPath = @"C:\Users\Kyaw Zayar Phyo\.gemini\antigravity-ide\brain\7f69e5da-652a-4981-8bc9-d2a12a264682\scratch\api_debug.txt";
+            var logMsg = $"[{DateTime.Now}] URL: {url}, Method: {method}, Status: {responseMessage.StatusCode}\nResponse: {resJson}\n-----------------------------------\n";
+            System.IO.File.AppendAllText(debugPath, logMsg);
+        }
+        catch {}
 
         if (string.IsNullOrWhiteSpace(resJson))
             return default;

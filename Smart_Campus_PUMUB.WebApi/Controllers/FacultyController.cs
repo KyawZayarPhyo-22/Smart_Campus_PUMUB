@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers
@@ -19,6 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/faculties
         [HttpGet]
+        [Permission("Faculty.View")]
         public IActionResult GetFaculties()
         {
             var lst = _db.Faculties
@@ -34,6 +37,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/faculties/{id}
         [HttpGet("{id}")]
+        [Permission("Faculty.View")]
         public IActionResult GetFaculty(int id)
         {
             var item = _db.Faculties.Include(x => x.Departments)
@@ -45,6 +49,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // POST /api/faculties
         [HttpPost]
+        [Permission("Faculty.Create")]
         public IActionResult CreateFaculty(FacultyCreateRequestModel request)
         {
             // Validation: Faculty Name တူနေခြင်း ရှိ/မရှိ စစ်ဆေးခြင်း
@@ -68,6 +73,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // PUT /api/faculties/{id}
         [HttpPut("{id}")]
+        [Permission("Faculty.Edit")]
         public IActionResult UpdateFaculty(int id, FacultyUpdateRequestModel request)
         {
             var item = _db.Faculties.FirstOrDefault(x => x.FacultyId == id && x.IsDelete == false);
@@ -99,6 +105,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // DELETE /api/faculties/{id}
         [HttpDelete("{id}")]
+        [Permission("Faculty.Delete")]
         public IActionResult DeleteFaculty(int id)
         {
             var item = _db.Faculties
@@ -149,3 +156,5 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
     }
 }
+
+

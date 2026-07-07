@@ -5,12 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
 {
     public partial class Page_StudentDirectory : ComponentBase
     {
         [Inject] public HttpClientService HttpClientService { get; set; } = null!;
+        [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
         private List<StudentModel> StudentList { get; set; } = new();
 
@@ -25,6 +27,10 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
 
         private bool IsLoading { get; set; } = true;
 
+        // Permissions Variables
+        private List<string> userPermissions = new();
+        private bool canManageStudent = true;
+
         // Toast properties
         private bool ShowToast { get; set; } = false;
         private string ToastMessage { get; set; } = "";
@@ -37,6 +43,26 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
         protected override async Task OnInitializedAsync()
         {
             await LoadStudents();
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender) return;
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                userPermissions = user.Claims
+                                      .Where(c => c.Type == "Permission")
+                                      .Select(c => c.Value)
+                                      .ToList();
+                                      
+                canManageStudent = userPermissions.Contains("Student.Edit") || userPermissions.Contains("Student.Delete");
+
+                StateHasChanged();
+            }
         }
 
         private async Task LoadStudents()

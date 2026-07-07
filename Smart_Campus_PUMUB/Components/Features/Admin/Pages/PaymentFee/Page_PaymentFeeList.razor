@@ -97,11 +97,13 @@
             </div>
 
             <!-- Add Button -->
-            <div class="col-auto">
-                <NavLink href="/admin/payment-fee/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Payment Fee">
-                    <i class="bi bi-plus-lg"></i>
-                </NavLink>
-            </div>
+            <AuthorizeView Policy="PaymentFee.Create">
+                <div class="col-auto">
+                    <NavLink href="/admin/payment-fee/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Payment Fee">
+                        <i class="bi bi-plus-lg"></i>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
         </div>
     </div>
 
@@ -124,7 +126,10 @@
                             <th>Fee Name</th>
                             <th>Amount</th>
                             <th>Status</th>
-                            <th class="text-center">Actions</th>
+                            @if (canManagePaymentFee)
+                            {
+                                <th class="text-center">Actions</th>
+                            }
                         </tr>
                     </thead>
                     <tbody>
@@ -149,12 +154,19 @@
                                             @fee.Status
                                         </span>
                                     </td>
-                                    <td>
-                                        <div class="d-flex justify-content-center align-items-center gap-2">
-                                            <NavLink href="@($"/admin/payment-fee/edit/{fee.FeesId}")" class="btn btn-action-edit"><i class="bi bi-pencil me-1.5"></i> Edit</NavLink>
-                                            <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(fee)"><i class="bi bi-trash me-1.5"></i> Delete</button>
-                                        </div>
-                                    </td>
+                                    @if (canManagePaymentFee)
+                                    {
+                                        <td>
+                                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                                <AuthorizeView Policy="PaymentFee.Edit">
+                                                    <NavLink href="@($"/admin/payment-fee/edit/{fee.FeesId}")" class="btn btn-action-edit"><i class="bi bi-pencil me-1.5"></i> Edit</NavLink>
+                                                </AuthorizeView>
+                                                <AuthorizeView Policy="PaymentFee.Delete">
+                                                    <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(fee)"><i class="bi bi-trash me-1.5"></i> Delete</button>
+                                                </AuthorizeView>
+                                            </div>
+                                        </td>
+                                    }
                                 </tr>
                                 count++;
                             }

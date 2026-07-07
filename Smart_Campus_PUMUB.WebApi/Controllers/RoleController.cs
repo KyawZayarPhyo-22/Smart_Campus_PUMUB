@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers
@@ -17,7 +19,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
         // GET /api/roles
+
         [HttpGet]
+        [Permission("Role.View")]
         public IActionResult GetRoles()
         {
             var lst = _db.Roles
@@ -43,7 +47,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
         // GET /api/roles/{id}
+
         [HttpGet("{id}")]
+        [Permission("Role.View")]
         public IActionResult GetRole(int id)
         {
             var item = _db.Roles.FirstOrDefault(x => x.RoleId == id);
@@ -55,7 +61,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
         // POST /api/roles
+
         [HttpPost]
+        [Permission("Role.Create")]
         public IActionResult CreateRole(RoleCreateRequestModel request)
         {
             // Validation: Check if RoleName already exists
@@ -90,7 +98,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
         // PUT /api/roles/{id}
+
         [HttpPut("{id}")]
+        [Permission("Role.Edit")]
         public IActionResult UpdateRole(RoleUpdateRequestModel request, int id)
         {
             var item = _db.Roles.FirstOrDefault(x => x.RoleId == id);
@@ -135,7 +145,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 }
             });
         }
+
         [HttpDelete("{id}")]
+        [Permission("Role.Delete")]
         public IActionResult DeleteRole(int id)
         {
             // Role ရှိမရှိ စစ်ဆေး
@@ -184,3 +196,5 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
     }
 }
+
+

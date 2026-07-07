@@ -77,6 +77,7 @@ using Smart_Campus_PUMUB.Components.Admin.Services;
 using Smart_Campus_PUMUB.Components.Features.Services;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using System.Globalization;
+using Microsoft.AspNetCore.Authorization;
 
 var cultureInfo = new CultureInfo("en-GB"); // en-GB က dd-MM-yyyy ကို သုံးပါတယ်
 CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
@@ -116,64 +117,27 @@ builder.Services.AddScoped<HttpClientService>();
 
 builder.Services.AddDbContext<SmartCampusDbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// builder.Services.AddAuthenticationCore();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "authToken";
+        options.LoginPath = "/login";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    });
+
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<PermissionService>();
 builder.Services.AddAuthenticationCore();
-// Register the Circuit Handler — fires when SignalR circuit opens, pushes real auth state
-// to all AuthorizeView components so permissions show without needing a page reload
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, AuthCircuitHandler>();
 builder.Services.AddSingleton<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService>();
 
+// Register Dynamic Policy Provider
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicPolicyProvider>();
+builder.Services.AddAuthorizationCore();
 
-// Program.cs ထဲတွင် ဤအတိုင်း အစားထိုးပါ
-// builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme)
-//     .AddCookie(options =>
-//     {
-//         // 💡 Login မဝင်ရသေးရင် သွားရမည့် စာမျက်နှာ
-//         options.LoginPath = "/login";
-
-//         // 💡 Login တော့ဝင်ထားတယ်၊ ဒါပေမယ့် Permission မရှိရင် သွားရမည့် စာမျက်နှာ (Access Denied)
-//         options.AccessDeniedPath = "/";
-//     });
-
-using (var serviceProvider = builder.Services.BuildServiceProvider())
-{
-    using (var scope = serviceProvider.CreateScope())
-    {
-        var dbContext = scope.ServiceProvider.GetRequiredService<SmartCampusDbContext>();
-
-        try
-        {
-            // ၁။ Database ထဲမှ Permission နာမည်များအားလုံးကို ဆွဲထုတ်ခြင်း
-            var permissions = dbContext.Permissions
-                                       .Select(p => p.PermissionName)
-                                       .Distinct()
-                                       .ToList();
-
-            // ၂။ Authorization ကို Register လုပ်ပြီး Policy များကို Loop ပတ်၍ ထည့်ခြင်း
-            builder.Services.AddAuthorizationCore(options =>
-            {
-                foreach (var permission in permissions)
-                {
-                    // ဥပမာ - "Create_Student" ဆိုတဲ့ Policy အတွက် "Permission" Claim ထဲမှာ "Create_Student" ပါရမည် ဟု သတ်မှတ်ခြင်း
-                    options.AddPolicy(permission, policy =>
-                        policy.RequireClaim("Permission", permission));
-                }
-                // (Option) Default Policy တစ်ခုခုထားချင်ရင် ဒီမှာ ထပ်ထည့်နိုင်ပါတယ်
-            });
-        }
-        catch (Exception ex)
-        {
-            // ⚠️ အရေးကြီးသည် - Database မရှိသေးချိန် (သို့) Migration အသစ်လုပ်ချိန်တွင် Error မတက်စေရန်
-            Console.WriteLine($"Policy Register လုပ်ရာတွင် အမှားဖြစ်နေပါသည်: {ex.Message}");
-
-            // Database Error ဖြစ်နေရင်တောင် App ဆက်ပွင့်အောင် အလွတ်တစ်ခု Register လုပ်ပေးထားရမည်
-            builder.Services.AddAuthorizationCore();
-        }
-    }
-}
 
 //builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.RegistrationState>();
 builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationState>();

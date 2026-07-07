@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class RegistrationPaymentController : ControllerBase
 {
     private const string ApprovedStatus = "Approved";
@@ -263,3 +265,5 @@ public class RegistrationPaymentController : ControllerBase
         });
     }
 }
+
+
