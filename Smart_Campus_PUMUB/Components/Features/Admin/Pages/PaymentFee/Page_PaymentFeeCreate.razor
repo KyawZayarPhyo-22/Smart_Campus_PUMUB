@@ -19,6 +19,7 @@
                     <label class="form-label text-light">Semester / Class Year <span class="text-danger">*</span></label>
                     <select class="form-select" @bind="feeModel.ClassYear" required>
                         <option value="">-- Choose Class Year / Semester --</option>
+                        <option value="All Semesters">🌐 All Semesters (Semester အားလုံးအတွက်)</option>
                         @foreach (var sem in SemesterList)
                         {
                             <option value="@sem.SemesterName">@sem.SemesterName</option>

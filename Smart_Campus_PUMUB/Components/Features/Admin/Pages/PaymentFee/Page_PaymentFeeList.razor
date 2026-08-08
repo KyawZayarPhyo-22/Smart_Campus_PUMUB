@@ -146,9 +146,20 @@
                             {
                                 <tr class="table-row-hover">
                                     <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                                    <td class="fw-semibold">@fee.ClassYear</td>
+                                    <td class="fw-semibold">
+                                        @if (fee.ClassYear == "All Semesters" || fee.ClassYear == "All")
+                                        {
+                                            <span class="badge bg-info bg-opacity-25 text-info border border-info px-2 py-1">
+                                                🌐 All Semesters
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            @fee.ClassYear
+                                        }
+                                    </td>
                                     <td>@(string.IsNullOrEmpty(fee.FeeName) ? "ကျောင်းလခ" : fee.FeeName)</td>
-                                    <td class="fw-bold text-primary">@fee.MontlyAmount.ToString("N0") Ks</td>
+                                    <td class="fw-bold text-primary">@fee.MontlyAmount.ToString("N0") MMK</td>
                                     <td>
                                         <span class="badge @(fee.Status == "Active" ? "bg-success" : "bg-secondary")">
                                             @fee.Status

@@ -36,6 +36,17 @@
                 </div>
 
                 <div class="col-md-6">
+                    <label class="form-label text-light">Faculty <span class="text-muted small">(Optional)</span></label>
+                    <InputSelect @bind-Value="subject.FacultyId" class="form-select bg-dark text-white border-secondary">
+                        <option value="">-- Faculty မရွေးချယ် --</option>
+                        @foreach (var fac in FacultyList)
+                        {
+                            <option value="@fac.FacultyId">@fac.FacultyName</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="col-md-6">
                     <label class="form-label text-light">Subject Name</label>
                     <InputText @bind-Value="subject.SubjectName" class="form-control bg-dark text-white border-secondary" />
                 </div>

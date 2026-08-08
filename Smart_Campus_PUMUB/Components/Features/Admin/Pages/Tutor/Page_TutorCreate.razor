@@ -53,19 +53,35 @@
                         </InputSelect>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Assign User</label>
-                        <InputSelect class="form-select" @bind-Value="createModel.UserId">
-                            <option value="0">Select User</option>
-                            @if (UserList != null)
+                        <label class="form-label">Faculty</label>
+                        <InputSelect class="form-select" @bind-Value="createModel.FacultyId">
+                            <option value="0">Select Faculty</option>
+                            @if (FacultyList != null)
                             {
-                                @foreach (var user in UserList.DistinctBy(u => u.RoleName))
+                                @foreach (var fac in FacultyList)
                                 {
-                                    <option value="@user.UserId">
-                                        @user.RoleName
-                                    </option>
+                                    <option value="@fac.FacultyId">@fac.FacultyName</option>
                                 }
                             }
                         </InputSelect>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Assign User</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary">
+                                <i class="bi bi-person-badge text-primary"></i>
+                            </span>
+                            <input type="text"
+                                   class="form-control"
+                                   style="background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: not-allowed;"
+                                   value="@(assignedUserDisplay)"
+                                   readonly
+                                   disabled
+                                   placeholder="Role No ရိုက်ထည့်ပါ — User အလိုအလျောက် သတ်မှတ်သွားမည်" />
+                        </div>
+                        <div class="form-text text-muted" style="font-size: 0.78rem;">
+                            <i class="bi bi-info-circle me-1"></i>Role No ရှာဖွေပြီးနောက် User အလိုအလျောက် သတ်မှတ်မည်ဖြစ်သည်
+                        </div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Department</label>

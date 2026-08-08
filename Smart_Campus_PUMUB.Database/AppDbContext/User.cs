@@ -29,6 +29,10 @@ public partial class User
     [StringLength(50)]
     public string? RoleNo { get; set; }
 
+    [Column("Email")]
+    [StringLength(150)]
+    public string? Email { get; set; }
+
     [StringLength(255)]
     [Unicode(false)]
     public string Password { get; set; } = null!;
@@ -58,9 +62,16 @@ public partial class User
     [InverseProperty("VerifyByNavigation")]
     public virtual ICollection<RegistrationPayment> RegistrationPayments { get; set; } = new List<RegistrationPayment>();
 
+    [Column("Faculty_Id")]
+    public int? FacultyId { get; set; }
+
     [ForeignKey("RoleId")]
     [InverseProperty("Users")]
     public virtual Role Role { get; set; } = null!;
+
+    [ForeignKey("FacultyId")]
+    [InverseProperty("Users")]
+    public virtual Faculty? Faculty { get; set; }
 
     [InverseProperty("User")]
     public virtual ICollection<StudentRegistration> StudentRegistrations { get; set; } = new List<StudentRegistration>();

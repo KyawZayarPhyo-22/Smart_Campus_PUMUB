@@ -157,11 +157,15 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         {
             SemesterList = new List<SemesterModel>
             {
-                new SemesterModel { SemesterName = "First Year" },
-                new SemesterModel { SemesterName = "Second Year" },
-                new SemesterModel { SemesterName = "Third Year" },
-                new SemesterModel { SemesterName = "Fourth Year" },
-                new SemesterModel { SemesterName = "Fifth Year" }
+                new SemesterModel { SemesterName = "Semester I" },
+                new SemesterModel { SemesterName = "Semester II" },
+                new SemesterModel { SemesterName = "Semester III" },
+                new SemesterModel { SemesterName = "Semester IV" },
+                new SemesterModel { SemesterName = "Semester V" },
+                new SemesterModel { SemesterName = "Semester VI" },
+                new SemesterModel { SemesterName = "Semester VII" },
+                new SemesterModel { SemesterName = "Semester VIII" },
+                new SemesterModel { SemesterName = "Semester IX" }
             };
         }
 

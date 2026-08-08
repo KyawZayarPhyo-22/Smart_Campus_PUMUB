@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
@@ -55,9 +56,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = "New Position added",
+                ActivityTitle = "Position Added",
                 Description = $"{request.PositionName} was added to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -82,9 +83,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = " Position updated",
+                ActivityTitle = "Position Updated",
                 Description = $"{request.PositionName} was updated to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -113,10 +114,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 });
             }
 
-            // ဒီ Position ကို အသုံးပြုနေတဲ့ သူ (Employee/User) ရှိမရှိ စစ်ဆေး
-            // Database Table အမည်ကို လိုအပ်သလို ပြင်သုံးပေးပါ (ဥပမာ - _db.Employees သို့မဟုတ် _db.Users)
-            // x.Tutors ထဲမှာ ကိုကိုစစ်ချင်တဲ့ id ပါသလားဆိုတာကို .Any() နဲ့ ထပ်စစ်ပေးတာပါ
-            bool hasUsers = _db.Tutors.Any(x => x.TutorId == id);
+            bool hasUsers = _db.Tutors.Any(x => x.PositionId == id && x.IsDelete == false);
 
             if (hasUsers)
             {
@@ -133,9 +131,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = " Position deleted",
-                Description = $"{item.PositionName} was deleted to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                ActivityTitle = "Position Deleted",
+                Description = $"{item.PositionName} was deleted from the System.",
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -144,6 +142,49 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 IsSuccess = result > 0,
                 Message = result > 0 ? "ရာထူးဖျက်ခြင်း အောင်မြင်ပါသည်။" : "ရာထူးဖျက်ခြင်း မအောင်မြင်ပါ။"
             });
+        }
+
+        [HttpGet("paginate")]
+        [AllowAnonymous]
+        public IActionResult GetPositionsPaginated(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? searchTerm = null)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _db.Positions
+                .AsNoTracking()
+                .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(x => x.PositionName != null && x.PositionName.Contains(searchTerm));
+            }
+
+            var totalCount = query.Count();
+
+            var items = query
+                .OrderBy(x => x.PositionId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new PositionModel
+                {
+                    PositionId = x.PositionId,
+                    PositionName = x.PositionName
+                })
+                .ToList();
+
+            var result = new PagedResult<PositionModel>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return Ok(result);
         }
     }
 }

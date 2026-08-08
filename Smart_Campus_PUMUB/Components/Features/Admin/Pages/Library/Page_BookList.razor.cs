@@ -28,29 +28,29 @@ public partial class Page_BookList : ComponentBase
     public int SelectedCategoryIdInput = 0;
     public int SelectedCategoryId = 0;
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         SelectedCategoryId = SelectedCategoryIdInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadBooks();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         SelectedCategoryIdInput = 0;
         SelectedCategoryId = 0;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadBooks();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
@@ -59,37 +59,12 @@ public partial class Page_BookList : ComponentBase
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<BookModel> GetFilteredBooks()
-    {
-        var list = BookList.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            list = list.Where(b => b.BookName != null && b.BookName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
-        }
-        if (SelectedCategoryId != 0)
-        {
-            list = list.Where(b => b.CategoryId == SelectedCategoryId);
-        }
-        return list;
-    }
+    public IEnumerable<BookModel> FilteredBooks => BookList;
 
-    public IEnumerable<BookModel> FilteredBooks
-    {
-        get
-        {
-            var allFiltered = GetFilteredBooks();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadBooks();
     }
 
     protected override async Task OnInitializedAsync()
@@ -123,21 +98,27 @@ public partial class Page_BookList : ComponentBase
         IsLoading = true;
         try
         {
-            var response = await HttpClientService.ExecuteAsync<List<BookModel>>("book", EnumHttpMethod.Get);
-            if (response != null) BookList = response;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<BookModel>>(
+                $"book/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&categoryId={SelectedCategoryId}", 
+                EnumHttpMethod.Get
+            );
+            if (response != null)
+            {
+                BookList = response.Items;
+                TotalPages = response.TotalPages;
+            }
 
             var catResponse = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get);
             if (catResponse != null) CategoryList = catResponse;
         }
         catch (Exception ex)
         {
-            // Error ကို log သာထုတ်ပါ (Prerendering အတွက် အန္တရာယ်မရှိပါ)
             Console.WriteLine($"Error loading books: {ex.Message}");
         }
         finally 
         { 
             IsLoading = false; 
-            StateHasChanged(); // UI ပြန်ဆန်းရန် အကြောင်းကြားခြင်း
+            StateHasChanged();
         }
     }
 

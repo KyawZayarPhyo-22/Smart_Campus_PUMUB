@@ -28,6 +28,25 @@
                 </div>
 
                 <div class="col-12 mb-3">
+                    <label class="form-label text-light">
+                        <i class="bi bi-file-earmark-pdf text-danger me-1"></i>Replace PDF File (optional)
+                    </label>
+                    <InputFile OnChange="HandlePdfSelected" class="form-control" accept=".pdf" />
+                    @if (!string.IsNullOrEmpty(PdfFileName))
+                    {
+                        <div class="mt-2 small text-success">
+                            <i class="bi bi-check-circle me-1"></i>@PdfFileName
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(ExistingPdfPath))
+                    {
+                        <div class="mt-2 small text-muted">
+                            <i class="bi bi-file-earmark-pdf text-danger me-1"></i>Current: @System.IO.Path.GetFileName(ExistingPdfPath)
+                        </div>
+                    }
+                </div>
+
+                <div class="col-12 mb-3">
                     <label class="form-label text-light">Book Cover Image</label>
                     <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
                     <div class="mt-2 text-center">

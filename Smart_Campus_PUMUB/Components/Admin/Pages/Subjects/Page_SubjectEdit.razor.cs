@@ -9,23 +9,32 @@ public partial class Page_SubjectEdit
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public NavigationManager Nav { get; set; } = null!;
     [Parameter] public int SubjectId { get; set; }
+
     private string? ErrorMessage;
-    private SubjectUpdateRequestModel subject = new();
+    private SubjectUpdateRequestModel? subject;
     private List<SemesterModel> SemesterList = new();
+    private List<FacultyModel> FacultyList = new();
     private bool IsProcessing = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // ၁။ Semester စာရင်း ဆွဲယူခြင်း
-        SemesterList = await HttpClientService.ExecuteAsync<List<SemesterModel>>("semester", EnumHttpMethod.Get) ?? new();
+        // Load lookups in parallel
+        var semTask = HttpClientService.ExecuteAsync<List<SemesterModel>>("semester", EnumHttpMethod.Get);
+        var facTask = HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get);
+        var dataTask = HttpClientService.ExecuteAsync<SubjectModel>($"subject/{SubjectId}", EnumHttpMethod.Get);
 
-        // ၂။ လက်ရှိ Subject အချက်အလက် ဆွဲယူခြင်း
-        var data = await HttpClientService.ExecuteAsync<SubjectModel>($"subject/{SubjectId}", EnumHttpMethod.Get);
+        await Task.WhenAll(semTask, facTask, dataTask);
+
+        SemesterList = semTask.Result ?? new();
+        FacultyList  = facTask.Result ?? new();
+
+        var data = dataTask.Result;
         if (data != null)
         {
             subject = new SubjectUpdateRequestModel
             {
-                SemesterId = data.SemesterId,
+                SemesterId  = data.SemesterId,
+                FacultyId   = data.FacultyId,
                 SubjectName = data.SubjectName,
                 SubjectCode = data.SubjectCode
             };
@@ -34,25 +43,9 @@ public partial class Page_SubjectEdit
 
     private async Task UpdateSubject()
     {
-        ErrorMessage = null; // Error ကို အရင်ရှင်းပါ
+        if (subject is null) return;
+        ErrorMessage = null;
 
-        // ၁။ လက်ရှိ Semester ထဲက Subject စာရင်းကို အကုန်ဆွဲထုတ်ပါ
-        var allSubjects = await HttpClientService.ExecuteAsync<List<SubjectModel>>("subject", EnumHttpMethod.Get) ?? new();
-
-        // ၂။ ကိုယ့်ကိုယ်ကို (Current Subject) ဖယ်ပြီး တူတာရှိမရှိ စစ်ပါ
-        bool isDuplicate = allSubjects.Any(s => s.SemesterId == subject.SemesterId
-                                            && s.SubjectId != SubjectId // ကိုယ့်ကိုယ်ကို မစစ်ရန်
-                                            && s.SubjectCode != null
-                                            && subject.SubjectCode != null
-                                            && s.SubjectCode.Trim().Equals(subject.SubjectCode.Trim(), StringComparison.OrdinalIgnoreCase));
-
-        if (isDuplicate)
-        {
-            ErrorMessage = "ဤ Semester အတွင်းတွင် ဤ Subject Code သည် ရှိနှင့်ပြီးဖြစ်ပါသည်။";
-            return;
-        }
-
-        // ၃။ Update လုပ်ခြင်း
         IsProcessing = true;
         var response = await HttpClientService.ExecuteAsync<ActionResponseModel>($"subject/{SubjectId}", EnumHttpMethod.Put, subject);
 

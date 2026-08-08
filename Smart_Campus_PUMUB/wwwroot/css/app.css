@@ -269,8 +269,10 @@ body {
 }
 
 #navbar.scrolled .nav-links a.active {
-  color: rgb(255, 255, 255);
-  background: var(--accent);
+  color: #ffffff !important;
+  background: var(--accent) !important;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(90, 79, 207, 0.35);
 }
 .nav-actions {
   display: flex;

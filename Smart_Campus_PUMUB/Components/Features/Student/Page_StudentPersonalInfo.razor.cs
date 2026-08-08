@@ -33,8 +33,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             stipend_requested = false,
             gender_relation = "Male",
             blood_type = "O",
-            academic_year_range = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}",
-            admission_year = DateTime.Now.Year
+            academic_year_range = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}"
+            // admission_year intentionally left null — filled from DB or user input
         };
 
         public bool ShowModal { get; set; } = false;
@@ -70,6 +70,129 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public IBrowserFile? SelectedPhotoFile { get; set; }
         public byte[]? SelectedPhotoBytes { get; set; }
         public List<SemesterModel> SemesterList { get; set; } = new();
+
+        // --- Faculty & Filtered Major ---
+        public List<FacultyModel> FacultyList { get; set; } = new();
+
+        // String-backed property to avoid int?/string type mismatch with <select @bind>
+        private int? _selectedFacultyId;
+        public int? SelectedFacultyId
+        {
+            get => _selectedFacultyId;
+            set => _selectedFacultyId = value;
+        }
+        public string SelectedFacultyIdStr
+        {
+            get => _selectedFacultyId?.ToString() ?? "";
+            set
+            {
+                if (int.TryParse(value, out var id))
+                    _selectedFacultyId = id;
+                else
+                    _selectedFacultyId = null;
+            }
+        }
+
+        private static readonly Dictionary<string, List<string>> FacultyMajorsMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Computer",    new() { "Computer Science", "Computer Technology", "Information Technology" } },
+            { "Engineering", new() { "Civil Engineering", "Electronic Engineering", "Electrical Power Engineering", "Mechanical Engineering", "Information Technology Engineering" } },
+        };
+
+        public List<string> FilteredMajors { get; set; } = new();
+
+        public void OnFacultyChanged(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out var facId))
+            {
+                SelectedFacultyId = facId;
+                var fac = FacultyList.FirstOrDefault(f => f.FacultyId == facId);
+                requestModel.major = null;
+                FilteredMajors = GetMajorsForFaculty(fac?.FacultyName);
+            }
+            else
+            {
+                SelectedFacultyId = null;
+                requestModel.major = null;
+                FilteredMajors = GetAllMajors();
+            }
+            StateHasChanged();
+        }
+
+        // Called after @bind updates SelectedFacultyId — filters majors accordingly
+        public void OnFacultyChangedAfterBind()
+        {
+            if (SelectedFacultyId.HasValue && SelectedFacultyId.Value > 0)
+            {
+                var fac = FacultyList.FirstOrDefault(f => f.FacultyId == SelectedFacultyId.Value);
+                FilteredMajors = GetMajorsForFaculty(fac?.FacultyName);
+                if (FilteredMajors.Any() && (string.IsNullOrEmpty(requestModel.major) || !FilteredMajors.Contains(requestModel.major)))
+                {
+                    requestModel.major = FilteredMajors.First();
+                }
+            }
+            else
+            {
+                SelectedFacultyId = null;
+                requestModel.major = null;
+                FilteredMajors = GetAllMajors();
+            }
+            StateHasChanged();
+        }
+
+        private void AutoSelectFacultyForMajor(string? major)
+        {
+            if (string.IsNullOrEmpty(major) || FacultyList == null || !FacultyList.Any())
+                return;
+
+            string? foundKey = null;
+            foreach (var kv in FacultyMajorsMap)
+            {
+                if (kv.Value.Any(m => string.Equals(m, major, StringComparison.OrdinalIgnoreCase)))
+                {
+                    foundKey = kv.Key;
+                    break;
+                }
+            }
+
+            FacultyModel? matchedFac = null;
+            if (!string.IsNullOrEmpty(foundKey))
+            {
+                matchedFac = FacultyList.FirstOrDefault(f => !string.IsNullOrEmpty(f.FacultyName) && f.FacultyName.Contains(foundKey, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (matchedFac == null)
+            {
+                matchedFac = FacultyList.FirstOrDefault(f => !string.IsNullOrEmpty(f.FacultyName) && (
+                    f.FacultyName.Contains(major, StringComparison.OrdinalIgnoreCase) ||
+                    major.Contains(f.FacultyName, StringComparison.OrdinalIgnoreCase)
+                ));
+            }
+
+            if (matchedFac != null)
+            {
+                SelectedFacultyId = matchedFac.FacultyId;
+                FilteredMajors = GetMajorsForFaculty(matchedFac.FacultyName);
+            }
+        }
+
+        private List<string> GetMajorsForFaculty(string? facultyName)
+        {
+            if (string.IsNullOrEmpty(facultyName)) return GetAllMajors();
+            foreach (var kv in FacultyMajorsMap)
+            {
+                if (facultyName.Contains(kv.Key, StringComparison.OrdinalIgnoreCase))
+                    return kv.Value;
+            }
+            return GetAllMajors();
+        }
+
+        private static List<string> GetAllMajors() => new()
+        {
+            "Computer Science", "Computer Technology", "Information Technology",
+            "Civil Engineering", "Electronic Engineering", "Electrical Power Engineering",
+            "Mechanical Engineering", "Information Technology Engineering"
+        };
         public string PastExamSemester { get; set; } = "";
         public DateTime? PastExamDate { get; set; }
 
@@ -218,6 +341,16 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
             catch { LoadDefaultSemesters(); }
 
+            // Load faculties
+            try
+            {
+                var faculties = await HttpClientService.ExecuteAsync<List<FacultyModel>>("Faculty", EnumHttpMethod.Get);
+                if (faculties != null && faculties.Any())
+                    FacultyList = faculties;
+            }
+            catch { }
+            FilteredMajors = GetAllMajors();
+
             // --- Compute allowed semester based on academic history ---
             ComputeAllowedSemester();
 
@@ -303,7 +436,20 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     requestModel.nrc_state = info.nrc_state;
                     requestModel.nrc_township = info.nrc_township;
                     requestModel.nrc_type = info.nrc_type;
-                    requestModel.nrc_number = info.nrc_number;
+                    // Set Faculty & Majors from loaded info
+                    if (info.FacultyId.HasValue && info.FacultyId.Value > 0)
+                    {
+                        SelectedFacultyId = info.FacultyId.Value;
+                        var fac = FacultyList.FirstOrDefault(f => f.FacultyId == info.FacultyId.Value);
+                        if (fac != null)
+                        {
+                            FilteredMajors = GetMajorsForFaculty(fac.FacultyName);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(info.major))
+                    {
+                        AutoSelectFacultyForMajor(info.major);
+                    }
 
                     // UI helper fields
                     if (info.dob.HasValue)
@@ -549,21 +695,30 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         {
             SemesterList = new List<SemesterModel>
             {
-                new SemesterModel { SemesterId = 1, SemesterName = "First Year",  Sequence = 1 },
-                new SemesterModel { SemesterId = 2, SemesterName = "Second Year", Sequence = 2 },
-                new SemesterModel { SemesterId = 3, SemesterName = "Third Year",  Sequence = 3 },
-                new SemesterModel { SemesterId = 4, SemesterName = "Fourth Year", Sequence = 4 },
-                new SemesterModel { SemesterId = 5, SemesterName = "Fifth Year",  Sequence = 5 }
+                new SemesterModel { SemesterId = 1, SemesterName = "Semester I",   Sequence = 1 },
+                new SemesterModel { SemesterId = 2, SemesterName = "Semester II",  Sequence = 2 },
+                new SemesterModel { SemesterId = 3, SemesterName = "Semester III", Sequence = 3 },
+                new SemesterModel { SemesterId = 4, SemesterName = "Semester IV",  Sequence = 4 },
+                new SemesterModel { SemesterId = 5, SemesterName = "Semester V",   Sequence = 5 },
+                new SemesterModel { SemesterId = 6, SemesterName = "Semester VI",  Sequence = 6 },
+                new SemesterModel { SemesterId = 7, SemesterName = "Semester VII", Sequence = 7 },
+                new SemesterModel { SemesterId = 8, SemesterName = "Semester VIII",Sequence = 8 },
+                new SemesterModel { SemesterId = 9, SemesterName = "Semester IX",  Sequence = 9 }
             };
         }
 
         // ---- Compute the allowed semester number from the student's result history ----
         private void ComputeAllowedSemester()
         {
+            string? GetSemName(int seq) =>
+                SemesterList.FirstOrDefault(s => s.Sequence == seq)?.SemesterName
+                ?? SemesterList.OrderBy(s => s.Sequence).FirstOrDefault()?.SemesterName;
+
             if (LoggedInStudent == null)
             {
                 AllowedSemesterSequence = 1;
-                AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == 1)?.SemesterName;
+                AllowedSemesterName = GetSemName(1);
+                requestModel.academic_year_level = AllowedSemesterName;
                 return;
             }
 
@@ -595,15 +750,13 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             {
                 IsGraduated = true;
                 AllowedSemesterSequence = 9;
-                AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == 9)?.SemesterName;
+                AllowedSemesterName = GetSemName(9);
+                requestModel.academic_year_level = AllowedSemesterName;
                 return;
             }
 
             AllowedSemesterSequence = firstFailedSeq ?? (highestPassed + 1);
-            AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == AllowedSemesterSequence)?.SemesterName
-                ?? SemesterList.FirstOrDefault()?.SemesterName;
-
-            // Pre-select the allowed semester in the form model
+            AllowedSemesterName     = GetSemName(AllowedSemesterSequence);
             requestModel.academic_year_level = AllowedSemesterName;
 
             // Auto-fill "ဖြေဆိုခဲ့သောစာမေးပွဲ" with the last PASSED semester from student directory
@@ -614,19 +767,21 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     PastExamSemester = lastPassedSemName;
 
                 // Auto-fill "အောင် / က်" status for that semester
-                // The last-passed semester is always "Pass"; if there's a failed sem, use that result
                 if (firstFailedSeq.HasValue && firstFailedSeq.Value <= highestPassed)
                     requestModel.past_exam_status = "Fail";
                 else
                     requestModel.past_exam_status = "Pass";
             }
-            else if (firstFailedSeq.HasValue)
+            else
             {
-                // No passed semester at all, but there is a failed one
-                var failedSemName = SemesterList.FirstOrDefault(s => s.Sequence == firstFailedSeq.Value)?.SemesterName;
-                if (!string.IsNullOrEmpty(failedSemName))
-                    PastExamSemester = failedSemName;
-                requestModel.past_exam_status = "Fail";
+                // New student or failed Semester 1 (highestPassed == 0) -> Past exam is high school matriculation exam
+                PastExamSemester = "တက္ကသိုလ်ဝင်စာမေးပွဲ";
+                requestModel.past_exam_major = "Information Technology";
+                if (string.IsNullOrEmpty(requestModel.major) || requestModel.major == "-")
+                {
+                    requestModel.major = "Information Technology";
+                }
+                requestModel.past_exam_status = "Pass";
             }
         }
 
@@ -675,10 +830,28 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 requestModel.stipend_requested    = prev.StipendRequested;
                 requestModel.university_reg_no    = prev.UniversityRegNo;
                 requestModel.AdmissionSerialNo    = prev.AdmissionSerialNo;
+                if (prev.AdmissionYear.HasValue)
+                    requestModel.admission_year = prev.AdmissionYear.Value;
+
+                // Past exam fields
+                if (!string.IsNullOrEmpty(prev.PastExamMajor))
+                    requestModel.past_exam_major = prev.PastExamMajor;
+                if (!string.IsNullOrEmpty(prev.PastExamRollNo))
+                    requestModel.past_exam_roll_no = prev.PastExamRollNo;
+                if (prev.PastExamYear.HasValue)
+                {
+                    requestModel.past_exam_year = prev.PastExamYear.Value;
+                    PastExamDate = new DateTime(prev.PastExamYear.Value, 1, 1);
+                }
+                if (!string.IsNullOrEmpty(prev.PastExamStatus))
+                    requestModel.past_exam_status = prev.PastExamStatus;
 
                 // အထူးပြူဘာသာ အမာစာ auto-fill (semester locked separately in ComputeAllowedSemester)
                 if (!string.IsNullOrEmpty(prev.Major))
+                {
                     requestModel.major = prev.Major;
+                    AutoSelectFacultyForMajor(prev.Major);
+                }
 
                 if (prev.Dob.HasValue)
                     DobDate = prev.Dob.Value.ToDateTime(TimeOnly.MinValue);
@@ -768,15 +941,15 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         {
             if (string.IsNullOrEmpty(name)) return 0;
             var lower = name.ToLower();
-            if (lower.Contains("first") || lower.Contains("sem 1") || lower.Contains("semester 1") || lower.Contains("1st") || lower.Contains("one")) return 1;
-            if (lower.Contains("second") || lower.Contains("sem 2") || lower.Contains("semester 2") || lower.Contains("2nd") || lower.Contains("two")) return 2;
-            if (lower.Contains("third") || lower.Contains("sem 3") || lower.Contains("semester 3") || lower.Contains("3rd") || lower.Contains("three")) return 3;
-            if (lower.Contains("fourth") || lower.Contains("sem 4") || lower.Contains("semester 4") || lower.Contains("4th") || lower.Contains("four")) return 4;
-            if (lower.Contains("fifth") || lower.Contains("sem 5") || lower.Contains("semester 5") || lower.Contains("5th") || lower.Contains("five")) return 5;
-            if (lower.Contains("sixth") || lower.Contains("sem 6") || lower.Contains("semester 6") || lower.Contains("6th") || lower.Contains("six")) return 6;
-            if (lower.Contains("seventh") || lower.Contains("sem 7") || lower.Contains("semester 7") || lower.Contains("7th") || lower.Contains("seven")) return 7;
-            if (lower.Contains("eighth") || lower.Contains("sem 8") || lower.Contains("semester 8") || lower.Contains("8th") || lower.Contains("eight")) return 8;
-            if (lower.Contains("ninth") || lower.Contains("sem 9") || lower.Contains("semester 9") || lower.Contains("9th") || lower.Contains("nine")) return 9;
+            if (lower.Contains("first") || lower.Contains("sem 1") || lower.Contains("semester 1") || lower.Contains("1st") || lower.Contains("one") || lower.Contains("sem i") || lower.Contains("semester i") || lower.EndsWith(" i")) return 1;
+            if (lower.Contains("second") || lower.Contains("sem 2") || lower.Contains("semester 2") || lower.Contains("2nd") || lower.Contains("two") || lower.Contains("sem ii") || lower.Contains("semester ii") || lower.EndsWith(" ii")) return 2;
+            if (lower.Contains("third") || lower.Contains("sem 3") || lower.Contains("semester 3") || lower.Contains("3rd") || lower.Contains("three") || lower.Contains("sem iii") || lower.Contains("semester iii") || lower.EndsWith(" iii")) return 3;
+            if (lower.Contains("fourth") || lower.Contains("sem 4") || lower.Contains("semester 4") || lower.Contains("4th") || lower.Contains("four") || lower.Contains("sem iv") || lower.Contains("semester iv") || lower.EndsWith(" iv")) return 4;
+            if (lower.Contains("fifth") || lower.Contains("sem 5") || lower.Contains("semester 5") || lower.Contains("5th") || lower.Contains("five") || lower.Contains("sem v") || lower.Contains("semester v") || lower.EndsWith(" v")) return 5;
+            if (lower.Contains("sixth") || lower.Contains("sem 6") || lower.Contains("semester 6") || lower.Contains("6th") || lower.Contains("six") || lower.Contains("sem vi") || lower.Contains("semester vi") || lower.EndsWith(" vi")) return 6;
+            if (lower.Contains("seventh") || lower.Contains("sem 7") || lower.Contains("semester 7") || lower.Contains("7th") || lower.Contains("seven") || lower.Contains("sem vii") || lower.Contains("semester vii") || lower.EndsWith(" vii")) return 7;
+            if (lower.Contains("eighth") || lower.Contains("sem 8") || lower.Contains("semester 8") || lower.Contains("8th") || lower.Contains("eight") || lower.Contains("sem viii") || lower.Contains("semester viii") || lower.EndsWith(" viii")) return 8;
+            if (lower.Contains("ninth") || lower.Contains("sem 9") || lower.Contains("semester 9") || lower.Contains("9th") || lower.Contains("nine") || lower.Contains("sem ix") || lower.Contains("semester ix") || lower.EndsWith(" ix")) return 9;
             return 0;
         }
         public bool IsSemesterAllowed(string? semesterName)
@@ -1029,10 +1202,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public void CloseModal()
         {
             ShowModal = false;
-            if (IsSuccessModal)
-            {
-                Nav.NavigateTo("/profile");
-            }
+            StateHasChanged();
         }
 
         public void EnableEditing()
@@ -1050,6 +1220,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
             IsSubmitting = true;
 
+            requestModel.FacultyId = SelectedFacultyId;
             requestModel.dob = DobDate ?? DateTime.Now;
             requestModel.covid_vaccine_status = CovidDate?.ToString("dd-MM-yyyy") ?? "-";
 
@@ -1129,9 +1300,19 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 if (response?.IsSuccess == true)
                 {
                     isUpdate = true;
+                    IsFormDisabled = true;
+                    if (requestModel.UserId.HasValue && requestModel.UserId > 0)
+                    {
+                        await LoadStudentPersonalInfo(requestModel.UserId.Value);
+                    }
+                    else if (requestModel.NewStudentAccId.HasValue && requestModel.NewStudentAccId > 0)
+                    {
+                        await LoadStudentPersonalInfoForNewStudent(requestModel.NewStudentAccId.Value);
+                    }
                     IsSuccessModal = true;
-                    ModalMessage = "Personal info saved successfully.";
+                    ModalMessage = "Personal info updated successfully.";
                     ShowModal = true;
+                    StateHasChanged();
                 }
                 else
                 {

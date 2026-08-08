@@ -1,0 +1,63 @@
+@page "/admin/major/create"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Major
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<div class="modal-dialog modal-md mt-5">
+    <div class="modal-content tech-card">
+        <div class="modal-header border-0 pb-0">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded p-2" style="background: #5A4FCF;">
+                    <i class="bi bi-collection fs-5 text-white"></i>
+                </div>
+                <h5 class="modal-title fw-bold text-white">Add New Major</h5>
+            </div>
+        </div>
+        <EditForm Model="majorModel" OnValidSubmit="SaveMajor" FormName="CreateMajorForm">
+            <DataAnnotationsValidator />
+            <div class="modal-body">
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Faculty <span class="text-danger">*</span></label>
+                    @if (IsLoadingFaculties)
+                    {
+                        <div class="d-flex align-items-center gap-2 text-muted small">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            Loading faculties...
+                        </div>
+                    }
+                    else
+                    {
+                        <select class="form-select" @bind="majorModel.FacultyId">
+                            <option value="0">-- Select Faculty --</option>
+                            @foreach (var faculty in FacultyList)
+                            {
+                                <option value="@faculty.FacultyId">@faculty.FacultyName</option>
+                            }
+                        </select>
+                    }
+                </div>
+                <div class="col-12 mb-3">
+                    <label class="form-label text-light">Major Name <span class="text-danger">*</span></label>
+                    <InputText @bind-Value="majorModel.MajorName" class="form-control" placeholder="e.g., Computer Science, Civil Engineering" />
+                </div>
+                @if (!string.IsNullOrEmpty(statusMessage))
+                {
+                    <div class="p-3 rounded mt-2"
+                         style="background: @(isSuccess ? "rgba(25,135,84,0.15)" : "rgba(220,53,69,0.15)"); border: 1px solid @(isSuccess ? "#198754" : "#dc3545");">
+                        <span style="color: @(isSuccess ? "#75b798" : "#ea868f"); font-size: 0.9rem;">
+                            <i class="bi @(isSuccess ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+                            @statusMessage
+                        </span>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <NavLink href="/admin/majors" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
+                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                    @(isProcessing ? "Creating..." : "Create Major")
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>

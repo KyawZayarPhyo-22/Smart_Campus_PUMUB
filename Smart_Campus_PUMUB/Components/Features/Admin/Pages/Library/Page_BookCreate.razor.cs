@@ -16,53 +16,126 @@ public partial class Page_BookCreate : ComponentBase
     private List<CategoryModel> CategoryList { get; set; } = new();
 
     private IBrowserFile? selectedImage;
+    private IBrowserFile? selectedPdf;
     private string PreviewImageUrl = "";
+    private string PdfFileName = "";
     private string statusMessage = "";
     private bool isProcessing = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Category စာရင်းကို API မှ ဆွဲယူခြင်း
-        CategoryList = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get) ?? new();
+        try
+        {
+            CategoryList = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading categories: {ex.Message}");
+        }
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
-        selectedImage = e.File;
-        // Image Preview အတွက်
-        var format = "image/png";
-        var resizedImage = await selectedImage.RequestImageFileAsync(format, 400, 400);
-        var buffer = new byte[resizedImage.Size];
-        await resizedImage.OpenReadStream(maxAllowedSize: 2097152).ReadAsync(buffer); // 2MB limit
-        PreviewImageUrl = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+        try
+        {
+            selectedImage = e.File;
+            if (selectedImage == null) return;
+
+            if (selectedImage.Size > 10_000_000) // 10MB
+            {
+                statusMessage = "Image file size must be less than 10MB.";
+                selectedImage = null;
+                PreviewImageUrl = "";
+                return;
+            }
+
+            var format = "image/png";
+            var resizedImage = await selectedImage.RequestImageFileAsync(format, 400, 400);
+            using var ms = new MemoryStream();
+            await resizedImage.OpenReadStream(maxAllowedSize: 10_000_000).CopyToAsync(ms);
+            PreviewImageUrl = $"data:{format};base64,{Convert.ToBase64String(ms.ToArray())}";
+            statusMessage = "";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Image select error: {ex.Message}");
+            statusMessage = "Unable to process selected image file.";
+        }
+    }
+
+    private void HandlePdfSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            selectedPdf = e.File;
+            if (selectedPdf == null) return;
+
+            if (selectedPdf.Size > 50_000_000) // 50MB limit
+            {
+                statusMessage = "PDF file size must be less than 50MB.";
+                selectedPdf = null;
+                PdfFileName = "";
+                return;
+            }
+
+            PdfFileName = selectedPdf.Name;
+            statusMessage = "";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"PDF select error: {ex.Message}");
+            statusMessage = "Unable to process selected PDF file.";
+        }
     }
 
     private async Task SaveBook()
     {
+        if (bookRequest.CategoryId <= 0)
+        {
+            statusMessage = "Please select a Category.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(bookRequest.BookName))
+        {
+            statusMessage = "Please enter Book Name.";
+            return;
+        }
+
         isProcessing = true;
-        statusMessage = "Processing...";
+        statusMessage = "Saving book...";
+        StateHasChanged();
 
         try
         {
-            // FormData ကို တည်ဆောက်ခြင်း
-            var content = new MultipartFormDataContent();
+            using var content = new MultipartFormDataContent();
             content.Add(new StringContent(bookRequest.CategoryId.ToString()), nameof(bookRequest.CategoryId));
-            content.Add(new StringContent(bookRequest.BookName ?? ""), nameof(bookRequest.BookName));
-            content.Add(new StringContent(bookRequest.FilePath ?? ""), nameof(bookRequest.FilePath));
+            content.Add(new StringContent(bookRequest.BookName.Trim()), nameof(bookRequest.BookName));
 
+            // Cover image
             if (selectedImage != null)
             {
-                var ms = new MemoryStream();
-                await selectedImage.OpenReadStream(maxAllowedSize: 2097152).CopyToAsync(ms);
-                content.Add(new ByteArrayContent(ms.ToArray()), "ImageFile", selectedImage.Name);
+                using var imageMs = new MemoryStream();
+                await selectedImage.OpenReadStream(maxAllowedSize: 10_000_000).CopyToAsync(imageMs);
+                var byteContent = new ByteArrayContent(imageMs.ToArray());
+                content.Add(byteContent, "ImageFile", selectedImage.Name);
             }
 
-            // API ခေါ်ဆိုခြင်း
+            // PDF file
+            if (selectedPdf != null)
+            {
+                using var pdfMs = new MemoryStream();
+                await selectedPdf.OpenReadStream(maxAllowedSize: 50_000_000).CopyToAsync(pdfMs);
+                var byteContent = new ByteArrayContent(pdfMs.ToArray());
+                content.Add(byteContent, "PdfFile", selectedPdf.Name);
+            }
+
             var response = await HttpClientService.ExecuteMultipartAsync<BookResponseModel>("book", content);
             if (response != null && response.IsSuccess)
             {
                 statusMessage = "စာအုပ်အသစ်ထည့်သွင်းခြင်း အောင်မြင်ပါသည်။";
-                await Task.Delay(1000); // User မြင်အောင် ခဏစောင့်ပေးခြင်း
+                StateHasChanged();
+                await Task.Delay(800);
                 NavigationManager.NavigateTo("/admin/books");
             }
             else
@@ -72,11 +145,13 @@ public partial class Page_BookCreate : ComponentBase
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"SaveBook exception: {ex}");
             statusMessage = $"Error: {ex.Message}";
         }
         finally
         {
             isProcessing = false;
+            StateHasChanged();
         }
     }
 }

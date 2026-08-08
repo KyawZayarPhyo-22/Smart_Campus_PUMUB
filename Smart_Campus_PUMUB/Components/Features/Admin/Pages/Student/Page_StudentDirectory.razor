@@ -151,18 +151,29 @@
 <div class="material-card p-3 mb-4">
     <div class="row g-3 align-items-center">
         <!-- Search Input -->
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchInput" @bind:after="ApplyFilter" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <!-- Major Dropdown -->
+        <!-- Faculty Dropdown -->
         <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedMajorInput">
+            <select class="form-select material-input" @bind="SelectedFacultyInput" @bind:after="OnFacultyChanged" disabled="@isFacultyAdminLocked">
+                <option value="All">All Faculties</option>
+                @foreach (var faculty in AvailableFaculties)
+                {
+                    <option value="@faculty">@faculty</option>
+                }
+            </select>
+        </div>
+
+        <!-- Major Dropdown -->
+        <div class="col-md-2">
+            <select class="form-select material-input" @bind="SelectedMajorInput" @bind:after="ApplyFilter">
                 <option value="All">All Majors</option>
-                @foreach (var major in StudentList.Select(s => s.CurrentMajor).Distinct().Where(m => !string.IsNullOrEmpty(m)))
+                @foreach (var major in AvailableMajors)
                 {
                     <option value="@major">@major</option>
                 }
@@ -170,15 +181,16 @@
         </div>
 
         <!-- Year Dropdown -->
-        <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedYearInput">
+        <div class="col-md-2">
+            <select class="form-select material-input" @bind="SelectedYearInput" @bind:after="ApplyFilter">
                 <option value="All">All Class Years</option>
-                @foreach (var year in StudentList.Select(s => s.CurrentClassYear).Distinct().Where(y => !string.IsNullOrEmpty(y)))
+                @foreach (var year in AvailableClassYears)
                 {
                     <option value="@year">@year</option>
                 }
             </select>
         </div>
+
 
         <!-- Search and Reset Buttons -->
         <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
@@ -192,6 +204,7 @@
     </div>
 </div>
 
+
 <!-- Table Section -->
 <div class="material-card table-container mb-5">
     <div class="table-responsive">
@@ -201,7 +214,7 @@
                     <th class="text-center">No.</th>
                     <th>Roll No</th>
                     <th>Full Name</th>
-                    <th class="text-center">Status</th>
+                    <th class="text-center">Faculty</th>
                     <th class="text-center">Sem 1</th>
                     <th class="text-center">Sem 2</th>
                     <th class="text-center">Sem 3</th>
@@ -241,13 +254,9 @@
                             <td class="fw-bold text-info">@(s.CurrentRollNo ?? "-")</td>
                             <td class="fw-bold text-white">@(s.FullName ?? "N/A")</td>
                             <td class="text-center">
-                                <select class="status-select @(s.Status == "Active" ? "active" : "inactive")" 
-                                        value="@s.Status"
-                                        disabled="@(!canManageStudent)"
-                                        @onchange="@(async (e) => await UpdateStatus(s, e.Value?.ToString()))">
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
+                                <span class="px-2 py-1 rounded fw-medium d-inline-block" style="background: rgba(105, 108, 255, 0.15); color: #696cff !important; border: 1px solid rgba(105, 108, 255, 0.3); font-size: 0.82rem; white-space: nowrap;">
+                                    @(string.IsNullOrWhiteSpace(s.FacultyName) ? "-" : s.FacultyName)
+                                </span>
                             </td>
                             <td class="text-center">
                                 <select class="result-dropdown @GetDropdownClass(s.Sem1_Result)" value="@(s.Sem1_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 1, e.Value?.ToString()))">

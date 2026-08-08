@@ -279,6 +279,25 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         _ => "bg-secondary"
     };
 
+    private string GetFacultyDisplayName(StudentRegistrationDataModel s)
+    {
+        if (!string.IsNullOrWhiteSpace(s.FacultyName))
+        {
+            return s.FacultyName;
+        }
+
+        return "-";
+    }
+
+    private string FormatStatus(string? status)
+    {
+        if (string.Equals(status, "Pending Confirmation", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Pending";
+        }
+        return status ?? "";
+    }
+
     private bool CanReviewRegistration(string? status)
     {
         return string.Equals(status, "Pending Confirmation", StringComparison.OrdinalIgnoreCase)
@@ -402,6 +421,7 @@ public class StudentRegistrationDataModel
     public int RegistrationId { get; set; }
     public string StudentNameMm { get; set; } = null!;
     public string Major { get; set; } = null!;
+    public string? FacultyName { get; set; }
     public string? RollNo { get; set; }
     public string? AcademicYearLevel { get; set; }
     public DateTime CreatedDatetime { get; set; }

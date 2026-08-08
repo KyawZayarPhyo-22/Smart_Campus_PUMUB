@@ -163,8 +163,11 @@ public class BookCreateRequestModel
     [StringLength(150)]
     public string? BookName { get; set; }
 
-    // Role: .jpg သို့မဟုတ် .png ဖိုင်ကို တိုက်ရိုက်လက်ခံရန်
+    // Cover image file (.jpg / .png)
     public IFormFile? ImageFile { get; set; }
+
+    // PDF file upload
+    public IFormFile? PdfFile { get; set; }
 
     public string? CreatedBy { get; set; }
 }
@@ -178,10 +181,15 @@ public class BookUpdateRequestModel
     [StringLength(150)]
     public string? BookName { get; set; }
 
-    // Role: ပုံအသစ် ပြောင်းချင်ရင် တင်ရန်
+    // Cover image update
     public IFormFile? ImageFile { get; set; }
 
+    // PDF file update (optional)
+    public IFormFile? PdfFile { get; set; }
+
     public string? ModifiedBy { get; set; }
+
+    public string? ExistingImage { get; set; }
 }
 
 public class BookResponseModel : ActionResponseModel
@@ -195,9 +203,8 @@ public class BookModel
     public int CategoryId { get; set; }
     public string? BookName { get; set; }
     public string? Image { get; set; }
+    public string? FilePath { get; set; }
     public string? CategoryName { get; set; }
-
-
 }
 
 // ==========================================
@@ -208,6 +215,8 @@ public class SubjectCreateRequestModel
     [Required(ErrorMessage = "Semester ID သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [Range(1, int.MaxValue, ErrorMessage = "မှန်ကန်သော Semester ID ကို ထည့်ပေးပါ။")]
     public int SemesterId { get; set; }
+
+    public int? FacultyId { get; set; }
 
     [Required(ErrorMessage = "Subject Name သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [StringLength(150, ErrorMessage = "Subject Name သည် စာလုံးရေ ၁၁၀ ထက် မကျော်ရပါ။")]
@@ -224,6 +233,8 @@ public class SubjectUpdateRequestModel
     [Required(ErrorMessage = "Semester ID သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [Range(1, int.MaxValue, ErrorMessage = "မှန်ကန်သော Semester ID ကို ထည့်ပေးပါ။")]
     public int SemesterId { get; set; }
+
+    public int? FacultyId { get; set; }
 
     [Required(ErrorMessage = "Subject Name သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [StringLength(150, ErrorMessage = "Subject Name သည် စာလုံးရေ ၁၅၀ ထက် မကျော်ရပါ။")]
@@ -245,6 +256,8 @@ public class SubjectModel
     public int SubjectId { get; set; }
     public string? SemesterName { get; set; }
     public int SemesterId { get; set; }
+    public int? FacultyId { get; set; }
+    public string? FacultyName { get; set; }
     public string? SubjectName { get; set; }
     public string? SubjectCode { get; set; }
 }

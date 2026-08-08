@@ -128,11 +128,16 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
                 var identity = new ClaimsIdentity(claims, "Cookies");
                 _currentUser = new ClaimsPrincipal(identity);
             }
+            else
+            {
+                _currentUser = _anonymous;
+            }
 
             return Task.FromResult(new AuthenticationState(_currentUser));
         }
         catch
         {
+            _currentUser = _anonymous;
             return Task.FromResult(new AuthenticationState(_currentUser));
         }
     }
@@ -161,6 +166,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
     // 🚪 Clear cookies on logout
     public async Task MarkUserAsLoggedOut()
     {
+        _currentUser = _anonymous;
         try
         {
             await _jsRuntime.InvokeVoidAsync("authFunctions.logout");
@@ -186,8 +192,19 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
                 foreach (var kvp in keyValuePairs)
                 {
                     string type = kvp.Key;
-                    if (type == "unique_name" || type == "name") type = ClaimTypes.Name;
-                    if (type == "role" || type == "roles") type = ClaimTypes.Role;
+                    if (type.Equals("unique_name", StringComparison.OrdinalIgnoreCase) || 
+                        type.Equals("name", StringComparison.OrdinalIgnoreCase) ||
+                        type.Equals(ClaimTypes.Name, StringComparison.OrdinalIgnoreCase)) 
+                    {
+                        type = ClaimTypes.Name;
+                    }
+
+                    if (type.Equals("role", StringComparison.OrdinalIgnoreCase) || 
+                        type.Equals("roles", StringComparison.OrdinalIgnoreCase) ||
+                        type.Equals(ClaimTypes.Role, StringComparison.OrdinalIgnoreCase)) 
+                    {
+                        type = ClaimTypes.Role;
+                    }
 
                     if (kvp.Value is JsonElement element && element.ValueKind == JsonValueKind.Array)
                     {

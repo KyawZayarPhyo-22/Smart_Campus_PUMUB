@@ -788,7 +788,8 @@
 
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {
-            if (user.IsInRole("Admin") || user.IsInRole("Tutor") || user.IsInRole("admin") || user.IsInRole("tutor"))
+            var roleVal = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.ToLower() ?? "";
+            if (roleVal.Contains("admin") || roleVal.Contains("tutor") || roleVal.Contains("super"))
                 NavigationManager.NavigateTo("/admin/dashboard");
             else
                 NavigationManager.NavigateTo("/");
@@ -852,7 +853,7 @@
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "rolename", response.Role);
 
                 string roleName = response.Role.ToLower();
-                if (roleName.Contains("admin") || roleName.Contains("tutor"))
+                if (roleName.Contains("admin") || roleName.Contains("tutor") || roleName.Contains("super"))
                     NavigationManager.NavigateTo("/admin/dashboard");
                 else
                     NavigationManager.NavigateTo("/");

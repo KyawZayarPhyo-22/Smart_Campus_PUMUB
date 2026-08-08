@@ -43,10 +43,14 @@ public class AuthController : ControllerBase
             bool isPasswordValid = false;
             try
             {
-                if (user.Password != null && user.Password.StartsWith("$2"))
+                if (user.Password == request.Password)
+                {
+                    isPasswordValid = true;
+                }
+                else if (user.Password != null && user.Password.StartsWith("$2"))
+                {
                     isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
-                else
-                    isPasswordValid = user.Password == request.Password;
+                }
             }
             catch
             {
@@ -65,12 +69,19 @@ public class AuthController : ControllerBase
                 .Select(rp => rp.Permission.PermissionName)
                 .ToList();
 
+            bool canAccessAllFaculties = string.Equals(roleName, "Super Admin", System.StringComparison.OrdinalIgnoreCase) 
+                || user.RoleId == 4 
+                || _db.RoleHierarchies.Any(rh => rh.ParentRoleId == user.RoleId && rh.CanAccessAllFaculties);
+
             var claims = new System.Collections.Generic.List<System.Security.Claims.Claim>
             {
                 new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, user.UserName),
                 new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, roleName),
                 new System.Security.Claims.Claim("UserId", user.UserId.ToString()),
-                new System.Security.Claims.Claim("FullName", user.FullName ?? string.Empty)
+                new System.Security.Claims.Claim("FullName", user.FullName ?? string.Empty),
+                new System.Security.Claims.Claim("FacultyId", user.FacultyId?.ToString() ?? ""),
+                new System.Security.Claims.Claim("RoleId", user.RoleId.ToString()),
+                new System.Security.Claims.Claim("CanAccessAllFaculties", canAccessAllFaculties ? "true" : "false")
             };
 
             foreach (var perm in permissions)

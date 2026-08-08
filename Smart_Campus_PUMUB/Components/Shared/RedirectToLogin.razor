@@ -1,9 +1,16 @@
 @inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Routing
 
 @code {
     protected override void OnInitialized()
     {
-        // ဤ Component လေး အလုပ်လုပ်တာနဲ့ /login ဆီ ချက်ချင်း လွှဲချမည်
-        Nav.NavigateTo("/login");
+        try
+        {
+            Nav.NavigateTo("/login", forceLoad: true);
+        }
+        catch (NavigationException)
+        {
+            // Blazor က ပုံမှန်အတိုင်း ပစ်ထုတ်သော Exception ဖြစ်သဖြင့် ဘာမှလုပ်စရာမလိုဘဲ လျစ်လျူရှုထားလိုက်ပါမည်။
+        }
     }
 }

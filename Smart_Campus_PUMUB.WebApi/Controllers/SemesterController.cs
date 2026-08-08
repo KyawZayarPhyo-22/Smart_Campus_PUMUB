@@ -21,7 +21,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         // GET /api/semesters
         [HttpGet]
-        [Permission("Semester.View")]
+        [AllowAnonymous]
         public IActionResult GetSemesters()
         {
             var lst = _db.Semesters
@@ -56,7 +56,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             {
                 ActivityTitle = "New Semester added",
                 Description = $"{request.SemesterName} was added to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
             return StatusCode(201, new SemesterCreateResponseModel { IsSuccess = result > 0, Message = result > 0 ? "သိမ်းဆည်းမှု အောင်မြင်ပါသည်။" : "သိမ်းဆည်းမှု မအောင်မြင်ပါ။" });
@@ -82,7 +82,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             {
                 ActivityTitle = "Semester Updated",
                 Description = $"{request.SemesterName} was updated to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -128,7 +128,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             {
                 ActivityTitle = "Semester deleted",
                 Description = $"{item.SemesterName} was deleted to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -139,6 +139,44 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                     ? "Semester ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။"
                     : "ဖျက်ခြင်း မအောင်မြင်ပါ။"
             });
+        }
+
+        [HttpGet("paginate")]
+        [AllowAnonymous]
+        public IActionResult GetSemestersPaginated(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? searchTerm = null)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _db.Semesters
+                .AsNoTracking()
+                .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(x => x.SemesterName != null && x.SemesterName.Contains(searchTerm));
+            }
+
+            var totalCount = query.Count();
+
+            var items = query
+                .OrderBy(x => x.SemesterId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var result = new PagedResult<Semester>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return Ok(result);
         }
     }
 }

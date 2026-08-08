@@ -404,6 +404,10 @@
                                 <label>အတန်း (Semester) <span style="color:red;">*</span></label>
                                 <select class="pay-input" @bind="InputAcademicYear" disabled>
                                     <option value="">-- သင်တန်းနှစ် ရွေးချယ်ပါ --</option>
+                                    @if (!string.IsNullOrWhiteSpace(InputAcademicYear) && !(SemesterList?.Any(s => string.Equals(s.SemesterName, InputAcademicYear, StringComparison.OrdinalIgnoreCase)) ?? false))
+                                    {
+                                        <option value="@InputAcademicYear" selected>@InputAcademicYear</option>
+                                    }
                                     @if (SemesterList != null && SemesterList.Any())
                                     {
                                         @foreach (var sem in SemesterList)
@@ -423,7 +427,7 @@
                                 @foreach (var fee in PaymentFees)
                                 {
                                     <div class="fee-item">
-                                        <span>@fee.FeeName</span>
+                                        <span>@(fee.FeeName == "ကျောင်းလခ" ? $"ကျောင်းလခ ({InputAcademicYear})" : fee.FeeName)</span>
                                         <span>@fee.MontlyAmount.ToString("N0") Ks</span>
                                     </div>
                                 }

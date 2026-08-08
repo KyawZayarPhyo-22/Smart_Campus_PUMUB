@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
@@ -66,8 +67,42 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [Permission("Role.Create")]
         public IActionResult CreateRole(RoleCreateRequestModel request)
         {
-            // Validation: Check if RoleName already exists
-            var exists = _db.Roles.Any(r => r.RoleName == request.RoleName);
+            if (string.IsNullOrWhiteSpace(request.RoleName))
+            {
+                return BadRequest(new RoleCreateResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "Role Name ဖြည့်ရန် လိုအပ်ပါသည်။"
+                });
+            }
+
+            var roleName = request.RoleName.Trim();
+
+            // Soft-deleted ဖြစ်နေပါက ပြန်ဖွင့်ပေးရန်
+            var deletedRole = _db.Roles.FirstOrDefault(r => r.IsDelete == true && r.RoleName.ToLower() == roleName.ToLower());
+            if (deletedRole != null)
+            {
+                deletedRole.IsDelete = false;
+                deletedRole.RoleName = roleName;
+                _db.SaveChanges();
+
+                _db.Activities.Add(new Activity
+                {
+                    ActivityTitle = "New Role Registered",
+                    Description = $"{roleName} was added to the System.",
+                    CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
+                });
+                _db.SaveChanges();
+
+                return StatusCode(201, new RoleCreateResponseModel
+                {
+                    IsSuccess = true,
+                    Message = "သိမ်းဆည်းမှု အောင်မြင်ပါသည်။"
+                });
+            }
+
+            // Validation: Check if active RoleName already exists
+            var exists = _db.Roles.Any(r => (r.IsDelete == false || r.IsDelete == null) && r.RoleName.ToLower() == roleName.ToLower());
             if (exists)
             {
                 return BadRequest(new RoleCreateResponseModel
@@ -79,14 +114,15 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             _db.Roles.Add(new Role
             {
-                RoleName = request.RoleName
+                RoleName = roleName,
+                IsDelete = false
             });
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
                 ActivityTitle = "New Role Registered",
-                Description = $"{request.RoleName} was added to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                Description = $"{roleName} was added to the System.",
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -103,7 +139,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [Permission("Role.Edit")]
         public IActionResult UpdateRole(RoleUpdateRequestModel request, int id)
         {
-            var item = _db.Roles.FirstOrDefault(x => x.RoleId == id);
+            var item = _db.Roles.FirstOrDefault(x => x.RoleId == id && (x.IsDelete == false || x.IsDelete == null));
             if (item is null)
             {
                 return NotFound(new RoleUpdateResponseModel
@@ -113,8 +149,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 });
             }
 
-            // Validation: Check if RoleName exists in OTHER records
-            var exists = _db.Roles.Any(r => r.RoleName == request.RoleName && r.RoleId != id);
+            // Validation: Check if RoleName exists in OTHER active records
+            var exists = _db.Roles.Any(r => (r.IsDelete == false || r.IsDelete == null) && r.RoleName.ToLower() == request.RoleName.Trim().ToLower() && r.RoleId != id);
             if (exists)
             {
                 return BadRequest(new RoleUpdateResponseModel
@@ -129,9 +165,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = " Role updated",
+                ActivityTitle = "Role Updated",
                 Description = $"{request.RoleName} was updated to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
             return Ok(new RoleUpdateResponseModel
@@ -180,9 +216,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = " Role deleted",
-                Description = $"{item.RoleName} was delete to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                ActivityTitle = "Role Deleted",
+                Description = $"{item.RoleName} was deleted from the System.",
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -193,6 +229,49 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                     ? "Role ဖျက်ခြင်း အောင်မြင်ပါသည်။"
                     : "Role ဖျက်ခြင်း မအောင်မြင်ပါ။"
             });
+        }
+
+        [HttpGet("paginate")]
+        [AllowAnonymous]
+        public IActionResult GetRolesPaginated(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? searchTerm = null)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _db.Roles
+                .AsNoTracking()
+                .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(x => x.RoleName != null && x.RoleName.Contains(searchTerm));
+            }
+
+            var totalCount = query.Count();
+
+            var items = query
+                .OrderBy(x => x.RoleId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new RoleModel
+                {
+                    RoleId = x.RoleId,
+                    RoleName = x.RoleName
+                })
+                .ToList();
+
+            var result = new PagedResult<RoleModel>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return Ok(result);
         }
     }
 }

@@ -44,7 +44,6 @@ public partial class Page_FacultyEdit
             var response = await HttpClientService.ExecuteAsync<FacultyUpdateResponseModel>($"faculty/{Id}", EnumHttpMethod.Put, facultyModel);
             if (response != null && response.IsSuccess)
             {
-                await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "Faculty ပြင်ဆင်မှု အောင်မြင်ပါသည်။");
                 NavigationManager.NavigateTo("/admin/faculties");
             }
             else { statusMessage = response?.Message ?? "တစ်စုံတစ်ခု မှားယွင်းနေပါသည်။"; }

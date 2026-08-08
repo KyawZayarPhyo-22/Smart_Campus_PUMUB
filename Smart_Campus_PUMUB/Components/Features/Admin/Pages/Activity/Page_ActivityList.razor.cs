@@ -20,6 +20,7 @@ public partial class Page_ActivityList
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<ActivityModel> ActivityList { get; set; } = new();
+    private List<string> LocationList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
     private bool IsLoading { get; set; } = true;
     private string ErrorMessage { get; set; } = "";
@@ -33,33 +34,31 @@ public partial class Page_ActivityList
     private string SelectedLocationInput = "All";
     private string SelectedLocation = "All";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         SelectedLocation = SelectedLocationInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadActivities();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         SelectedLocationInput = "All";
         SelectedLocation = "All";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadActivities();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
-
-    //private string statusMessage;
 
     private bool ShowModal { get; set; } = false;
     private ActivityModel? SelectedActivity { get; set; }
@@ -69,43 +68,28 @@ public partial class Page_ActivityList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<ActivityModel> GetFilteredActivities()
-    {
-        var list = ActivityList.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            list = list.Where(a => (a.ActivityTitle != null && a.ActivityTitle.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                                   (a.Location != null && a.Location.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)));
-        }
-        if (SelectedLocation != "All")
-        {
-            list = list.Where(a => a.Location == SelectedLocation);
-        }
-        return list;
-    }
+    private IEnumerable<ActivityModel> FilteredActivities => ActivityList;
 
-    private IEnumerable<ActivityModel> FilteredActivities
-    {
-        get
-        {
-            var allFiltered = GetFilteredActivities();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadActivities();
     }
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadLocations();
         await LoadActivities();
+    }
+
+    private async Task LoadLocations()
+    {
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<List<string>>("activity/locations", EnumHttpMethod.Get);
+            if (response != null) LocationList = response;
+        }
+        catch { }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -134,8 +118,15 @@ public partial class Page_ActivityList
         ErrorMessage = "";
         try
         {
-            var response = await HttpClientService.ExecuteAsync<List<ActivityModel>>("activity", EnumHttpMethod.Get);
-            if (response != null) ActivityList = response;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<ActivityModel>>(
+                $"activity/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&location={Uri.EscapeDataString(SelectedLocation)}", 
+                EnumHttpMethod.Get
+            );
+            if (response != null)
+            {
+                ActivityList = response.Items;
+                TotalPages = response.TotalPages;
+            }
         }
         catch (Exception ex)
         {

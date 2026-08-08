@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
-using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -27,11 +26,14 @@ public partial class Page_UserList
     private string SearchInput = "";
     private string SelectedRoleInput = "All";
     private string SelectedRole = "All";
+    private string SelectedFacultyInput = "All";
+    private string SelectedFaculty = "All";
 
     private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         SelectedRole = SelectedRoleInput;
+        SelectedFaculty = SelectedFacultyInput;
         CurrentPage = 1;
         await LoadUsers();
     }
@@ -42,6 +44,8 @@ public partial class Page_UserList
         SearchTerm = "";
         SelectedRoleInput = "All";
         SelectedRole = "All";
+        SelectedFacultyInput = "All";
+        SelectedFaculty = "All";
         CurrentPage = 1;
         await LoadUsers();
     }
@@ -71,6 +75,7 @@ public partial class Page_UserList
 
     private IEnumerable<UserModel> FilteredUsers => UserList;
     private List<RoleModel> RoleList { get; set; } = new();
+    private List<FacultyModel> FacultyList { get; set; } = new();
 
     private async Task OnPageChanged(int newPage)
     {
@@ -91,9 +96,23 @@ public partial class Page_UserList
         catch { }
     }
 
+    private async Task LoadFaculties()
+    {
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get);
+            if (response != null)
+            {
+                FacultyList = response;
+            }
+        }
+        catch { }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadRoles();
+        await LoadFaculties();
         await LoadUsers();
     }
 
@@ -125,7 +144,7 @@ public partial class Page_UserList
         try
         {
             var response = await HttpClientService.ExecuteAsync<PagedResult<UserModel>>(
-                $"user/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}",
+                $"user/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}&facultyName={Uri.EscapeDataString(SelectedFaculty)}",
                 EnumHttpMethod.Get
             );
 

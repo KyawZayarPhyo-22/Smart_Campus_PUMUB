@@ -4,7 +4,9 @@ public class TutorCreateRequestModel
 {
     public int DepartmentId { get; set; }
     public int PositionId { get; set; }
+    public int FacultyId { get; set; }
     public int UserId { get; set; }
+    public int RoleId { get; set; }
     public string? TutorName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
@@ -23,6 +25,7 @@ public class TutorUpdateRequestModel
 {
     public int DepartmentId { get; set; }
     public int PositionId { get; set; }
+    public int FacultyId { get; set; }
     public int UserId { get; set; }
     public string? TutorName { get; set; }
     public string? Email { get; set; }
@@ -51,6 +54,7 @@ public class TutorModel
     public int Department_Id { get; set; }
     public int PositionId { get; set; }
     public int Position_Id { get; set; }
+    public int FacultyId { get; set; }
     public int UserId { get; set; }
     public string? TutorName { get; set; }
     public string? Email { get; set; }
@@ -58,5 +62,7 @@ public class TutorModel
     public string? Profile { get; set; }
     public string? About { get; set; }
     public string? RoleName { get; set; }
+    public string? PositionName { get; set; }
+    public string? FacultyName { get; set; }
     public DateTime? CreatedDateTime { get; set; }
-}
+}

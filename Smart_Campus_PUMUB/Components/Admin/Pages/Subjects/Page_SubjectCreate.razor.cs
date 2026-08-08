@@ -15,35 +15,21 @@ public partial class Page_SubjectCreate
 
     private SubjectCreateRequestModel subject = new();
     private List<SemesterModel> SemesterList = new();
+    private List<FacultyModel> FacultyList = new();
 
     private bool IsProcessing = false;
     private string? ErrorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        // Semester List ကို API ကနေ ဆွဲယူထားခြင်း
         SemesterList = await HttpClientService.ExecuteAsync<List<SemesterModel>>("semester", EnumHttpMethod.Get) ?? new();
+        FacultyList  = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get) ?? new();
     }
 
     private async Task SaveSubject()
     {
-        ErrorMessage = null; // Error အဟောင်းများကို ရှင်းလင်းခြင်း
+        ErrorMessage = null;
 
-        // ၁။ Duplicate စစ်ဆေးခြင်း
-        var existingSubjects = await HttpClientService.ExecuteAsync<List<SubjectModel>>("subject", EnumHttpMethod.Get) ?? new();
-
-        bool isDuplicate = existingSubjects.Any(s => s.SemesterId == subject.SemesterId
-                                                && s.SubjectCode != null
-                                                && subject.SubjectCode != null
-                                                && s.SubjectCode.Trim().Equals(subject.SubjectCode.Trim(), StringComparison.OrdinalIgnoreCase));
-
-        if (isDuplicate)
-        {
-            ErrorMessage = "ဤ Semester အတွင်းတွင် ဤ Subject Code သည် ရှိနှင့်ပြီးဖြစ်ပါသည်။";
-            return; // ဆက်မလုပ်တော့ဘဲ ရပ်လိုက်ပါ
-        }
-
-        // ၂။ Save လုပ်ခြင်း
         IsProcessing = true;
         try
         {

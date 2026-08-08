@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -15,6 +15,9 @@ public partial class Subject
 
     [Column("Semester_Id")]
     public int SemesterId { get; set; }
+
+    [Column("Faculty_Id")]
+    public int? FacultyId { get; set; }
 
     [Column("Subject_Name")]
     [StringLength(150)]
@@ -40,4 +43,7 @@ public partial class Subject
     [ForeignKey("SemesterId")]
     [InverseProperty("Subjects")]
     public virtual Semester Semester { get; set; } = null!;
+
+    [ForeignKey("FacultyId")]
+    public virtual Faculty? Faculty { get; set; }
 }

@@ -29,30 +29,30 @@ public partial class Page_FacultyList
 
     private string SearchInput = "";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadFaculties();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadFaculties();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
-    private string statusMessage;
+    private string statusMessage = "";
 
     public bool IsSuccess { get; private set; }
     private bool ShowModal { get; set; } = false;
@@ -63,27 +63,12 @@ public partial class Page_FacultyList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<FacultyModel> GetFilteredFaculties() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? FacultyList
-        : FacultyList.Where(f => f.FacultyName != null && f.FacultyName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<FacultyModel> FilteredFaculties => FacultyList;
 
-    private IEnumerable<FacultyModel> FilteredFaculties
-    {
-        get
-        {
-            var allFiltered = GetFilteredFaculties();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadFaculties();
     }
 
     protected override async Task OnInitializedAsync()
@@ -117,11 +102,14 @@ public partial class Page_FacultyList
         ErrorMessage = "";
         try
         {
-            var response = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get);
+            var response = await HttpClientService.ExecuteAsync<PagedResult<FacultyModel>>(
+                $"faculty/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
+                EnumHttpMethod.Get
+            );
             if (response != null)
             {
-                FacultyList = response;
-                    
+                FacultyList = response.Items;
+                TotalPages = response.TotalPages;
             }
         }
         catch (Exception ex)

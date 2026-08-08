@@ -70,9 +70,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = " Category added",
+                ActivityTitle = "Category Added",
                 Description = $"{request.CategoryName} was added to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -98,9 +98,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = " Category Updated",
+                ActivityTitle = "Category Updated",
                 Description = $"{request.CategoryName} was updated to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -166,9 +166,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
-                ActivityTitle = " Category deleted",
-                Description = $"{item.CategoryName} was deleted to the System.",
-                CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+                ActivityTitle = "Category Deleted",
+                Description = $"{item.CategoryName} was deleted from the System.",
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
             });
             _db.SaveChanges();
 
@@ -179,6 +179,49 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                     ? "ဖျက်ဆီးမှု အောင်မြင်ပါသည်။"
                     : "ဖျက်ဆီးမှု မအောင်မြင်ပါ။"
             });
+        }
+
+        [HttpGet("paginate")]
+        [AllowAnonymous]
+        public IActionResult GetCategoriesPaginated(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? searchTerm = null)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _db.Categories
+                .AsNoTracking()
+                .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(x => x.CategoryName != null && x.CategoryName.Contains(searchTerm));
+            }
+
+            var totalCount = query.Count();
+
+            var items = query
+                .OrderByDescending(x => x.CategoryId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new CategoryModel
+                {
+                    CategoryId = x.CategoryId,
+                    CategoryName = x.CategoryName
+                })
+                .ToList();
+
+            var result = new PagedResult<CategoryModel>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+
+            return Ok(result);
         }
     }
 }

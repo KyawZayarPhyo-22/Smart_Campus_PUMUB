@@ -531,7 +531,27 @@
 
             @if (SubmittedRegistrationId > 0)
             {
-                <div style="color: #64748b; font-size: 0.9rem;">Registration ID: <strong>@SubmittedRegistrationId</strong></div>
+                <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px;">
+                    @if (!string.IsNullOrEmpty(RegModel.student_name_en) || !string.IsNullOrEmpty(RegModel.student_name_mm))
+                    {
+                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
+                            <span style="font-weight: 600; color: #0f172a;">Name:</span>
+                            @(!string.IsNullOrEmpty(RegModel.student_name_en) ? RegModel.student_name_en : RegModel.student_name_mm)
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(RegModel.major))
+                    {
+                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
+                            <span style="font-weight: 600; color: #0f172a;">Major:</span> @RegModel.major
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(AllowedSemesterName))
+                    {
+                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
+                            <span style="font-weight: 600; color: #0f172a;">Semester:</span> @AllowedSemesterName
+                        </div>
+                    }
+                </div>
             }
 
             <div class="review-actions">
@@ -593,25 +613,43 @@
             <input type="hidden" @bind="RegModel.UserId" />
 
             <!-- Roll No Auto-Fill Field (at top) -->
-            <div class="input-group" style="grid-column: span 2;">
+            <div class="input-group" style="grid-column: span 2; max-width: 480px;">
                 <label class="input-label" style="font-size: 1rem; font-weight: 700; color: #1e40af;">
                     <i class="fas fa-id-badge me-2" style="color: #2563eb;"></i>
-                    Roll No. (ဖြည့်လျှင် Data အလိုအလျောက် ဖြည့်ပေးမည်)
-                    <span style="color:red;">*</span>
+                    Roll No. (ခုံအမှတ် ရိုက်ထည့်ပြီး Fill Data နှိပ်ပါ)
                 </label>
-                <div style="position: relative;">
-                    <input type="text"
-                           class="modern-input"
-                           placeholder="Roll No. ထည့်ပါ..."
-                           value="@RollNoInput"
-                           @onchange="OnRollNoChanged"
-                           style="padding-right: 48px; font-weight: 600; font-size: 1rem;" />
-                    @if (IsAutoFilling)
-                    {
-                        <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #2563eb;">
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                    <div style="position: relative; flex: 1;">
+                        <input type="text"
+                               class="modern-input"
+                               placeholder="e.g. 1CE-1"
+                               @bind="RollNoInput"
+                               @bind:event="oninput"
+                               @onkeyup="HandleRollNoKeyUp"
+                               style="padding-right: 36px; font-weight: 600; font-size: 1rem; width: 100%;" />
+                        @if (IsAutoFilling)
+                        {
+                            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #2563eb;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        }
+                    </div>
+                    <button type="button"
+                            class="btn btn-primary d-flex align-items-center gap-2"
+                            style="padding: 10px 18px; border-radius: 10px; font-weight: 600; white-space: nowrap; background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.25);"
+                            @onclick="() => FetchDataByRollNo()"
+                            disabled="@IsAutoFilling">
+                        @if (IsAutoFilling)
+                        {
                             <i class="fas fa-spinner fa-spin"></i>
-                        </span>
-                    }
+                            <span>Filling...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-magic"></i>
+                            <span>Fill Data</span>
+                        }
+                    </button>
                 </div>
                 @if (!string.IsNullOrEmpty(AutoFillStatus))
                 {
@@ -790,54 +828,61 @@
 
             <div class="input-group">
                 <label class="input-label">သင်တန်းနှစ် (Semester) <span style="color:red;">*</span></label>
-                @if (AllowedSemesterName != null)
+                @if (!string.IsNullOrEmpty(RegModel.academic_year_level))
                 {
-                    <!-- Locked to the student's allowed next semester -->
-                    <select class="modern-input" @bind="RegModel.academic_year_level" required disabled="@(AllowedSemesterSequence > 0)">
-                        <option value="@AllowedSemesterName">@AllowedSemesterName @(AllowedSemesterSequence > 0 ? "(Auto-Selected)" : "")</option>
-                    </select>
-                    <small style="color:#64748b; margin-top:4px; display:block;">
-                        <i class="bi bi-lock-fill me-1 text-warning"></i> Semester @AllowedSemesterSequence သည် သင်၏ academic progression အရ ကြိုတင်သတ်မှတ်ပြီးဖြစ်သည်။
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="text"
+                               class="modern-input"
+                               value="@RegModel.academic_year_level"
+                               readonly
+                               style="background:rgba(37,99,235,0.07); color:#1e40af; font-weight:700; cursor:not-allowed; border:1.5px solid #2563eb;" />
+                        <span style="color:#2563eb; font-size:1.3rem;" title="Pass/Fail မှ Auto-fill">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </span>
+                    </div>
+                    <small style="color:#64748b; margin-top:5px; display:block; font-size:0.82rem;">
+                        <i class="bi bi-info-circle me-1 text-primary"></i>
+                        ကျောင်းသား၏ Pass/Fail မှတ်တမ်းအပေါ် မူတည်၍ အလိုအလျောက် သတ်မှတ်ထားပါသည်။
                     </small>
+                    <input type="hidden" @bind="RegModel.academic_year_level" />
                 }
                 else
                 {
-                    <select class="modern-input" @bind="RegModel.academic_year_level" required>
-                        <option value="">-- သင်တန်းနှစ် ရွေးချယ်ပါ --</option>
-                        @if (SemesterList != null && SemesterList.Any())
-                        {
-                            @foreach (var sem in SemesterList)
-                            {
-                                @if (IsSemesterAllowed(sem.SemesterName))
-                                {
-                                    <option value="@sem.SemesterName">@sem.SemesterName</option>
-                                }
-                                else
-                                {
-                                    <option value="@sem.SemesterName" disabled>@sem.SemesterName (🔒 Locked - Failed Previous Semester)</option>
-                                }
-                            }
-                        }
-                    </select>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="text"
+                               class="modern-input"
+                               value="(Roll No ဖြည့်မှ Auto-fill ဖြစ်မည်)"
+                               readonly
+                               style="background:rgba(100,116,139,0.07); color:#94a3b8; font-style:italic; cursor:not-allowed;" />
+                        <span style="color:#94a3b8; font-size:1.2rem;">
+                            <i class="bi bi-hourglass-split"></i>
+                        </span>
+                    </div>
+                    <small style="color:#94a3b8; margin-top:5px; display:block; font-size:0.82rem;">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        ခုံအမှတ် (Roll No) ထည့်ပြီး Fill Data နှိပ်ပါ — Semester အလိုအလျောက် ဖြည့်မည်။
+                    </small>
                 }
             </div>
 
             <div class="input-group">
+                <label class="input-label">ကာလပညာရေးဌာန (Faculty)</label>
+                <select class="modern-input" value="@SelectedFacultyId" @onchange="OnFacultyChanged">
+                    <option value="">-- Faculty ရွေးချယ်ပါ --</option>
+                    @foreach (var fac in FacultyList)
+                    {
+                        <option value="@fac.FacultyId">@fac.FacultyName</option>
+                    }
+                </select>
+            </div>
+            <div class="input-group">
                 <label class="input-label">အထူးပြုဘာသာ</label>
                 <select class="modern-input" @bind="RegModel.major">
                     <option value="">-- အထူးပြုဘာသာ ရွေးချယ်ပါ --</option>
-                    <optgroup label="Computer University (ကွန်ပျူတာတက္ကသိုလ်)">
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Computer Technology">Computer Technology</option>
-                        <option value="Information Technology">Information Technology</option>
-                    </optgroup>
-                    <optgroup label="GTC / Polytechnic (နည်းပညာတက္ကသိုလ်)">
-                        <option value="Civil Engineering">Civil Engineering</option>
-                        <option value="Electronic Engineering">Electronic Engineering</option>
-                        <option value="Electrical Power Engineering">Electrical Power Engineering</option>
-                        <option value="Mechanical Engineering">Mechanical Engineering</option>
-                        <option value="Information Technology Engineering">Information Technology Engineering</option>
-                    </optgroup>
+                    @foreach (var m in FilteredMajors)
+                    {
+                        <option value="@m">@m</option>
+                    }
                 </select>
             </div>
             <div class="input-group">
@@ -896,6 +941,7 @@
                                 <td>
                                     <select class="modern-input" @bind="PastExamSemester">
                                         <option value="">-- ရွေးချယ်ပါ --</option>
+                                        <option value="တက္ကသိုလ်ဝင်စာမေးပွဲ">တက္ကသိုလ်ဝင်စာမေးပွဲ</option>
                                         @if (SemesterList != null && SemesterList.Any())
                                         {
                                             @foreach (var sem in SemesterList)

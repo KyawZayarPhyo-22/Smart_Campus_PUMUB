@@ -35,30 +35,30 @@ public partial class Page_PositionList
 
     private string SearchInput = "";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadPositions();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadPositions();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
-    private string statusMessage;
+    private string statusMessage = "";
     private bool IsSuccess;
 
     // Delete Modal Controls
@@ -70,28 +70,12 @@ public partial class Page_PositionList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<PositionModel> GetFilteredPositions() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? PositionList
-        : PositionList.Where(p => p.PositionName != null && 
-                                  p.PositionName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<PositionModel> FilteredPositions => PositionList;
 
-    private IEnumerable<PositionModel> FilteredPositions
-    {
-        get
-        {
-            var allFiltered = GetFilteredPositions();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadPositions();
     }
 
     protected override async Task OnInitializedAsync()
@@ -126,15 +110,15 @@ public partial class Page_PositionList
         ErrorMessage = "";
         try
         {
-            // Backend API ၏ Route သတ်မှတ်ချက်အတိုင်း "position" သို့မဟုတ် "api/position" လိုအပ်သလို ညှိပေးပါဗျာ
-            var response = await HttpClientService.ExecuteAsync<List<PositionModel>>(
-                "position", 
+            var response = await HttpClientService.ExecuteAsync<PagedResult<PositionModel>>(
+                $"position/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
             );
 
             if (response != null)
             {
-                PositionList = response;
+                PositionList = response.Items;
+                TotalPages = response.TotalPages;
             }
         }
         catch (Exception ex)
@@ -150,12 +134,16 @@ public partial class Page_PositionList
     private void OpenDeleteModal(PositionModel position)
     {
         SelectedPosition = position;
+        statusMessage = "";
+        IsSuccess = false;
         ShowModal = true;
     }
 
     private void CloseDeleteModal()
     {
         SelectedPosition = null;
+        statusMessage = "";
+        IsSuccess = false;
         ShowModal = false;
     }
 
@@ -167,6 +155,7 @@ public partial class Page_PositionList
 
         IsProcessing = true;
         statusMessage = "ရာထူးကို ဖျက်သိမ်းနေပါသည်...";
+        IsSuccess = false;
 
         try
         {
@@ -179,18 +168,21 @@ public partial class Page_PositionList
             if (response?.IsSuccess == true)
             {
                 statusMessage = response.Message ?? "ရာထူး ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                IsSuccess = true;
                 SelectedPosition = null; // ဖျက်ပြီးသွားရင် ရွေးထားတာကို အလွတ်ပြန်ထားပေးတာက ပိုကောင်းပါတယ်
                 CloseDeleteModal();
                 await LoadPositions(); // List ကို အသစ်ပြန်ခေါ်ပါမယ်
             }
             else
             {
+                IsSuccess = false;
                 // API ကနေ BadRequest နဲ့ ပို့လိုက်တဲ့ Validation Message တွေ ဒီနေရာမှာ ပေါ်လာပါလိမ့်မယ်
                 statusMessage = response?.Message ?? "ရာထူး ဖျက်သိမ်း၍ မရပါ။ (အသုံးပြုနေသူများ ရှိနိုင်ပါသည်)";
             }
         }
         catch (Exception ex)
         {
+            IsSuccess = false;
             // Network အခက်အခဲ ဒါမှမဟုတ် တခြား Error တွေအတွက်
             statusMessage = $"စနစ်ချို့ယွင်းမှု ဖြစ်ပွားနေပါသည်။ Error: {ex.Message}";
         }

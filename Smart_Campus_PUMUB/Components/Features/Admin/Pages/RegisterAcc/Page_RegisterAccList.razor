@@ -40,50 +40,59 @@
         letter-spacing: 0.04em;
     }
 
-    /* ── Action Buttons ────────────────────────────── */
-    .btn-approve {
-        background: rgba(16, 185, 129, 0.12);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        border-radius: 8px;
-        padding: 5px 14px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-
-    .btn-approve:hover {
+    /* Action Buttons */
+    .btn-action-approve {
         background: #10b981;
-        color: #fff;
-    }
-
-    .btn-approve:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .btn-reject {
-        background: rgba(239, 68, 68, 0.1);
-        color: #f87171;
-        border: 1px solid rgba(239, 68, 68, 0.25);
-        border-radius: 8px;
-        padding: 5px 14px;
+        color: #ffffff;
+        border: 1px solid #10b981;
+        border-radius: 6px;
+        padding: 5px 12px;
         font-size: 0.82rem;
         font-weight: 600;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
     }
 
-    .btn-reject:hover {
-        background: #ef4444;
-        color: #fff;
+        .btn-action-approve:hover {
+            background: #059669;
+            color: #ffffff;
+            border-color: #059669;
+        }
+
+        .btn-action-approve:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+    .btn-action-reject {
+        background: #dc3545;
+        color: #ffffff;
+        border: 1px solid #dc3545;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
     }
 
-    .btn-reject:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+        .btn-action-reject:hover {
+            background: #bb2d3b;
+            color: #ffffff;
+            border-color: #bb2d3b;
+        }
+
+        .btn-action-reject:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
 
     /* ── Table ─────────────────────────────────────── */
     .acc-table {
@@ -238,26 +247,19 @@
     </div>
 </div>
 
-<!-- ── Table ────────────────────────────────────────────────────────── -->
-<div class="tech-card p-4">
-    @if (IsLoading)
+<!-- Table Section -->
+<div class="material-card p-0 overflow-hidden mb-4">
+    @if (Items == null || !Items.Any())
     {
-        <div class="text-center my-5">
-            <div class="spinner-border text-primary"></div>
-            <p class="text-secondary mt-2" style="font-size:0.85rem;">Data ဆွဲယူနေပါသည်...</p>
-        </div>
-    }
-    else if (!Items.Any())
-    {
-        <div class="text-center my-5 text-secondary">
+        <div class="text-center py-5 text-muted">
             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            <p>Request တစ်ခုမှ မတွေ့ပါ</p>
+            No records found.
         </div>
     }
     else
     {
-        <div class="table-responsive acc-table">
-            <table class="table align-middle mb-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 acc-table">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -268,7 +270,7 @@
                         <th>Status</th>
                         <th>Submitted</th>
                         <th class="text-center">Actions</th>
-                        <th class="text-center">Status</th>
+                        <th class="text-center">Acc Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -305,11 +307,11 @@
                                 <div class="d-flex justify-content-center gap-2">
                                      @if (item.Status == "Pending")
                                      {
-                                         <button class="btn-approve" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
-                                             <i class="bi bi-check-lg me-1"></i> Approve
+                                         <button class="btn-action-approve" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
+                                              <i class="bi bi-check-circle-fill"></i> Approve
                                          </button>
-                                         <button class="btn-reject" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
-                                             <i class="bi bi-x-lg me-1"></i> Reject
+                                         <button class="btn-action-reject" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
+                                              <i class="bi bi-x-circle-fill"></i> Reject
                                          </button>
                                      }
                                      else
@@ -318,20 +320,20 @@
                                              @item.ReviewedBy — @item.ReviewedDateTime?.ToString("dd-MM-yyyy")
                                          </span>
                                      }
-                                </div>
+                                 </div>
                             </td>
                             <td class="text-center">
                                 @if (item.NewStudentAccId.HasValue && item.NewStudentAccId > 0)
                                 {
                                     @if (item.AccountStatus == "Active")
                                     {
-                                        <button class="btn btn-sm btn-success" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => ToggleStudentAccountStatus(item)" disabled="@IsProcessing">
+                                        <button class="btn btn-sm btn-success" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
                                             <i class="bi bi-shield-check me-1"></i> Active
                                         </button>
                                     }
                                     else
                                     {
-                                        <button class="btn btn-sm btn-danger" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => ToggleStudentAccountStatus(item)" disabled="@IsProcessing">
+                                        <button class="btn btn-sm btn-danger" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
                                             <i class="bi bi-shield-slash me-1"></i> Inactive
                                         </button>
                                     }
@@ -344,6 +346,7 @@
                         </tr>
                         rowNo++;
                     }
+                }
                 </tbody>
             </table>
         </div>
@@ -453,6 +456,48 @@
                         {
                             <i class="bi bi-x-lg me-1"></i>
                             <span>Yes, Reject</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ── Status Modal ─────────────────────────────────────────────────── -->
+@if (ShowStatusModal && SelectedItem != null)
+{
+    <div class="modal show d-block" style="background:rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+                <div class="modal-header border-0 pb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:36px;height:36px;background:rgba(13,110,253,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-shield-check text-primary"></i>
+                        </div>
+                        <h5 class="text-primary mb-0">Confirm Status Change</h5>
+                    </div>
+                </div>
+                <div class="modal-body text-center text-white">
+                    <p class="text-secondary mb-3" style="font-size:0.87rem;">
+                        ဤအသုံးပြုသူ <strong>@SelectedItem.FullName</strong> ၏ Account Status အား 
+                        <strong class="@(string.Equals(SelectedItem.AccountStatus, "Active", StringComparison.OrdinalIgnoreCase) ? "text-danger" : "text-success")">
+                            @(string.Equals(SelectedItem.AccountStatus, "Active", StringComparison.OrdinalIgnoreCase) ? "Inactive" : "Active")
+                        </strong> သို့ ပြောင်းလဲရန် သေချာပါသလား?
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button class="btn btn-secondary" @onclick="CloseStatusModal" disabled="@IsProcessing">Cancel</button>
+                    <button class="btn btn-primary" @onclick="ConfirmToggleStatus" disabled="@IsProcessing">
+                        @if (IsProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            <span>Processing...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span>Confirm</span>
                         }
                     </button>
                 </div>

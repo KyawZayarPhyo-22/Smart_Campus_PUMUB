@@ -13,6 +13,7 @@ public partial class Page_UserCreate
 
     private UserCreateRequestModel Request = new();
     private List<RoleModel> RoleList = new();
+    private List<FacultyModel> FacultyList = new();
     private string statusMessage = "";
     private bool IsSuccess = false;
     private bool IsProcessing = false;
@@ -21,6 +22,7 @@ public partial class Page_UserCreate
     {
         Request.Status = "Active";
         RoleList = await HttpClientService.ExecuteAsync<List<RoleModel>>("role", EnumHttpMethod.Get) ?? new();
+        FacultyList = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get) ?? new();
     }
 
     // Username ကို Space ဖြုတ် Underscore တပ်ပြီး Special Character များ ဖယ်ရှားခြင်း

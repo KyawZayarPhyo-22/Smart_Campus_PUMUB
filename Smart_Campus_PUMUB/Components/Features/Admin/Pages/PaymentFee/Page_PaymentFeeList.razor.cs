@@ -29,26 +29,26 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
 
         private string SearchInput = "";
 
-        private void ApplyFilter()
+        private async Task ApplyFilter()
         {
             SearchTerm = SearchInput;
             CurrentPage = 1;
-            StateHasChanged();
+            await LoadFees();
         }
 
-        private void ResetFilter()
+        private async Task ResetFilter()
         {
             SearchInput = "";
             SearchTerm = "";
             CurrentPage = 1;
-            StateHasChanged();
+            await LoadFees();
         }
 
-        private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+        private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
         {
             if (e.Key == "Enter")
             {
-                ApplyFilter();
+                await ApplyFilter();
             }
         }
 
@@ -63,35 +63,12 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
         private int PageSize { get; set; } = 10;
         private int TotalPages { get; set; } = 1;
 
-        private IEnumerable<PaymentFeeModel> GetFilteredFees()
-        {
-            if (string.IsNullOrWhiteSpace(SearchTerm))
-            {
-                return FeeList;
-            }
-            return FeeList.Where(f => 
-                (f.ClassYear != null && f.ClassYear.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
-                (f.FeeName != null && f.FeeName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
-            );
-        }
+        private IEnumerable<PaymentFeeModel> FilteredFees => FeeList;
 
-        private IEnumerable<PaymentFeeModel> FilteredFees
-        {
-            get
-            {
-                var allFiltered = GetFilteredFees();
-                int count = allFiltered.Count();
-                int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-                TotalPages = calcPages < 1 ? 1 : calcPages;
-                if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-                return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-            }
-        }
-
-        private void OnPageChanged(int newPage)
+        private async Task OnPageChanged(int newPage)
         {
             CurrentPage = newPage;
-            StateHasChanged();
+            await LoadFees();
         }
 
         protected override async Task OnInitializedAsync()
@@ -125,8 +102,15 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
             ErrorMessage = "";
             try
             {
-                var response = await HttpClientService.ExecuteAsync<List<PaymentFeeModel>>("payment-fees", EnumHttpMethod.Get);
-                if (response != null) FeeList = response;
+                var response = await HttpClientService.ExecuteAsync<PagedResult<PaymentFeeModel>>(
+                    $"payment-fees/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
+                    EnumHttpMethod.Get
+                );
+                if (response != null)
+                {
+                    FeeList = response.Items;
+                    TotalPages = response.TotalPages;
+                }
             }
             catch (Exception ex)
             {

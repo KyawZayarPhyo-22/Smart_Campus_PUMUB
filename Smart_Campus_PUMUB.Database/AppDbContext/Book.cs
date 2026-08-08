@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -23,6 +23,9 @@ public partial class Book
     [StringLength(255)]
     [Unicode(false)]
     public string? Image { get; set; }
+
+    [StringLength(500)]
+    public string? FilePath { get; set; }
 
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }

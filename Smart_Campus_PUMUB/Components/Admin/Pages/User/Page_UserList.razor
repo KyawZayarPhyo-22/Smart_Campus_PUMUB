@@ -4,6 +4,8 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
+<PageTitle>User Management</PageTitle>
+
 <style>
     .custom-table {
         background: rgba(20, 24, 33, 0.6);
@@ -88,12 +90,23 @@
         </div>
 
         <!-- Role Dropdown -->
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select class="form-select material-input" @bind="SelectedRoleInput">
                 <option value="All">All Roles</option>
                 @foreach (var role in RoleList)
                 {
                     <option value="@role.RoleName">@role.RoleName</option>
+                }
+            </select>
+        </div>
+
+        <!-- Faculty Dropdown -->
+        <div class="col-md-3">
+            <select class="form-select material-input" @bind="SelectedFacultyInput">
+                <option value="All">All Faculties</option>
+                @foreach (var faculty in FacultyList)
+                {
+                    <option value="@faculty.FacultyName">@faculty.FacultyName</option>
                 }
             </select>
         </div>
@@ -134,10 +147,11 @@
                         <thead>
                             <tr>
                                 <th>No.</th>
-                                <th>User</th>
                                 <th>Username</th>
                                 <th>Roll No</th>
+                                <th>Email</th>
                                 <th>Role</th>
+                                <th>Faculty</th>
                                 <th class="text-center">Status</th>
                                 @if (canManageUser)
                                 {
@@ -153,18 +167,62 @@
                             {
                                 <tr class="table-row-hover">
                                     <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="fw-semibold text-white">@user.FullName</span>
-                                        </div>
-                                    </td>
                                     <td><code class="text-info">@user.UserName</code></td>
                                     <td><span class="text-white">@(user.RoleNo ?? "-")</span></td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(user.Email))
+                                        {
+                                            <span style="font-size:0.83rem; color:#93c5fd;">@user.Email</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" style="font-size:0.8rem;">-</span>
+                                        }
+                                    </td>
                                     <td>
                                         <span
                                             class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
                                             @user.RoleName
                                         </span>
+                                    </td>
+                                    <td>
+                                        @if (user.RoleName == "Super Admin" || user.RoleId == 4)
+                                        {
+                                            <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.35); font-weight: 600; font-size: 0.8rem;">
+                                                Faculty of Computing & Faculty of Engineering
+                                            </span>
+                                        }
+                                        else if (!string.IsNullOrEmpty(user.FacultyName))
+                                        {
+                                            @if (user.FacultyName.Contains("&"))
+                                            {
+                                                <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.35); font-weight: 600; font-size: 0.8rem;">
+                                                    @user.FacultyName
+                                                </span>
+                                            }
+                                            else if (user.FacultyName.Contains("Computing", StringComparison.OrdinalIgnoreCase) || user.FacultyName.Contains("Computer", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.35); font-weight: 600; font-size: 0.8rem;">
+                                                    @user.FacultyName
+                                                </span>
+                                            }
+                                            else if (user.FacultyName.Contains("Engineering", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed; border: 1px solid rgba(124, 58, 237, 0.35); font-weight: 600; font-size: 0.8rem;">
+                                                    @user.FacultyName
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-3 py-1.5" style="font-size: 0.8rem;">
+                                                    @user.FacultyName
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted" style="font-size:0.8rem;">-</span>
+                                        }
                                     </td>
                                     <td class="text-center">
                                         @if (user.Status == "Active")

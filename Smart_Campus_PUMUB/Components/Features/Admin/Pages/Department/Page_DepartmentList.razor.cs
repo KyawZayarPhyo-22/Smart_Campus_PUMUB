@@ -14,6 +14,7 @@ public partial class Page_DepartmentList : ComponentBase
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     private List<DepartmentModel> DepartmentList { get; set; } = new();
+    private List<Smart_Campus_PUMUB.Database.AppDbContext.Faculty> FacultyList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
     private bool IsLoading { get; set; } = true;
     private bool IsProcessing { get; set; } = false;
@@ -26,33 +27,33 @@ public partial class Page_DepartmentList : ComponentBase
     private string SelectedFacultyInput = "All";
     private string SelectedFaculty = "All";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         SelectedFaculty = SelectedFacultyInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadDepartments();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         SelectedFacultyInput = "All";
         SelectedFaculty = "All";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadDepartments();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
-    private string? statusMessage;
+    private string statusMessage = "";
 
     public bool IsSuccess { get; private set; }
     private bool ShowModal { get; set; } = false;
@@ -63,40 +64,29 @@ public partial class Page_DepartmentList : ComponentBase
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<DepartmentModel> GetFilteredDepartments()
-    {
-        var list = DepartmentList.AsEnumerable();
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            list = list.Where(d => d.DepartmentName != null && d.DepartmentName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
-        }
-        if (SelectedFaculty != "All")
-        {
-            list = list.Where(d => d.FacultyName == SelectedFaculty);
-        }
-        return list;
-    }
+    private IEnumerable<DepartmentModel> FilteredDepartments => DepartmentList;
 
-    private IEnumerable<DepartmentModel> FilteredDepartments
-    {
-        get
-        {
-            var allFiltered = GetFilteredDepartments();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadDepartments();
     }
 
-    protected override async Task OnInitializedAsync() => await LoadDepartments();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFaculties();
+        await LoadDepartments();
+    }
+
+    private async Task LoadFaculties()
+    {
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<List<Smart_Campus_PUMUB.Database.AppDbContext.Faculty>>("faculty", EnumHttpMethod.Get);
+            if (response != null) FacultyList = response;
+        }
+        catch { }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -123,9 +113,15 @@ public partial class Page_DepartmentList : ComponentBase
         IsLoading = true;
         try
         {
-            // API Endpoint (သင့် Controller တွင် 'department' ဟု သတ်မှတ်ထားသည်ဟု ယူဆပါသည်)
-            var response = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get);
-            if (response != null) DepartmentList = response;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<DepartmentModel>>(
+                $"department/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&facultyName={Uri.EscapeDataString(SelectedFaculty)}", 
+                EnumHttpMethod.Get
+            );
+            if (response != null)
+            {
+                DepartmentList = response.Items;
+                TotalPages = response.TotalPages;
+            }
         }
         catch { }
         finally { IsLoading = false; }

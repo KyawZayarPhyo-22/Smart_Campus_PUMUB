@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
@@ -7,7 +8,6 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
 [Route("api/rules")]
-[Authorize]
 public class RulesRegulationsController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
@@ -18,7 +18,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpGet]
-    [Permission("Rules.View")]
+    [AllowAnonymous]
     public IActionResult GetRules()
     {
          var lst = _db.RulesRegulations
@@ -35,7 +35,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Permission("Rules.View")]
+    [AllowAnonymous]
     public IActionResult GetRule(int id)
     {
         if (id <= 0)
@@ -126,6 +126,52 @@ public class RulesRegulationsController : ControllerBase
             IsSuccess = result > 0,
             Message = result > 0 ? "Delete Successfully" : "Delete Failed"
         });
+    }
+
+    [HttpGet("paginate")]
+    [AllowAnonymous]
+    public IActionResult GetRulesPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _db.RulesRegulations
+            .AsNoTracking()
+            .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(x => (x.Title != null && x.Title.Contains(searchTerm)) || 
+                                     (x.Description != null && x.Description.Contains(searchTerm)));
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .OrderByDescending(x => x.RuleId)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new RuleModel
+            {
+                RuleId = x.RuleId,
+                Title = x.Title,
+                Description = x.Description,
+                Penalty = x.Penalty
+            })
+            .ToList();
+
+        var result = new PagedResult<RuleModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
     }
 }
 

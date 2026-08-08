@@ -76,7 +76,7 @@
             <div class="col-md-3">
                 <select class="form-select material-input" @bind="SelectedLocationInput">
                     <option value="All">All Locations</option>
-                    @foreach (var loc in ActivityList.Select(a => a.Location).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                    @foreach (var loc in LocationList.Where(l => !string.IsNullOrEmpty(l)))
                     {
                         <option value="@loc">@loc</option>
                     }

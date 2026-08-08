@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
+using Smart_Campus_PUMUB.WebApi.Services;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -16,21 +17,40 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 public class StudentController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
+    private readonly IFacultyDataScopeService _scopeService;
 
-    public StudentController(SmartCampusDbContext db)
+    public StudentController(SmartCampusDbContext db, IFacultyDataScopeService scopeService)
     {
         _db = db;
+        _scopeService = scopeService;
     }
 
     // 🎯 ၁။ GET: api/student (ကျောင်းသားအားလုံးစာရင်း - Soft Delete မဖြစ်သေးတာပဲပြမည်)
     [HttpGet]
     [Permission("Student.View")]
-    public IActionResult GetStudents()
+    public IActionResult GetStudents([FromQuery] int? facultyId = null)
     {
+        // Hierarchical RBAC Data Scoping:
+        if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+        {
+            var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
+            if (scopedFacultyId.HasValue)
+            {
+                facultyId = scopedFacultyId.Value;
+            }
+        }
+
         // 1. Get all active users who are students
-        var studentUsers = _db.Users
-            .Where(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null))
-            .ToList();
+        var studentUsersQuery = _db.Users
+            .Where(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
+
+        // Faculty-based scoping: if facultyId provided, filter users by faculty
+        if (facultyId.HasValue && facultyId.Value > 0)
+        {
+            studentUsersQuery = studentUsersQuery.Where(u => u.FacultyId == facultyId.Value);
+        }
+
+        var studentUsers = studentUsersQuery.ToList();
 
         // 2. Check if they have a Student record. If not, create one.
         bool hasNewStudents = false;
@@ -42,8 +62,8 @@ public class StudentController : ControllerBase
                 var newStudent = new Student
                 {
                     UserId = user.UserId,
-                    CurrentClassYear = "First Year", // default
-                    CurrentMajor = "N/A", // default
+                    CurrentClassYear = "", // default
+                    CurrentMajor = "", // default
                     Status = "Active",
                     CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
                     IsDelete = false
@@ -58,28 +78,58 @@ public class StudentController : ControllerBase
             _db.SaveChanges();
         }
 
-        var lst = _db.Students
+        // 3. Get all active Majors for the Faculty join lookup
+        var majors = _db.Majors
+            .Include(m => m.Faculty)
+            .Where(m => m.IsDelete == false || m.IsDelete == null)
+            .ToList();
+
+        var studentsQuery = _db.Students
             .Include(s => s.User)
-            .Where(x => (x.IsDelete == false || x.IsDelete == null) && x.User.RoleId == 3 && (x.User.IsDelete == false || x.User.IsDelete == null))
+                .ThenInclude(u => u.Faculty)
+            .Where(x => (x.IsDelete == false || x.IsDelete == null) && x.User.RoleId == 3 && (x.User.IsDelete == false || x.User.IsDelete == null));
+
+        // Apply faculty filter at the DB query level
+        if (facultyId.HasValue && facultyId.Value > 0)
+        {
+            studentsQuery = studentsQuery.Where(x => x.User.FacultyId == facultyId.Value);
+        }
+
+        var lst = studentsQuery
             .OrderByDescending(s => s.StudentId)
-            .Select(s => new StudentModel
+            .ToList()
+            .Select(s =>
             {
-                StudentId = s.StudentId,
-                UserId = s.UserId,
-                FullName = s.User.FullName,
-                CurrentClassYear = s.CurrentClassYear,
-                CurrentMajor = s.CurrentMajor,
-                CurrentRollNo = s.User.RoleNo,
-                Status = s.Status ?? "Active",
-                Sem1_Result = s.Sem1_Result,
-                Sem2_Result = s.Sem2_Result,
-                Sem3_Result = s.Sem3_Result,
-                Sem4_Result = s.Sem4_Result,
-                Sem5_Result = s.Sem5_Result,
-                Sem6_Result = s.Sem6_Result,
-                Sem7_Result = s.Sem7_Result,
-                Sem8_Result = s.Sem8_Result,
-                Sem9_Result = s.Sem9_Result
+                var currentMajorText = (s.CurrentMajor ?? "").Trim();
+                // Student.CurrentMajor (string) နဲ့ Major.MajorName တူတာ သို့မဟုတ် ပါဝင်တာ ရှာ → Faculty ရမည်
+                var matchedMajor = majors.FirstOrDefault(m =>
+                    !string.IsNullOrEmpty(currentMajorText) && (
+                        string.Equals(m.MajorName.Trim(), currentMajorText, StringComparison.OrdinalIgnoreCase) ||
+                        m.MajorName.Trim().ToLower().Contains(currentMajorText.ToLower()) ||
+                        currentMajorText.ToLower().Contains(m.MajorName.Trim().ToLower())
+                    )
+                );
+
+                return new StudentModel
+                {
+                    StudentId = s.StudentId,
+                    UserId = s.UserId,
+                    FullName = s.User.FullName,
+                    CurrentClassYear = s.CurrentClassYear,
+                    CurrentMajor = s.CurrentMajor,
+                    FacultyName = s.User?.Faculty?.FacultyName ?? matchedMajor?.Faculty?.FacultyName,
+                    CurrentRollNo = s.User.RoleNo,
+                    Status = s.Status ?? "Active",
+                    Sem1_Result = s.Sem1_Result,
+                    Sem2_Result = s.Sem2_Result,
+                    Sem3_Result = s.Sem3_Result,
+                    Sem4_Result = s.Sem4_Result,
+                    Sem5_Result = s.Sem5_Result,
+                    Sem6_Result = s.Sem6_Result,
+                    Sem7_Result = s.Sem7_Result,
+                    Sem8_Result = s.Sem8_Result,
+                    Sem9_Result = s.Sem9_Result
+                };
             })
             .ToList();
 
@@ -91,7 +141,11 @@ public class StudentController : ControllerBase
     [Authorize(Roles = "Admin,admin")]
     public IActionResult GetStudent(int id)
     {
-        var item = _db.Students.Include(s => s.User).FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
+        var item = _db.Students
+            .Include(s => s.User)
+                .ThenInclude(u => u.Faculty)
+            .FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
+
         if (item is null)
         {
             return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားကို ရှာမတွေ့ပါ။" });
@@ -104,6 +158,7 @@ public class StudentController : ControllerBase
             FullName = item.User?.FullName,
             CurrentClassYear = item.CurrentClassYear,
             CurrentMajor = item.CurrentMajor,
+            FacultyName = item.User?.Faculty?.FacultyName,
             CurrentRollNo = item.User != null ? item.User.RoleNo : item.CurrentRollNo,
             Status = item.Status ?? "Active",
             Sem1_Result = item.Sem1_Result,
@@ -121,7 +176,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
-    [Permission("Student.View")]
+    [AllowAnonymous]
     public IActionResult GetStudentByUserId(int userId)
     {
         var userCheck = _db.Users.FirstOrDefault(u => u.UserId == userId && u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
@@ -148,6 +203,50 @@ public class StudentController : ControllerBase
 
             item = _db.Students.Include(s => s.User).FirstOrDefault(x => x.UserId == userId && (x.IsDelete == false || x.IsDelete == null));
         }
+
+        if (item is null)
+        {
+            return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားမှတ်တမ်းကို ရှာမတွေ့ပါ။" });
+        }
+
+        var data = new StudentModel
+        {
+            StudentId = item.StudentId,
+            UserId = item.UserId,
+            FullName = item.User?.FullName,
+            CurrentClassYear = item.CurrentClassYear,
+            CurrentMajor = item.CurrentMajor,
+            CurrentRollNo = item.User != null ? item.User.RoleNo : item.CurrentRollNo,
+            Status = item.Status ?? "Active",
+            Sem1_Result = item.Sem1_Result,
+            Sem2_Result = item.Sem2_Result,
+            Sem3_Result = item.Sem3_Result,
+            Sem4_Result = item.Sem4_Result,
+            Sem5_Result = item.Sem5_Result,
+            Sem6_Result = item.Sem6_Result,
+            Sem7_Result = item.Sem7_Result,
+            Sem8_Result = item.Sem8_Result,
+            Sem9_Result = item.Sem9_Result
+        };
+
+        return Ok(data);
+    }
+
+    [HttpGet("by-roll/{rollNo}")]
+    [AllowAnonymous]
+    public IActionResult GetStudentByRollNo(string rollNo)
+    {
+        if (string.IsNullOrWhiteSpace(rollNo))
+        {
+            return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "Roll No ဖြည့်ပါ" });
+        }
+
+        string cleanRoll = rollNo.Trim();
+        var item = _db.Students
+            .Include(s => s.User)
+            .FirstOrDefault(x => (x.IsDelete == false || x.IsDelete == null) &&
+                                 ((x.User != null && x.User.RoleNo != null && x.User.RoleNo.ToLower() == cleanRoll.ToLower()) ||
+                                  (x.CurrentRollNo != null && x.CurrentRollNo.ToLower() == cleanRoll.ToLower())));
 
         if (item is null)
         {
@@ -243,7 +342,7 @@ public class StudentController : ControllerBase
         {
             ActivityTitle = "New Student Registered",
             Description = $"{request.Name} was added to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -297,9 +396,10 @@ public class StudentController : ControllerBase
 
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Student Updated",
-            Description = $"{request.CurrentClassYear} {request.CurrentMajor} was updated to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            ActivityTitle = "Student Updated",
+            Description = $"Student '{item.CurrentRollNo ?? item.CurrentMajor}' ({item.CurrentClassYear}) was updated in the System.",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+            CreatedBy = "Admin"
         });
         _db.SaveChanges();
 
@@ -383,6 +483,9 @@ public class StudentController : ControllerBase
         if (request.Sem8_Result != null) { item.Sem8_Result = request.Sem8_Result == "None" ? null : request.Sem8_Result; updateCount++; }
         if (request.Sem9_Result != null) { item.Sem9_Result = request.Sem9_Result == "None" ? null : request.Sem9_Result; updateCount++; }
 
+        // Check if student passed all 9 semesters -> Auto deactivate user account
+        CheckAndAutoDeactivateGraduatedStudent(item);
+
         // ၇။ ဘာအချက်အလက်မှ ပြောင်းလဲလာခြင်း မရှိလျှင် BadRequest ပြန်မည်
         if (updateCount == 0)
         {
@@ -396,9 +499,10 @@ public class StudentController : ControllerBase
 
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Student Updated",
-            Description = $"{request.CurrentClassYear} {request.CurrentMajor} was updated to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            ActivityTitle = "Student Updated",
+            Description = $"Student '{item.CurrentRollNo ?? item.CurrentMajor}' ({item.CurrentClassYear}) was partially updated in the System.",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+            CreatedBy = "Admin"
         });
         _db.SaveChanges();
 
@@ -446,9 +550,10 @@ public class StudentController : ControllerBase
 
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = "Student deleted",
-            Description = $"{item.CurrentClassYear} {item.CurrentMajor} was deleted to the System.",
-            CreatedDateTime = DateTime.UtcNow
+            ActivityTitle = "Student Deleted",
+            Description = $"Student '{item.CurrentRollNo ?? item.CurrentMajor}' ({item.CurrentClassYear}) was deleted from the System.",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+            CreatedBy = "Admin"
         });
         _db.SaveChanges();
 
@@ -459,12 +564,78 @@ public class StudentController : ControllerBase
         });
     }
 
+    private void CheckAndAutoDeactivateGraduatedStudent(Student student)
+    {
+        var semResults = new[]
+        {
+            student.Sem1_Result, student.Sem2_Result, student.Sem3_Result,
+            student.Sem4_Result, student.Sem5_Result, student.Sem6_Result,
+            student.Sem7_Result, student.Sem8_Result, student.Sem9_Result
+        };
+
+        bool allPassed = semResults.All(r => 
+            !string.IsNullOrEmpty(r) &&
+            (string.Equals(r, "Pass", StringComparison.OrdinalIgnoreCase) || 
+             string.Equals(r, "Credit_Transferred", StringComparison.OrdinalIgnoreCase)));
+
+        if (allPassed)
+        {
+            if (student.UserId > 0)
+            {
+                var user = _db.Users.FirstOrDefault(u => u.UserId == student.UserId);
+                if (user != null && user.Status != "Inactive")
+                {
+                    user.Status = "Inactive";
+                }
+            }
+            student.Status = "Inactive";
+        }
+    }
+
     // 🎯 ၆။ GET: api/student/count/active (တက်ကြွဆဲ ကျောင်းသားအရေအတွက်)
     [HttpGet("count/active")]
-    [Permission("Student.View")]
+    [AllowAnonymous]
     public IActionResult GetActiveStudentCount()
     {
-        var count = _db.Users.Count(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
+        // 1. Check for any students with all 9 semesters passed and deactivate their user accounts
+        var allStudents = _db.Students.Where(s => (s.IsDelete == false || s.IsDelete == null)).ToList();
+        bool changes = false;
+        foreach (var s in allStudents)
+        {
+            var semResults = new[]
+            {
+                s.Sem1_Result, s.Sem2_Result, s.Sem3_Result,
+                s.Sem4_Result, s.Sem5_Result, s.Sem6_Result,
+                s.Sem7_Result, s.Sem8_Result, s.Sem9_Result
+            };
+
+            if (semResults.All(r => !string.IsNullOrEmpty(r) && (string.Equals(r, "Pass", StringComparison.OrdinalIgnoreCase) || string.Equals(r, "Credit_Transferred", StringComparison.OrdinalIgnoreCase))))
+            {
+                if (s.UserId > 0)
+                {
+                    var u = _db.Users.FirstOrDefault(usr => usr.UserId == s.UserId);
+                    if (u != null && u.Status != "Inactive")
+                    {
+                        u.Status = "Inactive";
+                        changes = true;
+                    }
+                }
+                if (s.Status != "Inactive")
+                {
+                    s.Status = "Inactive";
+                    changes = true;
+                }
+            }
+        }
+        if (changes) _db.SaveChanges();
+
+        // 2. Count Active students from User Management (Users with RoleId == 3 / Student role and Status == "Active")
+        var count = _db.Users.Count(u => 
+            (u.RoleId == 3 || (u.Role != null && u.Role.RoleName == "Student")) && 
+            u.Status == "Active" && 
+            (u.IsDelete == false || u.IsDelete == null)
+        );
+
         return Ok(new { Count = count });
     }
 
@@ -521,6 +692,12 @@ public class StudentController : ControllerBase
             })
             .ToList();
 
+        var studentImage = _db.StudentRegistrations
+            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null) && !string.IsNullOrEmpty(r.StudentImage))
+            .OrderByDescending(r => r.RegistrationId)
+            .Select(r => r.StudentImage)
+            .FirstOrDefault();
+
         return Ok(new
         {
             StudentId     = student.StudentId,
@@ -535,7 +712,7 @@ public class StudentController : ControllerBase
             Dob           = reg?.Dob,
             Email         = reg?.Email,
             Phone         = (string?)null,
-            StudentImage  = reg?.StudentImage,
+            StudentImage  = studentImage,
             Sem1_Result   = student.Sem1_Result,
             Sem2_Result   = student.Sem2_Result,
             Sem3_Result   = student.Sem3_Result,
@@ -553,16 +730,18 @@ public class StudentController : ControllerBase
     [HttpPut("profile/{userId}/image")]
     public IActionResult UpdateStudentProfileImage(int userId, [FromBody] StudentProfileImageRequest request)
     {
-        var reg = _db.StudentRegistrations
+        var regs = _db.StudentRegistrations
             .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
-            .OrderByDescending(r => r.RegistrationId)
-            .FirstOrDefault();
+            .ToList();
 
-        if (reg == null)
+        if (!regs.Any())
             return NotFound(new { IsSuccess = false, Message = "ကျောင်းအပ်နှံမှု မှတ်တမ်းကို ရှာမတွေ့ပါ။" });
 
-        reg.StudentImage = request.ImageBase64;
-        reg.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+        foreach (var r in regs)
+        {
+            r.StudentImage = request.ImageBase64;
+            r.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+        }
         _db.SaveChanges();
 
         return Ok(new { IsSuccess = true, Message = "Profile ဓာတ်ပုံ ပြောင်းလဲခြင်း အောင်မြင်ပါသည်။" });

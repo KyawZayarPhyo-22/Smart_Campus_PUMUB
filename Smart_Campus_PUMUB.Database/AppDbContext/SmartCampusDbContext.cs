@@ -54,6 +54,8 @@ public partial class SmartCampusDbContext : DbContext
     public virtual DbSet<RegisterAccount> RegisterAccounts { get; set; }
     public virtual DbSet<StudentPersonalInfo> StudentPersonalInfos { get; set; }
     public virtual DbSet<NewStudentAcc> NewStudentAccs { get; set; }
+    public virtual DbSet<Major> Majors { get; set; }
+    public virtual DbSet<RoleHierarchy> RoleHierarchies { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -197,6 +199,11 @@ public partial class SmartCampusDbContext : DbContext
             entity.HasOne(d => d.Semester).WithMany(p => p.Subjects)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Subject__Semeste__628FA481");
+
+            entity.HasOne(d => d.Faculty).WithMany(p => p.Subjects)
+                .HasForeignKey(d => d.FacultyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Subject_Faculty");
         });
 
         modelBuilder.Entity<Tutor>(entity =>
@@ -228,6 +235,11 @@ public partial class SmartCampusDbContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__User__Role_id__68487DD7");
+
+            entity.HasOne(d => d.Faculty).WithMany(p => p.Users)
+                .HasForeignKey(d => d.FacultyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_User_Faculty");
         });
 
         modelBuilder.Entity<RegisterAccount>(entity =>
@@ -244,6 +256,29 @@ public partial class SmartCampusDbContext : DbContext
             entity.Property(e => e.AccountStatus).HasDefaultValue("Active");
             entity.Property(e => e.MustChangePassword).HasDefaultValue(true);
             entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
+        });
+
+        modelBuilder.Entity<Major>(entity =>
+        {
+            entity.HasKey(e => e.MajorId).HasName("PK_Major");
+            entity.Property(e => e.CreatedDateTime).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.IsDelete).HasDefaultValue(false);
+            entity.HasOne(d => d.Faculty).WithMany(p => p.Majors)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Major_Faculty");
+        });
+
+        modelBuilder.Entity<RoleHierarchy>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(d => d.ParentRole)
+                .WithMany()
+                .HasForeignKey(d => d.ParentRoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(d => d.ChildRole)
+                .WithMany()
+                .HasForeignKey(d => d.ChildRoleId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         OnModelCreatingPartial(modelBuilder);

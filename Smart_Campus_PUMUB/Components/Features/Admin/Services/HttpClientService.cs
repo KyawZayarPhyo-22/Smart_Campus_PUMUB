@@ -178,8 +178,48 @@ public class HttpClientService
         await AttachTokenAsync(client);
 
         var responseMessage = await client.PostAsync(url, content);
-
         var resJson = await responseMessage.Content.ReadAsStringAsync();
+
+        if (!responseMessage.IsSuccessStatusCode)
+        {
+            if (!string.IsNullOrWhiteSpace(resJson))
+            {
+                try
+                {
+                    var resultObj = JsonConvert.DeserializeObject<T>(resJson);
+                    if (resultObj != null)
+                    {
+                        var msgCheck = typeof(T).GetProperty("Message")?.GetValue(resultObj)?.ToString();
+                        if (!string.IsNullOrWhiteSpace(msgCheck)) return resultObj;
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var jObj = Newtonsoft.Json.Linq.JObject.Parse(resJson);
+                    string? msg = jObj["message"]?.ToString() ?? jObj["Message"]?.ToString() ?? jObj["title"]?.ToString();
+                    if (string.IsNullOrWhiteSpace(msg) && jObj["errors"] != null)
+                    {
+                        msg = jObj["errors"]?.ToString();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(msg))
+                    {
+                        var failObj = System.Activator.CreateInstance<T>();
+                        typeof(T).GetProperty("Message")?.SetValue(failObj, msg);
+                        typeof(T).GetProperty("IsSuccess")?.SetValue(failObj, false);
+                        return failObj;
+                    }
+                }
+                catch { }
+            }
+
+            var errObj = System.Activator.CreateInstance<T>();
+            typeof(T).GetProperty("Message")?.SetValue(errObj, $"HTTP Error {(int)responseMessage.StatusCode} ({responseMessage.ReasonPhrase}): {(string.IsNullOrWhiteSpace(resJson) ? "No response details" : resJson)}");
+            typeof(T).GetProperty("IsSuccess")?.SetValue(errObj, false);
+            return errObj;
+        }
 
         if (string.IsNullOrWhiteSpace(resJson))
             return default;

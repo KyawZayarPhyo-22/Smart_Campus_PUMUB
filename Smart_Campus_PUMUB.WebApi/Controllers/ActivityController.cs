@@ -27,7 +27,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             {
                 ActivityTitle = title,
                 Description = description,
-                CreatedDateTime = DateTime.UtcNow,
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
                 IsDelete = false
             });
             _db.SaveChanges();
@@ -65,17 +65,14 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         {
             if (string.IsNullOrEmpty(title)) return false;
 
-            // စာသားအားလုံးကို lowercase ပြောင်းလိုက်ပါ
             var t = title.ToLower();
 
-            // Log လို သတ်မှတ်ထားတဲ့ စာသားအပိုင်းအစများ (Keywords)
             var logKeywords = new List<string>
-    {
-        "uploaded", "updated", "deleted", "added","removed",
-        "department", "position", "book", "role", "student", "semester"
-    };
+            {
+                "uploaded", "updated", "deleted", "added", "removed", "registered", "toggled", "created",
+                "department", "position", "book", "role", "student", "semester", "tutor", "user", "account", "login", "category", "faculty", "subject", "payment", "rule", "fee"
+            };
 
-            // Title ထဲမှာ အပေါ်က စာလုံးတွေထဲက တစ်ခုခု ပါနေရင် System Log လို သတ်မှတ်မယ်
             return logKeywords.Any(k => t.Contains(k));
         }
 
@@ -199,31 +196,105 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return Ok(new { Count = count });
         }
 
-        [HttpGet("recent")]
-        public IActionResult GetRecentActivities()
-        {
-            // ၁။ Database မှ Data ကို အရင်ဆွဲထုတ်ပါ (ToList() သုံးလိုက်သည့်အတွက် Query ပြီးဆုံးသွားသည်)
-            var activities = _db.Activities
-                                 .AsNoTracking()
-                                 .Where(x => x.IsDelete == false
-                                 && x.ActivityTitle != "New Activity Uploaded"
-                                && x.ActivityTitle != "Activity Updated"
-                                && x.ActivityTitle != "Activity deleted")
-                                 .OrderByDescending(x => x.CreatedDateTime)
-                                 .Take(5)
-                                 .ToList(); // 👈 ဒီနေရာမှာ Memory ထဲရောက်သွားပြီ
+    [HttpGet("locations")]
+    [AllowAnonymous]
+    public IActionResult GetLocations()
+    {
+        var locations = _db.Activities
+            .AsNoTracking()
+            .Where(x => (x.IsDelete == false || x.IsDelete == null) && x.Location != null && x.Location != "")
+            .Select(x => x.Location)
+            .Distinct()
+            .ToList();
+        return Ok(locations);
+    }
 
-            // ၂။ Memory ထဲရောက်မှ Icon ကို Mapping လုပ်ပါ
-            var recentActivities = activities.Select(x => new
+    [HttpGet("paginate")]
+    [AllowAnonymous]
+    public IActionResult GetActivitiesPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? location = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var allActivities = _db.Activities
+            .AsNoTracking()
+            .Where(x => x.IsDelete == false || x.IsDelete == null)
+            .ToList();
+
+        // System/Audit log များကို ဖယ်ထုတ်ပါ
+        var filtered = allActivities
+            .Where(x => !IsSystemLog(x.ActivityTitle));
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            filtered = filtered.Where(x => (x.ActivityTitle != null && x.ActivityTitle.ToLower().Contains(term)) ||
+                                           (x.Description != null && x.Description.ToLower().Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(location) && !location.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            filtered = filtered.Where(x => x.Location != null && x.Location.Equals(location, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var totalCount = filtered.Count();
+
+        var items = filtered
+            .OrderByDescending(x => x.CreatedDateTime)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ActivityModel
             {
+                ActivityId = x.ActivityId,
+                ActivityTitle = x.ActivityTitle,
+                Image = x.Image,
+                Description = x.Description,
+                Location = x.Location
+            })
+            .ToList();
+
+        var result = new PagedResult<ActivityModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
+
+    [HttpGet("recent")]
+    public IActionResult GetRecentActivities()
+    {
+        // DB ကနေ delete မဖြစ်သောအားလုံး ဆွဲထုတ်ပြီး memory ထဲ IsSystemLog() နဲ့ စစ်မည်
+        var allActivities = _db.Activities
+                             .AsNoTracking()
+                             .Where(x => x.IsDelete == false || x.IsDelete == null)
+                             .OrderByDescending(x => x.CreatedDateTime)
+                             .ToList();
+
+        // IsSystemLog() = true ဖြစ်မှသာ audit log → Recent Activity မှာ ပြမည်
+        // Campus events (Football, Tennis etc.) တွေ IsSystemLog() = false ဖြစ်တဲ့အတွက် ဖယ်ထွက်သွားမည်
+        var recentActivities = allActivities
+            .Where(x => IsSystemLog(x.ActivityTitle ?? ""))
+            .Take(10)
+            .Select(x => new
+            {
+                ActivityId = x.ActivityId,
                 ActivityTitle = x.ActivityTitle,
                 Description = x.Description,
                 CreatedDateTime = x.CreatedDateTime,
-                Icon = GetIconByActivityType(x.ActivityTitle) // 👈 အခုဆိုရင် Error မတက်တော့ပါ
+                CreatedBy = !string.IsNullOrWhiteSpace(x.CreatedBy) ? x.CreatedBy : "Admin",
+                Icon = GetIconByActivityType(x.ActivityTitle ?? "")
             }).ToList();
 
-            return Ok(recentActivities);
-        }
+        return Ok(recentActivities);
+    }
         // Activity အမျိုးအစားအလိုက် Icon သတ်မှတ်ပေးမည့် Helper Method
         private string GetIconByActivityType(string title)
         {

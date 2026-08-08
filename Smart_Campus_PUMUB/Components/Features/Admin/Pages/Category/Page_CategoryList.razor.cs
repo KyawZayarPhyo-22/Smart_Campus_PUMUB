@@ -29,30 +29,30 @@ public partial class Page_CategoryList
 
     private string SearchInput = "";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadCategories();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadCategories();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
-    private string statusMessage;
+    private string statusMessage = "";
 
     public bool IsSuccess { get; private set; }
     private bool ShowModal { get; set; } = false;
@@ -63,27 +63,12 @@ public partial class Page_CategoryList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<CategoryModel> GetFilteredCategories() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? CategoryList
-        : CategoryList.Where(c => c.CategoryName != null && c.CategoryName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<CategoryModel> FilteredCategories => CategoryList;
 
-    private IEnumerable<CategoryModel> FilteredCategories
-    {
-        get
-        {
-            var allFiltered = GetFilteredCategories();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadCategories();
     }
 
     protected override async Task OnInitializedAsync()
@@ -117,8 +102,15 @@ public partial class Page_CategoryList
         ErrorMessage = "";
         try
         {
-            var response = await HttpClientService.ExecuteAsync<List<CategoryModel>>("category", EnumHttpMethod.Get);
-            if (response != null) CategoryList = response;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<CategoryModel>>(
+                $"category/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
+                EnumHttpMethod.Get
+            );
+            if (response != null)
+            {
+                CategoryList = response.Items;
+                TotalPages = response.TotalPages;
+            }
         }
         catch (Exception ex)
         {

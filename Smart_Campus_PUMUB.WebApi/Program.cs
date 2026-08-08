@@ -8,6 +8,15 @@ using Smart_Campus_PUMUB.WebApi.Filters;
 var builder = WebApplication.CreateBuilder(args);
 
 
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100_000_000;
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100_000_000;
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -51,6 +60,7 @@ builder.Services.AddDbContext<SmartCampusDbContext>(opt => opt.UseSqlServer(buil
 
 // Mail Service
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IFacultyDataScopeService, FacultyDataScopeService>();
 
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("Jwt").Bind(jwtSettings);
@@ -79,6 +89,63 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicPolicyProvide
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// Ensure Email, Faculty_Id and RoleHierarchy exist in DB
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<SmartCampusDbContext>();
+
+        // Step 1: Add Email column if missing
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[User]') AND name = 'Email')
+            BEGIN
+                ALTER TABLE [dbo].[User] ADD [Email] NVARCHAR(150) NULL;
+            END
+        ");
+
+        // Step 2: Add Faculty_Id column if missing (column only, no FK inline)
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[User]') AND name = 'Faculty_Id')
+            BEGIN
+                ALTER TABLE [dbo].[User] ADD [Faculty_Id] INT NULL;
+            END
+        ");
+
+        // Step 3: Add FK constraint separately if it doesn't exist yet
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_User_Faculty')
+            BEGIN
+                ALTER TABLE [dbo].[User]
+                    ADD CONSTRAINT [FK_User_Faculty] FOREIGN KEY ([Faculty_Id]) REFERENCES [dbo].[Faculty] ([Faculty_Id]);
+            END
+        ");
+
+        // Step 4: Add RoleHierarchy table if missing
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'RoleHierarchy')
+            BEGIN
+                CREATE TABLE [dbo].[RoleHierarchy] (
+                    [Id] INT IDENTITY(1,1) PRIMARY KEY,
+                    [Parent_Role_Id] INT NOT NULL,
+                    [Child_Role_Id] INT NOT NULL,
+                    [CanAccessAllFaculties] BIT NOT NULL DEFAULT 0
+                );
+
+                IF EXISTS (SELECT * FROM [dbo].[Role] WHERE Role_Id = 4)
+                BEGIN
+                    INSERT INTO [dbo].[RoleHierarchy] ([Parent_Role_Id], [Child_Role_Id], [CanAccessAllFaculties])
+                    VALUES (4, 1, 1);
+                END
+            END
+        ");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"DB Migration error: {ex.Message}");
+    }
+}
 
 
 // Configure the HTTP request pipeline.

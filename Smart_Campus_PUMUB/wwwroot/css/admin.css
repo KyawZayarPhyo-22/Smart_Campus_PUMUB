@@ -77,18 +77,18 @@ body {
 /* ── Desktop Sidebar ────────────────────────────────────────────────── */
 .admin-sidebar {
     width: var(--sidebar-w);
-    min-height: 100vh;
+    height: 100vh !important;
+    max-height: 100vh !important;
     background: var(--bg-surface);
     border-right: 1px solid var(--border);
     flex-shrink: 0;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
     transition: width var(--transition);
     position: sticky;
     top: 0;
     align-self: flex-start;
-    max-height: 100vh;
     z-index: 1030;
 }
 
@@ -96,17 +96,29 @@ body {
     width: var(--sidebar-w-sm);
 }
 
-/* ── Sidebar Brand ──────────────────────────────────────────────────── */
+/* ── Sidebar Brand (Fixed Sticky Header) ────────────────────────────── */
 .sidebar-brand {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0 1.25rem;
-    height: var(--topnav-h);
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(135deg, rgba(34,211,238,0.08) 0%, transparent 70%);
-    flex-shrink: 0;
+    height: 68px !important;
+    min-height: 68px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    flex-shrink: 0 !important;
     overflow: hidden;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+}
+
+.sidebar-nav-wrapper {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-bottom: 2rem;
 }
 
 .brand-text {
@@ -1044,22 +1056,74 @@ main.admin-body,
     border-color: rgba(90, 79, 207, 0.2) !important;
 }
 
-/* Solid Navbar and Header Brand */
+/* Modern Admin Topbar Styling */
 .admin-topnav {
     background-color: #ffffff !important;
     background: #ffffff !important;
-    color: #1f2937 !important;
-    border-bottom: 1px solid var(--border) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-    opacity: 1 !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+    padding: 10px 24px !important;
+    min-height: 68px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.admin-topnav .nav-icon-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    background: #f1f5f9 !important;
+    color: #4f46e5 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.admin-topnav .nav-icon-btn:hover {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    border-color: #4f46e5 !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25) !important;
+}
+
+.admin-topnav .breadcrumb-pill {
+    background: #f8fafc !important;
+    padding: 6px 16px !important;
+    border-radius: 9999px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .admin-topnav .breadcrumb-item a,
-.admin-topnav .breadcrumb-item.active,
-.admin-topnav .text-muted,
-.admin-topnav .btn-link,
-.admin-topnav * {
-    color: #1f2937 !important;
+.admin-topnav .breadcrumb-item a:hover {
+    color: #4f46e5 !important;
+    font-weight: 700 !important;
+}
+
+.admin-topnav .breadcrumb-item.active {
+    color: #4f46e5 !important;
+}
+
+.admin-topnav .breadcrumb-item + .breadcrumb-item::before {
+    color: #94a3b8 !important;
+}
+
+.admin-topnav .profile-pill {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 5px 14px 5px 5px !important;
+    border-radius: 9999px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+}
+
+.admin-topnav .profile-pill:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 .sidebar-brand {
@@ -1082,10 +1146,8 @@ main.admin-body,
 /* Add buttons to match solid navbar green */
 .admin-body .btn-primary,
 .admin-body .btn-cyan,
-.admin-body .btn-success,
 .admin-body a.btn-primary,
 .admin-body .btn-add,
-.admin-body a.btn-success,
 .admin-body .btn-add-modern,
 .admin-body a.btn-add-modern {
     background-color: #5A4FCF !important;
@@ -1096,15 +1158,28 @@ main.admin-body,
 }
 .admin-body .btn-primary:hover,
 .admin-body .btn-cyan:hover,
-.admin-body .btn-success:hover,
 .admin-body a.btn-primary:hover,
 .admin-body .btn-add:hover,
-.admin-body a.btn-success:hover,
 .admin-body .btn-add-modern:hover,
 .admin-body a.btn-add-modern:hover {
     background-color: #483eb0 !important;
     background: #483eb0 !important;
     border-color: #483eb0 !important;
+}
+
+.admin-body .btn-success,
+.admin-body a.btn-success {
+    background-color: #10b981 !important;
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+.admin-body .btn-success:hover,
+.admin-body a.btn-success:hover {
+    background-color: #059669 !important;
+    background: #059669 !important;
+    border-color: #059669 !important;
 }
 
 /* Align and size action buttons inside table */
@@ -1325,9 +1400,181 @@ main.admin-body,
 /* .admin-body [class*="-pop"],
 .admin-body [class*="-hover"],
 .admin-body .pop-on-hover,
-.admin-body .pop-effect {
-    transform: none !important;
-} */
+
+/* =====================================================================
+   Material Design 3 Theme System for Smart Campus Admin
+   ===================================================================== */
+
+:root {
+    --md-sys-color-primary: #4f46e5;
+    --md-sys-color-primary-hover: #4338ca;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-surface: #ffffff;
+    --md-sys-color-background: #f8fafc;
+    --md-sys-color-surface-variant: #f1f5f9;
+    --md-sys-color-outline: #e2e8f0;
+    --md-sys-color-outline-variant: #cbd5e1;
+    --md-shape-corner-small: 8px;
+    --md-shape-corner-medium: 12px;
+    --md-shape-corner-large: 16px;
+    --md-shape-corner-full: 9999px;
+    --md-elevation-1: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    --md-elevation-2: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+    --md-elevation-3: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+.admin-wrapper,
+body.admin-body {
+    background-color: #f8fafc !important;
+}
+
+/* Material 3 Card */
+.admin-body .material-card,
+.admin-body .tech-card {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
+    transition: box-shadow 0.25s ease, transform 0.25s ease !important;
+}
+
+.admin-body .material-card:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Material 3 Table styling */
+.admin-body .custom-table,
+.admin-body table.table {
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06) !important;
+}
+
+.admin-body .custom-table thead,
+.admin-body table.table thead,
+.admin-body .custom-table th,
+.admin-body table.table th {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.6px !important;
+    text-transform: uppercase !important;
+    border: none !important;
+    padding: 14px 18px !important;
+}
+
+.admin-body .custom-table tbody tr {
+    transition: background-color 0.15s ease !important;
+}
+
+.admin-body .custom-table tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+.admin-body .custom-table td {
+    padding: 14px 18px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 0.88rem !important;
+}
+
+/* Material 3 Inputs & Selects */
+.admin-body input.form-control,
+.admin-body select.form-select,
+.admin-body input.pay-input,
+.admin-body select.pay-input,
+.admin-body .material-input {
+    border-radius: 12px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    padding: 9px 14px !important;
+    font-size: 0.88rem !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.admin-body input.form-control:focus,
+.admin-body select.form-select:focus,
+.admin-body .material-input:focus {
+    border-color: #4f46e5 !important;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12) !important;
+    outline: none !important;
+}
+
+/* Material 3 Buttons */
+.admin-body .btn-primary,
+.admin-body .btn-add-modern {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 8px 18px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
+    transition: all 0.2s ease !important;
+}
+
+.admin-body .btn-primary:hover,
+.admin-body .btn-add-modern:hover {
+    background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%) !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
+}
+
+/* Action Buttons in Tables */
+.admin-body .btn-action-edit,
+.admin-body .btn-outline-info,
+.admin-body td .btn-outline-info {
+    border-radius: 8px !important;
+    background-color: #3b82f6 !important;
+    border: 1px solid #3b82f6 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+.admin-body .btn-action-delete,
+.admin-body .btn-outline-danger,
+.admin-body td .btn-outline-danger {
+    border-radius: 8px !important;
+    background-color: #ef4444 !important;
+    border: 1px solid #ef4444 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Material 3 Badges */
+.badge-modern,
+.admin-body .badge {
+    border-radius: 9999px !important;
+    padding: 5px 12px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.4px !important;
+}
+
+/* Navbar & Header Material Design Refresh */
+.admin-topnav {
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 10px 24px !important;
+}
+
+.dropdown-menu {
+    border-radius: 16px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+    padding: 8px !important;
+}
+
+.dropdown-item {
+    border-radius: 8px !important;
+    padding: 8px 14px !important;
+    font-weight: 500 !important;
+    transition: background-color 0.15s ease !important;
+}
+
+.dropdown-item:hover {
+    background-color: #f1f5f9 !important;
+}
 
 
 

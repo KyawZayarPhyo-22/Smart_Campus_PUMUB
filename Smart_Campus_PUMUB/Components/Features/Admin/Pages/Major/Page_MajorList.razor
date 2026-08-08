@@ -1,0 +1,243 @@
+@page "/admin/majors"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.Major
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<PageTitle>Major Directory</PageTitle>
+
+<style>
+    .custom-table {
+        background: rgba(20, 24, 33, 0.6);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+        .custom-table thead {
+            background: rgba(13, 110, 253, 0.1);
+            border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+        }
+
+        .custom-table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            color: #0d6efd;
+            padding: 16px 20px;
+        }
+
+        .custom-table td {
+            padding: 16px 20px;
+            color: #e2e8f0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+    .table-row-hover:hover {
+        background: rgba(255, 255, 255, 0.02);
+        box-shadow: inset 4px 0 0 #0d6efd;
+    }
+
+    .btn-action-edit {
+        background: rgba(13, 110, 253, 0.1);
+        color: #39b5ff;
+        border: 1px solid rgba(13, 110, 253, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-action-edit:hover {
+            background: #0d6efd;
+            color: #ffffff;
+        }
+
+    .btn-action-delete {
+        background: rgba(220, 53, 69, 0.1);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 6px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+    }
+
+        .btn-action-delete:hover {
+            background: #dc3545;
+            color: #ffffff;
+        }
+
+    .badge-faculty {
+        background: rgba(90, 79, 207, 0.15);
+        color: #a78bfa;
+        border: 1px solid rgba(90, 79, 207, 0.3);
+        border-radius: 20px;
+        padding: 3px 10px;
+        font-size: 0.78rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="tab-pane fade show active" id="v-pills-major">
+    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+        <div class="d-flex align-items-center">
+            <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
+                <i class="bi bi-collection fs-5 text-white"></i>
+            </div>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Major Directory</h4>
+        </div>
+    </div>
+
+    <!-- 🔹 Filter Section -->
+    <div class="material-card p-3 mb-4">
+        <div class="row g-3 align-items-center">
+            <!-- Search Input -->
+            <div class="col">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
+                    <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Major Name or Faculty..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                </div>
+            </div>
+
+            <!-- Faculty Filter -->
+            <div class="col-md-3">
+                <select class="form-select material-input" @bind="FacultyFilter">
+                    <option value="">All Faculties</option>
+                    @foreach (var faculty in FacultyList)
+                    {
+                        <option value="@faculty.FacultyId">@faculty.FacultyName</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Search and Reset Buttons -->
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+
+            <!-- Add Button -->
+            <div class="col-auto">
+                <NavLink href="/admin/major/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Major">
+                    <i class="bi bi-plus-lg"></i>
+                </NavLink>
+            </div>
+        </div>
+    </div>
+
+    <div class="tech-card p-4">
+
+        @if (IsLoading)
+        {
+            <div class="text-center my-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="text-muted mt-2">Major စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive custom-table">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Major Name</th>
+                            <th>Faculty</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int count = (CurrentPage - 1) * PageSize + 1;
+                        }
+                        @foreach (var major in FilteredMajors)
+                        {
+                            <tr class="table-row-hover">
+                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
+                                <td class="fw-semibold">@major.MajorName</td>
+                                <td><span class="badge-faculty">@major.FacultyName</span></td>
+                                <td>
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <NavLink href="@($"/admin/major/edit/{major.MajorId}")" class="btn btn-action-edit"><i class="bi bi-pencil me-1"></i> Edit</NavLink>
+                                        <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(major)"><i class="bi bi-trash me-1"></i> Delete</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            count++;
+                        }
+
+                        @if (!FilteredMajors.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4" style="text-align: center !important;">
+                                    <div class="d-flex flex-column align-items-center justify-content-center w-100">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                        <span>Major မရှိသေးပါ။</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+        }
+    </div>
+</div>
+
+@* Delete Confirmation Modal *@
+@if (ShowModal)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content tech-card">
+
+                <div class="modal-header border-0 pb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded p-2" style="background: rgba(220,53,69,0.15);">
+                            <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
+                        </div>
+                        <h5 class="text-danger mb-0 fw-bold">Delete Major</h5>
+                    </div>
+                </div>
+
+                <div class="modal-body text-center pt-2">
+                    <p class="text-white mb-1">Are you sure you want to delete</p>
+                    <p class="fw-bold fs-6" style="color:#a78bfa;">@SelectedMajor?.MajorName</p>
+                    <p class="text-muted small">This action cannot be undone.</p>
+
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="mt-3 p-3 rounded"
+                             style="background: @(IsSuccess ? "rgba(25, 135, 84, 0.15)" : "rgba(220, 53, 69, 0.15)");
+                            border: 1px solid @(IsSuccess ? "#198754" : "#dc3545");">
+                            <span style="color: @(IsSuccess ? "#75b798" : "#ea868f"); font-size: 0.9rem;">
+                                <i class="bi @(IsSuccess ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+                                @statusMessage
+                            </span>
+                        </div>
+                    }
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button class="btn btn-secondary"
+                            @onclick="CloseDeleteModal"
+                            disabled="@IsProcessing">
+                        Cancel
+                    </button>
+
+                    <button class="btn btn-danger"
+                            @onclick="DeleteMajor"
+                            disabled="@(IsProcessing || IsSuccess)">
+                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}

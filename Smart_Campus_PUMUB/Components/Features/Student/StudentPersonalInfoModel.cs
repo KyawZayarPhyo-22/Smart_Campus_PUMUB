@@ -7,6 +7,8 @@ public class StudentPersonalInfoRequest
 {
     public int? UserId { get; set; }
     public int? NewStudentAccId { get; set; }
+    public int? FacultyId { get; set; }
+    public string? FacultyName { get; set; }
     public string? AdmissionSerialNo { get; set; }
     public string? academic_year_range { get; set; }
     public string? academic_year_level { get; set; }

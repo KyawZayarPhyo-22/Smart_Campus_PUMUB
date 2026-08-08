@@ -15,13 +15,18 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
         [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
         private List<StudentModel> StudentList { get; set; } = new();
+        private List<FacultyModel> FacultyList { get; set; } = new();
+        private List<MajorModel> MajorList { get; set; } = new();
+        private List<SemesterModel> SemesterList { get; set; } = new();
 
         // Filters
         private string SearchInput { get; set; } = "";
+        private string SelectedFacultyInput { get; set; } = "All";
         private string SelectedMajorInput { get; set; } = "All";
         private string SelectedYearInput { get; set; } = "All";
 
         private string SearchTerm { get; set; } = "";
+        private string SelectedFaculty { get; set; } = "All";
         private string SelectedMajor { get; set; } = "All";
         private string SelectedYear { get; set; } = "All";
 
@@ -45,6 +50,9 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
             await LoadStudents();
         }
 
+        private bool isFacultyAdminLocked = false;
+        private int? _userFacultyId = null;
+
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender) return;
@@ -61,20 +69,55 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
                                       
                 canManageStudent = userPermissions.Contains("Student.Edit") || userPermissions.Contains("Student.Delete");
 
+                var roleName = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+                var roleIdStr = user.FindFirst("RoleId")?.Value;
+
+                bool isSuperAdmin = string.Equals(roleName, "Super Admin", StringComparison.OrdinalIgnoreCase) || roleIdStr == "4";
+
+                if (!isSuperAdmin)
+                {
+                    var userFacultyIdStr = user.FindFirst("FacultyId")?.Value;
+                    if (!string.IsNullOrEmpty(userFacultyIdStr) && int.TryParse(userFacultyIdStr, out int userFacultyId) && userFacultyId > 0)
+                    {
+                        var userFaculty = FacultyList.FirstOrDefault(f => f.FacultyId == userFacultyId);
+                        if (userFaculty != null && !string.IsNullOrEmpty(userFaculty.FacultyName))
+                        {
+                            _userFacultyId = userFacultyId;
+                            SelectedFacultyInput = userFaculty.FacultyName;
+                            SelectedFaculty = userFaculty.FacultyName;
+                            isFacultyAdminLocked = true;
+                            // Reload students from API with faculty filter applied
+                            await LoadStudents(_userFacultyId);
+                        }
+                    }
+                }
+
                 StateHasChanged();
             }
         }
 
-        private async Task LoadStudents()
+        private async Task LoadStudents(int? facultyId = null)
         {
             IsLoading = true;
             try
             {
-                var response = await HttpClientService.ExecuteAsync<List<StudentModel>>("Student", EnumHttpMethod.Get);
-                if (response != null)
+                var studentUrl = "Student";
+                if (facultyId.HasValue && facultyId.Value > 0)
                 {
-                    StudentList = response;
+                    studentUrl += $"?facultyId={facultyId.Value}";
                 }
+
+                var studentTask = HttpClientService.ExecuteAsync<List<StudentModel>>(studentUrl, EnumHttpMethod.Get);
+                var facultyTask = HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get);
+                var majorTask = HttpClientService.ExecuteAsync<List<MajorModel>>("major", EnumHttpMethod.Get);
+                var semesterTask = HttpClientService.ExecuteAsync<List<SemesterModel>>("Semester", EnumHttpMethod.Get);
+
+                await Task.WhenAll(studentTask, facultyTask, majorTask, semesterTask);
+
+                StudentList = await studentTask ?? new();
+                FacultyList = await facultyTask ?? new();
+                MajorList = await majorTask ?? new();
+                SemesterList = await semesterTask ?? new();
             }
             catch (Exception ex)
             {
@@ -86,9 +129,16 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
             }
         }
 
+        private void OnFacultyChanged()
+        {
+            SelectedMajorInput = "All";
+            ApplyFilter();
+        }
+
         private void ApplyFilter()
         {
             SearchTerm = SearchInput;
+            SelectedFaculty = SelectedFacultyInput;
             SelectedMajor = SelectedMajorInput;
             SelectedYear = SelectedYearInput;
             CurrentPage = 1;
@@ -98,14 +148,81 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
         private void ResetFilter()
         {
             SearchInput = "";
+            SelectedFacultyInput = "All";
             SelectedMajorInput = "All";
             SelectedYearInput = "All";
 
             SearchTerm = "";
+            SelectedFaculty = "All";
             SelectedMajor = "All";
             SelectedYear = "All";
             CurrentPage = 1;
             StateHasChanged();
+        }
+
+        private IEnumerable<string> AvailableFaculties
+        {
+            get
+            {
+                var apiFaculties = FacultyList
+                    .Where(f => !string.IsNullOrWhiteSpace(f.FacultyName))
+                    .Select(f => f.FacultyName!.Trim());
+
+                var studentFaculties = StudentList
+                    .Where(s => !string.IsNullOrWhiteSpace(s.FacultyName))
+                    .Select(s => s.FacultyName!.Trim());
+
+                return apiFaculties.Union(studentFaculties).Distinct().OrderBy(f => f);
+            }
+        }
+
+        private IEnumerable<string> AvailableMajors
+        {
+            get
+            {
+                var majorsQuery = MajorList.AsEnumerable();
+
+                if (SelectedFacultyInput != "All")
+                {
+                    majorsQuery = majorsQuery.Where(m =>
+                        string.Equals(m.FacultyName?.Trim(), SelectedFacultyInput.Trim(), StringComparison.OrdinalIgnoreCase));
+                }
+
+                var apiMajors = majorsQuery
+                    .Where(m => !string.IsNullOrWhiteSpace(m.MajorName) && !string.Equals(m.MajorName.Trim(), "N/A", StringComparison.OrdinalIgnoreCase))
+                    .Select(m => m.MajorName!.Trim());
+
+                if (SelectedFacultyInput == "All")
+                {
+                    var studentMajors = StudentList
+                        .Where(s => !string.IsNullOrWhiteSpace(s.CurrentMajor) && !string.Equals(s.CurrentMajor.Trim(), "N/A", StringComparison.OrdinalIgnoreCase))
+                        .Select(s => s.CurrentMajor.Trim());
+
+                    return apiMajors.Union(studentMajors).Distinct().OrderBy(m => m);
+                }
+
+                return apiMajors.Distinct().OrderBy(m => m);
+            }
+        }
+
+        private IEnumerable<string> AvailableClassYears
+        {
+            get
+            {
+                var semesterNames = SemesterList
+                    .Where(s => !string.IsNullOrWhiteSpace(s.SemesterName) 
+                             && !string.Equals(s.SemesterName.Trim(), "N/A", StringComparison.OrdinalIgnoreCase)
+                             && !string.Equals(s.SemesterName.Trim(), "First Year", StringComparison.OrdinalIgnoreCase))
+                    .Select(s => s.SemesterName!.Trim());
+
+                var studentYears = StudentList
+                    .Where(s => !string.IsNullOrWhiteSpace(s.CurrentClassYear) 
+                             && !string.Equals(s.CurrentClassYear.Trim(), "N/A", StringComparison.OrdinalIgnoreCase)
+                             && !string.Equals(s.CurrentClassYear.Trim(), "First Year", StringComparison.OrdinalIgnoreCase))
+                    .Select(s => s.CurrentClassYear.Trim());
+
+                return semesterNames.Union(studentYears).Distinct();
+            }
         }
 
         private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
@@ -132,14 +249,30 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
                                        (s.FullName ?? "").Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
             }
 
+            if (SelectedFaculty != "All")
+            {
+                var majorsInFaculty = MajorList
+                    .Where(m => string.Equals(m.FacultyName?.Trim(), SelectedFaculty.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .Select(m => m.MajorName?.Trim().ToLower())
+                    .Where(m => m != null)
+                    .ToHashSet();
+
+                data = data.Where(s =>
+                    (s.FacultyName != null && string.Equals(s.FacultyName.Trim(), SelectedFaculty.Trim(), StringComparison.OrdinalIgnoreCase)) ||
+                    (s.CurrentMajor != null && (majorsInFaculty.Contains(s.CurrentMajor.Trim().ToLower()) ||
+                                               majorsInFaculty.Any(m => s.CurrentMajor.ToLower().Contains(m!))))
+                );
+            }
+
             if (SelectedMajor != "All")
             {
-                data = data.Where(s => string.Equals(s.CurrentMajor, SelectedMajor, StringComparison.OrdinalIgnoreCase));
+                data = data.Where(s => string.Equals(s.CurrentMajor?.Trim(), SelectedMajor.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                                       (s.CurrentMajor != null && s.CurrentMajor.ToLower().Contains(SelectedMajor.Trim().ToLower())));
             }
 
             if (SelectedYear != "All")
             {
-                data = data.Where(s => string.Equals(s.CurrentClassYear, SelectedYear, StringComparison.OrdinalIgnoreCase));
+                data = data.Where(s => string.Equals(s.CurrentClassYear?.Trim(), SelectedYear.Trim(), StringComparison.OrdinalIgnoreCase));
             }
 
             return data.ToList();

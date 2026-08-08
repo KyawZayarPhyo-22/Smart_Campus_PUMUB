@@ -12,14 +12,16 @@ public partial class Page_UserEdit
 
     private UserUpdateRequestModel Request = new(); // Edit အတွက် သီးသန့် Model သုံးပါ
     private List<RoleModel> RoleList = new();
+    private List<FacultyModel> FacultyList = new();
     private string statusMessage = "";
     private bool IsSuccess = false;
     private bool IsProcessing = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Role စာရင်းဆွဲယူခြင်း
+        // 1. Role & Faculty စာရင်းဆွဲယူခြင်း
         RoleList = await HttpClientService.ExecuteAsync<List<RoleModel>>("role", EnumHttpMethod.Get) ?? new();
+        FacultyList = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get) ?? new();
 
         // 2. လက်ရှိ User Data ကို ဆွဲယူခြင်း
         var user = await HttpClientService.ExecuteAsync<UserEditResponseModel>($"user/{UserId}", EnumHttpMethod.Get);
@@ -31,7 +33,9 @@ public partial class Page_UserEdit
                 FullName = user.FullName,
                 UserName = user.UserName,
                 RoleId = user.RoleId,
-                RoleNo = user.RoleNo
+                FacultyId = user.FacultyId,
+                RoleNo = user.RoleNo,
+                Email = user.Email
             };
         }
     }

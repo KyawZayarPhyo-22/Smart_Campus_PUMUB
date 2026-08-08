@@ -25,7 +25,7 @@
             </div>
         </div>
 
-        <div class="col-md-3">
+        @* <div class="col-md-3">
             <select class="form-select material-input" @bind="SelectedRoleInput">
                 <option value="All">All Roles</option>
                 @if (RoleList != null)
@@ -35,8 +35,8 @@
                         <option value="@role.RoleName">@role.RoleName</option>
                     }
                 }
-            </select>
-        </div>
+            </select> *@
+        @* </div> *@
 
         <div class="col-md-2 d-flex gap-2">
             <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
@@ -73,8 +73,8 @@
                         <th>No.</th>
                         <th>Profile</th>
                         <th>Name</th>
-                        <th>Role</th>
-                        <th>Email</th>
+                        <th>Faculty</th>
+                        <th>Position</th>
                         <th>Phone</th>
                         @if (canManageTutor)
                         {
@@ -97,8 +97,8 @@
                                          class="rounded-circle" width="50" height="50" style="object-fit: cover;">
                                 </td>
                                 <td>@tutor.TutorName</td>
-                                <td>@tutor.RoleName</td>
-                                <td>@tutor.Email</td>
+                                <td>@(string.IsNullOrEmpty(tutor.FacultyName) ? "-" : tutor.FacultyName)</td>
+                                <td>@tutor.PositionName</td>
                                 <td>@tutor.Phone</td>
                                 
                                 @if (canManageTutor)

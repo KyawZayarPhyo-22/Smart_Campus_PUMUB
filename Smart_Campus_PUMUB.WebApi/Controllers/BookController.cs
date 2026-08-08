@@ -23,33 +23,44 @@ public class BookController : ControllerBase
     }
 
     [HttpGet]
-    [Permission("Book.View")]
+    [AllowAnonymous]
     public IActionResult GetBooks()
     {
         var lst = _db.Books
             .AsNoTracking()
-            .Include(b => b.Category) // 👈 ဒီ Include လေး ထည့်လိုက်ရုံပါပဲ
+            .Include(b => b.Category)
             .Where(x => x.IsDelete == false || x.IsDelete == null)
             .OrderByDescending(x => x.CreatedDateTime)
-.Select(x => new BookModel
-{
-    BookId = x.BookId,
-    BookName = x.BookName,
-    Image = x.Image,
-    CategoryId = x.CategoryId,
-    CategoryName = x.Category != null ? x.Category.CategoryName : "N/A"
-})
+            .Select(x => new BookModel
+            {
+                BookId = x.BookId,
+                BookName = x.BookName,
+                Image = x.Image,
+                FilePath = x.FilePath,
+                CategoryId = x.CategoryId,
+                CategoryName = x.Category != null ? x.Category.CategoryName : "N/A"
+            })
             .ToList();
 
         return Ok(lst);
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public IActionResult GetBookById(int id)
     {
-        var book = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
+        var book = _db.Books.Include(b => b.Category)
+            .FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
         if (book == null) return NotFound();
-        return Ok(book);
+        return Ok(new BookModel
+        {
+            BookId = book.BookId,
+            BookName = book.BookName,
+            Image = book.Image,
+            FilePath = book.FilePath,
+            CategoryId = book.CategoryId,
+            CategoryName = book.Category?.CategoryName
+        });
     }
 
     [HttpPost]
@@ -60,38 +71,53 @@ public class BookController : ControllerBase
 
         var category = _db.Categories.FirstOrDefault(c => c.CategoryId == request.CategoryId);
         if (category is null || category.IsDelete == true)
-            return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Category ID ရှာမတွေ့ပါ။" });
+            return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Category ID ရသာမတွေ့ပါ။" });
 
         string? dbImagePath = null;
+        string? dbFilePath = null;
 
+        // --- Cover Image ---
         if (request.ImageFile != null)
         {
             var extension = Path.GetExtension(request.ImageFile.FileName).ToLower();
             if (extension != ".jpg" && extension != ".jpeg" && extension != ".png")
-            {
-                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = ".jpg , .png သို့မဟုတ် .jpeg ဖိုင်အမျိုးအစားသာ လက်ခံပါသည်။" });
-            }
+                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = ".jpg , .png သို့မဟုတ် .jpeg ဖိုင်အမျိုအစာသာ လက်ခံပါသည်။" });
 
             string uploadFolder = Path.Combine(_env.WebRootPath, "uploads");
             if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
 
-            // Guid ကိုသုံးပြီး နာမည်သစ်ပေးခြင်း (Special Characters ပြဿနာဖြေရှင်းရန်)
             string uniqueFileName = Guid.NewGuid().ToString() + extension;
             string filePath = Path.Combine(uploadFolder, uniqueFileName);
-
             using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
                 request.ImageFile.CopyTo(fileStream);
-            }
 
             dbImagePath = "/uploads/" + uniqueFileName;
+        }
+
+        // --- PDF File ---
+        if (request.PdfFile != null)
+        {
+            var ext = Path.GetExtension(request.PdfFile.FileName).ToLower();
+            if (ext != ".pdf")
+                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "PDF ဖိုင်အမျိုအစာသာပေးလက်ခံပါသည်။" });
+
+            string pdfFolder = Path.Combine(_env.WebRootPath, "uploads", "pdfs");
+            if (!Directory.Exists(pdfFolder)) Directory.CreateDirectory(pdfFolder);
+
+            string uniquePdfName = Guid.NewGuid().ToString() + ".pdf";
+            string pdfDiskPath = Path.Combine(pdfFolder, uniquePdfName);
+            using (var fs = new FileStream(pdfDiskPath, FileMode.Create))
+                request.PdfFile.CopyTo(fs);
+
+            dbFilePath = "/uploads/pdfs/" + uniquePdfName;
         }
 
         _db.Books.Add(new Book
         {
             CategoryId = request.CategoryId,
-            BookName = request.BookName.Trim(),
+            BookName = request.BookName!.Trim(),
             Image = dbImagePath,
+            FilePath = dbFilePath,
             CreatedDateTime = DateTime.Now,
             CreatedBy = request.CreatedBy,
             IsDelete = false
@@ -100,8 +126,8 @@ public class BookController : ControllerBase
         _db.Activities.Add(new Activity
         {
             ActivityTitle = "New Book Uploaded",
-            Description = $"{request.BookName.Trim()} was added to the Library.",
-            CreatedDateTime = DateTime.UtcNow
+            Description = $"{request.BookName!.Trim()} was added to the Library.",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
 
         _db.SaveChanges();
@@ -115,6 +141,7 @@ public class BookController : ControllerBase
         var item = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
         if (item is null) return NotFound(new ActionResponseModel { IsSuccess = false, Message = "Book not found" });
 
+        // --- Cover Image ---
         if (request.ImageFile != null)
         {
             var extension = Path.GetExtension(request.ImageFile.FileName).ToLower();
@@ -123,9 +150,7 @@ public class BookController : ControllerBase
             string filePath = Path.Combine(uploadFolder, uniqueFileName);
 
             using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
                 request.ImageFile.CopyTo(fileStream);
-            }
 
             if (!string.IsNullOrEmpty(item.Image))
             {
@@ -136,8 +161,34 @@ public class BookController : ControllerBase
             item.Image = "/uploads/" + uniqueFileName;
         }
 
+        // --- PDF File ---
+        if (request.PdfFile != null)
+        {
+            var ext = Path.GetExtension(request.PdfFile.FileName).ToLower();
+            if (ext == ".pdf")
+            {
+                string pdfFolder = Path.Combine(_env.WebRootPath, "uploads", "pdfs");
+                if (!Directory.Exists(pdfFolder)) Directory.CreateDirectory(pdfFolder);
+
+                string uniquePdfName = Guid.NewGuid().ToString() + ".pdf";
+                string pdfDiskPath = Path.Combine(pdfFolder, uniquePdfName);
+
+                using (var fs = new FileStream(pdfDiskPath, FileMode.Create))
+                    request.PdfFile.CopyTo(fs);
+
+                // Delete old PDF if exists
+                if (!string.IsNullOrEmpty(item.FilePath))
+                {
+                    string oldPdf = Path.Combine(_env.WebRootPath, item.FilePath.TrimStart('/'));
+                    if (System.IO.File.Exists(oldPdf)) System.IO.File.Delete(oldPdf);
+                }
+
+                item.FilePath = "/uploads/pdfs/" + uniquePdfName;
+            }
+        }
+
         item.CategoryId = request.CategoryId;
-        item.BookName = request.BookName.Trim();
+        item.BookName = request.BookName!.Trim();
         item.ModifiedDateTime = DateTime.Now;
         item.ModifiedBy = request.ModifiedBy;
 
@@ -145,7 +196,7 @@ public class BookController : ControllerBase
         {
             ActivityTitle = "Book Updated",
             Description = $"{item.BookName.Trim()} was updated.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
 
         _db.SaveChanges();
@@ -164,7 +215,7 @@ public class BookController : ControllerBase
         {
             ActivityTitle = "Book Deleted",
             Description = $"{item.BookName.Trim()} was deleted.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
 
         _db.SaveChanges();
@@ -176,6 +227,77 @@ public class BookController : ControllerBase
     {
         int count = await _db.Books.CountAsync(x => x.IsDelete == false || x.IsDelete == null);
         return Ok(new { Count = count });
+    }
+
+    [HttpGet("paginate")]
+    [AllowAnonymous]
+    public IActionResult GetBooksPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] int? categoryId = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _db.Books
+            .AsNoTracking()
+            .Include(b => b.Category)
+            .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(x => x.BookName != null && x.BookName.Contains(searchTerm));
+        }
+
+        if (categoryId.HasValue && categoryId.Value > 0)
+        {
+            query = query.Where(x => x.CategoryId == categoryId.Value);
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .OrderByDescending(x => x.CreatedDateTime)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new BookModel
+            {
+                BookId = x.BookId,
+                BookName = x.BookName,
+                Image = x.Image,
+                FilePath = x.FilePath,
+                CategoryId = x.CategoryId,
+                CategoryName = x.Category != null ? x.Category.CategoryName : "N/A"
+            })
+            .ToList();
+
+        var result = new PagedResult<BookModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
+    }
+
+    [HttpGet("download/{id}")]
+    [AllowAnonymous]
+    public IActionResult DownloadBook(int id)
+    {
+        var book = _db.Books.FirstOrDefault(x => x.BookId == id && (x.IsDelete == false || x.IsDelete == null));
+        if (book == null || string.IsNullOrEmpty(book.FilePath)) return NotFound("PDF file not found.");
+
+        string physicalPath = Path.Combine(_env.WebRootPath, book.FilePath.TrimStart('/'));
+        if (!System.IO.File.Exists(physicalPath)) return NotFound("PDF file does not exist on server.");
+
+        // Clean file name for download header
+        string safeFileName = string.Join("_", book.BookName.Trim().Split(Path.GetInvalidFileNameChars()));
+        if (!safeFileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) safeFileName += ".pdf";
+
+        return PhysicalFile(physicalPath, "application/pdf", safeFileName);
     }
 }
 

@@ -107,6 +107,7 @@
                         <th>#</th>
                         <th>Student Name</th>
                         <th>Roll No.</th>
+                        <th>Faculty</th>
                         <th>Major</th>
                         <th>Academic Year</th>
                         <th>Email</th>
@@ -129,6 +130,7 @@
                                     </div>
                                 </td>
                                 <td>@student.roll_no</td>
+                                <td>@(string.IsNullOrEmpty(student.FacultyName) ? "-" : student.FacultyName)</td>
                                 <td>
                                     <span class="badge" style="background-color: rgba(105, 108, 255, 0.1); color: #696cff;">
                                         @student.major
@@ -149,7 +151,7 @@
                     else if (IsLoading)
                     {
                         <tr>
-                            <td colspan="8" class="text-center py-5">
+                            <td colspan="9" class="text-center py-5">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
@@ -159,7 +161,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="8" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                            <td colspan="9" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
                                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                                 No records found.
                             </td>

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
@@ -20,8 +21,7 @@ public class PaymentFeesController : ControllerBase
     }
 
     [HttpGet]
-    [Permission("PaymentFee.View")]
-
+    [AllowAnonymous]
     public IActionResult GetPaymentFees([FromQuery] string? classYear = null, [FromQuery] string? status = null)
     {
         var query = _db.PaymentFees
@@ -29,7 +29,7 @@ public class PaymentFeesController : ControllerBase
 
         if (!string.IsNullOrEmpty(classYear))
         {
-            query = query.Where(x => x.ClassYear == classYear);
+            query = query.Where(x => x.ClassYear == classYear || x.ClassYear == "All Semesters" || x.ClassYear == "All");
         }
 
         if (!string.IsNullOrEmpty(status))
@@ -166,6 +166,7 @@ public class PaymentFeesController : ControllerBase
 
     // Special API - Auto Calculate Fee By Class Year
     [HttpGet("calculate")]
+    [AllowAnonymous]
     public IActionResult CalculateFee([FromQuery] string classYear)
     {
         // Role: Parameter Empty/Null Validation
@@ -173,7 +174,7 @@ public class PaymentFeesController : ControllerBase
             return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Class Year သတ်မှတ်ပေးရန် လိုအပ်ပါသည်။" });
 
         // Role: Existence Validation (ဒေတာ ရှိမရှိ အရင်စစ်ဆေးခြင်း - Active သာဖြစ်ရမည်)
-        var hasClassYear = _db.PaymentFees.Any(x => x.ClassYear == classYear && x.Status == "Active" && (x.IsDelete == false || x.IsDelete == null));
+        var hasClassYear = _db.PaymentFees.Any(x => (x.ClassYear == classYear || x.ClassYear == "All Semesters" || x.ClassYear == "All") && x.Status == "Active" && (x.IsDelete == false || x.IsDelete == null));
         if (!hasClassYear)
         {
             return NotFound(new ActionResponseModel { IsSuccess = false, Message = $"'{classYear}' အတွက် သတ်မှတ်ထားသော Active နှုန်းထားစာရင်း မရှိသေးပါ။" });
@@ -181,10 +182,57 @@ public class PaymentFeesController : ControllerBase
 
         // သက်ဆိုင်ရာ Class အလိုက် စုစုပေါင်းလစဉ်ကြေးကို တွက်ထုတ်ပေးခြင်း
         var totalAmount = _db.PaymentFees
-                             .Where(x => x.ClassYear == classYear && x.Status == "Active" && (x.IsDelete == false || x.IsDelete == null))
+                             .Where(x => (x.ClassYear == classYear || x.ClassYear == "All Semesters" || x.ClassYear == "All") && x.Status == "Active" && (x.IsDelete == false || x.IsDelete == null))
                              .Sum(x => x.MontlyAmount);
 
         return Ok(new { ClassYear = classYear, TotalCalculatedFee = totalAmount, CalculatedAt = DateTime.Now });
+    }
+
+    [HttpGet("paginate")]
+    [AllowAnonymous]
+    public IActionResult GetPaymentFeesPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _db.PaymentFees
+            .AsNoTracking()
+            .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(x => (x.FeeName != null && x.FeeName.Contains(searchTerm)) || 
+                                     (x.ClassYear != null && x.ClassYear.Contains(searchTerm)));
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .OrderByDescending(x => x.FeesId)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new PaymentFeeModel
+            {
+                FeesId = x.FeesId,
+                ClassYear = x.ClassYear,
+                FeeName = x.FeeName,
+                MontlyAmount = x.MontlyAmount,
+                Status = x.Status
+            })
+            .ToList();
+
+        var result = new PagedResult<PaymentFeeModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
     }
 }
 

@@ -8,7 +8,7 @@
     @if (IsLoading)
     {
         <div class="text-center my-5">
-            <div class="spinner-border text-warning" role="status"></div>
+            <div class="spinner-border text-primary" role="status"></div>
             <div class="text-muted mt-2">အချက်အလက်များကို ဆွဲယူနေပါသည်...</div>
         </div>
     }
@@ -40,7 +40,7 @@
 
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <NavLink href="/admin/departments" class="btn btn-secondary">Cancel</NavLink>
-                <button type="submit" class="btn btn-warning text-dark fw-semibold" disabled="@isProcessing">
+                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
                     @(isProcessing ? "Saving..." : "Save Changes")
                 </button>
             </div>

@@ -558,7 +558,27 @@
 
             @if (SubmittedRegistrationId > 0)
             {
-                <div style="color: #64748b; font-size: 0.9rem;">Registration ID: <strong>@SubmittedRegistrationId</strong></div>
+                <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px;">
+                    @if (!string.IsNullOrEmpty(requestModel.student_name_en) || !string.IsNullOrEmpty(requestModel.student_name_mm))
+                    {
+                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
+                            <span style="font-weight: 600; color: #0f172a;">Name:</span>
+                            @(!string.IsNullOrEmpty(requestModel.student_name_en) ? requestModel.student_name_en : requestModel.student_name_mm)
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(requestModel.major))
+                    {
+                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
+                            <span style="font-weight: 600; color: #0f172a;">Major:</span> @requestModel.major
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(AllowedSemesterName))
+                    {
+                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
+                            <span style="font-weight: 600; color: #0f172a;">Semester:</span> @AllowedSemesterName
+                        </div>
+                    }
+                </div>
             }
 
             <div class="review-actions">
@@ -759,21 +779,23 @@
 
 
             <div class="input-group">
+                <label class="input-label">ကာလပညာရေးဌာန (Faculty)</label>
+                <select class="modern-input" @bind="SelectedFacultyIdStr" @bind:after="OnFacultyChangedAfterBind">
+                    <option value="">-- Faculty ရွေးချယ်ပါ --</option>
+                    @foreach (var fac in FacultyList)
+                    {
+                        <option value="@fac.FacultyId">@fac.FacultyName</option>
+                    }
+                </select>
+            </div>
+            <div class="input-group">
                 <label class="input-label">အထူးပြုဘာသာ</label>
                 <select class="modern-input" @bind="requestModel.major">
                     <option value="">-- အထူးပြုဘာသာ ရွေးချယ်ပါ --</option>
-                    <optgroup label="Computer University (ကွန်ပျူတာတက္ကသိုလ်)">
-                        <option value="Computer Science">Computer Science</option>
-                        <option value="Computer Technology">Computer Technology</option>
-                        <option value="Information Technology">Information Technology</option>
-                    </optgroup>
-                    <optgroup label="GTC / Polytechnic (နည်းပညာတက္ကသိုလ်)">
-                        <option value="Civil Engineering">Civil Engineering</option>
-                        <option value="Electronic Engineering">Electronic Engineering</option>
-                        <option value="Electrical Power Engineering">Electrical Power Engineering</option>
-                        <option value="Mechanical Engineering">Mechanical Engineering</option>
-                        <option value="Information Technology Engineering">Information Technology Engineering</option>
-                    </optgroup>
+                    @foreach (var m in FilteredMajors)
+                    {
+                        <option value="@m">@m</option>
+                    }
                 </select>
             </div>
             <div class="input-group">

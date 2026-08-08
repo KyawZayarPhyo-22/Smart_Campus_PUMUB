@@ -6,6 +6,8 @@ using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.EntityFrameworkCore;
 
+using Smart_Campus_PUMUB.WebApi.Services;
+
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
@@ -13,10 +15,12 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 public class TutorController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
+    private readonly IFacultyDataScopeService _scopeService;
 
-    public TutorController(SmartCampusDbContext db)
+    public TutorController(SmartCampusDbContext db, IFacultyDataScopeService scopeService)
     {
         _db = db;
+        _scopeService = scopeService;
     }
 
     // ၁။ GET: Tutor အားလုံးစာရင်းယူရန် (Profile ဓာတ်ပုံလမ်းကြောင်း ပါဝင်သည်)
@@ -24,27 +28,40 @@ public class TutorController : ControllerBase
     [Permission("Tutor.View")]
     public IActionResult GetTutors()
     {
-        var rawList = (from t in _db.Tutors
-                       join d in _db.Departments on t.DepartmentId equals d.DepartmentId
-                       join p in _db.Positions on t.PositionId equals p.PositionId
-                       join u in _db.Users on t.UserId equals u.UserId
-                       join r in _db.Roles on u.RoleId equals r.RoleId
-                       where t.IsDelete == false
-                       orderby t.TutorId descending
-                       select new
-                       {
-                           t.TutorId,
-                           t.TutorName,
-                           t.Email,
-                           t.Phone,
-                           t.Profile, // Profile Column ဓာတ်ပုံလမ်းကြောင်း
-                           t.About,
-                           d.DepartmentName,
-                           p.PositionName,
-                           u.UserName,
-                           t.CreatedDateTime,
-                           r.RoleName
-                       }).ToList();
+        var tutorQuery = from t in _db.Tutors
+                         join d in _db.Departments on t.DepartmentId equals d.DepartmentId
+                         join p in _db.Positions on t.PositionId equals p.PositionId
+                         join u in _db.Users on t.UserId equals u.UserId
+                         join r in _db.Roles on u.RoleId equals r.RoleId
+                         where t.IsDelete == false
+                         select new { t, d, p, u, r };
+
+        // Hierarchical RBAC Data Scoping:
+        if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+        {
+            var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
+            if (scopedFacultyId.HasValue)
+            {
+                tutorQuery = tutorQuery.Where(x => x.d.FacultyId == scopedFacultyId.Value);
+            }
+        }
+
+        var rawList = tutorQuery
+                        .OrderByDescending(x => x.t.TutorId)
+                        .Select(x => new
+                        {
+                            x.t.TutorId,
+                            x.t.TutorName,
+                            x.t.Email,
+                            x.t.Phone,
+                            x.t.Profile,
+                            x.t.About,
+                            x.d.DepartmentName,
+                            x.p.PositionName,
+                            x.u.UserName,
+                            x.t.CreatedDateTime,
+                            x.r.RoleName
+                        }).ToList();
 
         var lst = rawList.Select(t => new
         {
@@ -70,7 +87,8 @@ public class TutorController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] string? roleName = null)
+        [FromQuery] string? roleName = null,
+        [FromQuery] int? facultyId = null)
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
@@ -80,6 +98,8 @@ public class TutorController : ControllerBase
                     join p in _db.Positions on t.PositionId equals p.PositionId
                     join u in _db.Users on t.UserId equals u.UserId
                     join r in _db.Roles on u.RoleId equals r.RoleId
+                    join f in _db.Faculties on d.FacultyId equals f.FacultyId into fj
+                    from f in fj.DefaultIfEmpty()
                     where t.IsDelete == false
                     select new
                     {
@@ -93,11 +113,19 @@ public class TutorController : ControllerBase
                         t.PositionId,
                         t.UserId,
                         d.DepartmentName,
+                        d.FacultyId,
+                        FacultyName = f != null ? f.FacultyName : null,
                         p.PositionName,
                         u.UserName,
                         t.CreatedDateTime,
                         r.RoleName
                     };
+
+        // Faculty-based scoping: filter tutors by their department's faculty
+        if (facultyId.HasValue && facultyId.Value > 0)
+        {
+            query = query.Where(t => t.FacultyId == facultyId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -129,8 +157,11 @@ public class TutorController : ControllerBase
             Department_Id = t.DepartmentId,
             PositionId = t.PositionId,
             Position_Id = t.PositionId,
+            FacultyId = t.FacultyId,
+            FacultyName = t.FacultyName,
             UserId = t.UserId,
             RoleName = t.RoleName,
+            PositionName = t.PositionName,
             CreatedDateTime = t.CreatedDateTime.HasValue ? t.CreatedDateTime.Value.AddHours(6).AddMinutes(30) : (DateTime?)null
         }).ToList();
 
@@ -281,11 +312,20 @@ public class TutorController : ControllerBase
             TutorName = request.TutorName,
             Email = request.Email,
             Phone = request.Phone,
-            Profile = dbProfilePath, // 📷 Profile ထဲ လမ်းကြောင်းသိမ်းသည်
+            Profile = dbProfilePath,
             About = request.About,
             IsDelete = false
-            // CreatedDateTime ကို DB ဘက်က DEFAULT (getdate()) နဲ့ Auto ထည့်ပေးပါမည်
         };
+
+        // If FacultyId provided, sync to User.FacultyId
+        if (request.FacultyId > 0)
+        {
+            var userToUpdate = _db.Users.FirstOrDefault(u => u.UserId == request.UserId);
+            if (userToUpdate != null)
+            {
+                userToUpdate.FacultyId = request.FacultyId;
+            }
+        }
 
         _db.Tutors.Add(newTutor);
         int result = _db.SaveChanges();
@@ -294,7 +334,7 @@ public class TutorController : ControllerBase
         {
             ActivityTitle = "New Tutor Registered",
             Description = $"{request.TutorName} was added to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -364,7 +404,7 @@ public class TutorController : ControllerBase
         {
             ActivityTitle = "Tutor Updated",
             Description = $"Tutor '{item.TutorName}' was Updated from the system.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
         return Ok(new TutorUpdateResponseModel { IsSuccess = result > 0, Message = "ပြင်ဆင်မှု အောင်မြင်ပါသည်" });
@@ -505,7 +545,7 @@ public class TutorController : ControllerBase
         {
             ActivityTitle = "Tutor Updated",
             Description = $"Tutor '{item.TutorName}' was Updated from the system.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -535,7 +575,7 @@ public class TutorController : ControllerBase
         {
             ActivityTitle = "Tutor Removed",
             Description = $"Tutor '{item.TutorName}' was removed from the system.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 

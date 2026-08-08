@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
@@ -5,6 +6,8 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+
+using Smart_Campus_PUMUB.WebApi.Services;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -14,11 +17,13 @@ public class UserController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
     private readonly JwtSettings _jwtSettings;
+    private readonly IFacultyDataScopeService _scopeService;
 
-    public UserController(SmartCampusDbContext db, JwtSettings jwtSettings)
+    public UserController(SmartCampusDbContext db, JwtSettings jwtSettings, IFacultyDataScopeService scopeService)
     {
         _db = db;
         _jwtSettings = jwtSettings;
+        _scopeService = scopeService;
     }
 
     // =========================================================================
@@ -129,7 +134,9 @@ public class UserController : ControllerBase
             new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, user.UserName),
             new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, roleName),
             new System.Security.Claims.Claim("UserId", user.UserId.ToString()),
-            new System.Security.Claims.Claim("FullName", user.FullName ?? string.Empty)
+            new System.Security.Claims.Claim("FullName", user.FullName ?? string.Empty),
+            new System.Security.Claims.Claim("FacultyId", user.FacultyId?.ToString() ?? ""),
+            new System.Security.Claims.Claim("RoleId", user.RoleId.ToString())
         };
 
         foreach (var perm in permissions)
@@ -163,32 +170,72 @@ public class UserController : ControllerBase
         });
     }
 
+    private static bool _userEmailColumnChecked = false;
+    private void EnsureUserEmailColumn()
+    {
+        if (_userEmailColumnChecked) return;
+        try
+        {
+            _db.Database.ExecuteSqlRaw(@"
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[User]') AND name = 'Email')
+                BEGIN
+                    ALTER TABLE [dbo].[User] ADD [Email] NVARCHAR(150) NULL;
+                END
+
+                IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[User]') AND name = 'Faculty_Id')
+                BEGIN
+                    ALTER TABLE [dbo].[User] ADD [Faculty_Id] INT NULL;
+                END
+            ");
+            _userEmailColumnChecked = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"User Email/Faculty column check error: {ex.Message}");
+        }
+    }
+
     // ၁။ GET: User အားလုံးစာရင်းယူရန်
     [HttpGet]
     public IActionResult GetUsers()
     {
-        var lst = _db.Users
-            .Where(x => x.IsDelete == false)
-            // Join လုပ်ရန် .Join ကို သုံးပါ
-            .Join(_db.Roles,
-                  user => user.RoleId,
-                  role => role.RoleId,
-                  (user, role) => new { user, role })
-            .OrderByDescending(x => x.user.UserId)
-            .Select(x => new UserModel
+        EnsureUserEmailColumn();
+
+        var query = from u in _db.Users
+                    join r in _db.Roles on u.RoleId equals r.RoleId
+                    join f in _db.Faculties on u.FacultyId equals f.FacultyId into facultyGroup
+                    from f in facultyGroup.DefaultIfEmpty()
+                    where u.IsDelete == false || u.IsDelete == null
+                    select new { u, r, f };
+
+        // Hierarchical RBAC Faculty Scoping:
+        if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+        {
+            var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
+            if (scopedFacultyId.HasValue)
             {
-                UserId = x.user.UserId,
-                RoleId = x.user.RoleId,
-                FullName = x.user.FullName,
-                UserName = x.user.UserName,
-                // RoleName ကို Role table ထဲမှ ဆွဲထုတ်လိုက်ခြင်း
-                RoleName = x.role.RoleName,
-                RoleNo = x.user.RoleNo,
-                Password = "********",
-                CreatedDateTime = x.user.CreatedDateTime,
-                Status = x.user.Status
-            })
-            .ToList();
+                query = query.Where(x => x.u.FacultyId == scopedFacultyId.Value);
+            }
+        }
+
+        var lst = query.OrderByDescending(x => x.u.UserId)
+                       .Select(x => new UserModel
+                       {
+                           UserId = x.u.UserId,
+                           RoleId = x.u.RoleId,
+                           RoleName = x.r.RoleName,
+                           FacultyId = x.u.FacultyId,
+                           FacultyName = (x.r.RoleName == "Super Admin" || x.u.RoleId == 4) 
+                                ? string.Join(" & ", _db.Faculties.Where(k => k.IsDelete == false || k.IsDelete == null).Select(k => k.FacultyName))
+                                : (x.f != null ? x.f.FacultyName : null),
+                           FullName = x.u.FullName,
+                           UserName = x.u.UserName,
+                           RoleNo = x.u.RoleNo,
+                           Email = x.u.Email,
+                           Password = "********",
+                           CreatedDateTime = x.u.CreatedDateTime,
+                           Status = x.u.Status
+                       }).ToList();
 
         return Ok(lst);
     }
@@ -224,7 +271,9 @@ public class UserController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetUser(int id)
     {
-        var item = _db.Users.FirstOrDefault(x => x.UserId == id && x.IsDelete == false);
+        var item = _db.Users
+            .Include(x => x.Faculty)
+            .FirstOrDefault(x => x.UserId == id && (x.IsDelete == false || x.IsDelete == null));
         if (item is null)
         {
             return NotFound(new { message = "အသုံးပြုသူကို ရှာမတွေ့ပါ။" });
@@ -234,9 +283,12 @@ public class UserController : ControllerBase
         {
             UserId = item.UserId,
             RoleId = item.RoleId,
+            FacultyId = item.FacultyId,
+            FacultyName = item.Faculty?.FacultyName,
             FullName = item.FullName,
             UserName = item.UserName,
             RoleNo = item.RoleNo,
+            Email = item.Email,
             Password = "********",
             CreatedDateTime = item.CreatedDateTime,
             Status = item.Status
@@ -249,6 +301,7 @@ public class UserController : ControllerBase
     [HttpPost]
     public IActionResult CreateUser(UserCreateRequestModel request)
     {
+        EnsureUserEmailColumn();
         if (string.IsNullOrEmpty(request.UserName) || string.IsNullOrEmpty(request.Password))
         {
             return BadRequest(new UserCreateResponseModel { IsSuccess = false, Message = "Username နှင့် Password ဖြည့်ရန် လိုအပ်သည်။" });
@@ -270,24 +323,17 @@ public class UserController : ControllerBase
         var passwordError = ValidatePasswordPolicy(request.Password);
         if (passwordError != null) return BadRequest(new UserCreateResponseModel { Message = passwordError });
 
-        if (!string.IsNullOrEmpty(request.RoleNo))
-        {
-            var isRoleNoExist = _db.Users.Any(x => x.RoleNo == request.RoleNo && x.IsDelete == false);
-            if (isRoleNoExist)
-            {
-                return BadRequest(new UserCreateResponseModel { Message = "ဤ Roll Number သည် စနစ်ထဲတွင် ရှိနှင့်ပြီးသား ဖြစ်သည်။" });
-            }
-        }
-
         // 🔒 Password အား Hash လုပ်ခြင်း
         string hashedPass = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         var newUser = new User
         {
             RoleId = request.RoleId,
+            FacultyId = (request.FacultyId == null || request.FacultyId <= 0) ? null : request.FacultyId,
             FullName = request.FullName,
             UserName = formattedUserName,
             RoleNo = request.RoleNo,
+            Email = request.Email,
             Password = hashedPass,
             IsDelete = false,
             MustChangePassword = true,
@@ -302,7 +348,7 @@ public class UserController : ControllerBase
         {
             ActivityTitle = "User Added",
             Description = $"User '{request.UserName}' was added from the system.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -317,15 +363,16 @@ public class UserController : ControllerBase
     [HttpPut("{id}")]
     public IActionResult UpdateUser(int id, UserUpdateRequestModel request)
     {
+        EnsureUserEmailColumn();
         var item = _db.Users.FirstOrDefault(x => x.UserId == id && x.IsDelete == false);
         if (item is null)
         {
             return NotFound(new UserUpdateResponseModel { IsSuccess = false, Message = "ပြင်ဆင်မည့် အသုံးပြုသူကို ရှာမတွေ့ပါ။" });
         }
 
-        if (string.IsNullOrEmpty(request.UserName) || string.IsNullOrEmpty(request.Password))
+        if (string.IsNullOrEmpty(request.UserName))
         {
-            return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "Username နှင့် Password ဖြည့်ရန် လိုအပ်သည်။" });
+            return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "Username ဖြည့်ရန် လိုအပ်သည်။" });
         }
 
         string formattedUserName = request.UserName.Replace(" ", "_");
@@ -335,29 +382,25 @@ public class UserController : ControllerBase
             return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "Username တွင် သင်္ကေတ (Special Characters) များ မသုံးရပါ။" });
         }
 
-        var isUsernameExist = _db.Users.Any(x => x.UserName == formattedUserName && x.UserId != id && x.IsDelete == false);
+        var isUsernameExist = _db.Users.Any(x => x.UserName == formattedUserName && x.UserId != id && (x.IsDelete == false || x.IsDelete == null));
         if (isUsernameExist)
         {
             return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "ဤ Username သည် အခြားသူတစ်ယောက် သုံးထားပြီးသား ဖြစ်သည်။" });
         }
 
-        var passwordError = ValidatePasswordPolicy(request.Password);
-        if (passwordError != null) return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = passwordError });
-
-        if (!string.IsNullOrEmpty(request.RoleNo))
+        if (!string.IsNullOrEmpty(request.Password))
         {
-            var isRoleNoExist = _db.Users.Any(x => x.RoleNo == request.RoleNo && x.UserId != id && x.IsDelete == false);
-            if (isRoleNoExist)
-            {
-                return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "ဤ Roll Number သည် အခြားသူတစ်ယောက် သုံးထားပြီးသား ဖြစ်သည်။" });
-            }
+            var passwordError = ValidatePasswordPolicy(request.Password);
+            if (passwordError != null) return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = passwordError });
+            item.Password = BCrypt.Net.BCrypt.HashPassword(request.Password);
         }
 
         item.RoleId = request.RoleId;
+        item.FacultyId = (request.FacultyId == null || request.FacultyId <= 0) ? null : request.FacultyId;
         item.FullName = request.FullName;
         item.UserName = formattedUserName;
         item.RoleNo = request.RoleNo;
-        item.Password = BCrypt.Net.BCrypt.HashPassword(request.Password); //🔒 Update တွင်လည်း Hash ပြုလုပ်သိမ်းဆည်းခြင်း
+        item.Email = request.Email;
         if (!string.IsNullOrEmpty(request.Status))
         {
             item.Status = request.Status;
@@ -367,8 +410,8 @@ public class UserController : ControllerBase
         _db.Activities.Add(new Activity
         {
             ActivityTitle = "User Updated",
-            Description = $"Tutor '{request.UserName}' was Updated from the system.",
-            CreatedDateTime = DateTime.UtcNow
+            Description = $"User '{request.UserName}' was Updated from the system.",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -468,8 +511,8 @@ public class UserController : ControllerBase
         _db.Activities.Add(new Activity
         {
             ActivityTitle = "User Updated",
-            Description = $"Tutor '{request.UserName}' was Updated from the system.",
-            CreatedDateTime = DateTime.UtcNow
+            Description = $"User '{request.UserName}' was Updated from the system.",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -507,7 +550,7 @@ public class UserController : ControllerBase
         {
             ActivityTitle = "User Deleted",
             Description = $"User '{item.UserName}' was Deleted from the system.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -536,7 +579,7 @@ public class UserController : ControllerBase
         {
             ActivityTitle = "User Status Toggled",
             Description = $"User '{item.UserName}' status was changed to '{newStatus}'.",
-            CreatedDateTime = DateTime.UtcNow
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -554,19 +597,111 @@ public class UserController : ControllerBase
     //}
 
     [HttpGet("count/by-role")]
-
+    [AllowAnonymous]
     public IActionResult GetCountByRole()
     {
         var result = _db.Users
             .Include(u => u.Role)
             .Where(u => u.IsDelete == false)
-            .GroupBy(u => u.Role.RoleName)
+            .GroupBy(u => u.Role != null ? u.Role.RoleName : "Unknown")
             .Select(g => new
             {
-                name = g.Key ?? "Unknown", // Frontend မှ name ဟု ခေါ်ထားသည်နှင့် ကိုက်အောင်လုပ်ပါ
+                name = g.Key,
                 y = (double)g.Count(),
-                // color = g.Key == "Admin" ? "#22d3ee" : (g.Key == "Student" ? "#10b981" : "#8b5cf6")
+                color = (g.Key == "Admin" || g.Key == "ADMIN") ? "#22d3ee" : ((g.Key == "Student" || g.Key == "STUDENT") ? "#10b981" : "#8b5cf6")
             }).ToList();
+
+        return Ok(result);
+    }
+
+    [HttpGet("count/by-faculty")]
+    [AllowAnonymous]
+    public IActionResult GetCountByFaculty()
+    {
+        EnsureUserEmailColumn();
+
+        var query = from u in _db.Users
+                    join f in _db.Faculties on u.FacultyId equals f.FacultyId into facultyGroup
+                    from f in facultyGroup.DefaultIfEmpty()
+                    where u.IsDelete == false || u.IsDelete == null
+                    select new { u, fName = f != null ? f.FacultyName : "Other/Unassigned" };
+
+        var result = query.ToList()
+            .GroupBy(x => x.fName)
+            .Select(g => new
+            {
+                name = g.Key,
+                y = (double)g.Count(),
+                color = (g.Key.Contains("Computing", StringComparison.OrdinalIgnoreCase) || g.Key.Contains("Computer", StringComparison.OrdinalIgnoreCase)) ? "#38bdf8" :
+                        (g.Key.Contains("Engineering", StringComparison.OrdinalIgnoreCase) ? "#8b5cf6" : "#10b981")
+            }).ToList();
+
+        return Ok(result);
+    }
+
+    [HttpGet("count/by-faculty-year")]
+    [AllowAnonymous]
+    public IActionResult GetCountByFacultyYear()
+    {
+        EnsureUserEmailColumn();
+
+        var years = new List<string> { "2022-2023", "2023-2024", "2024-2025", "2025-2026", "2026-2027" };
+
+        var usersWithFaculty = (from u in _db.Users
+                                join f in _db.Faculties on u.FacultyId equals f.FacultyId into facultyGroup
+                                from f in facultyGroup.DefaultIfEmpty()
+                                join s in _db.Students on u.UserId equals s.UserId into studentGroup
+                                from s in studentGroup.DefaultIfEmpty()
+                                where (u.IsDelete == false || u.IsDelete == null)
+                                select new
+                                {
+                                    u.UserId,
+                                    u.CreatedDateTime,
+                                    FacultyName = f != null ? f.FacultyName : "",
+                                    ClassYear = s != null && !string.IsNullOrEmpty(s.CurrentClassYear) ? s.CurrentClassYear : null
+                                }).ToList();
+
+        int[] fcCounts = new int[5];
+        int[] feCounts = new int[5];
+
+        foreach (var item in usersWithFaculty)
+        {
+            int yearIdx = 4;
+            
+            if (item.CreatedDateTime.HasValue)
+            {
+                int y = item.CreatedDateTime.Value.Year;
+                if (y == 2022) yearIdx = 0;
+                else if (y == 2023) yearIdx = 1;
+                else if (y == 2024) yearIdx = 2;
+                else if (y == 2025) yearIdx = 3;
+                else if (y >= 2026) yearIdx = 4;
+                else yearIdx = Math.Abs(item.UserId) % 5;
+            }
+            else
+            {
+                yearIdx = Math.Abs(item.UserId) % 5;
+            }
+
+            if (item.FacultyName.Contains("Computing", StringComparison.OrdinalIgnoreCase) || item.FacultyName.Contains("Computer", StringComparison.OrdinalIgnoreCase))
+            {
+                fcCounts[yearIdx]++;
+            }
+            else
+            {
+                feCounts[yearIdx]++;
+            }
+        }
+
+        var result = new
+        {
+            categories = years,
+            series = new[]
+            {
+                new { name = "Faculty of Computing (FC)", color = "#38bdf8", data = fcCounts },
+                new { name = "Faculty of Engineering (FE)", color = "#8b5cf6", data = feCounts }
+            }
+        };
 
         return Ok(result);
     }
@@ -576,27 +711,46 @@ public class UserController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] string? roleName = null)
+        [FromQuery] string? roleName = null,
+        [FromQuery] string? facultyName = null)
     {
+        EnsureUserEmailColumn();
+
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
 
-        var query = _db.Users
-            .Where(x => x.IsDelete == false)
-            .Join(_db.Roles,
-                  user => user.RoleId,
-                  role => role.RoleId,
-                  (user, role) => new { user, role });
+        var query = from u in _db.Users
+                    join r in _db.Roles on u.RoleId equals r.RoleId
+                    join f in _db.Faculties on u.FacultyId equals f.FacultyId into facultyGroup
+                    from f in facultyGroup.DefaultIfEmpty()
+                    where u.IsDelete == false || u.IsDelete == null
+                    select new { user = u, role = r, faculty = f };
+
+        // Hierarchical RBAC Faculty Scoping:
+        if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+        {
+            var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
+            if (scopedFacultyId.HasValue)
+            {
+                query = query.Where(x => x.user.FacultyId == scopedFacultyId.Value);
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             query = query.Where(x => (x.user.FullName != null && x.user.FullName.Contains(searchTerm)) ||
-                                     (x.user.UserName != null && x.user.UserName.Contains(searchTerm)));
+                                     (x.user.UserName != null && x.user.UserName.Contains(searchTerm)) ||
+                                     (x.user.RoleNo != null && x.user.RoleNo.Contains(searchTerm)));
         }
 
         if (!string.IsNullOrWhiteSpace(roleName) && !roleName.Equals("All", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(x => x.role.RoleName == roleName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(facultyName) && !facultyName.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.faculty != null && x.faculty.FacultyName == facultyName);
         }
 
         var totalCount = query.Count();
@@ -609,10 +763,13 @@ public class UserController : ControllerBase
             {
                 UserId = x.user.UserId,
                 RoleId = x.user.RoleId,
+                RoleName = x.role.RoleName,
+                FacultyId = x.user.FacultyId,
+                FacultyName = x.faculty != null ? x.faculty.FacultyName : null,
                 FullName = x.user.FullName,
                 UserName = x.user.UserName,
-                RoleName = x.role.RoleName,
                 RoleNo = x.user.RoleNo,
+                Email = x.user.Email,
                 Password = "********",
                 CreatedDateTime = x.user.CreatedDateTime,
                 Status = x.user.Status

@@ -141,11 +141,15 @@ builder.Services.AddAuthorizationCore();
 
 //builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.RegistrationState>();
 builder.Services.AddScoped<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationState>();
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100_000_000;
+});
 builder.Services.AddServerSideBlazor()
     .AddCircuitOptions(options => { options.DetailedErrors = true; })
     .AddHubOptions(options =>
     {
-        options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB limit
+        options.MaximumReceiveMessageSize = 100 * 1024 * 1024; // 100 MB limit
     });
 var app = builder.Build();
 app.UseCors("AllowBlazorServer");

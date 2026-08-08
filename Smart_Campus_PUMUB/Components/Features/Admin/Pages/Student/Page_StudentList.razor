@@ -158,11 +158,11 @@
                     <th>Date</th>
                     <th>Roll No</th>
                     <th>Name</th>
-                    <th>Major</th>
+                    <th>Faculty</th>
                     <th>Year</th>
                     <th>Amount</th>
-                    <th class="text-center">Pay Status</th>
                     <th class="text-center">Reg Status</th>
+                    <th class="text-center">Pay Status</th>
                     <th class="text-center">Actions</th>
                 </tr>
             </thead>
@@ -182,7 +182,7 @@
                 }
                 else
                 {
-                    int count = 1;
+                    int count = (CurrentPage - 1) * PageSize + 1;
                     @foreach (var s in FilteredStudents)
                     {
                         <tr>
@@ -190,7 +190,7 @@
                             <td><i class="bi bi-calendar2-event me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
                             <td class="fw-bold text-info">@s.RollNo</td>
                             <td class="fw-bold text-white">@s.StudentNameMm</td>
-                            <td>@s.Major</td>
+                            <td>@GetFacultyDisplayName(s)</td>
                             <td><span class="badge bg-primary bg-opacity-25 text-primary border border-primary badge-modern">@s.AcademicYearLevel</span></td>
 
                             <td class="text-success fw-bold">
@@ -198,20 +198,20 @@
                             </td>
 
                             <td class="text-center">
+                                <span class="badge badge-modern @GetStatusClass(s.Status)">@FormatStatus(s.Status)</span>
+                            </td>
+
+                            <td class="text-center">
                                 @if (s.RegistrationPayments.Any())
                                 {
                                     <span class="badge badge-modern @GetStatusClass(s.RegistrationPayments.First().Status)">
-                                        @s.RegistrationPayments.First().Status
+                                        @FormatStatus(s.RegistrationPayments.First().Status)
                                     </span>
                                 }
                                 else
                                 {
                                     <span class="text-muted">-</span>
                                 }
-                            </td>
-
-                            <td class="text-center">
-                                <span class="badge badge-modern @GetStatusClass(s.Status)">@s.Status</span>
                             </td>
 
                             <td class="text-center">
@@ -663,7 +663,7 @@
                                                                              @foreach (var fee in PaymentFees)
                                                                              {
                                                                                  <div class="d-flex justify-content-between">
-                                                                                     <span>@fee.FeeName</span>
+                                                                                     <span>@(fee.FeeName == "ကျောင်းလခ" && SelectedDetail != null ? $"ကျောင်းလခ ({SelectedDetail.AcademicYearLevel})" : fee.FeeName)</span>
                                                                                      <span>@fee.MontlyAmount.ToString("N0") MMK</span>
                                                                                  </div>
                                                                              }

@@ -40,6 +40,9 @@ public partial class Page_RegisterAccList
     private bool ShowRejectModal { get; set; } = false;
     private string RejectReason { get; set; } = "";
 
+    // ── Status Modal ───────────────────────────────────────────────────────
+    private bool ShowStatusModal { get; set; } = false;
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -213,6 +216,27 @@ public partial class Page_RegisterAccList
         {
             IsProcessing = false;
         }
+    }
+
+    // ── Status Flow ────────────────────────────────────────────────────────
+    private void OpenStatusModal(RegisterAccListItem item)
+    {
+        SelectedItem = item;
+        ShowStatusModal = true;
+    }
+
+    private void CloseStatusModal()
+    {
+        SelectedItem = null;
+        ShowStatusModal = false;
+    }
+
+    private async Task ConfirmToggleStatus()
+    {
+        if (SelectedItem == null) return;
+        var item = SelectedItem;
+        CloseStatusModal();
+        await ToggleStudentAccountStatus(item);
     }
 
     private async Task ToggleStudentAccountStatus(RegisterAccListItem item)

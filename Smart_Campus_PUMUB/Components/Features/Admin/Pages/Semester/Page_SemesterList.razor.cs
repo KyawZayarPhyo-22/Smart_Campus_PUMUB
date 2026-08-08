@@ -33,26 +33,26 @@ public partial class Page_SemesterList
 
     private string SearchInput = "";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadSemesters();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadSemesters();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
@@ -61,27 +61,12 @@ public partial class Page_SemesterList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<SemesterModel> GetFilteredSemesters() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? SemesterList
-        : SemesterList.Where(s => s.SemesterName != null && s.SemesterName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<SemesterModel> FilteredSemesters => SemesterList;
 
-    private IEnumerable<SemesterModel> FilteredSemesters
-    {
-        get
-        {
-            var allFiltered = GetFilteredSemesters();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadSemesters();
     }
 
     public bool IsSuccess { get; private set; }
@@ -117,8 +102,15 @@ public partial class Page_SemesterList
         ErrorMessage = "";
         try
         {
-            var response = await HttpClientService.ExecuteAsync<List<SemesterModel>>("semester", EnumHttpMethod.Get);
-            if (response != null) SemesterList = response;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<SemesterModel>>(
+                $"semester/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
+                EnumHttpMethod.Get
+            );
+            if (response != null)
+            {
+                SemesterList = response.Items;
+                TotalPages = response.TotalPages;
+            }
         }
         catch (Exception ex)
         {

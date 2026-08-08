@@ -2,20 +2,22 @@
 @layout AdminLayout
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Book
 @using Smart_Campus_PUMUB.WebApi.Models
-@using Microsoft.AspNetCore.Components.Authorization
 @rendermode InteractiveServer
 
-<AuthorizeView Policy="Book.Create" Context="authContext">
-    <Authorized>
-        <div class="modal-dialog modal-md mt-5">
-    <div class="modal-content tech-card">
-        <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold text-white">Add New Book</h5>
+<div class="d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div style="width: 100%; max-width: 560px;">
+
+        <div class="mb-4 text-center">
+            <h3 class="fw-bold text-white">
+                <i class="bi bi-book-half me-2 text-primary"></i>Add New Book
+            </h3>
         </div>
-        <EditForm Model="bookRequest" OnValidSubmit="SaveBook" FormName="CreateBookForm">
-            <DataAnnotationsValidator />
-            <div class="modal-body">
-                <div class="col-12 mb-3">
+
+        <div class="tech-card p-4">
+            <EditForm Model="bookRequest" OnValidSubmit="SaveBook">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
                     <label class="form-label text-light">Category</label>
                     <InputSelect @bind-Value="bookRequest.CategoryId" class="form-select">
                         <option value="0">-- Select Category --</option>
@@ -24,19 +26,29 @@
                             <option value="@cat.CategoryId">@cat.CategoryName</option>
                         }
                     </InputSelect>
+                    <ValidationMessage For="@(() => bookRequest.CategoryId)" class="text-danger small" />
                 </div>
 
-                <div class="col-12 mb-3">
+                <div class="mb-3">
                     <label class="form-label text-light">Book Name</label>
                     <InputText @bind-Value="bookRequest.BookName" class="form-control" placeholder="Enter Book Title" />
+                    <ValidationMessage For="@(() => bookRequest.BookName)" class="text-danger small" />
                 </div>
 
-                <div class="col-12 mb-3">
-                    <label class="form-label text-light">Book File Path/Link</label>
-                    <InputText @bind-Value="bookRequest.FilePath" class="form-control" placeholder="Enter File URL" />
+                <div class="mb-3">
+                    <label class="form-label text-light">
+                        <i class="bi bi-file-earmark-pdf text-danger me-1"></i>Book PDF File
+                    </label>
+                    <InputFile OnChange="HandlePdfSelected" class="form-control" accept=".pdf" />
+                    @if (!string.IsNullOrEmpty(PdfFileName))
+                    {
+                        <div class="mt-2 small text-success">
+                            <i class="bi bi-check-circle me-1"></i>@PdfFileName
+                        </div>
+                    }
                 </div>
 
-                <div class="col-12 mb-2">
+                <div class="mb-4">
                     <label class="form-label text-light">Book Cover Image</label>
                     <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
                     @if (!string.IsNullOrEmpty(PreviewImageUrl))
@@ -49,27 +61,26 @@
 
                 @if (!string.IsNullOrEmpty(statusMessage))
                 {
-                    <div class="small text-info mt-2">@statusMessage</div>
+                    <div class="alert @(isProcessing ? "alert-info" : "alert-danger") py-2 small">
+                        @statusMessage
+                    </div>
                 }
-            </div>
-            <div class="modal-footer border-0 pt-0">
-                <NavLink href="/admin/books" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
-                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
-                    @(isProcessing ? "Saving..." : "Create Book")
-                </button>
-            </div>
-        </EditForm>
+
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <NavLink href="/admin/books" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Cancel
+                    </NavLink>
+                    <button type="submit" class="btn btn-primary px-4" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        @(isProcessing ? "Saving..." : "Create Book")
+                    </button>
+                </div>
+
+            </EditForm>
+        </div>
+
     </div>
 </div>
-    </Authorized>
-    <NotAuthorized>
-        <div class="text-center mt-5 p-5 tech-card">
-            <i class="bi bi-shield-slash text-danger fs-1"></i>
-            <h2 class="text-danger fw-bold mt-3">Access Denied</h2>
-            <p class="text-muted">သင့်တွင် ဤစာမျက်နှာကို ဝင်ရောက်ကြည့်ရှုရန် ခွင့်ပြုချက် (Book.Create Policy) မရှိပါ။</p>
-            <NavLink href="/admin/books" class="btn btn-primary mt-2">
-                <i class="bi bi-arrow-left"></i> Back to Directory
-            </NavLink>
-        </div>
-    </NotAuthorized>
-</AuthorizeView>

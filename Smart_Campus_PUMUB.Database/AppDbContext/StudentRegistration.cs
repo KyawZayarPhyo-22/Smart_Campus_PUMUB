@@ -126,8 +126,7 @@ public partial class StudentRegistration
     public string PermanentAddressEn { get; set; } = null!;
 
     [Column("matric_roll_no")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(100)]
     public string MatricRollNo { get; set; } = null!;
 
     [Column("matric_passed_year")]

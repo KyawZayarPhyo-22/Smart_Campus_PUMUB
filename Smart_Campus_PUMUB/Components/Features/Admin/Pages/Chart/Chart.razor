@@ -1,4 +1,5 @@
 @page "/admin/dashboard"
+@* @attribute [Authorize(Roles = "Admin")] *@
 @layout AdminLayout
 @implements IDisposable
 @inject IJSRuntime JS
@@ -8,6 +9,8 @@
 @inject IHttpClientFactory ClientFactory
 @inject NavigationManager NavigationManager
 @inject Smart_Campus_PUMUB.BlazorServer.Frontend.Services.HttpClientService HttpClientService
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject IHttpContextAccessor HttpContextAccessor
 <style>
     .stat-icon {
         display: flex;
@@ -22,6 +25,15 @@
     }
 </style>
 <!-- Page Header -->
+@* <AuthorizeView>
+    <Authorized>
+<div>
+
+<AuthorizeView Policy="StudentDatabank.View" Context="View">
+
+    <Authorized> *@
+
+  
 <div class="page-header">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div>
@@ -55,11 +67,11 @@
                     <i class="bi bi-people-fill text-info"></i>
                 </div>
 
-                <span
+                @* <span
                     class="badge @(percentage >= 0 ? "bg-info" : "bg-danger") bg-opacity-25 text-info border border-info border-opacity-25 stat-change">
                     <i class="bi @(percentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
                     @($"{percentage:+0;-0;0}%")
-                </span>
+                </span> *@
             </div>
 
             <div class="stat-value text-info">@activeStudentCount.ToString("N0")</div>
@@ -73,11 +85,11 @@
                     <i class="bi bi-person-workspace" style="color:#8b5cf6;"></i>
                 </div>
 
-                <span class="badge border stat-change"
+                @* <span class="badge border stat-change"
                       style="background:rgba(139,92,246,0.15);color:#8b5cf6;border-color:rgba(139,92,246,0.3)!important;">
                     <i class="bi @(tutorPercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
                     @($"{tutorPercentage:+0;-0;0}%")
-                </span>
+                </span> *@
             </div>
 
             <div class="stat-value" style="color:#8b5cf6;">@totalTutorCount</div>
@@ -90,11 +102,11 @@
                 <div class="stat-icon" style="background:rgba(16,185,129,0.12);">
                     <i class="bi bi-book-fill text-success"></i>
                 </div>
-                <span
+                @* <span
                     class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 stat-change">
                     <i class="bi @(bookPercentage >= 0 ? "bi-arrow-up-short" : "bi-arrow-down-short")"></i>
                     @($"{bookPercentage:+0;-0;0}%")
-                </span>
+                </span> *@
             </div>
             <div class="stat-value text-success">@bookCount.ToString("N0")</div>
             <div class="stat-label mt-1">Library PDF Files</div>
@@ -118,10 +130,10 @@
             <div class="stat-icon" style="background:rgba(239,68,68,0.12);">
                 <i class="bi bi-megaphone-fill text-danger"></i>
             </div>
-            <span
+            @* <span
                 class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 stat-change">
                 <i class="bi bi-exclamation-circle"></i> Total
-            </span>
+            </span> *@
         </div>
         <div class="stat-value text-danger">@activeAlertCount</div>
         <div class="stat-label mt-1">Activity</div>
@@ -148,12 +160,12 @@
         </div>
     </div>
 
-    <!-- Column — Library Books & Tutors by Dept -->
+    <!-- Column — Students by Faculty -->
     <div class="col-12 col-lg-7">
         <div class="tech-card h-100">
             <div class="tech-card-header">
                 <h6 class="tech-card-title">
-                    <i class="bi bi-bar-chart-fill me-2 text-info"></i>Library Books &amp; Tutors by Dept.
+                    <i class="bi bi-bar-chart-fill me-2 text-info"></i>Students by Faculty
                 </h6>
                 <span class="badge bg-info text-dark">2026</span>
             </div>
@@ -256,38 +268,54 @@
                 }
             </ul> *@
             <ul class="list-unstyled mb-0">
-                @foreach (var activity in recentActivities)
+                @if (recentActivities != null && recentActivities.Any())
                 {
-                    <li class="d-flex align-items-center gap-3 py-2 border-bottom"
-                        @onclick="() => activity.IsExpanded = !activity.IsExpanded" style="cursor: pointer;">
+                    @foreach (var activity in recentActivities)
+                    {
+                        <li class="d-flex align-items-center gap-3 py-2 border-bottom"
+                            @onclick="() => activity.IsExpanded = !activity.IsExpanded" style="cursor: pointer;">
 
-                        <span class="stat-icon flex-shrink-0"
-                              style="width:36px;height:36px;background:rgba(34,211,238,0.1);">
-                            @* <i class="bi @(!string.IsNullOrEmpty(activity.Icon) ? activity.Icon : "bi-bell")
-                        text-info"></i> *@
-                            <i class="bi @activity.Icon @GetIconColor(activity.ActivityTitle)"></i>
-                            @* <i class="bi @activity.Icon text-info"></i> *@
-                        </span>
+                            <span class="stat-icon flex-shrink-0"
+                                  style="width:36px;height:36px;background:rgba(34,211,238,0.1);">
+                                <i class="bi @activity.Icon @GetIconColor(activity.ActivityTitle)"></i>
+                            </span>
 
-                        <div class="flex-grow-1 min-w-0">
-                            <p class="mb-0 fw-semibold small">@activity.ActivityTitle</p>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <p class="mb-0 fw-semibold small text-truncate">@activity.ActivityTitle</p>
+                                    <span class="badge bg-light text-secondary border flex-shrink-0" style="font-size: 0.65rem; padding: 2px 6px;">
+                                        <i class="bi bi-person-fill me-1"></i>@(string.IsNullOrWhiteSpace(activity.CreatedBy) ? "Admin" : activity.CreatedBy)
+                                    </span>
+                                </div>
 
-                            @if (activity.IsExpanded)
-                            {
-                                <p class="mb-0 text-muted" style="font-size:0.75rem; white-space: normal;">
-                                    @activity.Description
-                                </p>
-                            }
-                            else
-                            {
-                                <p class="mb-0 text-muted"
-                                   style="font-size:0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
-                                    @activity.Description
-                                </p>
-                            }
-                        </div>
-                        <small class="text-muted flex-shrink-0">@GetTimeAgo(activity.CreatedDateTime)</small>
-                    </li>
+                                @if (activity.IsExpanded)
+                                {
+                                    <p class="mb-0 text-muted" style="font-size:0.75rem; white-space: normal; word-break: break-word;">
+                                        @activity.Description
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="mb-0 text-muted"
+                                       style="font-size:0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">
+                                        @activity.Description
+                                    </p>
+                                }
+                            </div>
+                            <div class="text-end flex-shrink-0 ms-2">
+                                <small class="text-muted d-block" style="font-size: 0.72rem; font-weight: 500;">
+                                    <i class="bi bi-calendar3 me-1"></i>@(activity.CreatedDateTime != default ? activity.CreatedDateTime.ToString("dd/MM/yyyy") : "")
+                                </small>
+                                <small class="text-muted d-block" style="font-size: 0.68rem;">
+                                    <i class="bi bi-clock me-1"></i>@(activity.CreatedDateTime != default ? activity.CreatedDateTime.ToString("hh:mm tt") : "")
+                                </small>
+                            </div>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li class="p-3 text-center text-muted small">No recent activity found.</li>
                 }
             </ul>
         </div>
@@ -408,7 +436,16 @@
         </div>
     </div>
 </div>
+@* </Authorized>
 
+
+<NotAuthorized>
+                    <div class="alert alert-warning">သင်သည် ဤအချက်အလက်များကို ကြည့်ရှုခွင့်မရှိပါ။</div>
+                </NotAuthorized>
+    </AuthorizeView>
+</div>
+</Authorized>
+</AuthorizeView> *@
 @*
 {
     private readonly List<RoleDistributionChartPoint> RoleDistributionData = new();
@@ -501,20 +538,22 @@
 @code
 {
     private readonly List<RoleDistributionChartPoint> RoleDistributionData = new();
+    private readonly List<RoleDistributionChartPoint> FacultyDistributionData = new();
     private Timer? _timer;
     private List<ActivityItem> recentActivities = new();
     private bool _isRendered = false; // JS Interop အတွက် အရေးကြီးသည်
 
     private int activeStudentCount = 0;
-    private int previousStudentCount = 2;
+    private int previousStudentCount = 0;
     private double percentage = 0;
     private int totalTutorCount = 0;
-    private int previousTutorCount = 4;
+    private int previousTutorCount = 0;
     private double tutorPercentage = 0;
     private int bookCount = 0;
-    private int previousBookCount = 1100;
+    private int previousBookCount = 0;
     private double bookPercentage = 0;
     private int activeAlertCount = 0;
+    private bool isDataLoading = true;
     private SystemSummary summary = new();
     private List<StudentModel> completedStudents = new();
     private List<StudentModel> allStudents = new();
@@ -569,15 +608,39 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _timer = new Timer(TimerCallback, null, 0, 60000);
-        var client = ClientFactory.CreateClient("SmartCampusApi");
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            
+            _timer = new Timer(TimerCallback, null, 0, 60000);
+            var client = ClientFactory.CreateClient("SmartCampusApi");
+
+
 
         try
         {
-            var res = await client.GetFromJsonAsync<StudentCountResponse>("student/count/active");
-            activeStudentCount = res?.Count ?? 0;
+            var res = await HttpClientService.ExecuteAsync<StudentCountResponse>("student/count/active", Smart_Campus_PUMUB.BlazorServer.Frontend.Services.EnumHttpMethod.Get);
+            if (res != null)
+            {
+                activeStudentCount = res.Count;
+            }
+            else
+            {
+                var res2 = await client.GetFromJsonAsync<StudentCountResponse>("student/count/active");
+                activeStudentCount = res2?.Count ?? 0;
+            }
         }
-        catch (Exception ex) { Console.WriteLine($"Error student count: {ex.Message}"); }
+        catch (Exception ex)
+        {
+            try
+            {
+                var res2 = await client.GetFromJsonAsync<StudentCountResponse>("student/count/active");
+                activeStudentCount = res2?.Count ?? 0;
+            }
+            catch { }
+            Console.WriteLine($"Error student count: {ex.Message}");
+        }
 
         try
         {
@@ -631,35 +694,40 @@
         }
         catch (Exception ex) { Console.WriteLine($"Error loading students: {ex.Message}"); }
 
+        await LoadRoleDistributionAsync();
+        await LoadFacultyDistributionAsync();
+
         // Calculations
+        if (previousStudentCount <= 0) previousStudentCount = activeStudentCount;
+        if (previousTutorCount <= 0) previousTutorCount = totalTutorCount;
+        if (previousBookCount <= 0) previousBookCount = bookCount;
+
         percentage = previousStudentCount > 0 ? ((double)(activeStudentCount - previousStudentCount) / previousStudentCount) * 100 : 0;
         tutorPercentage = previousTutorCount > 0 ? ((double)(totalTutorCount - previousTutorCount) / previousTutorCount) * 100 : 0;
         bookPercentage = previousBookCount > 0 ? ((double)(bookCount - previousBookCount) / previousBookCount) * 100 : 0;
+        isDataLoading = false;
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Other Error: " + ex.Message);
+        }
     }
+
+
+
 
     private async void TimerCallback(object? state)
     {
-        @* await LoadRoleDistributionAsync();
-
-        // UI ကို Update လုပ်ရန်
-        await InvokeAsync(StateHasChanged);
-
-        // Chart ကို ပြန်ဆွဲရန် (Render ဖြစ်ပြီးမှသာ ခေါ်ပါ)
-        if (_isRendered)
-        {
-            await InvokeAsync(async () =>
-            {
-                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
-            });
-        } *@
         try
         {
             await LoadActivities();
             await LoadRoleDistributionAsync();
+            await LoadFacultyDistributionAsync();
             await InvokeAsync(StateHasChanged);
             if (_isRendered)
             {
-                await InvokeAsync(async () => await JS.InvokeVoidAsync("initCharts", RoleDistributionData));
+                await InvokeAsync(async () => await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData));
             }
         }
         catch (Exception ex)
@@ -673,55 +741,32 @@
         _timer?.Dispose();
     }
 
-    @* protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            _isRendered = true; // JS အဆင်သင့်ဖြစ်ပြီဟု သတ်မှတ်လိုက်သည်
-            try
-            {
-                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
-            }
-            catch
-            {
-                await Task.Delay(250);
-                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
-            }
-        }
-    } *@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+
+
         if (firstRender)
         {
-            // 🌟 ၁။ အရင်ဆုံး Session Storage ကို စစ်ပါမယ်
-            var isLogined = await JS.InvokeAsync<string>("sessionStorage.getItem", "islogined");
-            var roleName = await JS.InvokeAsync<string>("sessionStorage.getItem", "rolename");
-
-            // Login မဝင်ထားဘူး (သို့) Role က admin/tutor မဟုတ်ဘူးဆိုရင်
-            if (isLogined != "true" || (roleName?.ToLower() != "admin" && roleName?.ToLower() != "tutor"))
+            var token = HttpContextAccessor.HttpContext?.Request.Cookies["authToken"];
+            if (string.IsNullOrEmpty(token))
             {
-                // Home page ဆီ ပြန်ကန်ချမယ်
-                NavigationManager.NavigateTo("/");
-                return; // ⚠️ အရေးကြီးသည် - အောက်က Chart ဆွဲတဲ့ Code တွေ ဆက်မလုပ်တော့ဘဲ ဒီမှာတင် ရပ်လိုက်ပါမယ်
+                NavigationManager.NavigateTo("/login", forceLoad: true);
             }
 
-            // 🌟 ၂။ မင်းရဲ့ မူလ Chart Render လုပ်တဲ့ အပိုင်း
             _isRendered = true;
             try
             {
-                await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData);
             }
             catch
             {
-                // initCharts may not be loaded yet - wait and retry once
                 try
                 {
                     await Task.Delay(500);
-                    await JS.InvokeVoidAsync("initCharts", RoleDistributionData);
+                    await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData);
                 }
                 catch (Exception ex)
                 {
-                    // If still not found, log and continue - do NOT let this kill the circuit
                     Console.WriteLine($"initCharts JS error (chart will not render): {ex.Message}");
                 }
             }
@@ -747,12 +792,27 @@
         {
             Console.WriteLine($"Error loading data: {ex.Message}");
         }
+    }
 
-        // Error တက်လျှင် Default data သုံးရန်
-        if (!RoleDistributionData.Any())
+    private FacultyYearChartResponse? FacultyYearData;
+
+    private async Task LoadFacultyDistributionAsync()
+    {
+        try
         {
-            RoleDistributionData.Clear();
-            RoleDistributionData.AddRange(GetDefaultRoleDistribution());
+            var apiData = await HttpClientService.ExecuteAsync<FacultyYearChartResponse>(
+                "user/count/by-faculty-year",
+                Smart_Campus_PUMUB.BlazorServer.Frontend.Services.EnumHttpMethod.Get);
+
+            if (apiData is not null)
+            {
+                FacultyYearData = apiData;
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading faculty year data: {ex.Message}");
         }
     }
 
@@ -779,17 +839,12 @@
     public class ActivityCountResponse { public int Count { get; set; } }
     public class ActivityItem
     {
-        public string ActivityTitle { get; set; } = ""; public string Description { get; set; } = "";
-        public
-   string Icon
-        { get; set; } = ""; [JsonIgnore] public string TimeAgo { get; set; } = ""; public DateTime CreatedDateTime
-        {
-            get; set;
-        }// UI
-
-        
-        public bool IsExpanded { get; set; } = false; // DateTime နဲ့
-
+        public string ActivityTitle { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string CreatedBy { get; set; } = "Admin";
+        public DateTime CreatedDateTime { get; set; }
+        public bool IsExpanded { get; set; } = false;
     }
     private sealed class RoleDistributionChartPoint
     {
@@ -813,6 +868,7 @@
     private string GetIconColor(string title)
     {
         title = title.ToLower();
+       // title = (title ?? string.Empty).ToLower();
         return title switch
         {
             _ when title.Contains("book") => "text-primary", // Book အတွက် အပြာ
@@ -831,5 +887,18 @@
         public int Semesters { get; set; }
         public int Positions { get; set; }
         public int Rules { get; set; }
+    }
+
+    public class FacultyYearChartResponse
+    {
+        public List<string> categories { get; set; } = new();
+        public List<FacultyYearSeries> series { get; set; } = new();
+    }
+
+    public class FacultyYearSeries
+    {
+        public string name { get; set; } = "";
+        public string color { get; set; } = "";
+        public List<int> data { get; set; } = new();
     }
 }

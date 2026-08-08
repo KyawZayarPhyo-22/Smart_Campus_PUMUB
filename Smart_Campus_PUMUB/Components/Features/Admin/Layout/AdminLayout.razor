@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 
 <head>
-    <link rel="stylesheet" href="css/admin.css?v=20260618_v2" />
+    <link rel="stylesheet" href="css/admin.css?v=20260723_v3" />
     <!-- Bootstrap 5.1.0 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
@@ -17,6 +17,10 @@
 </head>
 
 <!-- Mobile Offcanvas Sidebar -->
+<AuthorizeView Roles="Admin, admin, Super Admin, super_admin, SuperAdmin, Tutor, tutor">
+    <Authorized> 
+
+
 <div class="offcanvas offcanvas-start admin-offcanvas" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
     <div class="offcanvas-header border-bottom border-secondary">
         <div class="d-flex align-items-center gap-2">
@@ -58,12 +62,17 @@
 
     </div>
 </div>
+     </Authorized>
+     <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView> 
 
 <!-- Bootstrap 5.1.0 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
         crossorigin="anonymous"></script>
-<script src="js/admin.js?v=role-chart-20260616"></script>
+<script src="js/admin.js?v=faculty-chart-20260723_v2"></script>
 
 <!-- Sidebar toggle wiring — inline so it always runs after DOM is ready,
      bypassing Blazor's event interception on layout components. -->

@@ -139,16 +139,16 @@
 
         <ul class="nav-links">
             <li style="margin-bottom: -1rem;">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Home</NavLink>
             </li>
             <li style="margin-bottom: -1rem;">
-                <NavLink class="nav-link" href="department" Match="NavLinkMatch.Prefix">Departments</NavLink>
+                <NavLink class="nav-link" href="/department" Match="NavLinkMatch.Prefix">Departments</NavLink>
             </li>
             <li style="margin-bottom: -1rem;">
-                <NavLink class="nav-link" href="library" Match="NavLinkMatch.Prefix">Library</NavLink>
+                <NavLink class="nav-link" href="/library" Match="NavLinkMatch.Prefix">Library</NavLink>
             </li>
             <li style="margin-bottom: -1rem;">
-                <NavLink class="nav-link" href="activities" Match="NavLinkMatch.Prefix">Activities</NavLink>
+                <NavLink class="nav-link" href="/activities" Match="NavLinkMatch.Prefix">Activities</NavLink>
             </li>
             <li style="margin-bottom: -1rem;">
                 <NavLink class="nav-link" href="/rules" Match="NavLinkMatch.Prefix">Rules</NavLink>
@@ -213,7 +213,7 @@
                     <div class="profile-trigger" @onclick="ToggleProfileMenu" style="cursor: pointer; display: flex; align-items: center;">
                         @if (!string.IsNullOrEmpty(userProfileImage))
                         {
-                            <img src="@userProfileImage" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.8);" />
+                            <img src="@(userProfileImage.StartsWith("data:") || userProfileImage.StartsWith("http") ? userProfileImage : $"https://localhost:7297{userProfileImage}")" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.8);" />
                         }
                         else
                         {
@@ -228,7 +228,7 @@
                             <span class="user-name-text">@context.User.Identity?.Name</span>
                             <span class="status-text">Access Granted</span>
                             
-                            @if (context.User.IsInRole("Admin") || context.User.IsInRole("admin") || context.User.IsInRole("Tutor") || context.User.IsInRole("tutor"))
+                            @if (context.User.IsInRole("Admin") || context.User.IsInRole("admin") || context.User.IsInRole("Tutor") || context.User.IsInRole("tutor") || context.User.IsInRole("Super Admin") || context.User.IsInRole("super_admin") || context.User.HasClaim(c => c.Type == System.Security.Claims.ClaimTypes.Role && (c.Value.ToLower().Contains("admin") || c.Value.ToLower().Contains("super"))))
                             {
                                 <a href="/admin/dashboard" style="display:flex; align-items:center; gap:8px; padding:10px 15px; border-radius:12px; background:#f0f4ff; color:#0d6efd; text-decoration:none; font-weight:600; font-size:0.88rem; margin-bottom:8px; transition:0.2s;" @onclick="ToggleProfileMenu">
                                     <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -327,54 +327,85 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        if (user.Identity != null && user.Identity.IsAuthenticated)
-        {
-            var userIdClaim = user.FindFirst("UserId")?.Value
-                              ?? user.FindFirst("User_Id")?.Value
-                              ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                              ?? user.FindFirst("id")?.Value
-                              ?? user.FindFirst("uid")?.Value;
-            if (int.TryParse(userIdClaim, out var id))
-            {
-                currentUserId = id;
-            }
-        }
-
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         NotifierService.OnRegistrationStatusChanged += HandleRegistrationStatusChanged;
         NotifierService.OnPaymentStatusChanged += HandlePaymentStatusChanged;
         NotifierService.OnProfileImageChanged += HandleProfileImageChanged;
 
-        if (currentUserId > 0)
-        {
-            await LoadUserProfileImage();
-        }
+        await CheckAndLoadUser();
     }
 
-    private async Task LoadUserProfileImage()
+    protected override async Task OnParametersSetAsync()
+    {
+        await CheckAndLoadUser();
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        await InvokeAsync(async () =>
+        {
+            await CheckAndLoadUser();
+            StateHasChanged();
+        });
+    }
+
+    private async Task CheckAndLoadUser()
     {
         try
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
-            if (user.IsInRole("Student") || user.IsInRole("student"))
+            if (user.Identity != null && user.Identity.IsAuthenticated)
             {
-                var data = await HttpClientService.ExecuteAsync<StudentProfileResponse>(
-                    $"student/profile/{currentUserId}", EnumHttpMethod.Get);
-                if (data != null)
+                var userIdClaim = user.FindFirst("UserId")?.Value
+                                  ?? user.FindFirst("User_Id")?.Value
+                                  ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                  ?? user.FindFirst("id")?.Value
+                                  ?? user.FindFirst("uid")?.Value;
+                if (int.TryParse(userIdClaim, out var id))
                 {
-                    userProfileImage = data.StudentImage;
+                    bool userChanged = currentUserId != id;
+                    currentUserId = id;
+                    if (userChanged || string.IsNullOrEmpty(userProfileImage))
+                    {
+                        await LoadUserProfileImage();
+                    }
                 }
             }
-            else if (user.IsInRole("Tutor") || user.IsInRole("tutor"))
+            else
             {
-                var data = await HttpClientService.ExecuteAsync<TutorProfileResponse>(
-                    $"tutor/profile/{currentUserId}", EnumHttpMethod.Get);
-                if (data != null)
-                {
-                    userProfileImage = data.Profile;
-                }
+                currentUserId = 0;
+                userProfileImage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error checking user state: {ex.Message}");
+        }
+    }
+
+    private async Task LoadUserProfileImage()
+    {
+        if (currentUserId <= 0) return;
+
+        try
+        {
+            var studentData = await HttpClientService.ExecuteAsync<StudentProfileResponse>(
+                $"student/profile/{currentUserId}", EnumHttpMethod.Get);
+            if (studentData != null && !string.IsNullOrEmpty(studentData.StudentImage))
+            {
+                userProfileImage = studentData.StudentImage;
+                StateHasChanged();
+                return;
+            }
+
+            var tutorData = await HttpClientService.ExecuteAsync<TutorProfileResponse>(
+                $"tutor/profile/{currentUserId}", EnumHttpMethod.Get);
+            if (tutorData != null && !string.IsNullOrEmpty(tutorData.Profile))
+            {
+                userProfileImage = tutorData.Profile;
+                StateHasChanged();
+                return;
             }
         }
         catch (Exception ex)
@@ -398,22 +429,28 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && currentUserId > 0)
+        if (firstRender)
         {
-            try
+            await CheckAndLoadUser();
+
+            if (currentUserId > 0)
             {
-                var notiJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"notifications_{currentUserId}");
-                if (!string.IsNullOrEmpty(notiJson))
+                try
                 {
-                    notifications = System.Text.Json.JsonSerializer.Deserialize<List<NotificationItem>>(notiJson) ?? new();
-                    unreadCount = notifications.Count(n => !n.IsRead);
-                    StateHasChanged();
+                    var notiJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"notifications_{currentUserId}");
+                    if (!string.IsNullOrEmpty(notiJson))
+                    {
+                        notifications = System.Text.Json.JsonSerializer.Deserialize<List<NotificationItem>>(notiJson) ?? new();
+                        unreadCount = notifications.Count(n => !n.IsRead);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading notifications: {ex.Message}");
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading notifications: {ex.Message}");
-            }
+
+            StateHasChanged();
         }
     }
 
@@ -482,6 +519,7 @@
 
     public void Dispose()
     {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
         NotifierService.OnRegistrationStatusChanged -= HandleRegistrationStatusChanged;
         NotifierService.OnPaymentStatusChanged -= HandlePaymentStatusChanged;
         NotifierService.OnProfileImageChanged -= HandleProfileImageChanged;

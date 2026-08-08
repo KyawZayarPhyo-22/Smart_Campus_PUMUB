@@ -31,26 +31,26 @@ public partial class Page_RulesList
 
     private string SearchInput = "";
 
-    private void ApplyFilter()
+    private async Task ApplyFilter()
     {
         SearchTerm = SearchInput;
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadRules();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
         SearchInput = "";
         SearchTerm = "";
         CurrentPage = 1;
-        StateHasChanged();
+        await LoadRules();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
@@ -59,27 +59,12 @@ public partial class Page_RulesList
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
 
-    private IEnumerable<RuleModel> GetFilteredRules() => string.IsNullOrWhiteSpace(SearchTerm)
-        ? RulesList
-        : RulesList.Where(r => r.Title != null && r.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<RuleModel> FilteredRules => RulesList;
 
-    private IEnumerable<RuleModel> FilteredRules
-    {
-        get
-        {
-            var allFiltered = GetFilteredRules();
-            int count = allFiltered.Count();
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-            return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
         CurrentPage = newPage;
-        StateHasChanged();
+        await LoadRules();
     }
 
     protected override async Task OnInitializedAsync()
@@ -101,7 +86,7 @@ public partial class Page_RulesList
                                   .Select(c => c.Value)
                                   .ToList();
                                   
-            canManageRule = userPermissions.Contains("Rule.Edit") || userPermissions.Contains("Rule.Delete");
+            canManageRule = userPermissions.Contains("Rules.Edit") || userPermissions.Contains("Rules.Delete");
 
             StateHasChanged();
         }
@@ -113,9 +98,15 @@ public partial class Page_RulesList
         ErrorMessage = "";
         try
         {
-            // API လမ်းကြောင်း "rules" ကို ခေါ်ယူခြင်း
-            var response = await HttpClientService.ExecuteAsync<List<RuleModel>>("rules", EnumHttpMethod.Get);
-            if (response != null) RulesList = response;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<RuleModel>>(
+                $"rules/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
+                EnumHttpMethod.Get
+            );
+            if (response != null)
+            {
+                RulesList = response.Items;
+                TotalPages = response.TotalPages;
+            }
         }
         catch (Exception ex)
         {

@@ -5,6 +5,8 @@ using Smart_Campus_PUMUB.Database.AppDbContext; // ကိုကို့ DbConte
 using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 
+using Smart_Campus_PUMUB.WebApi.Services;
+
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
@@ -12,33 +14,47 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 public class DepartmentController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
+    private readonly IFacultyDataScopeService _scopeService;
 
-    public DepartmentController(SmartCampusDbContext db)
+    public DepartmentController(SmartCampusDbContext db, IFacultyDataScopeService scopeService)
     {
         _db = db;
+        _scopeService = scopeService;
     }
 
     [HttpGet]
-    [Permission("Department.View")]
+    [AllowAnonymous]
     public IActionResult GetDepartments()
     {
-        var lst = _db.Departments
+        var query = _db.Departments
                     .Include(x => x.Tutors)
                     .Include(x => x.Faculty)
-                     .Where(x => x.IsDelete == false || x.IsDelete == null)
-                     .OrderByDescending(x => x.DepartmentId).Select(x => new DepartmentModel 
-                 {
-                     DepartmentId = x.DepartmentId,
-                     DepartmentName = x.DepartmentName,
-                     FacultyId = x.FacultyId,
-                     FacultyName = x.Faculty.FacultyName // 💡 Faculty Name ကို ယူပေးရမည်
-                 })
+                    .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+        // Hierarchical RBAC Data Scoping:
+        if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+        {
+            var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
+            if (scopedFacultyId.HasValue)
+            {
+                query = query.Where(x => x.FacultyId == scopedFacultyId.Value);
+            }
+        }
+
+        var lst = query.OrderByDescending(x => x.DepartmentId)
+                     .Select(x => new DepartmentModel 
+                     {
+                         DepartmentId = x.DepartmentId,
+                         DepartmentName = x.DepartmentName,
+                         FacultyId = x.FacultyId,
+                         FacultyName = x.Faculty.FacultyName
+                     })
                      .ToList();
         return Ok(lst);
     }
 
     [HttpGet("{id}")]
-    [Permission("Department.View")]
+    [AllowAnonymous]
     public IActionResult GetDepartment(int id)
     {
         // Role: ID Validation
@@ -89,9 +105,9 @@ public class DepartmentController : ControllerBase
         int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Department added",
+            ActivityTitle = "Department Added",
             Description = $"{request.DepartmentName} was added to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
         return StatusCode(201, new ActionResponseModel { IsSuccess = result > 0, Message = result > 0 ? "Saving Successful" : "Saving Failed" });
@@ -138,9 +154,9 @@ public class DepartmentController : ControllerBase
         int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Department Updated",
+            ActivityTitle = "Department Updated",
             Description = $"{request.DepartmentName} was Updated to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
         return Ok(new DepartmentResponseModel
@@ -192,9 +208,9 @@ public class DepartmentController : ControllerBase
 
         _db.Activities.Add(new Activity
         {
-            ActivityTitle = " Department deleted",
-            Description = $"{item.DepartmentName} was deleted to the System.",
-            CreatedDateTime = DateTime.UtcNow // အချိန်မှန်အောင် UtcNow သုံးပါ
+            ActivityTitle = "Department Deleted",
+            Description = $"{item.DepartmentName} was deleted from the System.",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         });
         _db.SaveChanges();
 
@@ -203,6 +219,58 @@ public class DepartmentController : ControllerBase
             IsSuccess = result > 0,
             Message = result > 0 ? "Delete Successfully" : "Delete Failed"
         });
+    }
+
+    [HttpGet("paginate")]
+    [AllowAnonymous]
+    public IActionResult GetDepartmentsPaginated(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? facultyName = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        var query = _db.Departments
+            .AsNoTracking()
+            .Include(x => x.Faculty)
+            .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(x => x.DepartmentName != null && x.DepartmentName.Contains(searchTerm));
+        }
+
+        if (!string.IsNullOrWhiteSpace(facultyName) && !facultyName.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(x => x.Faculty != null && x.Faculty.FacultyName == facultyName);
+        }
+
+        var totalCount = query.Count();
+
+        var items = query
+            .OrderByDescending(x => x.DepartmentId)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new DepartmentModel
+            {
+                DepartmentId = x.DepartmentId,
+                DepartmentName = x.DepartmentName,
+                FacultyId = x.FacultyId,
+                FacultyName = x.Faculty != null ? x.Faculty.FacultyName : "N/A"
+            })
+            .ToList();
+
+        var result = new PagedResult<DepartmentModel>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(result);
     }
 }
 

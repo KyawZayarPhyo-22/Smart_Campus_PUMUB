@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
    Highcharts uses <div> containers — zero canvas/DOM race conditions.
    We destroy any existing instance first to prevent duplicate renders.
    ===================================================================== */
-function initCharts(roleDistributionData) {
+function initCharts(roleDistributionData, facultyDistributionData) {
     const rolePieData =
         Array.isArray(roleDistributionData) && roleDistributionData.length
             ? roleDistributionData
@@ -71,11 +71,27 @@ function initCharts(roleDistributionData) {
                     color: item.color || item.Color || undefined,
                 }))
                 .filter((item) => item.name && Number.isFinite(item.y) && item.y > 0)
+            : [];
+
+    const rawFacultyData =
+        Array.isArray(facultyDistributionData) && facultyDistributionData.length
+            ? facultyDistributionData
+                .map((item) => ({
+                    name: item.name || item.Name || "",
+                    y: Number(item.y ?? item.Y ?? 0),
+                    color: item.color || item.Color || undefined,
+                }))
+                .filter((item) => item.name)
             : [
-                { name: "Admin", y: 10, color: "#1b8a5a" },
-                { name: "Student", y: 70, color: "#2563eb" },
-                { name: "Tutor", y: 20, color: "#7c3aed" },
+                { name: "Faculty of Computing", y: 28, color: "#38bdf8" },
+                { name: "Faculty of Engineering", y: 23, color: "#8b5cf6" }
             ];
+
+    const facultyChartData = rawFacultyData.map(d => ({
+        name: d.name,
+        y: d.y,
+        color: d.color || (d.name.toLowerCase().includes("comput") ? "#38bdf8" : (d.name.toLowerCase().includes("engin") ? "#8b5cf6" : "#10b981"))
+    }));
 
     if (typeof Highcharts === "undefined") {
         renderFallbackRolePie(rolePieData);
@@ -150,10 +166,43 @@ function initCharts(roleDistributionData) {
         });
     }
 
-    /* ── 2. Column/Bar Chart — Library Books & Tutors by Dept ──────── */
+    /* ── 2. Column/Bar Chart — Students by Faculty & Year ──────── */
     const barEl = document.getElementById("hc-bar-chart");
     if (barEl) {
         destroyHC("hc-bar-chart");
+
+        let categories = ["2022-2023", "2023-2024", "2024-2025", "2025-2026", "2026-2027"];
+        let seriesData = [
+            { name: "Faculty of Computing (FC)", color: "#38bdf8", data: [9, 8, 9, 8, 9] },
+            { name: "Faculty of Engineering (FE)", color: "#8b5cf6", data: [8, 7, 8, 7, 7] }
+        ];
+
+        if (facultyDistributionData && (facultyDistributionData.categories || facultyDistributionData.Categories)) {
+            const rawCats = facultyDistributionData.categories || facultyDistributionData.Categories;
+            const rawSeries = facultyDistributionData.series || facultyDistributionData.Series;
+            if (Array.isArray(rawCats) && rawCats.length) categories = rawCats;
+            if (Array.isArray(rawSeries) && rawSeries.length) {
+                seriesData = rawSeries.map(s => ({
+                    name: s.name || s.Name || "",
+                    color: s.color || s.Color || ((s.name || "").includes("Computing") || (s.name || "").includes("FC") ? "#38bdf8" : "#8b5cf6"),
+                    data: Array.isArray(s.data) ? s.data : (Array.isArray(s.Data) ? s.Data : [])
+                }));
+            }
+        } else if (Array.isArray(facultyDistributionData) && facultyDistributionData.length) {
+            categories = facultyDistributionData.map(item => item.name || item.Name || "");
+            seriesData = [
+                {
+                    name: "Students",
+                    colorByPoint: true,
+                    data: facultyDistributionData.map(item => ({
+                        name: item.name || item.Name || "",
+                        y: Number(item.y ?? item.Y ?? 0),
+                        color: item.color || item.Color || undefined
+                    }))
+                }
+            ];
+        }
+
         _hcRegistry["hc-bar-chart"] = Highcharts.chart("hc-bar-chart", {
             chart: {
                 type: "column",
@@ -161,43 +210,38 @@ function initCharts(roleDistributionData) {
             },
             title: { text: null },
             xAxis: {
-                categories: ["Civil", "Mech", "IT", "Math", "Science"],
-                labels: { style: { color: "#4b5563", fontSize: "12px" } },
+                categories: categories,
+                labels: { style: { color: "#1e293b", fontSize: "12px", fontWeight: "600" } },
                 lineColor: "rgba(0,0,0,0.08)",
                 tickColor: "rgba(0,0,0,0.08)",
             },
             yAxis: {
                 min: 0,
-                title: { text: null },
+                title: { text: "Students", style: { color: "#64748b", fontSize: "11px" } },
                 labels: { style: { color: "#4b5563", fontSize: "11px" } },
                 gridLineColor: "rgba(0,0,0,0.05)",
                 gridLineDashStyle: "ShortDash",
             },
             legend: {
-                symbolRadius: 4,
-                itemMarginRight: 16,
+                enabled: true,
+                align: "center",
+                verticalAlign: "bottom",
+                layout: "horizontal",
+                itemStyle: { color: "#334155", fontSize: "12px", fontWeight: "600" }
             },
             plotOptions: {
                 column: {
-                    borderRadius: 5,
+                    borderRadius: 6,
                     borderWidth: 0,
-                    groupPadding: 0.1,
+                    groupPadding: 0.15,
                     pointPadding: 0.05,
-                    dataLabels: { enabled: false },
+                    dataLabels: { 
+                        enabled: true,
+                        style: { fontSize: "11px", fontWeight: "bold", color: "#1e293b" }
+                    },
                 },
             },
-            series: [
-                {
-                    name: "Library PDF Books",
-                    color: "#1b8a5a",
-                    data: [300, 250, 400, 150, 140],
-                },
-                {
-                    name: "Tutors",
-                    color: "#7c3aed",
-                    data: [80, 75, 90, 40, 30],
-                },
-            ],
+            series: seriesData,
         });
     }
 }

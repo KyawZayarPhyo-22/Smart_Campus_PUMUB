@@ -7,22 +7,23 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System.Net;
 using System.Net.Mail;
 
-namespace Smart_Campus_PUMUB.WebApi.Controllers;
+using Smart_Campus_PUMUB.WebApi.Services;
 
+namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize]
-[Microsoft.AspNetCore.Mvc.Infrastructure.DefaultStatusCode(200)]
 public class RegisterAccController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
     private readonly IConfiguration _config;
+    private readonly IFacultyDataScopeService _scopeService;
 
-    public RegisterAccController(SmartCampusDbContext db, IConfiguration config)
+    public RegisterAccController(SmartCampusDbContext db, IConfiguration config, IFacultyDataScopeService scopeService)
     {
         _db = db;
         _config = config;
+        _scopeService = scopeService;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

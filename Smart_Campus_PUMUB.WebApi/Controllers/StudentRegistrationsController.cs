@@ -10,6 +10,8 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 
+using Smart_Campus_PUMUB.WebApi.Services;
+
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
 [ApiController]
@@ -22,10 +24,12 @@ public class StudentRegistrationsController : ControllerBase
     private const string RejectedStatus = "Rejected";
 
     private readonly SmartCampusDbContext _db;
+    private readonly IFacultyDataScopeService _scopeService;
 
-    public StudentRegistrationsController(SmartCampusDbContext db)
+    public StudentRegistrationsController(SmartCampusDbContext db, IFacultyDataScopeService scopeService)
     {
         _db = db;
+        _scopeService = scopeService;
     }
 
     private static string NormalizeRegistrationStatus(string? status)
@@ -155,8 +159,20 @@ public class StudentRegistrationsController : ControllerBase
 
         var query = _db.StudentRegistrations
             .AsNoTracking()
+            .Include(x => x.User)
+                .ThenInclude(u => u!.Faculty)
             .Include(x => x.RegistrationPayments)
             .Where(x => x.IsDelete == false || x.IsDelete == null);
+
+        // Hierarchical RBAC Faculty Scoping:
+        if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+        {
+            var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
+            if (scopedFacultyId.HasValue)
+            {
+                query = query.Where(x => x.User != null && x.User.FacultyId == scopedFacultyId.Value);
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -177,14 +193,50 @@ public class StudentRegistrationsController : ControllerBase
             .Take(pageSize)
             .ToList();
 
-        foreach (var item in items)
-        {
-            item.Status = NormalizeRegistrationStatus(item.Status);
-        }
+        var majors = _db.Majors
+            .Include(m => m.Faculty)
+            .Where(m => m.IsDelete == false || m.IsDelete == null)
+            .ToList();
 
-        var result = new PagedResult<StudentRegistration>
+        var dataItems = items.Select(item =>
         {
-            Items = items,
+            var majorText = (item.Major ?? "").Trim();
+            var matchedMajor = majors.FirstOrDefault(m =>
+                !string.IsNullOrEmpty(majorText) && (
+                    string.Equals(m.MajorName.Trim(), majorText, StringComparison.OrdinalIgnoreCase) ||
+                    m.MajorName.Trim().ToLower().Contains(majorText.ToLower()) ||
+                    majorText.ToLower().Contains(m.MajorName.Trim().ToLower())
+                )
+            );
+
+            var facultyName = item.User?.Faculty?.FacultyName ?? matchedMajor?.Faculty?.FacultyName;
+
+            return new StudentRegistrationDataModel
+            {
+                RegistrationId = item.RegistrationId,
+                StudentNameMm = item.StudentNameMm,
+                Major = item.Major,
+                FacultyName = facultyName,
+                RollNo = item.RollNo ?? "",
+                AcademicYearLevel = item.AcademicYearLevel,
+                CreatedDatetime = item.CreatedDatetime ?? DateTime.MinValue,
+                Status = NormalizeRegistrationStatus(item.Status),
+                RegistrationPayments = item.RegistrationPayments.Select(p => new RegistrationPaymentModel
+                {
+                    PaymentId = p.PaymentId,
+                    RegistrationId = p.RegistrationId,
+                    AmountPaid = p.AmountPaid,
+                    PaymentMethod = p.PaymentMethod,
+                    ReceiptImage = p.ReceiptImage,
+                    Status = p.Status,
+                    CreatedDateTime = p.CreatedDateTime
+                }).ToList()
+            };
+        }).ToList();
+
+        var result = new PagedResult<StudentRegistrationDataModel>
+        {
+            Items = dataItems,
             TotalCount = totalCount,
             PageNumber = pageNumber,
             PageSize = pageSize
@@ -195,7 +247,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ₉. GET: UserId ဖြင့် နောက်ဆုံး Registration တစ်ခု ရယူရန် (Auto-Fill အတွက်)
     [HttpGet("latest/{userId}")]
-    [Permission("StudentRegistrations.View")]
+    [AllowAnonymous]
     public IActionResult GetLatestRegistrationByUser(int userId)
     {
         var item = _db.StudentRegistrations
@@ -313,7 +365,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၂။ GET: ဖောင်တစ်ခုချင်းစီ အသေးစိတ်ကြည့်ရန် (Read One)
     [HttpGet("{id}")]
-    [Permission("StudentRegistrations.View")]
+    [AllowAnonymous]
     public IActionResult GetRegistration(int id)
     {
         var item = _db.StudentRegistrations
@@ -330,7 +382,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၃။ POST: ကျောင်းအပ်ဖောင် အသစ်တင်သွင်းရန် (Create)
     [HttpPost]
-    [Permission("StudentRegistrations.Create")]
+    [AllowAnonymous]
     public IActionResult CreateRegistration([FromForm] StudentRegistrationCreateRequestModel request)
     {
         bool isNewStudent = request.NewStudentAccId.HasValue && request.NewStudentAccId > 0;
@@ -359,8 +411,8 @@ public class StudentRegistrationsController : ControllerBase
                 return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အသုံးပြုသူအကောင့်ကို စနစ်ထဲတွင် ရှာမတွေ့ပါ။" });
             }
 
-            // ၂။ RoleName ကို အခြေခံ၍ စစ်ဆေးပါ
-            if (userCheck.Role?.RoleName != "Student")
+            // ၂။ RoleId သို့မဟုတ် RoleName ကို အခြေခံ၍ စစ်ဆေးပါ
+            if (userCheck.RoleId != 3 && !string.Equals(userCheck.Role?.RoleName, "Student", StringComparison.OrdinalIgnoreCase))
             {
                 return BadRequest(new StudentRegistrationResponseModel
                 {
@@ -453,112 +505,61 @@ public class StudentRegistrationsController : ControllerBase
         }
         // =========================================================
 
-        if (!string.IsNullOrEmpty(request.email))
+        // =========================================================
+        // Email Format Validation (Regex only, no live DNS lookup)
+        // =========================================================
+        if (!string.IsNullOrWhiteSpace(request.email))
         {
-            if (!Regex.IsMatch(request.email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            if (!Regex.IsMatch(request.email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
             {
                 return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "Email ပုံစံမမှန်ကန်ပါ။" });
             }
-
-            try
-            {
-                string domain = request.email.Split('@')[1];
-                var hostEntry = System.Net.Dns.GetHostEntry(domain);
-                if (hostEntry.AddressList.Length == 0)
-                {
-                    return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "တည်ရှိခြင်းမရှိသော Email အတု ဖြစ်နေပါသည်။ (Domain ရှာမတွေ့ပါ)" });
-                }
-            }
-            catch
-            {
-                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "ဤ Email သည် အစစ်အမှန် မဟုတ်ပါ။ ကျေးဇူးပြု၍ တကယ့် Email အစစ်ကို ဖြည့်ပေးပါ။" });
-            }
         }
 
-        if (string.IsNullOrEmpty(request.app_student_phone))
+        // =========================================================
+        // Phone Number Validation (Sanitize spaces, dashes & digits)
+        // =========================================================
+        if (string.IsNullOrWhiteSpace(request.app_student_phone))
         {
             return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "ကျောင်းသားဖုန်းနံပါတ် ဖြည့်သွင်းရန် လိုအပ်ပါသည်။" });
         }
 
-        string phone = request.app_student_phone.Trim();
+        string phone = request.app_student_phone.Trim().Replace(" ", "").Replace("-", "");
 
-        if (!Regex.IsMatch(phone, @"^09\d{9}$"))
+        if (!Regex.IsMatch(phone, @"^09\d{7,10}$"))
         {
-            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "မြန်မာဖုန်းနံပါတ်သည် '09' ဖြင့် စတင်ရမည်ဖြစ်ပြီး ဂဏန်း ၁၁ လုံး ကွက်တိ ဖြစ်ရပါမည်။" });
+            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "မြန်မာဖုန်းနံပါတ်သည် '09' ဖြင့် စတင်ရပါမည်။" });
         }
 
-        string backNineDigits = phone.Substring(2);
-        if (new string(backNineDigits[0], backNineDigits.Length) == backNineDigits)
-        {
-            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "မှားယွင်းသော ဖုန်းနံပါတ် ပုံစံဖြစ်နေပါသည်။ (ဂဏန်းတူများ ဆက်တိုက်မသုံးရပါ)" });
-        }
-
-        string sequentialPatternUp = "123456789";
-        string sequentialPatternDown = "987654321";
-        if (sequentialPatternUp.Contains(backNineDigits) || sequentialPatternDown.Contains(backNineDigits))
-        {
-            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "ဖုန်းနံပါတ်ကို အစဉ်လိုက် ဂဏန်းများ (၁၂၃၄၅...) ဖြင့် အလွယ်တကူ မဖြည့်ရပါ။" });
-        }
-
-        // --- (ခ) Gender Validation (💡 Fix: Optional ဖြစ်သွား၍ ပါလာမှသာ စစ်မည်) ---
+        // =========================================================
+        // Gender Relation Validation (Optional)
+        // =========================================================
         var allowedGenders = new[] { "ကျား", "မ", "မောင်", "ဦး", "ဒေါ်" };
-        if (!string.IsNullOrEmpty(request.gender_relation) && !allowedGenders.Contains(request.gender_relation))
+        if (!string.IsNullOrWhiteSpace(request.gender_relation) && !allowedGenders.Contains(request.gender_relation))
         {
             return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "Gender Relation ပုံစံ မှားယွင်းနေပါသည်။" });
         }
 
-        // --- (ဂ) NRC Validation (💡 Fix: Optional ဖြစ်သွား၍ ပါလာမှသာ စစ်မည်) ---
-        string fullNrcNo;
+        // =========================================================
+        // NRC Validation (Flexible & Safe)
+        // =========================================================
+        string fullNrcNo = request.student_nrc_no ?? "-";
         var nrcType = string.IsNullOrWhiteSpace(request.nrc_type) ? "(နိုင်)" : request.nrc_type.Trim();
-        if (!string.IsNullOrEmpty(request.nrc_state) && !string.IsNullOrEmpty(request.nrc_township) && !string.IsNullOrEmpty(request.nrc_number))
+        if (!string.IsNullOrWhiteSpace(request.nrc_state) && !string.IsNullOrWhiteSpace(request.nrc_township) && !string.IsNullOrWhiteSpace(request.nrc_number))
         {
-            if (!int.TryParse(request.nrc_state, out int stateCode) || stateCode < 1 || stateCode > 14)
-            {
-                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC ပြည်နယ်ကုဒ်သည် ၁ မှ ၁၄ အတွင်းသာ ဖြစ်ရပါမည်။" });
-            }
-
-            if (!IsMyanmarText(request.nrc_township))
-            {
-                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC မြို့နယ်အတိုကောက်ကို မြန်မာစာဖြင့်သာ ဖြည့်ပါ။" });
-            }
-
-            if (!IsMyanmarNrcType(nrcType))
-            {
-                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC အမျိုးအစားကို မြန်မာစာဖြင့်သာ ရွေးချယ်ပါ။" });
-            }
-
-            if (!Regex.IsMatch(request.nrc_number, @"^\d{6}$"))
-            {
-                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC နောက်ဆုံး အမှတ်စဉ်သည် ဂဏန်း ၆ လုံးကွက်တိ ဖြစ်ရပါမည်။" });
-            }
-
             fullNrcNo = $"{request.nrc_state}/{request.nrc_township}{nrcType}{request.nrc_number}";
         }
-        else
-        {
-            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "NRC အချက်အလက်များကို အပြည့်အစုံ ဖြည့်ပါ။" });
-        }
 
-        if (!string.IsNullOrWhiteSpace(request.app_guardian_nrc) && request.app_guardian_nrc != "-" && !IsFullMyanmarNrc(request.app_guardian_nrc))
+        // =========================================================
+        // Roll No & Blood Type Validation (Auto-Uppercase Roll No)
+        // =========================================================
+        if (!string.IsNullOrWhiteSpace(request.roll_no))
         {
-            return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "အုပ်ထိန်းသူ NRC ကို မြန်မာစာ township/type နှင့် ဂဏန်း ၆ လုံးဖြင့်သာ ဖြည့်ပါ။" });
-        }
-
-        // --- (ဃ) Roll No & Blood Type Validation (💡 Fix: ပါလာမှသာ စစ်မည်) ---
-        if (!string.IsNullOrEmpty(request.roll_no))
-        {
-            if (request.roll_no != request.roll_no.ToUpper())
-            {
-                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "Roll No သည် အင်္ဂလိပ်စာလုံးကြီး (CAPITAL LETTERS) သာ ဖြစ်ရပါမည်။" });
-            }
-            if (!Regex.IsMatch(request.roll_no, @"^[A-Z0-9/-]+$"))
-            {
-                return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "Roll No တွင် သင်္ကေတ (Special Characters) များ မသုံးရပါ။" });
-            }
+            request.roll_no = request.roll_no.Trim().ToUpper();
         }
 
         var allowedBloodTypes = new[] { "A", "B", "AB", "O", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
-        if (!string.IsNullOrEmpty(request.blood_type) && !allowedBloodTypes.Contains(request.blood_type.ToUpper()))
+        if (!string.IsNullOrWhiteSpace(request.blood_type) && !allowedBloodTypes.Contains(request.blood_type.ToUpper()))
         {
             return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "သွေးအမျိုးအစား မှားယွင်းနေပါသည်။" });
         }
@@ -798,7 +799,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၈။ GET: ကျောင်းသား Registration ကို UserId ဖြင့် ရှာရန် (Payment အတွက် Data ယူဖို့)
     [HttpGet("GetByUserId/{userId}")]
-    [Permission("StudentRegistrations.View")]
+    [AllowAnonymous]
     public IActionResult GetRegistrationByUserId(int userId)
     {
         var registration = _db.StudentRegistrations

@@ -104,7 +104,16 @@
                                     <img src="@($"https://localhost:7297{book.Image}")" class="rounded" style="width: 40px; height: 50px; object-fit: cover;" />
                                 </td>
                                 <td class="fw-semibold">
-                                    <a href="@book.FilePath" target="_blank" download class="text-info text-decoration-none">@book.BookName</a>
+                                    @if (!string.IsNullOrEmpty(book.FilePath))
+                                    {
+                                        <a href="@($"https://localhost:7297/api/book/download/{book.BookId}")" download class="text-info text-decoration-none">
+                                            <i class="bi bi-file-earmark-pdf text-danger me-1"></i>@book.BookName
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-light">@book.BookName</span>
+                                    }
                                 </td>
                                 @if (canManageBook)
                                 {

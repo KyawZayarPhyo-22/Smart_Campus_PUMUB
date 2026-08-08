@@ -172,6 +172,9 @@ public partial class Page_TutorList
     private List<string> userPermissions = new();
     private bool canManageTutor = true;
 
+    // Faculty-based scoping
+    private int? _userFacultyId = null;
+
     // Pagination Variables
     private int CurrentPage { get; set; } = 1;
     private int PageSize { get; set; } = 10;
@@ -200,8 +203,25 @@ public partial class Page_TutorList
                                   .Select(c => c.Value)
                                   .ToList();
                                   
-            // 💡 Permission ကို စစ်ဆေးပြီး Action Buttons များကို ထိန်းချုပ်ရန်
+            // Permission ကို စစ်ဆေးပြီး Action Buttons များကို ထိန်းချုပ်ရန်
             canManageTutor = userPermissions.Contains("Tutor.Edit") || userPermissions.Contains("Tutor.Delete");
+
+            // Faculty-based scoping: read FacultyId claim for FC/FE Admins
+            var roleName = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            var roleIdStr = user.FindFirst("RoleId")?.Value;
+            bool isSuperAdmin = string.Equals(roleName, "Super Admin", StringComparison.OrdinalIgnoreCase) || roleIdStr == "4";
+
+            if (!isSuperAdmin)
+            {
+                var facultyIdStr = user.FindFirst("FacultyId")?.Value;
+                if (!string.IsNullOrEmpty(facultyIdStr) && int.TryParse(facultyIdStr, out int fid) && fid > 0)
+                {
+                    _userFacultyId = fid;
+                    // Reload with faculty filter applied
+                    CurrentPage = 1;
+                    await LoadTutors();
+                }
+            }
 
             // Trigger re-render so the table header and action buttons update
             StateHasChanged();
@@ -229,8 +249,14 @@ public partial class Page_TutorList
         IsLoading = true;
         try
         {
+            var url = $"tutor/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}";
+            if (_userFacultyId.HasValue && _userFacultyId.Value > 0)
+            {
+                url += $"&facultyId={_userFacultyId.Value}";
+            }
+
             var response = await HttpClientService.ExecuteAsync<PagedResult<TutorModel>>(
-                $"tutor/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}",
+                url,
                 EnumHttpMethod.Get
             );
 

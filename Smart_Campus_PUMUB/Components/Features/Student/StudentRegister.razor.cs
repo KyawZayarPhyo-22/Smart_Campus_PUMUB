@@ -29,8 +29,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             stipend_requested = false,
             gender_relation = "Male",
             blood_type = "O",
-            academic_year_range = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}",
-            admission_year = DateTime.Now.Year
+            academic_year_range = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}"
+            // admission_year intentionally left null — filled from DB or user input
         };
 
         public bool ShowModal { get; set; } = false;
@@ -66,6 +66,91 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public IBrowserFile? SelectedPhotoFile { get; set; }
         public byte[]? SelectedPhotoBytes { get; set; }
         public List<SemesterModel> SemesterList { get; set; } = new();
+
+        // --- Faculty & Filtered Major ---
+        public List<FacultyModel> FacultyList { get; set; } = new();
+        public int? SelectedFacultyId { get; set; }
+
+        // Faculty → Majors mapping
+        private static readonly Dictionary<string, List<string>> FacultyMajorsMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Computer",        new() { "Computer Science", "Computer Technology", "Information Technology" } },
+            { "Engineering",     new() { "Civil Engineering", "Electronic Engineering", "Electrical Power Engineering", "Mechanical Engineering", "Information Technology Engineering" } },
+        };
+
+        public List<string> FilteredMajors { get; set; } = new();
+
+        public void OnFacultyChanged(ChangeEventArgs e)
+        {
+            if (int.TryParse(e.Value?.ToString(), out var facId))
+            {
+                SelectedFacultyId = facId;
+                var fac = FacultyList.FirstOrDefault(f => f.FacultyId == facId);
+                RegModel.major = null;
+                FilteredMajors = GetMajorsForFaculty(fac?.FacultyName);
+            }
+            else
+            {
+                SelectedFacultyId = null;
+                RegModel.major = null;
+                FilteredMajors = GetAllMajors();
+            }
+            StateHasChanged();
+        }
+
+        private void AutoSelectFacultyForMajor(string? major)
+        {
+            if (string.IsNullOrEmpty(major) || FacultyList == null || !FacultyList.Any())
+                return;
+
+            string? foundKey = null;
+            foreach (var kv in FacultyMajorsMap)
+            {
+                if (kv.Value.Any(m => string.Equals(m, major, StringComparison.OrdinalIgnoreCase)))
+                {
+                    foundKey = kv.Key;
+                    break;
+                }
+            }
+
+            FacultyModel? matchedFac = null;
+            if (!string.IsNullOrEmpty(foundKey))
+            {
+                matchedFac = FacultyList.FirstOrDefault(f => !string.IsNullOrEmpty(f.FacultyName) && f.FacultyName.Contains(foundKey, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (matchedFac == null)
+            {
+                matchedFac = FacultyList.FirstOrDefault(f => !string.IsNullOrEmpty(f.FacultyName) && (
+                    f.FacultyName.Contains(major, StringComparison.OrdinalIgnoreCase) ||
+                    major.Contains(f.FacultyName, StringComparison.OrdinalIgnoreCase)
+                ));
+            }
+
+            if (matchedFac != null)
+            {
+                SelectedFacultyId = matchedFac.FacultyId;
+                FilteredMajors = GetMajorsForFaculty(matchedFac.FacultyName);
+            }
+        }
+
+        private List<string> GetMajorsForFaculty(string? facultyName)
+        {
+            if (string.IsNullOrEmpty(facultyName)) return GetAllMajors();
+            foreach (var kv in FacultyMajorsMap)
+            {
+                if (facultyName.Contains(kv.Key, StringComparison.OrdinalIgnoreCase))
+                    return kv.Value;
+            }
+            return GetAllMajors();
+        }
+
+        private static List<string> GetAllMajors() => new()
+        {
+            "Computer Science", "Computer Technology", "Information Technology",
+            "Civil Engineering", "Electronic Engineering", "Electrical Power Engineering",
+            "Mechanical Engineering", "Information Technology Engineering"
+        };
         public string PastExamSemester { get; set; } = "";
         public DateTime? PastExamDate { get; set; }
 
@@ -87,13 +172,34 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public string AutoFillStatus { get; set; } = "";
         public bool AutoFillSuccess { get; set; } = false;
 
+        public async Task HandleRollNoKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+        {
+            if (e.Key == "Enter")
+            {
+                await FetchDataByRollNo();
+            }
+        }
+
         public async Task OnRollNoChanged(ChangeEventArgs e)
         {
             var val = e.Value?.ToString() ?? "";
             _rollNoInput = val;
             RegModel.roll_no = val;
+            await FetchDataByRollNo(val);
+        }
 
-            if (string.IsNullOrWhiteSpace(val)) { AutoFillStatus = ""; return; }
+        public async Task FetchDataByRollNo(string? rollNo = null)
+        {
+            var val = rollNo ?? _rollNoInput;
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                AutoFillSuccess = false;
+                AutoFillStatus = "⚠ ခုံအမှတ် (Roll No) ရိုက်ထည့်ပါ";
+                return;
+            }
+
+            _rollNoInput = val;
+            RegModel.roll_no = val;
 
             IsAutoFilling = true;
             AutoFillStatus = "";
@@ -104,50 +210,153 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 var info = await HttpClientService.ExecuteAsync<StudentPersonalInfoResponse>($"studentpersonalinfo/by-roll/{Uri.EscapeDataString(val)}", EnumHttpMethod.Get);
                 if (info != null)
                 {
-                    RegModel.student_name_mm = info.student_name_mm;
-                    RegModel.student_name_en = info.student_name_en;
-                    RegModel.father_name = info.father_name;
-                    RegModel.mother_name = info.mother_name;
-                    RegModel.gender_relation = info.gender_relation ?? RegModel.gender_relation;
-                    RegModel.ethnicity = info.ethnicity;
-                    RegModel.religion = info.religion;
-                    RegModel.pob = info.pob;
-                    RegModel.birth_place_region = info.birth_place_region;
-                    RegModel.student_nrc_no = info.student_nrc_no;
-                    RegModel.nationality_status = info.nationality_status ?? RegModel.nationality_status;
+                    RegModel.student_name_mm      = info.student_name_mm;
+                    RegModel.student_name_en      = info.student_name_en;
+                    RegModel.father_name          = info.father_name;
+                    RegModel.mother_name          = info.mother_name;
+                    RegModel.gender_relation      = info.gender_relation ?? RegModel.gender_relation;
+                    RegModel.ethnicity            = info.ethnicity;
+                    RegModel.religion             = info.religion;
+                    RegModel.pob                  = info.pob;
+                    RegModel.birth_place_region   = info.birth_place_region;
+                    RegModel.student_nrc_no       = info.student_nrc_no;
+                    RegModel.nationality_status   = info.nationality_status ?? RegModel.nationality_status;
                     if (info.dob.HasValue) { RegModel.dob = info.dob.Value; DobDate = info.dob.Value.Date; }
-                    RegModel.email = info.email;
-                    RegModel.blood_type = info.blood_type ?? RegModel.blood_type;
-                    RegModel.current_address = info.current_address;
+                    RegModel.email                = info.email;
+                    RegModel.blood_type           = info.blood_type ?? RegModel.blood_type;
+                    RegModel.current_address      = info.current_address;
                     RegModel.permanent_address_mm = info.permanent_address_mm;
                     RegModel.permanent_address_en = info.permanent_address_en;
-                    RegModel.matric_roll_no = info.matric_roll_no;
-                    RegModel.matric_passed_year = info.matric_passed_year;
-                    RegModel.exam_center = info.exam_center;
-                    RegModel.father_occupation = info.father_occupation;
-                    RegModel.mother_occupation = info.mother_occupation;
-                    RegModel.guardian_name = info.guardian_name;
-                    RegModel.guardian_relationship = info.guardian_relationship;
-                    RegModel.guardian_occupation = info.guardian_occupation;
+                    RegModel.matric_roll_no       = info.matric_roll_no;
+                    RegModel.matric_passed_year   = info.matric_passed_year;
+                    RegModel.exam_center          = info.exam_center;
+                    RegModel.father_occupation    = info.father_occupation;
+                    RegModel.mother_occupation    = info.mother_occupation;
+                    RegModel.guardian_name        = info.guardian_name;
+                    RegModel.guardian_relationship= info.guardian_relationship;
+                    RegModel.guardian_occupation  = info.guardian_occupation;
                     RegModel.guardian_address_phone = info.guardian_address_phone;
-                    RegModel.app_guardian_name = info.app_guardian_name;
-                    RegModel.app_guardian_nrc = info.app_guardian_nrc;
-                    RegModel.app_guardian_phone = info.app_guardian_phone;
+                    RegModel.app_guardian_name    = info.app_guardian_name;
+                    RegModel.app_guardian_nrc     = info.app_guardian_nrc;
+                    RegModel.app_guardian_phone   = info.app_guardian_phone;
                     RegModel.app_guardian_address = info.app_guardian_address;
-                    RegModel.app_student_name = info.app_student_name;
-                    RegModel.app_student_phone = info.app_student_phone;
-                    RegModel.nrc_state = info.nrc_state;
+                    RegModel.app_student_name     = info.app_student_name;
+                    RegModel.app_student_phone    = info.app_student_phone;
+                    RegModel.university_reg_no    = info.university_reg_no;
+                    if (info.admission_year.HasValue) RegModel.admission_year = info.admission_year;
+
+                    // ── အထူးပြုဘာသာ + Faculty auto-fill (Personal Info မှ) ──
+                    if (!string.IsNullOrEmpty(info.major))
+                        RegModel.major = info.major;
+
+                    // Faculty dropdown — Personal Info မှ FacultyId ကို ဦးစွာ သုံး၊
+                    // မရရှိသေးပါက major name မှ auto-detect
+                    if (info.FacultyId.HasValue && info.FacultyId.Value > 0)
+                    {
+                        SelectedFacultyId = info.FacultyId.Value;
+                        var fac = FacultyList.FirstOrDefault(f => f.FacultyId == info.FacultyId.Value);
+                        FilteredMajors = GetMajorsForFaculty(fac?.FacultyName);
+                    }
+                    else if (!string.IsNullOrEmpty(info.major))
+                    {
+                        AutoSelectFacultyForMajor(info.major);
+                    }
+
+                    // ── ကိုဗစ်ကာကွယ်ဆေး ပြီးစီးသည့်ရက် auto-fill ──
+                    if (!string.IsNullOrEmpty(info.covid_vaccine_status) && info.covid_vaccine_status != "-")
+                    {
+                        if (DateTime.TryParseExact(info.covid_vaccine_status, "dd-MM-yyyy",
+                                System.Globalization.CultureInfo.InvariantCulture,
+                                System.Globalization.DateTimeStyles.None, out var covidParsed))
+                            CovidDate = covidParsed;
+                        else if (DateTime.TryParse(info.covid_vaccine_status, out var covidParsed2))
+                            CovidDate = covidParsed2;
+                    }
+
+                    // ── Student NRC component fields ──
+                    RegModel.nrc_state    = info.nrc_state;
                     RegModel.nrc_township = info.nrc_township;
-                    RegModel.nrc_type = info.nrc_type;
-                    RegModel.nrc_number = info.nrc_number;
-                    RegModel.university_reg_no = info.university_reg_no;
-                    if (info.dob.HasValue) DobDate = info.dob.Value.Date;
+                    RegModel.nrc_type     = info.nrc_type;
+                    RegModel.nrc_number   = info.nrc_number;
                     if (!string.IsNullOrEmpty(info.nrc_type)) NrcType = info.nrc_type;
                     if (!string.IsNullOrEmpty(info.nrc_state) && NrcTownshipsByState.TryGetValue(info.nrc_state, out var towns))
                         CurrentTownshipList = towns;
 
+                    // ── အဘ / Guardian NRC — parse "state/township(type)number" string ──
+                    if (!string.IsNullOrEmpty(info.app_guardian_nrc) && info.app_guardian_nrc != "-")
+                    {
+                        var nrcRaw   = info.app_guardian_nrc;
+                        var slashIdx = nrcRaw.IndexOf('/');
+                        if (slashIdx > 0)
+                        {
+                            var state  = nrcRaw[..slashIdx];
+                            var rest   = nrcRaw[(slashIdx + 1)..];
+                            string? township = null;
+                            string  nrcType  = "(နိုင်)";
+                            string? number   = null;
+
+                            var openParen  = rest.IndexOf('(');
+                            var closeParen = rest.IndexOf(')');
+                            if (openParen >= 0 && closeParen > openParen)
+                            {
+                                township = rest[..openParen];
+                                nrcType  = rest[openParen..(closeParen + 1)];
+                                number   = rest[(closeParen + 1)..];
+                            }
+                            else { township = rest; }
+
+                            // Guardian NRC fields
+                            GuardianNrcState    = state;
+                            GuardianNrcTownship = township;
+                            GuardianNrcType     = nrcType;
+                            GuardianNrcNumber   = ToMyanmarDigits(number ?? "");
+
+                            // Father NRC fields
+                            FatherNrcState    = state;
+                            FatherNrcTownship = township;
+                            FatherNrcType     = nrcType;
+                            FatherNrcNumber   = ToMyanmarDigits(number ?? "");
+
+                            if (!string.IsNullOrEmpty(state) && NrcTownshipsByState.ContainsKey(state))
+                            {
+                                var nrcList = NrcTownshipsByState[state];
+                                GuardianTownshipList = nrcList;
+                                FatherTownshipList   = nrcList;
+                            }
+                        }
+                    }
+
                     AutoFillSuccess = true;
                     AutoFillStatus = "✔ ကျောင်းသားအချက်အလက် အလိုအလျောက် ဖြည့်ပြီးပါပြီ";
+
+                    // ── Pass/Fail မှ Semester auto-compute ──
+                    StudentModel? studentDir = null;
+
+                    // ၁။ Roll No ဖြင့် Student directory မှ Sem results ရလဒ်များ တိုက်ရိုက် ရှာဖွေခြင်း
+                    try
+                    {
+                        studentDir = await HttpClientService.ExecuteAsync<StudentModel>(
+                            $"Student/by-roll/{Uri.EscapeDataString(val)}", EnumHttpMethod.Get);
+                    }
+                    catch { }
+
+                    // ၂။ ရှာမတွေ့သေးပါက UserId ဖြင့် ထပ်မံ ရှာဖွေခြင်း
+                    if (studentDir == null && info.UserId.HasValue && info.UserId > 0)
+                    {
+                        try
+                        {
+                            studentDir = await HttpClientService.ExecuteAsync<StudentModel>(
+                                $"Student/user/{info.UserId}", EnumHttpMethod.Get);
+                        }
+                        catch { }
+                    }
+
+                    if (studentDir != null)
+                    {
+                        LoggedInStudent = studentDir;
+                    }
+
+                    ComputeAllowedSemester();
                 }
                 else
                 {
@@ -238,8 +447,9 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                         if (studentData != null)
                         {
                             LoggedInStudent = studentData;
-                            RegModel.roll_no = LoggedInStudent.CurrentRollNo;
-                            Console.WriteLine($"Loaded student details for user: {parsedUserId}. Roll No auto-filled: {RegModel.roll_no}");
+                            // Roll No intentionally NOT auto-filled here — the student must type
+                            // their Roll No to trigger the personal-data auto-fill
+                            Console.WriteLine($"Loaded student session for user: {parsedUserId}. Roll No left blank for manual entry.");
                         }
                     }
                     catch (Exception ex)
@@ -271,14 +481,20 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
             catch { LoadDefaultSemesters(); }
 
-            // --- Compute allowed semester based on academic history ---
-            ComputeAllowedSemester();
-
-            // --- Auto-fill from previous registration ---
-            if (RegModel.UserId.HasValue && RegModel.UserId > 0)
+            // Load faculties
+            try
             {
-                await AutoFillFromPreviousRegistration(RegModel.UserId.Value);
+                var faculties = await HttpClientService.ExecuteAsync<List<FacultyModel>>("Faculty", EnumHttpMethod.Get);
+                if (faculties != null && faculties.Any())
+                    FacultyList = faculties;
             }
+            catch { }
+            FilteredMajors = GetAllMajors();
+
+            // --- Compute allowed semester based on student's result history ---
+            // (auto-fill from previous registration is intentionally removed:
+            //  personal data fills only when the student enters their Roll No)
+            ComputeAllowedSemester();
         }
 
         private static string NormalizeRegistrationStatus(string? status)
@@ -418,21 +634,32 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         {
             SemesterList = new List<SemesterModel>
             {
-                new SemesterModel { SemesterId = 1, SemesterName = "First Year",  Sequence = 1 },
-                new SemesterModel { SemesterId = 2, SemesterName = "Second Year", Sequence = 2 },
-                new SemesterModel { SemesterId = 3, SemesterName = "Third Year",  Sequence = 3 },
-                new SemesterModel { SemesterId = 4, SemesterName = "Fourth Year", Sequence = 4 },
-                new SemesterModel { SemesterId = 5, SemesterName = "Fifth Year",  Sequence = 5 }
+                new SemesterModel { SemesterId = 1, SemesterName = "Semester I",    Sequence = 1 },
+                new SemesterModel { SemesterId = 2, SemesterName = "Semester II",   Sequence = 2 },
+                new SemesterModel { SemesterId = 3, SemesterName = "Semester III",  Sequence = 3 },
+                new SemesterModel { SemesterId = 4, SemesterName = "Semester IV",   Sequence = 4 },
+                new SemesterModel { SemesterId = 5, SemesterName = "Semester V",    Sequence = 5 },
+                new SemesterModel { SemesterId = 6, SemesterName = "Semester VI",   Sequence = 6 },
+                new SemesterModel { SemesterId = 7, SemesterName = "Semester VII",  Sequence = 7 },
+                new SemesterModel { SemesterId = 8, SemesterName = "Semester VIII", Sequence = 8 },
+                new SemesterModel { SemesterId = 9, SemesterName = "Semester IX",   Sequence = 9 }
             };
         }
 
         // ---- Compute the allowed semester number from the student's result history ----
         private void ComputeAllowedSemester()
         {
+            // Helper: SemesterList မှ Sequence နဲ့ match ဆွဲ၊ မရရင် first semester ပြ
+            string? GetSemName(int seq) =>
+                SemesterList.FirstOrDefault(s => s.Sequence == seq)?.SemesterName
+                ?? SemesterList.OrderBy(s => s.Sequence).FirstOrDefault()?.SemesterName;
+
             if (LoggedInStudent == null)
             {
+                // New student / student directory မတွေ့ → Semester 1 ကနေ စမည်
                 AllowedSemesterSequence = 1;
-                AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == 1)?.SemesterName;
+                AllowedSemesterName = GetSemName(1);
+                RegModel.academic_year_level = AllowedSemesterName;
                 return;
             }
 
@@ -464,15 +691,13 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             {
                 IsGraduated = true;
                 AllowedSemesterSequence = 9;
-                AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == 9)?.SemesterName;
+                AllowedSemesterName = GetSemName(9);
+                RegModel.academic_year_level = AllowedSemesterName;
                 return;
             }
 
             AllowedSemesterSequence = firstFailedSeq ?? (highestPassed + 1);
-            AllowedSemesterName = SemesterList.FirstOrDefault(s => s.Sequence == AllowedSemesterSequence)?.SemesterName
-                ?? SemesterList.FirstOrDefault()?.SemesterName;
-
-            // Pre-select the allowed semester in the form model
+            AllowedSemesterName     = GetSemName(AllowedSemesterSequence);
             RegModel.academic_year_level = AllowedSemesterName;
 
             // Auto-fill "ဖြေဆိုခဲ့သောစာမေးပွဲ" with the last PASSED semester from student directory
@@ -483,19 +708,31 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     PastExamSemester = lastPassedSemName;
 
                 // Auto-fill "အောင် / က်" status for that semester
-                // The last-passed semester is always "Pass"; if there's a failed sem, use that result
                 if (firstFailedSeq.HasValue && firstFailedSeq.Value <= highestPassed)
                     RegModel.past_exam_status = "Fail";
                 else
                     RegModel.past_exam_status = "Pass";
             }
-            else if (firstFailedSeq.HasValue)
+            else
             {
-                // No passed semester at all, but there is a failed one
-                var failedSemName = SemesterList.FirstOrDefault(s => s.Sequence == firstFailedSeq.Value)?.SemesterName;
-                if (!string.IsNullOrEmpty(failedSemName))
-                    PastExamSemester = failedSemName;
-                RegModel.past_exam_status = "Fail";
+                // ── New student / Semester 1 မအောင်သေးသူ (highestPassed == 0) ──
+                // Pass/Fail history တွင် ဘာမှမအောင်သေး → Past exam မှာ တက္ကသိုလ်ဝင် ဖြေဆိုခဲ့တာပဲ
+                PastExamSemester = "တက္ကသိုလ်ဝင်စာမေးပွဲ";
+
+                // ခုံအမှတ် → matric_roll_no (တက္ကသိုလ်ဝင် ခုံအမှတ်) ကို auto fill
+                if (!string.IsNullOrEmpty(RegModel.matric_roll_no))
+                    RegModel.past_exam_roll_no = RegModel.matric_roll_no;
+
+                // အောင်/ကျ → Pass (တက္ကသိုလ်ဝင်ကြောင်း တကျောင်းဝင်ပြီးသားဆို Pass ပဲ)
+                RegModel.past_exam_status = "Pass";
+
+                // အဓိကဘာသာ — ဖြေဆိုသည့်ဘာသာ ရှိပြီးသားမဟုတ်မှ IT ထည့်
+                if (string.IsNullOrEmpty(RegModel.past_exam_major))
+                    RegModel.past_exam_major = "Information Technology";
+
+                // Enrollment major — blank မှသာ IT set
+                if (string.IsNullOrEmpty(RegModel.major) || RegModel.major == "-")
+                    RegModel.major = "Information Technology";
             }
         }
 
@@ -544,10 +781,28 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 RegModel.stipend_requested    = prev.StipendRequested;
                 RegModel.university_reg_no    = prev.UniversityRegNo;
                 RegModel.AdmissionSerialNo    = prev.AdmissionSerialNo;
+                if (prev.AdmissionYear.HasValue)
+                    RegModel.admission_year = prev.AdmissionYear.Value;
+
+                // Past exam fields
+                if (!string.IsNullOrEmpty(prev.PastExamMajor))
+                    RegModel.past_exam_major = prev.PastExamMajor;
+                if (!string.IsNullOrEmpty(prev.PastExamRollNo))
+                    RegModel.past_exam_roll_no = prev.PastExamRollNo;
+                if (prev.PastExamYear.HasValue)
+                {
+                    RegModel.past_exam_year = prev.PastExamYear.Value;
+                    PastExamDate = new DateTime(prev.PastExamYear.Value, 1, 1);
+                }
+                if (!string.IsNullOrEmpty(prev.PastExamStatus))
+                    RegModel.past_exam_status = prev.PastExamStatus;
 
                 // အထူးပြူဘာသာ အမာစာ auto-fill (semester locked separately in ComputeAllowedSemester)
                 if (!string.IsNullOrEmpty(prev.Major))
+                {
                     RegModel.major = prev.Major;
+                    AutoSelectFacultyForMajor(prev.Major);
+                }
 
                 if (prev.Dob.HasValue)
                     DobDate = prev.Dob.Value.ToDateTime(TimeOnly.MinValue);
@@ -637,15 +892,15 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         {
             if (string.IsNullOrEmpty(name)) return 0;
             var lower = name.ToLower();
-            if (lower.Contains("first") || lower.Contains("sem 1") || lower.Contains("semester 1") || lower.Contains("1st") || lower.Contains("one")) return 1;
-            if (lower.Contains("second") || lower.Contains("sem 2") || lower.Contains("semester 2") || lower.Contains("2nd") || lower.Contains("two")) return 2;
-            if (lower.Contains("third") || lower.Contains("sem 3") || lower.Contains("semester 3") || lower.Contains("3rd") || lower.Contains("three")) return 3;
-            if (lower.Contains("fourth") || lower.Contains("sem 4") || lower.Contains("semester 4") || lower.Contains("4th") || lower.Contains("four")) return 4;
-            if (lower.Contains("fifth") || lower.Contains("sem 5") || lower.Contains("semester 5") || lower.Contains("5th") || lower.Contains("five")) return 5;
-            if (lower.Contains("sixth") || lower.Contains("sem 6") || lower.Contains("semester 6") || lower.Contains("6th") || lower.Contains("six")) return 6;
-            if (lower.Contains("seventh") || lower.Contains("sem 7") || lower.Contains("semester 7") || lower.Contains("7th") || lower.Contains("seven")) return 7;
-            if (lower.Contains("eighth") || lower.Contains("sem 8") || lower.Contains("semester 8") || lower.Contains("8th") || lower.Contains("eight")) return 8;
-            if (lower.Contains("ninth") || lower.Contains("sem 9") || lower.Contains("semester 9") || lower.Contains("9th") || lower.Contains("nine")) return 9;
+            if (lower.Contains("first") || lower.Contains("sem 1") || lower.Contains("semester 1") || lower.Contains("1st") || lower.Contains("one") || lower.Contains("sem i") || lower.Contains("semester i") || lower.EndsWith(" i")) return 1;
+            if (lower.Contains("second") || lower.Contains("sem 2") || lower.Contains("semester 2") || lower.Contains("2nd") || lower.Contains("two") || lower.Contains("sem ii") || lower.Contains("semester ii") || lower.EndsWith(" ii")) return 2;
+            if (lower.Contains("third") || lower.Contains("sem 3") || lower.Contains("semester 3") || lower.Contains("3rd") || lower.Contains("three") || lower.Contains("sem iii") || lower.Contains("semester iii") || lower.EndsWith(" iii")) return 3;
+            if (lower.Contains("fourth") || lower.Contains("sem 4") || lower.Contains("semester 4") || lower.Contains("4th") || lower.Contains("four") || lower.Contains("sem iv") || lower.Contains("semester iv") || lower.EndsWith(" iv")) return 4;
+            if (lower.Contains("fifth") || lower.Contains("sem 5") || lower.Contains("semester 5") || lower.Contains("5th") || lower.Contains("five") || lower.Contains("sem v") || lower.Contains("semester v") || lower.EndsWith(" v")) return 5;
+            if (lower.Contains("sixth") || lower.Contains("sem 6") || lower.Contains("semester 6") || lower.Contains("6th") || lower.Contains("six") || lower.Contains("sem vi") || lower.Contains("semester vi") || lower.EndsWith(" vi")) return 6;
+            if (lower.Contains("seventh") || lower.Contains("sem 7") || lower.Contains("semester 7") || lower.Contains("7th") || lower.Contains("seven") || lower.Contains("sem vii") || lower.Contains("semester vii") || lower.EndsWith(" vii")) return 7;
+            if (lower.Contains("eighth") || lower.Contains("sem 8") || lower.Contains("semester 8") || lower.Contains("8th") || lower.Contains("eight") || lower.Contains("sem viii") || lower.Contains("semester viii") || lower.EndsWith(" viii")) return 8;
+            if (lower.Contains("ninth") || lower.Contains("sem 9") || lower.Contains("semester 9") || lower.Contains("9th") || lower.Contains("nine") || lower.Contains("sem ix") || lower.Contains("semester ix") || lower.EndsWith(" ix")) return 9;
             return 0;
         }
         public bool IsSemesterAllowed(string? semesterName)
@@ -1081,7 +1336,10 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 }
                 else
                 {
-                    ShowError(response?.Message ?? "Data အချက်အလက်များ မပြည့်စုံပါ");
+                    string errMessage = !string.IsNullOrWhiteSpace(response?.Message)
+                        ? response.Message
+                        : "Data အချက်အလက်များ မပြည့်စုံပါ သို့မဟုတ် မမှန်ကန်ပါ။ ကျေးဇူးပြု၍ ပြန်လည် စစ်ဆေးပေးပါ။";
+                    ShowError(errMessage);
                 }
             }
             catch (Exception ex)

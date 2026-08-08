@@ -15,8 +15,11 @@ public partial class Page_TutorCreate
     private TutorCreateRequestModel createModel = new();
     private List<PositionModel> PositionList = new();
     private List<DepartmentModel> DepartmentList = new();
-    private List<UserModels> UserList = new();
     private List<RoleModels> roleModels = new();
+    private List<FacultyModel> FacultyList = new();
+
+    // Assign User field တွင် ပြမည့် display text (read-only)
+    private string assignedUserDisplay = "";
 
     private IBrowserFile? selectedFile;
     private bool isProcessing = false;
@@ -29,10 +32,10 @@ public partial class Page_TutorCreate
 
     protected override async Task OnInitializedAsync()
     {
-        UserList = await HttpClientService.ExecuteAsync<List<UserModels>>("user", EnumHttpMethod.Get) ?? new();
         PositionList = await HttpClientService.ExecuteAsync<List<PositionModel>>("position", EnumHttpMethod.Get) ?? new();
         DepartmentList = await HttpClientService.ExecuteAsync<List<DepartmentModel>>("department", EnumHttpMethod.Get) ?? new();
         roleModels = await HttpClientService.ExecuteAsync<List<RoleModels>>("role", EnumHttpMethod.Get) ?? new();
+        FacultyList = await HttpClientService.ExecuteAsync<List<FacultyModel>>("Faculty", EnumHttpMethod.Get) ?? new();
     }
 
     private void HandleFileSelected(InputFileChangeEventArgs e) => selectedFile = e.File;
@@ -68,12 +71,15 @@ public partial class Page_TutorCreate
                     createModel.TutorName = result.FullName;
                     createModel.UserId = result.UserId;
                     createModel.RoleId = result.RoleId;
+                    // Read-only Assign User display ကို သတ်မှတ်ပေးမည်
+                    assignedUserDisplay = $"{result.FullName} [{result.RoleName}]";
                     statusMessage = "";
                 }
             }
             else
             {
                 roleNoValidationMessage = "❌ Role No not found in User accounts.";
+            assignedUserDisplay = "";
             }
         }
         catch (Exception ex)
@@ -109,9 +115,10 @@ public partial class Page_TutorCreate
 
             // Data များ Add လုပ်ခြင်း
 
-            content.Add(new StringContent(createModel.TutorName ?? ""), "TutorName"); // Model အသစ်အတိုင်း
+            content.Add(new StringContent(createModel.TutorName ?? ""), "TutorName");
             content.Add(new StringContent(createModel.UserId.ToString()), "UserId");
             content.Add(new StringContent(createModel.RoleId.ToString()), "RoleId");
+            content.Add(new StringContent(createModel.FacultyId.ToString()), "FacultyId");
             content.Add(new StringContent(createModel.DepartmentId.ToString()), "DepartmentId");
             content.Add(new StringContent(createModel.PositionId.ToString()), "PositionId");
             content.Add(new StringContent(createModel.Email ?? ""), "Email");
