@@ -40,13 +40,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [AllowAnonymous]
         public IActionResult GetActivities()
         {
-            // Database ကနေ Data အရင်ဆွဲထုတ်ပြီး မှတ်ဉာဏ်ထဲမှာ စစ်မယ်
+            // Query active activities from DB and filter in memory
             var lst = _db.Activities
                              .AsNoTracking()
                              .Where(x => x.IsDelete == false)
-                             .ToList() // Memory ထဲဆွဲထုတ်ခြင်း
+                             .ToList() // Load to memory
                              .Where(x => !IsSystemLog(x.ActivityTitle))
-                             .OrderByDescending(x => x.CreatedDateTime) // 🌟 အသစ်ဆုံးကို အရင်ပြရန်
+                             .OrderByDescending(x => x.CreatedDateTime) // Sort latest first
                              .Select(x => new
                              {
                                  x.ActivityId,
@@ -54,7 +54,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                                  x.Description,
                                  x.Image,
                                  x.Location,
-                                 CreatedAt = x.CreatedDateTime // 🌟 Model မှာ CreatedAt လို့သုံးထားရင် ဒီလို Mapping လုပ်ပါ
+                                 CreatedAt = x.CreatedDateTime // Model mapping
                              })
                              .ToList();
 
@@ -81,7 +81,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult GetActivity(int id)
         {
             var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
-            if (item is null) return NotFound("သတင်း/လှုပ်ရှားမှုအား ရှာမတွေ့ပါ။");
+            if (item is null) return NotFound("Activity not found.");
             return Ok(item);
         }
 
@@ -99,7 +99,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             {
                 var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
 
-                // ဤလမ်းကြောင်းမှာ အရေးကြီးပါသည်
+                // Upload directory path setup
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
@@ -110,7 +110,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                     await request.ImageFile.CopyToAsync(stream);
                 }
 
-                // ဤ path သည် URL အတွက်ဖြစ်သည်
+                // Relative URL path
                 imagePath = "/uploads/" + fileName;
             }
 
@@ -136,7 +136,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
             if (item is null) return NotFound(new { IsSuccess = false, Message = "Activity not found" });
 
-            // ပုံအသစ်တင်လျှင် အစားထိုးခြင်း
+            // Replace image if uploaded
             if (request.ImageFile != null && request.ImageFile.Length > 0)
             {
                 var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
@@ -167,7 +167,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         public IActionResult DeleteActivity(int id)
         {
             var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
-            if (item is null) return NotFound(new ActivityDeleteResponseModel { IsSuccess = false, Message = "သတင်း/လှုပ်ရှားမှုအား ရှာမတွေ့ပါ။" });
+            if (item is null) return NotFound(new ActivityDeleteResponseModel { IsSuccess = false, Message = "Activity not found." });
 
             // Soft Delete
             item.IsDelete = true;
@@ -177,20 +177,20 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return Ok(new ActivityDeleteResponseModel
             {
                 IsSuccess = result > 0,
-                Message = result > 0 ? "ဖျက်ဆီးမှု အောင်မြင်ပါသည်။" : "ဖျက်ဆီးမှု မအောင်မြင်ပါ။"
+                Message = result > 0 ? "Deleted successfully." : "Deletion failed."
             });
         }
 
         [HttpGet("count/active")]
         public IActionResult GetActivityCount()
         {
-            // ၁။ Delete မဖြစ်သေးသော Activity အားလုံးကို အရင်ယူပါ
+            // 1. Query all active activities
             var activeActivities = _db.Activities
                                    .AsNoTracking()
                                    .Where(x => x.IsDelete == false)
                                    .ToList();
 
-            // ၂။ System Log များ မပါဝင်သော Activity အရေအတွက်ကိုသာ ရေတွက်ပါ
+            // 2. Count non-system logs
             int count = activeActivities.Count(x => !IsSystemLog(x.ActivityTitle));
 
             return Ok(new { Count = count });
@@ -225,7 +225,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             .Where(x => x.IsDelete == false || x.IsDelete == null)
             .ToList();
 
-        // System/Audit log များကို ဖယ်ထုတ်ပါ
+        // Exclude system audit logs
         var filtered = allActivities
             .Where(x => !IsSystemLog(x.ActivityTitle));
 
@@ -271,15 +271,14 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
     [HttpGet("recent")]
     public IActionResult GetRecentActivities()
     {
-        // DB ကနေ delete မဖြစ်သောအားလုံး ဆွဲထုတ်ပြီး memory ထဲ IsSystemLog() နဲ့ စစ်မည်
+        // Query non-deleted activities and filter system logs in memory
         var allActivities = _db.Activities
                              .AsNoTracking()
                              .Where(x => x.IsDelete == false || x.IsDelete == null)
                              .OrderByDescending(x => x.CreatedDateTime)
                              .ToList();
 
-        // IsSystemLog() = true ဖြစ်မှသာ audit log → Recent Activity မှာ ပြမည်
-        // Campus events (Football, Tennis etc.) တွေ IsSystemLog() = false ဖြစ်တဲ့အတွက် ဖယ်ထွက်သွားမည်
+        // Include system logs only for audit display
         var recentActivities = allActivities
             .Where(x => IsSystemLog(x.ActivityTitle ?? ""))
             .Take(10)
@@ -295,7 +294,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
         return Ok(recentActivities);
     }
-        // Activity အမျိုးအစားအလိုက် Icon သတ်မှတ်ပေးမည့် Helper Method
+        // Helper method to resolve icon by activity type
         private string GetIconByActivityType(string title)
         {
             title = title.ToLower();

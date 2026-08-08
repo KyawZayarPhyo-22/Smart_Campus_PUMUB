@@ -6,7 +6,7 @@ public class StudentCreateRequestModel
     public string Name { get; set; }
     public string CurrentClassYear { get; set; } = null!;
     public string CurrentMajor { get; set; } = null!;
-    public string? CurrentRollNo { get; set; } // ဥပမာ - MUB-1098
+    public string? CurrentRollNo { get; set; } // Example: MUB-1098
 }
 
 public class StudentUpdateRequestModel
@@ -31,7 +31,7 @@ public class StudentModel
     public string? FullName { get; set; }
     public string CurrentClassYear { get; set; } = null!;
     public string CurrentMajor { get; set; } = null!;
-    public string? FacultyName { get; set; }   // Major မှ join လာသော Faculty Name
+    public string? FacultyName { get; set; }   // Faculty Name joined from Major
     public string? CurrentRollNo { get; set; }
     public string Status { get; set; } = "Active";
     public string? Sem1_Result { get; set; }

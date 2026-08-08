@@ -54,10 +54,10 @@ public class StudentRegistrationCreateRequestModel
     public string? app_student_phone { get; set; }
     public bool? stipend_requested { get; set; }
     public string? created_by { get; set; }
-    public string? nrc_state { get; set; }     // Dropdown ဖိုး (ဥပမာ - "11")
-    public string? nrc_township { get; set; }  // Dropdown ဖိုး (ဥပမာ - "THAKANA")
+    public string? nrc_state { get; set; }     // State code (e.g. "11")
+    public string? nrc_township { get; set; }  // Township code (e.g. "THAKANA")
     public string? nrc_type { get; set; }
-    public string? nrc_number { get; set; }    // Textbox ရိုက်ချက် (ဥပမာ - "122344")
+    public string? nrc_number { get; set; }    // Number string (e.g. "122344")
 
     // 📷 Images Upload Fields
     public IFormFile? StudentImageFile { get; set; }

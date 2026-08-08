@@ -9,11 +9,11 @@ using System.ComponentModel.DataAnnotations;
 /// <summary>Admin manual create request</summary>
 public class NewStudentAccCreateRequest
 {
-    [Required(ErrorMessage = "Full Name မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    [Required(ErrorMessage = "Full Name is required.")]
     [StringLength(100)]
     public string FullName { get; set; } = null!;
 
-    [Required(ErrorMessage = "Email မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    [Required(ErrorMessage = "Email is required.")]
     [EmailAddress]
     [StringLength(150)]
     public string Email { get; set; } = null!;
@@ -60,10 +60,10 @@ public class NewStudentAccUpdateStatusRequest
 /// <summary>Login request for new-student account</summary>
 public class NewStudentAccLoginRequest
 {
-    [Required(ErrorMessage = "Username မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    [Required(ErrorMessage = "Username is required.")]
     public string Username { get; set; } = null!;
 
-    [Required(ErrorMessage = "Password မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    [Required(ErrorMessage = "Password is required.")]
     public string Password { get; set; } = null!;
 }
 

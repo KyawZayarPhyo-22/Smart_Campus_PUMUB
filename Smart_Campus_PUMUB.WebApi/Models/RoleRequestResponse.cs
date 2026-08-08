@@ -1,4 +1,4 @@
-﻿namespace Smart_Campus_PUMUB.WebApi.Models;
+namespace Smart_Campus_PUMUB.WebApi.Models;
 
 // --- Create Models ---
 public class RoleCreateRequestModel
@@ -36,7 +36,7 @@ public class TblRole
 {
     public int RoleId { get; set; }
     public string RoleName { get; set; } = null!;
-    public bool IsDeleted { get; set; } = false; // Soft Delete အတွက် ဒီ property လိုပါတယ်
+    public bool IsDeleted { get; set; } = false; // Flag for soft deletion
 }
 
 public class RoleDeleteResponseModel

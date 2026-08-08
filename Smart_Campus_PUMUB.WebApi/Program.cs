@@ -20,7 +20,7 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Object အချင်းချင်း အပြန်အလှန် ပတ်ညွှန်းနေတာတွေကို Serializer က ကျော်သွားခိုင်းမည့် Logic
+        // Ignore cyclic references in JSON serializer
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

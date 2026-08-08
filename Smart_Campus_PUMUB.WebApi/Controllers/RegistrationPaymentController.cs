@@ -26,7 +26,7 @@ public class RegistrationPaymentController : ControllerBase
         _env = env;
     }
 
-    // 🎯 ၁။ GET: api/registrationpayment (Read All)
+    // GET: api/registrationpayment (Read All)
     [HttpGet]
     public IActionResult GetPayments()
     {
@@ -53,7 +53,7 @@ public class RegistrationPaymentController : ControllerBase
         return Ok(lst);
     }
 
-    // 🎯 ၂။ GET: api/registrationpayment/{id} (Read One)
+    // GET: api/registrationpayment/{id} (Read One)
     [HttpGet("{id}")]
     public IActionResult GetPayment(int id)
     {
@@ -84,7 +84,7 @@ public class RegistrationPaymentController : ControllerBase
         return Ok(data);
     }
 
-    // 🎯 ၃။ POST: api/registrationpayment (Create - Upload Slip)
+    // POST: api/registrationpayment (Create - Upload Slip)
     [HttpPost]
     public IActionResult CreatePayment([FromForm] RegistrationPaymentCreateRequestModel request)
     {
@@ -94,7 +94,7 @@ public class RegistrationPaymentController : ControllerBase
             return BadRequest(new RegistrationPaymentResponseModel { IsSuccess = false, Message = "ဒေတာများကို ပြည့်စုံစွာ ဖြည့်သွင်းပါ။" });
         }
 
-        // Student_Registrations Table ထဲမှာ တကယ်ရှိမရှိ စစ်ဆေးခြင်း
+        // Verify Student Registration record exists
         var registrationCheck = _db.StudentRegistrations.FirstOrDefault(x => x.RegistrationId == request.RegistrationId && (x.IsDelete == false || x.IsDelete == null));
         if (registrationCheck is null)
         {
@@ -136,8 +136,8 @@ public class RegistrationPaymentController : ControllerBase
             RegistrationId = request.RegistrationId,
             AmountPaid = request.AmountPaid,
             PaymentMethod = request.PaymentMethod,
-            ReceiptImage = dbImagePath, // 💡 SQL ရဲ့ Receipt_Image ထဲသိမ်းမည်
-            PaymentDate = DateTime.UtcNow.AddHours(6).AddMinutes(30), // ငွေသွင်းသည့်နေ့
+            ReceiptImage = dbImagePath, // Save image path in DB
+            PaymentDate = DateTime.UtcNow.AddHours(6).AddMinutes(30), // Payment date
             Status = "Pending", 
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
             CreatedBy = request.CreatedBy,
@@ -154,7 +154,7 @@ public class RegistrationPaymentController : ControllerBase
         });
     }
 
-    // 🎯 ၄။ PUT: api/registrationpayment/{id} (Update)
+    // PUT: api/registrationpayment/{id} (Update)
     [HttpPost("update/{id}")]
     public IActionResult UpdatePayment(int id, [FromForm] RegistrationPaymentUpdateRequestModel request)
     {
@@ -169,7 +169,7 @@ public class RegistrationPaymentController : ControllerBase
             return BadRequest(new RegistrationPaymentResponseModel { IsSuccess = false, Message = "Approved ဖြစ်ပြီးသား ပြေစာများကို ပြင်ဆင်ခွင့်မရှိပါ။" });
         }
 
-        // ပုံအသစ်ပါလာလျှင် ပုံဟောင်းဖျက်ပြီး အစားထိုးမည့် Logic
+        // Replace image if new file uploaded
         if (request.ReceiptImage != null && request.ReceiptImage.Length > 0)
         {
             if (!string.IsNullOrEmpty(item.ReceiptImage))
@@ -193,7 +193,7 @@ public class RegistrationPaymentController : ControllerBase
 
         item.AmountPaid = request.AmountPaid;
         item.PaymentMethod = request.PaymentMethod;
-        item.Status = "Pending"; // ပြင်လိုက်လျှင် စစ်ဆေးဆဲ အဆင့်သို့ ပြန်သွားမည်
+        item.Status = "Pending"; // Reset status to Pending on edit
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
         item.ModifiedBy = request.ModifiedBy;
 
@@ -206,7 +206,7 @@ public class RegistrationPaymentController : ControllerBase
         });
     }
 
-    // 🎯 ၅။ DELETE: api/registrationpayment/{id} (Soft Delete)
+    // DELETE: api/registrationpayment/{id} (Soft Delete)
     [HttpDelete("{id}")]
     public IActionResult DeletePayment(int id)
     {
@@ -229,7 +229,7 @@ public class RegistrationPaymentController : ControllerBase
         });
     }
 
-    // 🎯 ၆။ PATCH: api/registrationpayment/{id}/verify (Special API for Staff Verification)
+    // PATCH: api/registrationpayment/{id}/verify (Staff Verification)
     [HttpPatch("{id}/verify")]
     public IActionResult VerifyPayment(int id, [FromBody] RegistrationPaymentVerifyRequestModel request)
     {
@@ -245,7 +245,7 @@ public class RegistrationPaymentController : ControllerBase
             return BadRequest(new RegistrationPaymentResponseModel { IsSuccess = false, Message = "Status ပြောင်းလဲမှုပုံစံ မှားယွင်းနေပါသည်။ (Approved သို့မဟုတ် Rejected သာ ဖြစ်ရမည်)" });
         }
 
-        // ဝန်ထမ်းအကောင့် (User Table) ထဲမှာ ရှိမရှိ စစ်ဆေးခြင်း
+        // Verify staff user exists
         var staffCheck = _db.Users.FirstOrDefault(x => x.UserId == request.VerifyBy && (x.IsDelete == false || x.IsDelete == null));
         if (staffCheck is null)
         {
@@ -253,7 +253,7 @@ public class RegistrationPaymentController : ControllerBase
         }
 
         item.Status = request.Status;
-        item.VerifyBy = request.VerifyBy; // 💡 SQL ရဲ့ VerifyBy ထဲသိမ်းမည်
+        item.VerifyBy = request.VerifyBy; // Save verifier UserId
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
         int result = _db.SaveChanges();
