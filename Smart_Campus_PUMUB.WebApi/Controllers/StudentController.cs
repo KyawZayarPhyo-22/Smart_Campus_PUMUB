@@ -41,7 +41,7 @@ public class StudentController : ControllerBase
         }
 
         // 1. Get all active users who are students
-        var studentUsersQuery = _db.Users
+          var studentUsersQuery = _db.Users
             .Where(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
 
         // Faculty-based scoping: if facultyId provided, filter users by faculty
