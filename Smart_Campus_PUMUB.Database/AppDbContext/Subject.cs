@@ -19,6 +19,9 @@ public partial class Subject
     [Column("Faculty_Id")]
     public int? FacultyId { get; set; }
 
+    [Column("Major_Id")]
+    public int? MajorId { get; set; }
+
     [Column("Subject_Name")]
     [StringLength(150)]
     public string SubjectName { get; set; } = null!;
@@ -27,6 +30,9 @@ public partial class Subject
     [StringLength(50)]
     [Unicode(false)]
     public string SubjectCode { get; set; } = null!;
+
+    [Column("Subject_Type")]
+    public EnumSubjectType SubjectType { get; set; } = EnumSubjectType.None;
 
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }
@@ -46,4 +52,21 @@ public partial class Subject
 
     [ForeignKey("FacultyId")]
     public virtual Faculty? Faculty { get; set; }
+
+    [ForeignKey("MajorId")]
+    [InverseProperty("Subjects")]
+    public virtual Major? Major { get; set; }
+
+    [InverseProperty("Subject")]
+    public virtual ICollection<SubjectPrerequisite> Prerequisites { get; set; } = new List<SubjectPrerequisite>();
+
+    [InverseProperty("PrerequisiteSubject")]
+    public virtual ICollection<SubjectPrerequisite> PrerequisiteFor { get; set; } = new List<SubjectPrerequisite>();
+
+    [InverseProperty("Subject")]
+    public virtual ICollection<StudentSubjectEnrollment> Enrollments { get; set; } = new List<StudentSubjectEnrollment>();
+
+    [InverseProperty("Subject")]
+    public virtual ICollection<StudentSubjectResult> Results { get; set; } = new List<StudentSubjectResult>();
+
 }

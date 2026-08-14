@@ -584,11 +584,12 @@
     else
     {
     <div class="stepper-wrapper">
-        <div class="stepper-progress" style="width: @((CurrentStep - 1) * 33.33)%"></div>
+        <div class="stepper-progress" style="width: @((CurrentStep - 1) * 25)%"></div>
         <div class="step-block @(CurrentStep >= 1 ? "active" : "")"><div class="step-circle">1</div><div class="step-label">Personal Info</div></div>
         <div class="step-block @(CurrentStep >= 2 ? "active" : "")"><div class="step-circle">2</div><div class="step-label">Academic Info</div></div>
-        <div class="step-block @(CurrentStep >= 3 ? "active" : "")"><div class="step-circle">3</div><div class="step-label">Family Info</div></div>
-        <div class="step-block @(CurrentStep >= 4 ? "active" : "")"><div class="step-circle">4</div><div class="step-label">Submit</div></div>
+        <div class="step-block @(CurrentStep >= 3 ? "active" : "")"><div class="step-circle">3</div><div class="step-label">Subject Grade</div></div>
+        <div class="step-block @(CurrentStep >= 4 ? "active" : "")"><div class="step-circle">4</div><div class="step-label">Family Info</div></div>
+        <div class="step-block @(CurrentStep >= 5 ? "active" : "")"><div class="step-circle">5</div><div class="step-label">Submit</div></div>
     </div>
 
     @if (CurrentStep == 1)
@@ -916,11 +917,104 @@
 
         <div class="form-footer">
             <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
-            <button class="btn-next" @onclick="NextStep">Next: Family Info <i class="fas fa-arrow-right"></i></button>
+            <button class="btn-next" @onclick="NextStep">Next: Subject Grade <i class="fas fa-arrow-right"></i></button>
         </div>
     }
 
     @if (CurrentStep == 3)
+    {
+        <div class="input-grid">
+            <div class="input-group" style="border-right: 1px dashed #e2e8f0; padding-right: 20px;">
+                <label class="input-label" style="font-size: 1.1rem; color: #1e40af;"><i class="fas fa-book me-2"></i> တက်ရောက်မည့် ဘာသာရပ်များ (Upcoming Subjects)</label>
+                
+                @if (UpcomingSubjects != null && UpcomingSubjects.Any())
+                {
+                    <div class="table-responsive" style="margin-top: 10px;">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>ဘာသာရပ် (Subject)</th>
+                                    <th>ကုဒ် (Code)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sub in UpcomingSubjects)
+                                {
+                                    <tr>
+                                        <td>@sub.SubjectName</td>
+                                        <td>@sub.SubjectCode</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div style="padding: 10px; color: #94a3b8; font-style: italic;">
+                        မှတ်တမ်း မရှိသေးပါ။
+                    </div>
+                }
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" style="font-size: 1.1rem; color: #047857;"><i class="fas fa-history me-2"></i> အရင် Semester ရဲ့ အမှတ်များ (Previous Grades)</label>
+                <div class="table-responsive" style="margin-top: 10px;">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>ဘာသာရပ် (Subject)</th>
+                                <th>ကုဒ် (Code)</th>
+                                <th>ရမှတ် (Grade)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (PreviousSubjects != null && PreviousSubjects.Any())
+                            {
+                                @foreach (var pSub in PreviousSubjects)
+                                {
+                                    <tr>
+                                        <td>@pSub.SubjectName</td>
+                                        <td>@pSub.SubjectCode</td>
+                                        <td>
+                                            @if (AllGrades.Any())
+                                            {
+                                                <select class="modern-input" @bind="pSub.Grade">
+                                                    <option value="">-- ရွေးပါ --</option>
+                                                    @foreach (var g in AllGrades)
+                                                    {
+                                                        <option value="@g.Name">@g.Name</option>
+                                                    }
+                                                </select>
+                                            }
+                                            else
+                                            {
+                                                <input type="text" class="modern-input" placeholder="အမှတ်ရိုက်ထည့်ပါ" @bind="pSub.Grade">
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 20px; color: #94a3b8; font-style: italic;">
+                                        အရင် Semester ဘာသာရပ်များ မတွေ့ရှိပါ။
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="form-footer">
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-next" @onclick="NextStep">Next: Family Info <i class="fas fa-arrow-right"></i></button>
+        </div>
+    }
+
+    @if (CurrentStep == 4)
     {
         <div class="input-grid">
             <div class="input-group full-width" style="border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 10px;">
@@ -1046,7 +1140,7 @@
         </div>
     }
 
-    @if (CurrentStep == 4)
+    @if (CurrentStep == 5)
     {
         <div class="input-grid">
             <div class="input-group full-width">

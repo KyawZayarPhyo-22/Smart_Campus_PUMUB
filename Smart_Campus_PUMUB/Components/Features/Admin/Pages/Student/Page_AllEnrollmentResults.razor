@@ -1,0 +1,254 @@
+@page "/admin/enrollment-results"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@using Smart_Campus_PUMUB.WebApi.Models
+@inject HttpClientService HttpClientService
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1" style="color: #495057; font-weight: 700;">Enrollment Results</h4>
+            <p class="text-muted mb-0">View all student enrollments and examination results</p>
+        </div>
+    </div>
+
+    <div class="material-card" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.05); padding: 1.5rem;">
+        
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" placeholder="Search by name, roll no or subject..." @bind="SearchQuery" @bind:event="oninput" />
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive table-container">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Student Name</th>
+                        <th>Roll No</th>
+                        <th>Semester</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (FilteredResults != null && FilteredResults.Any())
+                    {
+                        var index = 1;
+                        foreach (var result in FilteredResults)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td style="font-weight: 500; color: #495057;">@result.StudentName</td>
+                                <td><span class="badge bg-light text-dark border">@result.RollNo</span></td>
+                                <td>@result.SemesterName</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" @onclick="() => OpenViewModal(result)">
+                                        <i class="bi bi-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else if (IsLoading)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No enrollment results found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (ShowDetailModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1050; overflow-y: auto;">
+        <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1051; max-width: 850px;">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; background-color: #ffffff; color: #212529;">
+
+                <!-- Modal Header -->
+                <div class="modal-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between" style="background-color: #f8fafc; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark d-flex align-items-center mb-0" style="font-size: 1.15rem;">
+                            <i class="bi bi-journal-text text-primary me-2 fs-5"></i>
+                            <span>Course Description & Enrollment Form</span>
+                        </h5>
+                        @if (SelectedResult != null)
+                        {
+                            <small class="text-muted">
+                                Student: <strong>@SelectedResult.StudentName</strong> 
+                                @if (!string.IsNullOrEmpty(SelectedResult.RollNo))
+                                {
+                                    <text> | Roll No: <strong>@SelectedResult.RollNo</strong></text>
+                                }
+                                @if (!string.IsNullOrEmpty(SelectedResult.SemesterName))
+                                {
+                                    <text> | Semester: <strong>@SelectedResult.SemesterName</strong></text>
+                                }
+                            </small>
+                        }
+                    </div>
+                    <button type="button" class="btn-close" @onclick="CloseViewModal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle text-nowrap mb-0" style="border: 1px solid #333;">
+                            <thead style="background-color: #ffffff; border-bottom: 2px solid #333;">
+                                <tr class="text-center align-middle" style="font-weight: 600; font-size: 0.95rem; color: #212529;">
+                                    <th style="width: 60px; padding: 10px 8px; border: 1px solid #333;">Sr.</th>
+                                    <th style="width: 140px; padding: 10px 8px; border: 1px solid #333;">Subject<br/>Code</th>
+                                    <th style="padding: 10px 12px; border: 1px solid #333;">Course Description</th>
+                                    <th style="width: 100px; padding: 10px 8px; border: 1px solid #333;">Grade</th>
+                                    <th style="width: 120px; padding: 10px 8px; border: 1px solid #333;">Pre-<br/>requisite</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 0.92rem; color: #212529;">
+                                <tr>
+                                    <td class="text-center" style="border: 1px solid #333;">1</td>
+                                    <td style="border: 1px solid #333; font-weight: 500;">M-1101/M-1001</td>
+                                    <td style="border: 1px solid #333;">Myanmar Language</td>
+                                    <td class="text-center" style="border: 1px solid #333;"></td>
+                                    <td style="border: 1px solid #333;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center" style="border: 1px solid #333;">2</td>
+                                    <td style="border: 1px solid #333; font-weight: 500;">E-1101</td>
+                                    <td style="border: 1px solid #333;">English Proficiency I</td>
+                                    <td class="text-center" style="border: 1px solid #333;"></td>
+                                    <td style="border: 1px solid #333;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center" style="border: 1px solid #333;">3</td>
+                                    <td style="border: 1px solid #333; font-weight: 500;">P-1101</td>
+                                    <td style="border: 1px solid #333;">College Physics</td>
+                                    <td class="text-center" style="border: 1px solid #333;"></td>
+                                    <td style="border: 1px solid #333;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center" style="border: 1px solid #333;">4</td>
+                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1141</td>
+                                    <td style="border: 1px solid #333;">Calculus</td>
+                                    <td class="text-center" style="border: 1px solid #333;"></td>
+                                    <td style="border: 1px solid #333;"></td>
+                                </tr>
+                                <tr style="background-color: #e9f2fb;">
+                                    <td class="text-center" style="border: 1px solid #333;">5</td>
+                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1102</td>
+                                    <td style="border: 1px solid #333;">Principle of Information Technology</td>
+                                    <td class="text-center" style="border: 1px solid #333;"></td>
+                                    <td style="border: 1px solid #333;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center" style="border: 1px solid #333;">6</td>
+                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1123</td>
+                                    <td style="border: 1px solid #333;">Basic Data Processing</td>
+                                    <td class="text-center" style="border: 1px solid #333;"></td>
+                                    <td style="border: 1px solid #333;"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center" style="border: 1px solid #333;">7</td>
+                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1154</td>
+                                    <td style="border: 1px solid #333;">Web Development (HTML5+ CSS)</td>
+                                    <td class="text-center" style="border: 1px solid #333;"></td>
+                                    <td style="border: 1px solid #333;"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-end" style="background-color: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                    <button type="button" class="btn btn-secondary px-4" @onclick="CloseViewModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public List<StudentEnrollmentResultModel>? AllResults { get; set; }
+    
+    private string _searchQuery = "";
+    public string SearchQuery 
+    { 
+        get => _searchQuery; 
+        set
+        {
+            _searchQuery = value;
+            StateHasChanged();
+        }
+    }
+
+    public IEnumerable<StudentEnrollmentResultModel>? FilteredResults =>
+        string.IsNullOrWhiteSpace(SearchQuery) 
+        ? AllResults 
+        : AllResults?.Where(r => 
+            (r.StudentName != null && r.StudentName.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)) ||
+            (r.RollNo != null && r.RollNo.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)) ||
+            (r.SubjectName != null && r.SubjectName.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase)) ||
+            (r.SubjectCode != null && r.SubjectCode.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+        );
+
+    public bool IsLoading { get; set; } = true;
+    private bool ShowDetailModal { get; set; } = false;
+    private StudentEnrollmentResultModel? SelectedResult { get; set; }
+
+    private void OpenViewModal(StudentEnrollmentResultModel result)
+    {
+        SelectedResult = result;
+        ShowDetailModal = true;
+    }
+
+    private void CloseViewModal()
+    {
+        ShowDetailModal = false;
+        SelectedResult = null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadResults();
+    }
+
+    private async Task LoadResults()
+    {
+        IsLoading = true;
+        try
+        {
+            // Call the new API endpoint
+            var url = "Enrollment/results";
+            AllResults = await HttpClientService.ExecuteAsync<List<StudentEnrollmentResultModel>>(url, EnumHttpMethod.Get);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading results: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

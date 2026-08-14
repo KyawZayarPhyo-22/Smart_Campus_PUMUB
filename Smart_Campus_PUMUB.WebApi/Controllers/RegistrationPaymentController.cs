@@ -256,6 +256,55 @@ public class RegistrationPaymentController : ControllerBase
         item.VerifyBy = request.VerifyBy; // 💡 SQL ရဲ့ VerifyBy ထဲသိမ်းမည်
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
+        if (request.Status == "Approved")
+        {
+            var registration = _db.StudentRegistrations.FirstOrDefault(r => r.RegistrationId == item.RegistrationId && (r.IsDelete == false || r.IsDelete == null));
+            if (registration != null && registration.UserId != null)
+            {
+                var student = _db.Students.FirstOrDefault(s => s.UserId == registration.UserId && (s.IsDelete == false || s.IsDelete == null));
+                if (student == null)
+                {
+                    student = new Student
+                    {
+                        UserId = registration.UserId.Value,
+                        CurrentClassYear = registration.AcademicYearLevel ?? "First Year",
+                        CurrentMajor = registration.Major ?? "N/A",
+                        CurrentRollNo = registration.RollNo ?? string.Empty,
+                        Status = "Active",
+                        CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                        IsDelete = false
+                    };
+                    _db.Students.Add(student);
+                    _db.SaveChanges();
+                }
+
+                var semester = _db.Semesters.FirstOrDefault(s => s.SemesterName == registration.AcademicYearLevel && (s.IsDelete == false || s.IsDelete == null));
+                if (semester != null)
+                {
+                    var subjects = _db.Subjects.Where(s => s.SemesterId == semester.SemesterId).ToList();
+                    foreach (var sub in subjects)
+                    {
+                        bool alreadyEnrolled = _db.StudentSubjectEnrollments.Any(e => e.StudentId == student.StudentId && e.SubjectId == sub.SubjectId && e.SemesterId == semester.SemesterId && (e.IsDelete == false || e.IsDelete == null));
+                        if (!alreadyEnrolled)
+                        {
+                            var newEnrollment = new StudentSubjectEnrollment
+                            {
+                                StudentId = student.StudentId,
+                                SubjectId = sub.SubjectId,
+                                SemesterId = semester.SemesterId,
+                                EnrollmentDate = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                                Status = 1,
+                                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                                CreatedBy = staffCheck.FullName ?? "System",
+                                IsDelete = false
+                            };
+                            _db.StudentSubjectEnrollments.Add(newEnrollment);
+                        }
+                    }
+                }
+            }
+        }
+
         int result = _db.SaveChanges();
 
         return Ok(new RegistrationPaymentResponseModel

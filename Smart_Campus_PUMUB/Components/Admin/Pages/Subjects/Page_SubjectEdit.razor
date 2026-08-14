@@ -2,6 +2,7 @@
 @layout AdminLayout
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Subject
 @using Smart_Campus_PUMUB.WebApi.Models
+@using Smart_Campus_PUMUB.Database.AppDbContext
 @rendermode InteractiveServer
 
 <div class="mb-4">
@@ -25,7 +26,7 @@
             <DataAnnotationsValidator />
 
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label text-light">Semester</label>
                     <InputSelect @bind-Value="subject.SemesterId" class="form-select bg-dark text-white border-secondary">
                         @foreach (var sem in SemesterList)
@@ -35,7 +36,7 @@
                     </InputSelect>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label text-light">Faculty <span class="text-muted small">(Optional)</span></label>
                     <InputSelect @bind-Value="subject.FacultyId" class="form-select bg-dark text-white border-secondary">
                         <option value="">-- Faculty မရွေးချယ် --</option>
@@ -46,14 +47,62 @@
                     </InputSelect>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="form-label text-light">Subject Name</label>
-                    <InputText @bind-Value="subject.SubjectName" class="form-control bg-dark text-white border-secondary" />
+                <div class="col-md-4">
+                    <label class="form-label text-light">Major <span class="text-muted small">(Optional)</span></label>
+                    <InputSelect @bind-Value="subject.MajorId" class="form-select bg-dark text-white border-secondary">
+                        <option value="">-- Major မရွေးချယ် --</option>
+                        @foreach (var maj in FilteredMajors)
+                        {
+                            <option value="@maj.MajorId">@maj.MajorName</option>
+                        }
+                    </InputSelect>
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
+                    <label class="form-label text-light">Subject Name</label>
+                    <InputText @bind-Value="subject.SubjectName" class="form-control bg-dark text-white border-secondary" />
+                    <ValidationMessage For="@(() => subject.SubjectName)" class="text-danger" />
+                </div>
+
+                <div class="col-md-4">
                     <label class="form-label text-light">Subject Code</label>
                     <InputText @bind-Value="subject.SubjectCode" class="form-control bg-dark text-white border-secondary" />
+                    <ValidationMessage For="@(() => subject.SubjectCode)" class="text-danger" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label text-light">Subject Type</label>
+                    <InputSelect @bind-Value="subject.SubjectType" class="form-select bg-dark text-white border-secondary">
+                        @foreach (var type in Enum.GetValues<EnumSubjectType>())
+                        {
+                            if (type == EnumSubjectType.None)
+                            {
+                                <option value="@type">-- Subject Type ရွေးချယ်ပါ --</option>
+                            }
+                            else
+                            {
+                                <option value="@type">@type.ToString()</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => subject.SubjectType)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row g-3 mt-2">
+                <div class="col-md-12">
+                    <label class="form-label text-light">Prerequisite Subjects <span class="text-muted small">(Optional)</span></label>
+                    <InputSelect @bind-Value="SelectedPrerequisiteId" class="form-select bg-dark text-white border-secondary">
+                        <option value="0">-- Prerequisite ဘာသာရပ်ကို ရွေးပါ --</option>
+                        @foreach (var sub in SubjectList)
+                        {
+                            @if (sub.SubjectId != SubjectId)
+                            {
+                                <option value="@sub.SubjectId">@sub.SubjectCode - @sub.SubjectName</option>
+                            }
+                        }
+                    </InputSelect>
+                    <div class="form-text text-muted">Prerequisite ဘာသာရပ်မရှိပါက မရွေးချယ်ဘဲ ထားနိုင်ပါသည်။</div>
                 </div>
             </div>
 

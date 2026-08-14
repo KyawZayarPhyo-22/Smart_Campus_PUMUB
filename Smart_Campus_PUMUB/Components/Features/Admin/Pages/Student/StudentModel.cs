@@ -186,3 +186,21 @@ public class PreviousRegistrationModel
     public bool? StipendRequested { get; set; }
 }
 
+
+public class StudentEnrollmentResultModel
+{
+    public int EnrollmentId { get; set; }
+    public int StudentId { get; set; }
+    public string? StudentName { get; set; }
+    public string? RollNo { get; set; }
+    public int SemesterId { get; set; }
+    public string? SemesterName { get; set; }
+    public int SubjectId { get; set; }
+    public string? SubjectCode { get; set; }
+    public string? SubjectName { get; set; }
+    public DateTime EnrollmentDate { get; set; }
+    public decimal? MaxMarks { get; set; }
+    public decimal? MarksObtained { get; set; }
+    public string? Grade { get; set; }
+    public bool IsPass { get; set; }
+}

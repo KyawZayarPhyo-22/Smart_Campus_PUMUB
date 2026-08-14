@@ -83,3 +83,11 @@ public class StudentRegistrationResponseModel
     public string? Message { get; set; }
     public object? Data { get; set; }
 }
+
+public class SubjectGradeBindingModel
+{
+    public int SubjectId { get; set; }
+    public string SubjectName { get; set; } = "";
+    public string SubjectCode { get; set; } = "";
+    public string? Grade { get; set; }
+}

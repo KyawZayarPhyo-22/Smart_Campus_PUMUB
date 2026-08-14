@@ -423,6 +423,43 @@ public class StudentRegistrationsController : ControllerBase
         }
 
         // =========================================================
+        // Duplicate Registration Validation
+        // =========================================================
+        var existingRegQuery = _db.StudentRegistrations
+            .AsNoTracking()
+            .Where(x => (x.IsDelete == false || x.IsDelete == null) &&
+                        x.AcademicYearRange == request.academic_year_range &&
+                        x.AcademicYearLevel == request.academic_year_level &&
+                        (x.Status == null || x.Status != "Rejected"));
+
+        var existingUserReg = isNewStudent
+            ? existingRegQuery.Where(x => x.NewStudentAccId == request.NewStudentAccId)
+            : existingRegQuery.Where(x => x.UserId == request.UserId);
+
+        if (existingUserReg.Any())
+        {
+            return BadRequest(new StudentRegistrationResponseModel
+            {
+                IsSuccess = false,
+                Message = $"သင်သည် {request.academic_year_range} ပညာသင်နှစ်အတွက် {request.academic_year_level} သို့ ကျောင်းအပ်နှံထားပြီးဖြစ်ပါသည်။ ထပ်မံကျောင်းအပ်၍ မရပါ။"
+            });
+        }
+
+        // RollNo validation (Same Roll No cannot be registered by someone else in the same semester)
+        if (!string.IsNullOrWhiteSpace(request.roll_no))
+        {
+            var existingRollNoReg = existingRegQuery.Where(x => x.RollNo == request.roll_no);
+            if (existingRollNoReg.Any())
+            {
+                return BadRequest(new StudentRegistrationResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"သင်ဖြည့်သွင်းထားသော ခုံအမှတ် (Roll No - {request.roll_no}) သည် ဤ Semester တွင် အသုံးပြုထားပြီးဖြစ်ပါသည်။"
+                });
+            }
+        }
+
+        // =========================================================
         // Semester Progression Validation
         // =========================================================
         var studentRecord = _db.Students
@@ -655,6 +692,19 @@ public class StudentRegistrationsController : ControllerBase
 
         _db.StudentRegistrations.Add(newReg);
         int result = _db.SaveChanges();
+
+        if (result > 0)
+        {
+            var newResult = new StudentSubjectResult
+            {
+                RegistrationId = newReg.RegistrationId,
+                IsPass = false,
+                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                CreatedBy = string.IsNullOrEmpty(request.created_by) ? "System" : request.created_by
+            };
+            _db.StudentSubjectResults.Add(newResult);
+            _db.SaveChanges();
+        }
 
         return StatusCode(201, new StudentRegistrationResponseModel
         {

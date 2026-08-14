@@ -74,4 +74,30 @@ public partial class Student
     [ForeignKey("UserId")]
     [InverseProperty("Students")]
     public virtual User User { get; set; } = null!;
+
+    [Column("Student_Name")]
+    [StringLength(150)]
+    public string? StudentName { get; set; }
+
+    [Column("Enrollment_No")]
+    [StringLength(50)]
+    public string? EnrollmentNo { get; set; }
+
+    [StringLength(150)]
+    public string? Email { get; set; }
+
+    [StringLength(20)]
+    public string? Phone { get; set; }
+
+    [Column("Faculty_Id")]
+    public int? FacultyId { get; set; }
+
+    [ForeignKey("FacultyId")]
+    public virtual Faculty? Faculty { get; set; }
+
+    [InverseProperty("Student")]
+    public virtual ICollection<StudentSubjectEnrollment> Enrollments { get; set; } = new List<StudentSubjectEnrollment>();
+
+    [InverseProperty("Student")]
+    public virtual ICollection<StudentSubjectResult> Results { get; set; } = new List<StudentSubjectResult>();
 }

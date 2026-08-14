@@ -55,7 +55,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         //}
 
         public int CurrentStep { get; set; } = 1;
-        private const int TotalSteps = 4;
+        private const int TotalSteps = 5;
         public bool IsSubmitting { get; set; } = false;
 
         public DateTime? DobDate { get; set; }
@@ -67,9 +67,13 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public byte[]? SelectedPhotoBytes { get; set; }
         public List<SemesterModel> SemesterList { get; set; } = new();
 
-        // --- Faculty & Filtered Major ---
         public List<FacultyModel> FacultyList { get; set; } = new();
         public int? SelectedFacultyId { get; set; }
+
+        // --- Subject Grade (Step 3) ---
+        public List<SubjectModel> UpcomingSubjects { get; set; } = new();
+        public List<SubjectGradeBindingModel> PreviousSubjects { get; set; } = new();
+        public List<GradeModel> AllGrades { get; set; } = new();
 
         // Faculty → Majors mapping
         private static readonly Dictionary<string, List<string>> FacultyMajorsMap = new(StringComparer.OrdinalIgnoreCase)
@@ -210,6 +214,32 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 var info = await HttpClientService.ExecuteAsync<StudentPersonalInfoResponse>($"studentpersonalinfo/by-roll/{Uri.EscapeDataString(val)}", EnumHttpMethod.Get);
                 if (info != null)
                 {
+                    // ====================================================================
+                    // SECURITY CHECK: Prevent using another user's Roll No for Auto-Fill
+                    // ====================================================================
+                    bool isSameUser = false;
+                    if (RegModel.NewStudentAccId.HasValue && RegModel.NewStudentAccId > 0 && info.NewStudentAccId == RegModel.NewStudentAccId)
+                    {
+                        isSameUser = true;
+                    }
+                    else if (RegModel.UserId.HasValue && RegModel.UserId > 0 && info.UserId == RegModel.UserId)
+                    {
+                        isSameUser = true;
+                    }
+
+                    if (!isSameUser)
+                    {
+                        AutoFillSuccess = false;
+                        AutoFillStatus = "အခြားကျောင်းသား၏ ခုံအမှတ်ကို အသုံးပြု၍မရပါ။ မိမိ၏ ခုံအမှတ်ကိုသာ အသုံးပြုပါ။";
+                        IsAutoFilling = false;
+                        
+                        ShowModal = true;
+                        IsSuccessModal = false;
+                        ModalMessage = "အခြားကျောင်းသား၏ ခုံအမှတ်ကို အသုံးပြု၍မရပါ။ မိမိ၏ ခုံအမှတ်ကိုသာ အသုံးပြုပါ။";
+                        StateHasChanged();
+                        return;
+                    }
+                    // ====================================================================
                     RegModel.student_name_mm      = info.student_name_mm;
                     RegModel.student_name_en      = info.student_name_en;
                     RegModel.father_name          = info.father_name;
@@ -330,23 +360,27 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     AutoFillStatus = "✔ ကျောင်းသားအချက်အလက် အလိုအလျောက် ဖြည့်ပြီးပါပြီ";
 
                     // ── Pass/Fail မှ Semester auto-compute ──
+                    // ⚠ အရေးကြီး: Roll No ဖြင့် ရှာပါက အခြား Student ၏ data ရနိုင်တဲ့အတွက်
+                    // Log In ဝင်ထားသည့် User ၏ UserId ဖြင့်သာ Student data ကို ဆွဲယူရမည်
                     StudentModel? studentDir = null;
 
-                    // ၁။ Roll No ဖြင့် Student directory မှ Sem results ရလဒ်များ တိုက်ရိုက် ရှာဖွေခြင်း
-                    try
-                    {
-                        studentDir = await HttpClientService.ExecuteAsync<StudentModel>(
-                            $"Student/by-roll/{Uri.EscapeDataString(val)}", EnumHttpMethod.Get);
-                    }
-                    catch { }
-
-                    // ၂။ ရှာမတွေ့သေးပါက UserId ဖြင့် ထပ်မံ ရှာဖွေခြင်း
-                    if (studentDir == null && info.UserId.HasValue && info.UserId > 0)
+                    // ၁။ Log In ဝင်ထားသူ ၏ UserId ဖြင့် ဦးစွာ ရှာဖွေခြင်း (most reliable)
+                    if (info.UserId.HasValue && info.UserId > 0)
                     {
                         try
                         {
                             studentDir = await HttpClientService.ExecuteAsync<StudentModel>(
                                 $"Student/user/{info.UserId}", EnumHttpMethod.Get);
+                        }
+                        catch { }
+                    }
+                    // ၂။ Log In ဝင်ထားသည့် User ID မရှိပါက RegModel ထဲရှိ UserId ဖြင့် ထပ်မံ ရှာဖွေခြင်း
+                    else if (RegModel.UserId.HasValue && RegModel.UserId > 0)
+                    {
+                        try
+                        {
+                            studentDir = await HttpClientService.ExecuteAsync<StudentModel>(
+                                $"Student/user/{RegModel.UserId}", EnumHttpMethod.Get);
                         }
                         catch { }
                     }
@@ -480,6 +514,17 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 }
             }
             catch { LoadDefaultSemesters(); }
+
+            // Load Grades
+            try
+            {
+                var gradeResp = await HttpClientService.ExecuteAsync<GradeListResponseModel>("grade", EnumHttpMethod.Get);
+                if (gradeResp != null && gradeResp.IsSuccess && gradeResp.Data != null)
+                {
+                    AllGrades = gradeResp.Data.ToList();
+                }
+            }
+            catch { }
 
             // Load faculties
             try
@@ -1053,7 +1098,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
         }
 
-        private void NextStep()
+        private async Task NextStep()
         {
             if (CurrentStep == 1)
             {
@@ -1085,7 +1130,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     return;
                 }
 
-                // Auto-fill Step 3 matriculation table fields from Step 2
+                // Auto-fill Step 4 matriculation table fields from Step 2
                 RegModel.past_exam_major = RegModel.major;
                 RegModel.past_exam_roll_no = RegModel.roll_no;
                 if (!string.IsNullOrEmpty(RegModel.academic_year_range))
@@ -1097,8 +1142,55 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                         PastExamDate = new DateTime(yr, 1, 1);
                     }
                 }
+
+                // Fetch Subjects for Step 3
+                var currentSem = SemesterList.FirstOrDefault(s => s.SemesterName == RegModel.academic_year_level);
+                if (currentSem != null)
+                {
+                    string endpoint = $"Subject/by-semester/{currentSem.SemesterId}";
+                    if (SelectedFacultyId.HasValue && SelectedFacultyId > 0)
+                    {
+                        endpoint += $"?facultyId={SelectedFacultyId.Value}";
+                    }
+
+                    var upcomingResp = await HttpClientService.ExecuteAsync<List<SubjectModel>>(endpoint, EnumHttpMethod.Get);
+                    if (upcomingResp != null)
+                    {
+                        UpcomingSubjects = upcomingResp;
+                    }
+                    
+                    var previousSem = SemesterList.FirstOrDefault(s => s.Sequence == (currentSem.Sequence - 1));
+                    if (previousSem != null)
+                    {
+                        string prevEndpoint = $"Subject/by-semester/{previousSem.SemesterId}";
+                        if (SelectedFacultyId.HasValue && SelectedFacultyId > 0)
+                        {
+                            prevEndpoint += $"?facultyId={SelectedFacultyId.Value}";
+                        }
+
+                        var previousResp = await HttpClientService.ExecuteAsync<List<SubjectModel>>(prevEndpoint, EnumHttpMethod.Get);
+                        if (previousResp != null)
+                        {
+                            PreviousSubjects = previousResp.Select(p => new SubjectGradeBindingModel
+                            {
+                                SubjectId = p.SubjectId,
+                                SubjectName = p.SubjectName,
+                                SubjectCode = p.SubjectCode,
+                                Grade = ""
+                            }).ToList();
+                        }
+                    }
+                    else
+                    {
+                        PreviousSubjects.Clear();
+                    }
+                }
             }
             else if (CurrentStep == 3)
+            {
+                // Nothing special to validate for Subject Grade yet, user might just review or enter grades
+            }
+            else if (CurrentStep == 4)
             {
                 if (string.IsNullOrWhiteSpace(RegModel.father_name) ||
                     string.IsNullOrWhiteSpace(RegModel.guardian_name) ||
@@ -1111,7 +1203,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
             if (CurrentStep < TotalSteps)
             {
-                if (CurrentStep == 3)
+                if (CurrentStep == 4)
                 {
                     RegModel.app_student_name = RegModel.student_name_mm;
                     RegModel.app_guardian_name = RegModel.guardian_name;

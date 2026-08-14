@@ -119,11 +119,12 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 15%;">No.</th>
-                            <th style="width: 50%;">Semester Name</th>
+                            <th style="width: 10%;">No.</th>
+                            <th style="width: 45%;">Semester Name</th>
+                            <th style="width: 20%; text-align: center;">Max Elective</th>
                             @if (canManageSemester)
                             {
-                                <th style="width: 35%; text-align: center;">Actions</th>
+                                <th style="width: 25%; text-align: center;">Actions</th>
                             }
                         </tr>
                     </thead>
@@ -134,6 +135,11 @@
                             <tr class="table-row-hover">
                                 <td class="fw-bold text-muted">@count.ToString("D2")</td>
                                 <td class="fw-semibold">@semester.SemesterName</td>
+                                <td class="text-center">
+                                    <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2.5 py-1.5">
+                                        <i class="bi bi-collection me-1"></i>@(semester.MaxElective ?? 0)
+                                    </span>
+                                </td>
                                 @if (canManageSemester)
                                 {
                                     <td>

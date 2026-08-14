@@ -382,7 +382,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 var info = await HttpClientService.ExecuteAsync<StudentPersonalInfoResponse>(
                     endpoint, EnumHttpMethod.Get);
 
-                if (info != null)
+                if (info != null && info.Id > 0)
                 {
                     isUpdate = true;
                     IsFormDisabled = true;

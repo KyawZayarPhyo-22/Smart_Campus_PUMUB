@@ -1,0 +1,120 @@
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@using Smart_Campus_PUMUB.WebApi.Models
+@inject HttpClientService HttpClientService
+
+<div class="table-responsive table-container">
+    <table class="table custom-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Semester</th>
+                <th>Subject Code</th>
+                <th>Subject Name</th>
+                <th>Enrollment Date</th>
+                <th>Max Marks</th>
+                <th>Marks Obtained</th>
+                <th>Grade</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Results != null && Results.Any())
+            {
+                var index = 1;
+                foreach (var result in Results)
+                {
+                    <tr>
+                        <td>@index</td>
+                        <td>@result.SemesterName</td>
+                        <td>@result.SubjectCode</td>
+                        <td>@result.SubjectName</td>
+                        <td>@result.EnrollmentDate.ToString("yyyy-MM-dd")</td>
+                        <td>@(result.MaxMarks?.ToString("0.##") ?? "-")</td>
+                        <td>@(result.MarksObtained?.ToString("0.##") ?? "-")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(result.Grade))
+                            {
+                                <span class="badge" style="background-color: rgba(105, 108, 255, 0.1); color: #696cff;">
+                                    @result.Grade
+                                </span>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (result.MarksObtained.HasValue)
+                            {
+                                if (result.IsPass)
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Pass</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Fail</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">Pending</span>
+                            }
+                        </td>
+                    </tr>
+                    index++;
+                }
+            }
+            else if (IsLoading)
+            {
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                        No enrollment results found.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public int StudentId { get; set; }
+
+    public List<StudentEnrollmentResultModel>? Results { get; set; }
+    public bool IsLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadResults();
+    }
+
+    private async Task LoadResults()
+    {
+        IsLoading = true;
+        try
+        {
+            // Call the new API endpoint
+            var url = $"Enrollment/student/{StudentId}/results";
+            Results = await HttpClientService.ExecuteAsync<List<StudentEnrollmentResultModel>>(url, EnumHttpMethod.Get);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading results: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

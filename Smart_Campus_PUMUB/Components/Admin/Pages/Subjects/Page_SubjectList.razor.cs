@@ -64,7 +64,9 @@ public partial class Page_SubjectList
         if (!string.IsNullOrWhiteSpace(SearchTerm))
         {
             list = list.Where(s => (s.SubjectName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                                   (s.SubjectCode?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+                                   (s.SubjectCode?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                                   (s.MajorName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                                   (s.FacultyName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
         }
         if (SelectedSemester != "All")
         {
@@ -122,9 +124,14 @@ public partial class Page_SubjectList
         IsLoading = false;
     }
 
+    private string statusMessage = string.Empty;
+    private bool IsSuccess = false;
+
     private void OpenDeleteModal(SubjectModel subject)
     {
         SelectedSubject = subject;
+        statusMessage = string.Empty;
+        IsSuccess = false;
         ShowModal = true;
         StateHasChanged();
     }
@@ -132,11 +139,10 @@ public partial class Page_SubjectList
     private void CloseDeleteModal()
     {
         SelectedSubject = null;
+        statusMessage = string.Empty;
+        IsSuccess = false;
         ShowModal = false;
     }
-
-    private string statusMessage = string.Empty;
-    private bool IsSuccess = false;
 
     private async Task DeleteSubject()
     {

@@ -1,11 +1,21 @@
 namespace Smart_Campus_PUMUB.WebApi.Models
 {
     // --- Create ---
-    public class SemesterCreateRequestModel { public string? SemesterName { get; set; } public int? Sequence { get; set; } }
+    public class SemesterCreateRequestModel 
+    { 
+        public string? SemesterName { get; set; } 
+        public int? Sequence { get; set; } 
+        public int? MaxElective { get; set; } = 0;
+    }
     public class SemesterCreateResponseModel { public bool IsSuccess { get; set; } public string? Message { get; set; } }
 
     // --- Update ---
-    public class SemesterUpdateRequestModel { public string? SemesterName { get; set; } public int? Sequence { get; set; } }
+    public class SemesterUpdateRequestModel 
+    { 
+        public string? SemesterName { get; set; } 
+        public int? Sequence { get; set; } 
+        public int? MaxElective { get; set; } = 0;
+    }
     public class SemesterUpdateResponseModel
     {
         public bool IsSuccess { get; set; }
@@ -22,5 +32,6 @@ namespace Smart_Campus_PUMUB.WebApi.Models
         public int SemesterId { get; set; }
         public string? SemesterName { get; set; }
         public int? Sequence { get; set; }
+        public int? MaxElective { get; set; } = 0;
     }
 }

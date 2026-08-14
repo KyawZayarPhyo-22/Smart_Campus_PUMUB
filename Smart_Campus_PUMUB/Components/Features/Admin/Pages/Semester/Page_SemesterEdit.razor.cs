@@ -24,7 +24,12 @@ public partial class Page_SemesterEdit
         try
         {
             var response = await HttpClientService.ExecuteAsync<SemesterModel>($"semester/{Id}", EnumHttpMethod.Get);
-            if (response != null) semesterModel.SemesterName = response.SemesterName;
+            if (response != null) 
+            {
+                semesterModel.SemesterName = response.SemesterName;
+                semesterModel.Sequence = response.Sequence;
+                semesterModel.MaxElective = response.MaxElective ?? 0;
+            }
         }
         catch (Exception ex) { statusMessage = $"Error: {ex.Message}"; }
         finally { IsLoading = false; }

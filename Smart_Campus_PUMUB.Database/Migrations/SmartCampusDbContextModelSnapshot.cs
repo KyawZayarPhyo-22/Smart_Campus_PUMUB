@@ -101,6 +101,10 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<string>("FilePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Image")
                         .HasMaxLength(255)
                         .IsUnicode(false)
@@ -249,6 +253,163 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .HasName("PK__Faculty__4EFCEAAADECD7578");
 
                     b.ToTable("Faculty");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Grade", b =>
+                {
+                    b.Property<int>("GradeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Grade_Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GradeId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("CreatedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool?>("IsDelete")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("ModifiedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("GradeId");
+
+                    b.ToTable("Grade");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Major", b =>
+                {
+                    b.Property<int>("MajorId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Major_Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MajorId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedDateTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<int>("FacultyId")
+                        .HasColumnType("int")
+                        .HasColumnName("Faculty_Id");
+
+                    b.Property<bool?>("IsDelete")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("MajorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("Major_Name");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("MajorId")
+                        .HasName("PK_Major");
+
+                    b.HasIndex("FacultyId");
+
+                    b.ToTable("Major");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.NewStudentAcc", b =>
+                {
+                    b.Property<int>("NewStudentAccId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("NewStudentAccId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("NewStudentAccId"));
+
+                    b.Property<string>("AccountStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Active");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("CreatedDateTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Full_Name");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ModifiedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("MustChangePassword")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("RegisterAccId")
+                        .HasColumnType("int")
+                        .HasColumnName("RegisterAccId");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("NewStudentAccId");
+
+                    b.HasIndex("Username")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_NewStudentAcc_Username");
+
+                    b.ToTable("NewStudentAcc");
                 });
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.PaymentFee", b =>
@@ -538,6 +699,34 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                     b.ToTable("Role");
                 });
 
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.RoleHierarchy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("CanAccessAllFaculties")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ChildRoleId")
+                        .HasColumnType("int")
+                        .HasColumnName("Child_Role_Id");
+
+                    b.Property<int>("ParentRoleId")
+                        .HasColumnType("int")
+                        .HasColumnName("Parent_Role_Id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChildRoleId");
+
+                    b.HasIndex("ParentRoleId");
+
+                    b.ToTable("RoleHierarchy");
+                });
+
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.RolePermission", b =>
                 {
                     b.Property<int>("RolePermissionId")
@@ -689,6 +878,19 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .HasColumnType("varchar(20)")
                         .HasColumnName("Current_Roll_No");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("EnrollmentNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("Enrollment_No");
+
+                    b.Property<int?>("FacultyId")
+                        .HasColumnType("int")
+                        .HasColumnName("Faculty_Id");
+
                     b.Property<bool?>("IsDelete")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -699,6 +901,10 @@ namespace Smart_Campus_PUMUB.Database.Migrations
 
                     b.Property<DateTime?>("ModifiedDateTime")
                         .HasColumnType("datetime");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Sem1_Result")
                         .HasMaxLength(20)
@@ -742,12 +948,19 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Active");
 
+                    b.Property<string>("StudentName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("Student_Name");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("User_Id");
 
                     b.HasKey("StudentId")
                         .HasName("PK__Student__A2F4E98C1185513A");
+
+                    b.HasIndex("FacultyId");
 
                     b.HasIndex("UserId");
 
@@ -762,40 +975,172 @@ namespace Smart_Campus_PUMUB.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AdmissionSerialNo")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime?>("CreatedDateTime")
-                        .HasColumnType("datetime");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("ExamSeatNo")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("FormNo")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("ModifiedDateTime")
-                        .HasColumnType("datetime");
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("Phone")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int?>("NewStudentAccId")
+                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.Property<string>("academic_year_level")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("UserId");
+                    b.Property<string>("academic_year_range")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("admission_year")
+                        .HasColumnType("int");
+
+                    b.Property<string>("app_guardian_address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("app_guardian_name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("app_guardian_nrc")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("app_guardian_phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("app_student_name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("app_student_phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("birth_place_region")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("blood_type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("covid_vaccine_status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("created_by")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("current_address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("dob")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ethnicity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("exam_center")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("father_name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("father_occupation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("gender_relation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("guardian_address_phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("guardian_name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("guardian_occupation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("guardian_relationship")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("major")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("matric_passed_year")
+                        .HasColumnType("int");
+
+                    b.Property<string>("matric_roll_no")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("mother_name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("mother_occupation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("nationality_status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("nrc_number")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("nrc_state")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("nrc_township")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("nrc_type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("past_exam_major")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("past_exam_roll_no")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("past_exam_status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("past_exam_year")
+                        .HasColumnType("int");
+
+                    b.Property<string>("permanent_address_en")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("permanent_address_mm")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("pob")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("previous_year_roll_no")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("religion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("roll_no")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("stipend_requested")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("student_name_en")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("student_name_mm")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("student_nrc_no")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("university_reg_no")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
 
                     b.ToTable("StudentPersonalInfo");
                 });
@@ -977,9 +1322,8 @@ namespace Smart_Campus_PUMUB.Database.Migrations
 
                     b.Property<string>("MatricRollNo")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("matric_roll_no");
 
                     b.Property<string>("ModifiedBy")
@@ -1006,6 +1350,10 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("nationality_status");
+
+                    b.Property<int?>("NewStudentAccId")
+                        .HasColumnType("int")
+                        .HasColumnName("NewStudentAccId");
 
                     b.Property<string>("PastExamMajor")
                         .HasMaxLength(100)
@@ -1120,6 +1468,145 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                     b.ToTable("Student_Registrations");
                 });
 
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.StudentSubjectEnrollment", b =>
+                {
+                    b.Property<int>("EnrollmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Enrollment_Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EnrollmentId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("CreatedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("EnrollmentDate")
+                        .HasColumnType("datetime")
+                        .HasColumnName("Enrollment_Date");
+
+                    b.Property<bool?>("IsDelete")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ModifiedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("SemesterId")
+                        .HasColumnType("int")
+                        .HasColumnName("Semester_Id");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int")
+                        .HasColumnName("Student_Id");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int")
+                        .HasColumnName("Subject_Id");
+
+                    b.HasKey("EnrollmentId");
+
+                    b.HasIndex("SemesterId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex(new[] { "StudentId", "SubjectId", "SemesterId" }, "UQ_Student_Subject_Semester")
+                        .IsUnique();
+
+                    b.ToTable("Student_Subject_Enrollment");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.StudentSubjectResult", b =>
+                {
+                    b.Property<int>("ResultId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Result_Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ResultId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("CreatedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<int?>("EnrollmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("Enrollment_Id");
+
+                    b.Property<string>("Grade")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<bool>("IsPass")
+                        .HasColumnType("bit")
+                        .HasColumnName("Is_Pass");
+
+                    b.Property<decimal?>("MarksObtained")
+                        .HasColumnType("decimal(5, 2)")
+                        .HasColumnName("Marks_Obtained");
+
+                    b.Property<decimal?>("MaxMarks")
+                        .HasColumnType("decimal(5, 2)")
+                        .HasColumnName("Max_Marks");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ModifiedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<int?>("RegistrationId")
+                        .HasColumnType("int")
+                        .HasColumnName("Registration_Id");
+
+                    b.Property<DateTime?>("ResultDate")
+                        .HasColumnType("datetime")
+                        .HasColumnName("Result_Date");
+
+                    b.Property<int?>("SemesterId")
+                        .HasColumnType("int")
+                        .HasColumnName("Semester_Id");
+
+                    b.Property<int?>("StudentId")
+                        .HasColumnType("int")
+                        .HasColumnName("Student_Id");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("int")
+                        .HasColumnName("Subject_Id");
+
+                    b.HasKey("ResultId");
+
+                    b.HasIndex("EnrollmentId")
+                        .IsUnique()
+                        .HasFilter("[Enrollment_Id] IS NOT NULL");
+
+                    b.HasIndex("RegistrationId");
+
+                    b.HasIndex("SemesterId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex(new[] { "EnrollmentId" }, "IX_Result_Enrollment");
+
+                    b.ToTable("Student_Subject_Result");
+                });
+
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Subject", b =>
                 {
                     b.Property<int>("SubjectId")
@@ -1136,6 +1623,10 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
+
+                    b.Property<int?>("FacultyId")
+                        .HasColumnType("int")
+                        .HasColumnName("Faculty_Id");
 
                     b.Property<bool?>("IsDelete")
                         .ValueGeneratedOnAdd()
@@ -1168,9 +1659,47 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                     b.HasKey("SubjectId")
                         .HasName("PK__Subject__D98F54B64787BB85");
 
+                    b.HasIndex("FacultyId");
+
                     b.HasIndex("SemesterId");
 
                     b.ToTable("Subject");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.SubjectPrerequisite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("CreatedDateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<int>("PrerequisiteSubjectId")
+                        .HasColumnType("int")
+                        .HasColumnName("Prerequisite_Subject_Id");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int")
+                        .HasColumnName("Subject_Id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrerequisiteSubjectId");
+
+                    b.HasIndex(new[] { "SubjectId", "PrerequisiteSubjectId" }, "UQ_Subject_Prereq")
+                        .IsUnique();
+
+                    b.ToTable("Subject_Prerequisite", t =>
+                        {
+                            t.HasCheckConstraint("CK_No_Self_Prereq", "[Subject_Id] <> [Prerequisite_Subject_Id]");
+                        });
                 });
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Tutor", b =>
@@ -1266,6 +1795,15 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("Email");
+
+                    b.Property<int?>("FacultyId")
+                        .HasColumnType("int")
+                        .HasColumnName("Faculty_Id");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1302,6 +1840,12 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("Role_No");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1310,6 +1854,8 @@ namespace Smart_Campus_PUMUB.Database.Migrations
 
                     b.HasKey("UserId")
                         .HasName("PK__User__206D91702B22E388");
+
+                    b.HasIndex("FacultyId");
 
                     b.HasIndex("RoleId");
 
@@ -1341,6 +1887,17 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                     b.Navigation("Faculty");
                 });
 
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Major", b =>
+                {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Faculty", "Faculty")
+                        .WithMany("Majors")
+                        .HasForeignKey("FacultyId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Major_Faculty");
+
+                    b.Navigation("Faculty");
+                });
+
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.RegistrationPayment", b =>
                 {
                     b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.StudentRegistration", "Registration")
@@ -1357,6 +1914,25 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                     b.Navigation("Registration");
 
                     b.Navigation("VerifyByNavigation");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.RoleHierarchy", b =>
+                {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Role", "ChildRole")
+                        .WithMany()
+                        .HasForeignKey("ChildRoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Role", "ParentRole")
+                        .WithMany()
+                        .HasForeignKey("ParentRoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChildRole");
+
+                    b.Navigation("ParentRole");
                 });
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.RolePermission", b =>
@@ -1380,22 +1956,17 @@ namespace Smart_Campus_PUMUB.Database.Migrations
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Student", b =>
                 {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Faculty", "Faculty")
+                        .WithMany()
+                        .HasForeignKey("FacultyId");
+
                     b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.User", "User")
                         .WithMany("Students")
                         .HasForeignKey("UserId")
                         .IsRequired()
                         .HasConstraintName("FK__Student__User_Id__7C4F7684");
 
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.StudentPersonalInfo", b =>
-                {
-                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Faculty");
 
                     b.Navigation("User");
                 });
@@ -1410,15 +1981,102 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.StudentSubjectEnrollment", b =>
+                {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Semester", "Semester")
+                        .WithMany()
+                        .HasForeignKey("SemesterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Student", "Student")
+                        .WithMany("Enrollments")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Subject", "Subject")
+                        .WithMany("Enrollments")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Semester");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.StudentSubjectResult", b =>
+                {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.StudentSubjectEnrollment", "Enrollment")
+                        .WithOne("Result")
+                        .HasForeignKey("Smart_Campus_PUMUB.Database.AppDbContext.StudentSubjectResult", "EnrollmentId")
+                        .HasConstraintName("FK_Result_Enrollment");
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.StudentRegistration", "Registration")
+                        .WithMany("Results")
+                        .HasForeignKey("RegistrationId");
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Semester", "Semester")
+                        .WithMany()
+                        .HasForeignKey("SemesterId");
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Student", "Student")
+                        .WithMany("Results")
+                        .HasForeignKey("StudentId");
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Subject", "Subject")
+                        .WithMany("Results")
+                        .HasForeignKey("SubjectId");
+
+                    b.Navigation("Enrollment");
+
+                    b.Navigation("Registration");
+
+                    b.Navigation("Semester");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("Subject");
+                });
+
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Subject", b =>
                 {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Faculty", "Faculty")
+                        .WithMany("Subjects")
+                        .HasForeignKey("FacultyId")
+                        .HasConstraintName("FK_Subject_Faculty");
+
                     b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Semester", "Semester")
                         .WithMany("Subjects")
                         .HasForeignKey("SemesterId")
                         .IsRequired()
                         .HasConstraintName("FK__Subject__Semeste__628FA481");
 
+                    b.Navigation("Faculty");
+
                     b.Navigation("Semester");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.SubjectPrerequisite", b =>
+                {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Subject", "PrerequisiteSubject")
+                        .WithMany("PrerequisiteFor")
+                        .HasForeignKey("PrerequisiteSubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Subject", "Subject")
+                        .WithMany("Prerequisites")
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PrerequisiteSubject");
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Tutor", b =>
@@ -1450,11 +2108,18 @@ namespace Smart_Campus_PUMUB.Database.Migrations
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.User", b =>
                 {
+                    b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Faculty", "Faculty")
+                        .WithMany("Users")
+                        .HasForeignKey("FacultyId")
+                        .HasConstraintName("FK_User_Faculty");
+
                     b.HasOne("Smart_Campus_PUMUB.Database.AppDbContext.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .IsRequired()
                         .HasConstraintName("FK__User__Role_id__68487DD7");
+
+                    b.Navigation("Faculty");
 
                     b.Navigation("Role");
                 });
@@ -1472,6 +2137,12 @@ namespace Smart_Campus_PUMUB.Database.Migrations
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Faculty", b =>
                 {
                     b.Navigation("Departments");
+
+                    b.Navigation("Majors");
+
+                    b.Navigation("Subjects");
+
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Permission", b =>
@@ -1496,9 +2167,34 @@ namespace Smart_Campus_PUMUB.Database.Migrations
                     b.Navigation("Subjects");
                 });
 
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Student", b =>
+                {
+                    b.Navigation("Enrollments");
+
+                    b.Navigation("Results");
+                });
+
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.StudentRegistration", b =>
                 {
                     b.Navigation("RegistrationPayments");
+
+                    b.Navigation("Results");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.StudentSubjectEnrollment", b =>
+                {
+                    b.Navigation("Result");
+                });
+
+            modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.Subject", b =>
+                {
+                    b.Navigation("Enrollments");
+
+                    b.Navigation("PrerequisiteFor");
+
+                    b.Navigation("Prerequisites");
+
+                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("Smart_Campus_PUMUB.Database.AppDbContext.User", b =>

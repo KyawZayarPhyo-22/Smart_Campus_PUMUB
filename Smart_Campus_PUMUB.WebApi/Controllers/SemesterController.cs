@@ -50,7 +50,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 return BadRequest(new SemesterCreateResponseModel { IsSuccess = false, Message = "Semester အမည်မှာ ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
             }
 
-            _db.Semesters.Add(new Semester { SemesterName = request.SemesterName, Sequence = request.Sequence, IsDelete = false });
+            _db.Semesters.Add(new Semester 
+            { 
+                SemesterName = request.SemesterName, 
+                Sequence = request.Sequence, 
+                MaxElective = request.MaxElective ?? 0,
+                IsDelete = false 
+            });
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
@@ -77,6 +83,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
 
             item.SemesterName = request.SemesterName;
             item.Sequence = request.Sequence ?? item.Sequence;
+            item.MaxElective = request.MaxElective ?? item.MaxElective;
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
@@ -90,7 +97,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             {
                 IsSuccess = result > 0,
                 Message = result > 0 ? "ပြင်ဆင်မှု အောင်မြင်ပါသည်။" : "ပြင်ဆင်မှု မအောင်မြင်ပါ။",
-                Data = new SemesterModel { SemesterId = item.SemesterId, SemesterName = item.SemesterName, Sequence = item.Sequence }
+                Data = new SemesterModel 
+                { 
+                    SemesterId = item.SemesterId, 
+                    SemesterName = item.SemesterName, 
+                    Sequence = item.Sequence,
+                    MaxElective = item.MaxElective
+                }
             });
         }
 
