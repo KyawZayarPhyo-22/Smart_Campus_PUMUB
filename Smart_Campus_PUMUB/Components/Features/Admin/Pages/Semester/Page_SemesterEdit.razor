@@ -26,9 +26,15 @@
                         <label class="form-label text-light">Semester Name</label>
                         <InputText @bind-Value="semesterModel.SemesterName" class="form-control" />
                     </div>
-                    <div class="col-12 mb-2">
-                        <label class="form-label text-light">Max Elective Subjects <span class="text-muted small">(Default: 0)</span></label>
-                        <InputNumber @bind-Value="semesterModel.MaxElective" class="form-control" min="0" />
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label text-light">Max Elective (CS)</label>
+                            <InputNumber @bind-Value="semesterModel.MaxElectiveCS" class="form-control" min="0" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-light">Max Elective (CT)</label>
+                            <InputNumber @bind-Value="semesterModel.MaxElectiveCT" class="form-control" min="0" />
+                        </div>
                     </div>
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {

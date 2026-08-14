@@ -83,7 +83,7 @@
 @if (ShowDetailModal)
 {
     <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1050; overflow-y: auto;">
-        <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1051; max-width: 850px;">
+        <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1051; max-width: 900px;">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; background-color: #ffffff; color: #212529;">
 
                 <!-- Modal Header -->
@@ -93,19 +93,37 @@
                             <i class="bi bi-journal-text text-primary me-2 fs-5"></i>
                             <span>Course Description & Enrollment Form</span>
                         </h5>
-                        @if (SelectedResult != null)
+                        @if (DetailData != null)
                         {
-                            <small class="text-muted">
-                                Student: <strong>@SelectedResult.StudentName</strong> 
+                            <div class="small text-muted mt-1">
+                                Student: <strong class="text-dark">@DetailData.StudentName</strong> 
+                                @if (!string.IsNullOrEmpty(DetailData.RollNo))
+                                {
+                                    <text> | Roll No: <strong class="text-dark">@DetailData.RollNo</strong></text>
+                                }
+                                @if (!string.IsNullOrEmpty(DetailData.SemesterName))
+                                {
+                                    <text> | Semester: <strong class="text-primary">@DetailData.SemesterName</strong></text>
+                                }
+                                @if (!string.IsNullOrEmpty(DetailData.MajorName))
+                                {
+                                    <text> | Major: <strong class="text-info">@DetailData.MajorName</strong></text>
+                                }
+                            </div>
+                        }
+                        else if (SelectedResult != null)
+                        {
+                            <div class="small text-muted mt-1">
+                                Student: <strong class="text-dark">@SelectedResult.StudentName</strong> 
                                 @if (!string.IsNullOrEmpty(SelectedResult.RollNo))
                                 {
-                                    <text> | Roll No: <strong>@SelectedResult.RollNo</strong></text>
+                                    <text> | Roll No: <strong class="text-dark">@SelectedResult.RollNo</strong></text>
                                 }
                                 @if (!string.IsNullOrEmpty(SelectedResult.SemesterName))
                                 {
-                                    <text> | Semester: <strong>@SelectedResult.SemesterName</strong></text>
+                                    <text> | Semester: <strong class="text-primary">@SelectedResult.SemesterName</strong></text>
                                 }
-                            </small>
+                            </div>
                         }
                     </div>
                     <button type="button" class="btn-close" @onclick="CloseViewModal" aria-label="Close"></button>
@@ -113,75 +131,111 @@
 
                 <!-- Modal Body -->
                 <div class="modal-body p-4">
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle text-nowrap mb-0" style="border: 1px solid #333;">
-                            <thead style="background-color: #ffffff; border-bottom: 2px solid #333;">
-                                <tr class="text-center align-middle" style="font-weight: 600; font-size: 0.95rem; color: #212529;">
-                                    <th style="width: 60px; padding: 10px 8px; border: 1px solid #333;">Sr.</th>
-                                    <th style="width: 140px; padding: 10px 8px; border: 1px solid #333;">Subject<br/>Code</th>
-                                    <th style="padding: 10px 12px; border: 1px solid #333;">Course Description</th>
-                                    <th style="width: 100px; padding: 10px 8px; border: 1px solid #333;">Grade</th>
-                                    <th style="width: 120px; padding: 10px 8px; border: 1px solid #333;">Pre-<br/>requisite</th>
-                                </tr>
-                            </thead>
-                            <tbody style="font-size: 0.92rem; color: #212529;">
-                                <tr>
-                                    <td class="text-center" style="border: 1px solid #333;">1</td>
-                                    <td style="border: 1px solid #333; font-weight: 500;">M-1101/M-1001</td>
-                                    <td style="border: 1px solid #333;">Myanmar Language</td>
-                                    <td class="text-center" style="border: 1px solid #333;"></td>
-                                    <td style="border: 1px solid #333;"></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center" style="border: 1px solid #333;">2</td>
-                                    <td style="border: 1px solid #333; font-weight: 500;">E-1101</td>
-                                    <td style="border: 1px solid #333;">English Proficiency I</td>
-                                    <td class="text-center" style="border: 1px solid #333;"></td>
-                                    <td style="border: 1px solid #333;"></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center" style="border: 1px solid #333;">3</td>
-                                    <td style="border: 1px solid #333; font-weight: 500;">P-1101</td>
-                                    <td style="border: 1px solid #333;">College Physics</td>
-                                    <td class="text-center" style="border: 1px solid #333;"></td>
-                                    <td style="border: 1px solid #333;"></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center" style="border: 1px solid #333;">4</td>
-                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1141</td>
-                                    <td style="border: 1px solid #333;">Calculus</td>
-                                    <td class="text-center" style="border: 1px solid #333;"></td>
-                                    <td style="border: 1px solid #333;"></td>
-                                </tr>
-                                <tr style="background-color: #e9f2fb;">
-                                    <td class="text-center" style="border: 1px solid #333;">5</td>
-                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1102</td>
-                                    <td style="border: 1px solid #333;">Principle of Information Technology</td>
-                                    <td class="text-center" style="border: 1px solid #333;"></td>
-                                    <td style="border: 1px solid #333;"></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center" style="border: 1px solid #333;">6</td>
-                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1123</td>
-                                    <td style="border: 1px solid #333;">Basic Data Processing</td>
-                                    <td class="text-center" style="border: 1px solid #333;"></td>
-                                    <td style="border: 1px solid #333;"></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center" style="border: 1px solid #333;">7</td>
-                                    <td style="border: 1px solid #333; font-weight: 500;">CST-1154</td>
-                                    <td style="border: 1px solid #333;">Web Development (HTML5+ CSS)</td>
-                                    <td class="text-center" style="border: 1px solid #333;"></td>
-                                    <td style="border: 1px solid #333;"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    @if (IsDetailLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading subjects...</span>
+                            </div>
+                            <div class="text-muted small mt-2">Loading student subjects and prerequisites...</div>
+                        </div>
+                    }
+                    else if (DetailData != null && DetailData.Subjects.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0" style="border: 1px solid #dee2e6;">
+                                <thead style="background-color: #f8fafc; border-bottom: 2px solid #dee2e6;">
+                                    <tr class="text-center align-middle" style="font-weight: 600; font-size: 0.9rem; color: #495057;">
+                                        <th style="width: 50px; padding: 10px 8px;">Sr.</th>
+                                        <th style="width: 120px; padding: 10px 8px;">Subject<br/>Code</th>
+                                        <th style="padding: 10px 12px; text-align: left;">Course Description</th>
+                                        <th style="width: 140px; padding: 10px 8px;">Grade</th>
+                                        <th style="width: 220px; padding: 10px 8px;">Pre-requisite</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="font-size: 0.9rem; color: #212529;">
+                                    @{ int sCount = 1; }
+                                    @foreach (var sub in DetailData.Subjects)
+                                    {
+                                        <tr>
+                                            <td class="text-center fw-semibold text-muted">@sCount</td>
+                                            <td class="text-center fw-bold text-primary">@sub.SubjectCode</td>
+                                            <td>
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <span>@sub.SubjectName</span>
+                                                    @if (sub.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective)
+                                                    {
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 ms-2 py-0.5 px-1.5" style="font-size: 0.75rem;">Elective</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <select class="form-select form-select-sm" @bind="sub.Grade" style="min-width: 100px;">
+                                                    <option value="">-- Grade --</option>
+                                                    @if (AvailableGrades != null)
+                                                    {
+                                                        @foreach (var g in AvailableGrades)
+                                                        {
+                                                            <option value="@g.Name">@g.Name</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td class="text-muted small" style="font-size: 0.85rem;">
+                                                @if (!string.IsNullOrEmpty(sub.PrerequisiteInfo) && sub.PrerequisiteInfo != "-")
+                                                {
+                                                    <span class="badge bg-light text-dark border">
+                                                        <i class="bi bi-arrow-return-right me-1 text-primary"></i>@sub.PrerequisiteInfo
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                        sCount++;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-journal-x fs-1 d-block mb-2 text-secondary"></i>
+                            ဤကျောင်းသား၏ Semester/Major အတွက် ဘာသာရပ်များ မတွေ့ရှိပါ။
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(saveMessage))
+                    {
+                        <div class="alert @(isSaveSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show mt-3 mb-0 py-2" role="alert">
+                            <i class="bi @(isSaveSuccess ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i>
+                            @saveMessage
+                        </div>
+                    }
                 </div>
 
                 <!-- Modal Footer -->
-                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-end" style="background-color: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-                    <button type="button" class="btn btn-secondary px-4" @onclick="CloseViewModal">Close</button>
+                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between align-items-center" style="background-color: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CloseViewModal">Close</button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary px-4 d-inline-flex align-items-center" @onclick="SaveGrades" disabled="@(isSaving || IsDetailLoading || DetailData == null || !DetailData.Subjects.Any())">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-check2-circle me-1.5"></i>
+                                <span>Save Grades</span>
+                            }
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -190,6 +244,7 @@
 
 @code {
     public List<StudentEnrollmentResultModel>? AllResults { get; set; }
+    public List<GradeModel>? AvailableGrades { get; set; }
     
     private string _searchQuery = "";
     public string SearchQuery 
@@ -214,23 +269,104 @@
 
     public bool IsLoading { get; set; } = true;
     private bool ShowDetailModal { get; set; } = false;
+    private bool IsDetailLoading { get; set; } = false;
+    private bool isSaving { get; set; } = false;
+    private bool isSaveSuccess { get; set; } = false;
+    private string saveMessage { get; set; } = "";
     private StudentEnrollmentResultModel? SelectedResult { get; set; }
+    private StudentEnrollmentDetailResponseModel? DetailData { get; set; }
 
-    private void OpenViewModal(StudentEnrollmentResultModel result)
+    private async Task OpenViewModal(StudentEnrollmentResultModel result)
     {
         SelectedResult = result;
         ShowDetailModal = true;
+        IsDetailLoading = true;
+        saveMessage = "";
+        DetailData = null;
+
+        try
+        {
+            var regId = result.RegistrationId ?? result.EnrollmentId;
+            var url = $"Enrollment/registration/{regId}/details";
+            DetailData = await HttpClientService.ExecuteAsync<StudentEnrollmentDetailResponseModel>(url, EnumHttpMethod.Get);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading details: {ex.Message}");
+        }
+        finally
+        {
+            IsDetailLoading = false;
+        }
     }
 
     private void CloseViewModal()
     {
         ShowDetailModal = false;
         SelectedResult = null;
+        DetailData = null;
+        saveMessage = "";
+    }
+
+    private async Task SaveGrades()
+    {
+        if (DetailData == null || !DetailData.Subjects.Any()) return;
+
+        isSaving = true;
+        saveMessage = "";
+
+        try
+        {
+            var req = new SaveStudentGradesRequestModel
+            {
+                RegistrationId = DetailData.RegistrationId,
+                StudentId = DetailData.StudentId,
+                SemesterId = DetailData.SemesterId,
+                Grades = DetailData.Subjects.Select(s => new SaveGradeItemModel
+                {
+                    SubjectId = s.SubjectId,
+                    Grade = s.Grade
+                }).ToList()
+            };
+
+            var res = await HttpClientService.ExecuteAsync<ActionResponseModel>("Enrollment/save-student-grades", EnumHttpMethod.Post, req);
+            if (res != null && res.IsSuccess)
+            {
+                isSaveSuccess = true;
+                saveMessage = "Grades saved successfully!";
+            }
+            else
+            {
+                isSaveSuccess = false;
+                saveMessage = res?.Message ?? "Failed to save grades.";
+            }
+        }
+        catch (Exception ex)
+        {
+            isSaveSuccess = false;
+            saveMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadResults();
+        await Task.WhenAll(LoadResults(), LoadGrades());
+    }
+
+    private async Task LoadGrades()
+    {
+        try
+        {
+            AvailableGrades = await HttpClientService.ExecuteAsync<List<GradeModel>>("Grade", EnumHttpMethod.Get);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading grades: {ex.Message}");
+        }
     }
 
     private async Task LoadResults()
@@ -238,7 +374,6 @@
         IsLoading = true;
         try
         {
-            // Call the new API endpoint
             var url = "Enrollment/results";
             AllResults = await HttpClientService.ExecuteAsync<List<StudentEnrollmentResultModel>>(url, EnumHttpMethod.Get);
         }

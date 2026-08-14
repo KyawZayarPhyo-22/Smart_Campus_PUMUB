@@ -20,5 +20,7 @@ public class SubjectGradeBindingModel
     public int SubjectId { get; set; }
     public string SubjectName { get; set; } = "";
     public string SubjectCode { get; set; } = "";
+    public string? SemesterName { get; set; }
     public string? Grade { get; set; }
+    public bool IsRetake { get; set; } = false;
 }

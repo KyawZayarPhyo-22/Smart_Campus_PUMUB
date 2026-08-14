@@ -58,6 +58,7 @@ public class StudentRegistrationCreateRequestModel
     public string? nrc_township { get; set; }  // Dropdown ဖိုး (ဥပမာ - "THAKANA")
     public string? nrc_type { get; set; }
     public string? nrc_number { get; set; }    // Textbox ရိုက်ချက် (ဥပမာ - "122344")
+    public string? selected_subject_ids { get; set; }
 
     // 📷 Images Upload Fields
     public IFormFile? StudentImageFile { get; set; }

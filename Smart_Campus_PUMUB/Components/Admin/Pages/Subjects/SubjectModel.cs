@@ -78,4 +78,9 @@ public class SubjectModel
     public string SubjectTypeName => SubjectType.ToString();
 
     public List<int> PrerequisiteSubjectIds { get; set; } = new();
+    public string? PrerequisiteInfo { get; set; }
+    public bool IsPrerequisiteSatisfied { get; set; } = true;
+    public string? PrerequisiteStatusMessage { get; set; }
+    public bool IsRetake { get; set; } = false;
+    public bool IsSelected { get; set; } = false;
 }

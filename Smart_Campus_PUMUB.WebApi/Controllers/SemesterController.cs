@@ -55,6 +55,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                 SemesterName = request.SemesterName, 
                 Sequence = request.Sequence, 
                 MaxElective = request.MaxElective ?? 0,
+                MaxElectiveCS = request.MaxElectiveCS ?? 0,
+                MaxElectiveCT = request.MaxElectiveCT ?? 0,
                 IsDelete = false 
             });
             int result = _db.SaveChanges();
@@ -84,6 +86,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             item.SemesterName = request.SemesterName;
             item.Sequence = request.Sequence ?? item.Sequence;
             item.MaxElective = request.MaxElective ?? item.MaxElective;
+            item.MaxElectiveCS = request.MaxElectiveCS ?? item.MaxElectiveCS;
+            item.MaxElectiveCT = request.MaxElectiveCT ?? item.MaxElectiveCT;
             int result = _db.SaveChanges();
             _db.Activities.Add(new Activity
             {
@@ -102,7 +106,9 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                     SemesterId = item.SemesterId, 
                     SemesterName = item.SemesterName, 
                     Sequence = item.Sequence,
-                    MaxElective = item.MaxElective
+                    MaxElective = item.MaxElective,
+                    MaxElectiveCS = item.MaxElectiveCS,
+                    MaxElectiveCT = item.MaxElectiveCT
                 }
             });
         }

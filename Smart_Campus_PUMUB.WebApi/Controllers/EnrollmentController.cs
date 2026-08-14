@@ -65,5 +65,36 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             var results = await _enrollmentService.GetAllEnrollmentsWithResultsAsync();
             return Ok(results);
         }
+
+        [HttpGet("registration/{registrationId}/details")]
+        public async Task<IActionResult> GetEnrollmentDetails(int registrationId)
+        {
+            var details = await _enrollmentService.GetEnrollmentDetailsAsync(registrationId);
+            if (details == null)
+                return NotFound(new { IsSuccess = false, Message = "Registration not found." });
+
+            return Ok(details);
+        }
+
+        [HttpPost("save-student-grades")]
+        public async Task<IActionResult> SaveStudentGrades([FromBody] SaveStudentGradesRequestModel request)
+        {
+            var response = await _enrollmentService.SaveStudentGradesAsync(request);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [HttpGet("previous-grades")]
+        public async Task<IActionResult> GetPreviousGrades([FromQuery] int? userId, [FromQuery] int? newStudentAccId, [FromQuery] string? rollNo, [FromQuery] int semesterId, [FromQuery] string? major)
+        {
+            var grades = await _enrollmentService.GetPreviousSemesterGradesAsync(userId, newStudentAccId, rollNo, semesterId, major);
+            return Ok(grades);
+        }
+
+        [HttpGet("subjects-by-major")]
+        public async Task<IActionResult> GetSubjectsByMajor([FromQuery] int semesterId, [FromQuery] string? major, [FromQuery] int? userId = null, [FromQuery] int? newStudentAccId = null, [FromQuery] string? rollNo = null)
+        {
+            var subjects = await _enrollmentService.GetSemesterSubjectsByMajorAsync(semesterId, major, userId, newStudentAccId, rollNo);
+            return Ok(subjects);
+        }
     }
 }

@@ -29,6 +29,8 @@ public partial class Page_SemesterEdit
                 semesterModel.SemesterName = response.SemesterName;
                 semesterModel.Sequence = response.Sequence;
                 semesterModel.MaxElective = response.MaxElective ?? 0;
+                semesterModel.MaxElectiveCS = response.MaxElectiveCS ?? 0;
+                semesterModel.MaxElectiveCT = response.MaxElectiveCT ?? 0;
             }
         }
         catch (Exception ex) { statusMessage = $"Error: {ex.Message}"; }

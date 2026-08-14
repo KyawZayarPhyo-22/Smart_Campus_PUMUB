@@ -1147,28 +1147,34 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 var currentSem = SemesterList.FirstOrDefault(s => s.SemesterName == RegModel.academic_year_level);
                 if (currentSem != null)
                 {
-                    string endpoint = $"Subject/by-semester/{currentSem.SemesterId}";
-                    if (SelectedFacultyId.HasValue && SelectedFacultyId > 0)
-                    {
-                        endpoint += $"?facultyId={SelectedFacultyId.Value}";
-                    }
+                    // 1. Fetch upcoming subjects filtered by student's major + include Retakes from previous semesters
+                    var upcomingUrl = $"Enrollment/subjects-by-major?semesterId={currentSem.SemesterId}&major={Uri.EscapeDataString(RegModel.major ?? "")}";
+                    if (RegModel.UserId.HasValue && RegModel.UserId.Value > 0)
+                        upcomingUrl += $"&userId={RegModel.UserId.Value}";
+                    if (RegModel.NewStudentAccId.HasValue && RegModel.NewStudentAccId.Value > 0)
+                        upcomingUrl += $"&newStudentAccId={RegModel.NewStudentAccId.Value}";
+                    if (!string.IsNullOrWhiteSpace(RegModel.roll_no))
+                        upcomingUrl += $"&rollNo={Uri.EscapeDataString(RegModel.roll_no.Trim())}";
 
-                    var upcomingResp = await HttpClientService.ExecuteAsync<List<SubjectModel>>(endpoint, EnumHttpMethod.Get);
+                    var upcomingResp = await HttpClientService.ExecuteAsync<List<SubjectModel>>(upcomingUrl, EnumHttpMethod.Get);
                     if (upcomingResp != null)
                     {
                         UpcomingSubjects = upcomingResp;
                     }
                     
+                    // 2. Fetch previous semester subjects & saved grades from Enrollment Result
                     var previousSem = SemesterList.FirstOrDefault(s => s.Sequence == (currentSem.Sequence - 1));
                     if (previousSem != null)
                     {
-                        string prevEndpoint = $"Subject/by-semester/{previousSem.SemesterId}";
-                        if (SelectedFacultyId.HasValue && SelectedFacultyId > 0)
-                        {
-                            prevEndpoint += $"?facultyId={SelectedFacultyId.Value}";
-                        }
+                        var prevUrl = $"Enrollment/previous-grades?semesterId={previousSem.SemesterId}&major={Uri.EscapeDataString(RegModel.major ?? "")}";
+                        if (RegModel.UserId.HasValue && RegModel.UserId.Value > 0)
+                            prevUrl += $"&userId={RegModel.UserId.Value}";
+                        if (RegModel.NewStudentAccId.HasValue && RegModel.NewStudentAccId.Value > 0)
+                            prevUrl += $"&newStudentAccId={RegModel.NewStudentAccId.Value}";
+                        if (!string.IsNullOrWhiteSpace(RegModel.roll_no))
+                            prevUrl += $"&rollNo={Uri.EscapeDataString(RegModel.roll_no.Trim())}";
 
-                        var previousResp = await HttpClientService.ExecuteAsync<List<SubjectModel>>(prevEndpoint, EnumHttpMethod.Get);
+                        var previousResp = await HttpClientService.ExecuteAsync<List<StudentSubjectGradeItemModel>>(prevUrl, EnumHttpMethod.Get);
                         if (previousResp != null)
                         {
                             PreviousSubjects = previousResp.Select(p => new SubjectGradeBindingModel
@@ -1176,7 +1182,9 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                                 SubjectId = p.SubjectId,
                                 SubjectName = p.SubjectName,
                                 SubjectCode = p.SubjectCode,
-                                Grade = ""
+                                SemesterName = p.SemesterName,
+                                Grade = p.Grade ?? "",
+                                IsRetake = p.IsRetake
                             }).ToList();
                         }
                     }
@@ -1188,7 +1196,27 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
             else if (CurrentStep == 3)
             {
-                // Nothing special to validate for Subject Grade yet, user might just review or enter grades
+                var electives = UpcomingSubjects.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake).ToList();
+                if (electives.Any())
+                {
+                    int maxAllowed = GetMaxElectiveForCurrentSemester();
+                    int selectedCount = electives.Count(s => s.IsSelected);
+
+                    if (selectedCount != maxAllowed)
+                    {
+                        ShowError($"ကျေးဇူးပြု၍ Elective ဘာသာရပ် {maxAllowed} ခု ရွေးချယ်ပေးပါ (လက်ရှိ {selectedCount} ခု ရွေးချယ်ထားပါသည်)။");
+                        return;
+                    }
+
+                    // Check if any selected elective has unsatisfied prerequisite
+                    var invalidSelected = electives.Where(s => s.IsSelected && !s.IsPrerequisiteSatisfied).ToList();
+                    if (invalidSelected.Any())
+                    {
+                        var invalidNames = string.Join(", ", invalidSelected.Select(s => s.SubjectName));
+                        ShowError($"ရွေးချယ်ထားသော ဘာသာရပ် ({invalidNames}) ၏ Pre-Requisite မအောင်မြင်သေးသဖြင့် ရွေးချယ်၍ မရပါ။");
+                        return;
+                    }
+                }
             }
             else if (CurrentStep == 4)
             {
@@ -1363,6 +1391,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             content.Add(new StringContent(NrcType), "nrc_type");
             content.Add(new StringContent(studentNrcNumberEng), "nrc_number");
 
+            var selectedSubIds = UpcomingSubjects.Where(s => s.IsSelected).Select(s => s.SubjectId).ToList();
+            if (selectedSubIds.Any())
+            {
+                content.Add(new StringContent(string.Join(",", selectedSubIds)), "selected_subject_ids");
+            }
+
             if (SelectedPhotoBytes != null && SelectedPhotoFile != null)
             {
                 var fileContent = new ByteArrayContent(SelectedPhotoBytes);
@@ -1442,6 +1476,71 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             {
                 IsSubmitting = false;
             }
+        }
+
+        public int GetMaxElectiveForCurrentSemester()
+        {
+            var currentSem = SemesterList.FirstOrDefault(s => s.SemesterName == RegModel.academic_year_level);
+            if (currentSem == null) return 1;
+
+            var majorName = (RegModel.major ?? "").Trim();
+            bool isCS = majorName.Contains("Computer Science", StringComparison.OrdinalIgnoreCase) || majorName.Equals("CS", StringComparison.OrdinalIgnoreCase);
+            bool isCT = majorName.Contains("Computer Technology", StringComparison.OrdinalIgnoreCase) || majorName.Equals("CT", StringComparison.OrdinalIgnoreCase);
+
+            int max = isCS ? (currentSem.MaxElectiveCS ?? 0) : (isCT ? (currentSem.MaxElectiveCT ?? 0) : (currentSem.MaxElective ?? 0));
+            var electivesCount = UpcomingSubjects.Count(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake);
+            if (max == 0 && electivesCount > 0)
+            {
+                max = 1;
+            }
+            return max;
+        }
+
+        public void ToggleElectiveSelection(SubjectModel sub)
+        {
+            if (!sub.IsPrerequisiteSatisfied)
+            {
+                ShowError($"'{sub.SubjectName}' သည် Pre-Requisite မအောင်မြင်သေးသဖြင့် ရွေးချယ်ခွင့် မရှိပါ။\n{sub.PrerequisiteStatusMessage}");
+                return;
+            }
+
+            int maxAllowed = GetMaxElectiveForCurrentSemester();
+            var electives = UpcomingSubjects.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake).ToList();
+
+            if (maxAllowed <= 1)
+            {
+                // Radio-like single selection
+                foreach (var s in electives)
+                {
+                    if (s.SubjectId == sub.SubjectId)
+                    {
+                        s.IsSelected = !s.IsSelected;
+                    }
+                    else
+                    {
+                        s.IsSelected = false;
+                    }
+                }
+            }
+            else
+            {
+                // Multi-selection up to maxAllowed
+                if (!sub.IsSelected)
+                {
+                    int currentSelected = electives.Count(s => s.IsSelected);
+                    if (currentSelected >= maxAllowed)
+                    {
+                        ShowError($"Elective ဘာသာရပ်ကို အများဆုံး {maxAllowed} ခုသာ ရွေးချယ်နိုင်ပါသည်။");
+                        return;
+                    }
+                    sub.IsSelected = true;
+                }
+                else
+                {
+                    sub.IsSelected = false;
+                }
+            }
+            StateHasChanged();
         }
     }
 }
