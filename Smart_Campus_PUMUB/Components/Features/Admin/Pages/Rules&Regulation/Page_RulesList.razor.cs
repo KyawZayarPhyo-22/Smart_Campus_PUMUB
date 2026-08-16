@@ -96,12 +96,17 @@ public partial class Page_RulesList
     {
         IsLoading = true;
         ErrorMessage = "";
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<RuleModel>>(
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<RuleModel>>(
                 $"rules/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
             if (response != null)
             {
                 RulesList = response.Items;
@@ -112,7 +117,11 @@ public partial class Page_RulesList
         {
             ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
         }
-        finally { IsLoading = false; }
+        finally 
+        { 
+            IsLoading = false; 
+            StateHasChanged();
+        }
     }
 
     private string statusMessage = string.Empty;

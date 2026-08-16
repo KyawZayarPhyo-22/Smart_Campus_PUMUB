@@ -28,8 +28,36 @@ public partial class Page_BookList : ComponentBase
     public int SelectedCategoryIdInput = 0;
     public int SelectedCategoryId = 0;
 
+    // Custom Dropdown Open States
+    private bool isCategoryDropdownOpen = false;
+
+    private void ToggleCategoryDropdown()
+    {
+        isCategoryDropdownOpen = !isCategoryDropdownOpen;
+    }
+
+    private void SelectCategory(int categoryId)
+    {
+        SelectedCategoryIdInput = categoryId;
+        isCategoryDropdownOpen = false;
+        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isCategoryDropdownOpen = false;
+    }
+
+    private string GetSelectedCategoryName()
+    {
+        if (SelectedCategoryIdInput == 0) return "All Categories";
+        var cat = CategoryList.FirstOrDefault(c => c.CategoryId == SelectedCategoryIdInput);
+        return cat?.CategoryName ?? "All Categories";
+    }
+
     private async Task ApplyFilter()
     {
+        CloseAllDropdowns();
         SearchTerm = SearchInput;
         SelectedCategoryId = SelectedCategoryIdInput;
         CurrentPage = 1;
@@ -38,6 +66,7 @@ public partial class Page_BookList : ComponentBase
 
     private async Task ResetFilter()
     {
+        CloseAllDropdowns();
         SearchInput = "";
         SearchTerm = "";
         SelectedCategoryIdInput = 0;
@@ -96,12 +125,17 @@ public partial class Page_BookList : ComponentBase
     private async Task LoadBooks()
     {
         IsLoading = true;
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<BookModel>>(
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<BookModel>>(
                 $"book/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&categoryId={SelectedCategoryId}", 
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
             if (response != null)
             {
                 BookList = response.Items;

@@ -23,6 +23,37 @@ public partial class Page_MajorList
     private string SearchInput = "";
     private string FacultyFilter = "";
 
+    // Custom Dropdown Open States
+    private bool isFacultyDropdownOpen = false;
+
+    private void ToggleFacultyDropdown()
+    {
+        isFacultyDropdownOpen = !isFacultyDropdownOpen;
+    }
+
+    private void SelectFaculty(string? facultyId)
+    {
+        FacultyFilter = facultyId ?? "";
+        isFacultyDropdownOpen = false;
+        // Search button နှိပ်မှသာ filter ဖြစ်မည်
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isFacultyDropdownOpen = false;
+    }
+
+    private string GetSelectedFacultyName()
+    {
+        if (string.IsNullOrWhiteSpace(FacultyFilter)) return "All Faculties";
+        if (int.TryParse(FacultyFilter, out int fid))
+        {
+            var match = FacultyList.FirstOrDefault(f => f.FacultyId == fid);
+            return match?.FacultyName ?? "All Faculties";
+        }
+        return "All Faculties";
+    }
+
     private bool IsLoading { get; set; } = true;
     private bool IsProcessing { get; set; } = false;
 
@@ -38,6 +69,7 @@ public partial class Page_MajorList
 
     private async Task ApplyFilter()
     {
+        CloseAllDropdowns();
         SearchTerm = SearchInput;
         CurrentPage = 1;
         await LoadMajors();
@@ -45,6 +77,7 @@ public partial class Page_MajorList
 
     private async Task ResetFilter()
     {
+        CloseAllDropdowns();
         SearchInput = "";
         SearchTerm = "";
         FacultyFilter = "";
@@ -85,6 +118,7 @@ public partial class Page_MajorList
     private async Task LoadMajors()
     {
         IsLoading = true;
+        StateHasChanged();
         try
         {
             int? parsedFacultyId = null;
@@ -99,7 +133,11 @@ public partial class Page_MajorList
                 url += $"&facultyId={parsedFacultyId.Value}";
             }
 
-            var response = await HttpClientService.ExecuteAsync<PagedResult<MajorModel>>(url, EnumHttpMethod.Get);
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<MajorModel>>(url, EnumHttpMethod.Get);
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
             if (response != null)
             {
                 MajorList = response.Items;
@@ -110,7 +148,11 @@ public partial class Page_MajorList
         {
             Console.WriteLine($"Error loading majors: {ex.Message}");
         }
-        finally { IsLoading = false; }
+        finally 
+        { 
+            IsLoading = false; 
+            StateHasChanged();
+        }
     }
 
     private void OpenDeleteModal(MajorModel major)

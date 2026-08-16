@@ -57,14 +57,17 @@
                 document.cookie = `${name}=${value}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax${isSecure}`;
             },
             logout: function () {
-                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure;";
-                document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure;";
+                var cookieNames = ["authToken", "refreshToken", "isLoggedIn", "islogined", "rolename"];
+                cookieNames.forEach(function(c) {
+                    document.cookie = c + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = c + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;";
+                    document.cookie = c + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict;";
+                    document.cookie = c + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=None; Secure;";
+                    document.cookie = c + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; Secure;";
+                });
                 try {
-                    localStorage.removeItem("authToken");
-                    localStorage.removeItem("refreshToken");
-                    localStorage.setItem("isLoggedIn", "false");
+                    localStorage.clear();
+                    sessionStorage.clear();
                 } catch(e) {}
             }
         };

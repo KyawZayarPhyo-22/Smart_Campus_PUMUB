@@ -157,7 +157,7 @@ public partial class Page_TutorList
     private bool ShowModal = false;
     private TutorModel? SelectedTutor;
 
-    // Search & Role Filter Logic
+    // Search, Faculty & Position Filter Logic
     public string SearchTerm 
     { 
         get => _searchTerm; 
@@ -165,8 +165,13 @@ public partial class Page_TutorList
     }
 
     private string SearchInput = "";
-    private string SelectedRoleInput = "All";
-    private string SelectedRole = "All";
+    private string SelectedFacultyInput = "All";
+    private string SelectedFaculty = "All";
+    private string SelectedPositionInput = "All";
+    private string SelectedPosition = "All";
+    private List<FacultyModel> FacultyList = new();
+    private List<PositionModel> PositionList = new();
+    private bool isFacultyAdminLocked = false;
 
     // Permissions Variables
     private List<string> userPermissions = new();
@@ -179,12 +184,12 @@ public partial class Page_TutorList
     private int CurrentPage { get; set; } = 1;
     private int PageSize { get; set; } = 10;
     private int TotalPages { get; set; } = 1;
-    private List<RoleModels> RoleList = new();
 
     protected override async Task OnInitializedAsync()
     {
         // Only load data here - auth state is NOT yet readable during SSR
-        await LoadRoles();
+        await LoadFaculties();
+        await LoadPositions();
         await LoadTutors();
     }
 
@@ -217,6 +222,13 @@ public partial class Page_TutorList
                 if (!string.IsNullOrEmpty(facultyIdStr) && int.TryParse(facultyIdStr, out int fid) && fid > 0)
                 {
                     _userFacultyId = fid;
+                    isFacultyAdminLocked = true;
+                    var myFaculty = FacultyList.FirstOrDefault(f => f.FacultyId == fid);
+                    if (myFaculty != null)
+                    {
+                        SelectedFacultyInput = myFaculty.FacultyName;
+                        SelectedFaculty = myFaculty.FacultyName;
+                    }
                     // Reload with faculty filter applied
                     CurrentPage = 1;
                     await LoadTutors();
@@ -228,68 +240,139 @@ public partial class Page_TutorList
         }
     }
 
-    private async Task LoadRoles()
+    private async Task LoadFaculties()
     {
         try
         {
-            var response = await HttpClientService.ExecuteAsync<List<RoleModels>>("role", EnumHttpMethod.Get);
+            var response = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get);
             if (response != null)
             {
-                RoleList = response;
+                FacultyList = response;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading roles: {ex.Message}");
+            Console.WriteLine($"Error loading faculties: {ex.Message}");
+        }
+    }
+
+    private async Task LoadPositions()
+    {
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<List<PositionModel>>("position", EnumHttpMethod.Get);
+            if (response != null)
+            {
+                PositionList = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading positions: {ex.Message}");
         }
     }
 
     private async Task LoadTutors()
     {
         IsLoading = true;
+        StateHasChanged();
         try
         {
-            var url = $"tutor/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}";
-            if (_userFacultyId.HasValue && _userFacultyId.Value > 0)
-            {
-                url += $"&facultyId={_userFacultyId.Value}";
-            }
+            var delayTask = Task.Delay(1000);
+            string facultyParam = SelectedFaculty != "All" ? $"&facultyName={Uri.EscapeDataString(SelectedFaculty)}" : "";
+            string positionParam = SelectedPosition != "All" ? $"&positionName={Uri.EscapeDataString(SelectedPosition)}" : "";
+            string scopeParam = (_userFacultyId.HasValue && _userFacultyId.Value > 0) ? $"&facultyId={_userFacultyId.Value}" : "";
 
-            var response = await HttpClientService.ExecuteAsync<PagedResult<TutorModel>>(
+            var url = $"tutor/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}{facultyParam}{positionParam}{scopeParam}";
+
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<TutorModel>>(
                 url,
                 EnumHttpMethod.Get
             );
 
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
+
             if (response != null)
             {
-                TutorList = response.Items;
-                TotalPages = response.TotalPages;
+                TutorList = response.Items ?? new();
+                TotalPages = response.TotalPages < 1 ? 1 : response.TotalPages;
+            }
+            else
+            {
+                TutorList = new();
+                TotalPages = 1;
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading tutors: {ex.Message}");
+            TutorList = new();
         }
         finally
         {
             IsLoading = false;
+            StateHasChanged();
         }
+    }
+
+    // Custom Dropdown Open States
+    private bool isFacultyDropdownOpen = false;
+    private bool isPositionDropdownOpen = false;
+
+    private void ToggleFacultyDropdown()
+    {
+        if (isFacultyAdminLocked) return;
+        isPositionDropdownOpen = false;
+        isFacultyDropdownOpen = !isFacultyDropdownOpen;
+    }
+
+    private void TogglePositionDropdown()
+    {
+        isFacultyDropdownOpen = false;
+        isPositionDropdownOpen = !isPositionDropdownOpen;
+    }
+
+    private void SelectFaculty(string? facultyName)
+    {
+        SelectedFacultyInput = facultyName ?? "All";
+        isFacultyDropdownOpen = false;
+    }
+
+    private void SelectPosition(string? positionName)
+    {
+        SelectedPositionInput = positionName ?? "All";
+        isPositionDropdownOpen = false;
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isFacultyDropdownOpen = false;
+        isPositionDropdownOpen = false;
     }
 
     private async Task ApplyFilter()
     {
+        CloseAllDropdowns();
         SearchTerm = SearchInput;
-        SelectedRole = SelectedRoleInput;
+        SelectedFaculty = SelectedFacultyInput;
+        SelectedPosition = SelectedPositionInput;
         CurrentPage = 1;
         await LoadTutors();
     }
 
     private async Task ResetFilter()
     {
+        CloseAllDropdowns();
         SearchInput = "";
         SearchTerm = "";
-        SelectedRoleInput = "All";
-        SelectedRole = "All";
+        if (!isFacultyAdminLocked)
+        {
+            SelectedFacultyInput = "All";
+            SelectedFaculty = "All";
+        }
+        SelectedPositionInput = "All";
+        SelectedPosition = "All";
         CurrentPage = 1;
         await LoadTutors();
     }

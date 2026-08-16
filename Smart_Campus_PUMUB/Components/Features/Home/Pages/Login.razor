@@ -783,6 +783,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var uri = NavigationManager.Uri.ToLower();
+        if (uri.Contains("loggedout") || uri.Contains("logout"))
+        {
+            try
+            {
+                var customAuth = (CustomAuthStateProvider)AuthStateProvider;
+                await customAuth.MarkUserAsLoggedOut();
+            }
+            catch { }
+            return;
+        }
+
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
@@ -793,6 +805,22 @@
                 NavigationManager.NavigateTo("/admin/dashboard");
             else
                 NavigationManager.NavigateTo("/");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var uri = NavigationManager.Uri.ToLower();
+            if (uri.Contains("loggedout") || uri.Contains("logout"))
+            {
+                try
+                {
+                    await JS.InvokeVoidAsync("authFunctions.logout");
+                }
+                catch { }
+            }
         }
     }
 

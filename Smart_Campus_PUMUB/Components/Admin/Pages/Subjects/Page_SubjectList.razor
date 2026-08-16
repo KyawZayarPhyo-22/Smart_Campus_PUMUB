@@ -50,38 +50,143 @@
         transition: all 0.2s ease;
     }
     .btn-action-delete:hover { background: #dc3545; color: #ffffff; }
+
+    .badge-faculty {
+        background: rgba(90, 79, 207, 0.12) !important;
+        color: #1e1b4b !important;
+        border: 1px solid rgba(90, 79, 207, 0.3) !important;
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
 </style>
+
+@if (isSemesterDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
 
 <div class="tab-pane fade show active" id="v-pills-subject">
     <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
         <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
-                <i class="bi bi-journal-bookmark fs-5 text-white"></i>
+            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+                <i class="bi bi-journal-bookmark fs-5" style="color: #5A4FCF;"></i>
             </div>
-            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Subject Directory</h4>
+            <div>
+                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Subject Directory</h4>
+                <small class="text-secondary">သင်ရိုးညွှန်းတမ်း ဘာသာရပ်များနှင့် သင်ကြားမှုကဏ္ဍများ စီမံခန့်ခွဲခြင်း</small>
+            </div>
         </div>
     </div>
 
     <!-- 🔹 Filter Section -->
-    <div class="material-card p-3 mb-4">
+    <div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
         <div class="row g-3 align-items-center">
             <!-- Search Input -->
             <div class="col">
                 <div class="position-relative">
-                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                    <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Subject Name or Code..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Subject Name or Code..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
-            <!-- Semester Dropdown -->
+            <!-- Semester Dropdown (approx 6 items height with scroll) -->
             <div class="col-md-3">
-                <select class="form-select material-input" @bind="SelectedSemesterInput">
-                    <option value="All">All Semesters</option>
-                    @foreach (var sem in SubjectList.Select(s => s.SemesterName).Distinct().Where(se => !string.IsNullOrEmpty(se)))
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="ToggleSemesterDropdown">
+                        <span class="text-truncate">@(SelectedSemesterInput == "All" ? "All Semesters" : SelectedSemesterInput)</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isSemesterDropdownOpen)
                     {
-                        <option value="@sem">@sem</option>
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(SelectedSemesterInput == "All" ? "selected" : "")" 
+                                 @onclick='() => SelectSemester("All")'>
+                                <span>All Semesters</span>
+                                @if (SelectedSemesterInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var sem in SubjectList.Select(s => s.SemesterName).Distinct().Where(se => !string.IsNullOrEmpty(se)))
+                            {
+                                <div class="dropdown-item-custom @(SelectedSemesterInput == sem ? "selected" : "")" 
+                                     @onclick='() => SelectSemester(sem)'>
+                                    <span>@sem</span>
+                                    @if (SelectedSemesterInput == sem) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
                     }
-                </select>
+                </div>
             </div>
 
             <!-- Search and Reset Buttons -->
@@ -110,23 +215,23 @@
         @if (IsLoading) {
             <div class="text-center my-5">
                 <div class="spinner-border text-primary"></div>
-                <div class="text-muted mt-2">Loading Subjects...</div>
+                <div class="text-dark mt-3 small fw-bold">Subject စာရင်းများကို ဆွဲယူနေပါသည်...</div>
             </div>
         } else {
             <div class="table-responsive custom-table">
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>No.</th>
-                            <th>Subject Name</th>
-                            <th>Code</th>
-                            <th>Type</th>
-                            <th>Semester</th>
-                            <th>Faculty</th>
-                            <th>Major</th>
+                            <th style="width: 8%;">No.</th>
+                            <th style="width: 25%;">Subject Name</th>
+                            <th style="width: 10%;">Code</th>
+                            <th style="width: 12%;">Type</th>
+                            <th style="width: 12%;">Semester</th>
+                            <th style="width: 15%;">Faculty</th>
+                            <th style="width: 18%;">Major</th>
                             @if (canManageSubject)
                             {
-                                <th class="text-center">Actions</th>
+                                <th style="text-align: center;">Actions</th>
                             }
                         </tr>
                     </thead>
@@ -134,54 +239,52 @@
                         @{ int count = (CurrentPage - 1) * PageSize + 1; }
                         @foreach (var item in FilteredSubjects) {
                             <tr class="table-row-hover">
-                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                                <td class="fw-semibold text-white">@item.SubjectName</td>
-                                <td><code class="text-info">@item.SubjectCode</code></td>
+                                <td class="fw-bold text-dark">@count.ToString("D2")</td>
+                                <td class="fw-bold text-dark">@item.SubjectName</td>
+                                <td><code class="text-dark fw-bold">@item.SubjectCode</code></td>
                                 <td>
                                     @if (item.SubjectType == EnumSubjectType.Core)
                                     {
-                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
-                                            <i class="bi bi-star-fill me-1 small"></i>Core
+                                        <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #4F46E5; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                            <i class="bi bi-star-fill me-1.5 small" style="color: #ffffff !important;"></i>Core
                                         </span>
                                     }
                                     else if (item.SubjectType == EnumSubjectType.Elective)
                                     {
-                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">
-                                            <i class="bi bi-puzzle-fill me-1 small"></i>Elective
+                                        <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #d97706; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                            <i class="bi bi-puzzle-fill me-1.5 small" style="color: #ffffff !important;"></i>Elective
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">—</span>
+                                        <span class="text-dark fw-bold small">—</span>
                                     }
                                 </td>
                                 <td>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
+                                    <span class="badge rounded-pill fw-bold" style="background: #4F46E5; color: #ffffff !important; font-size: 0.82rem; padding: 6px 12px; letter-spacing: 0.3px;">
                                         @item.SemesterName
                                     </span>
                                 </td>
                                 <td>
                                     @if (!string.IsNullOrEmpty(item.FacultyName))
                                     {
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
-                                            <i class="bi bi-building me-1"></i>@item.FacultyName
-                                        </span>
+                                        <span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">@item.FacultyName</span>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">—</span>
+                                        <span class="text-dark fw-bold small">—</span>
                                     }
                                 </td>
                                 <td>
                                     @if (!string.IsNullOrEmpty(item.MajorName))
                                     {
-                                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">
+                                        <span class="badge bg-info bg-opacity-10 text-info fw-bold border border-info border-opacity-25">
                                             <i class="bi bi-mortarboard me-1"></i>@item.MajorName
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">—</span>
+                                        <span class="text-dark fw-bold small">—</span>
                                     }
                                 </td>
                                 @if (canManageSubject)
@@ -203,6 +306,21 @@
                                 }
                             </tr>
                             count++;
+                        }
+
+                        @if (!FilteredSubjects.Any())
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5" style="text-align: center;">
+                                    <div class="d-flex flex-column align-items-center justify-content-center py-4 w-100 text-center" style="min-height: 180px;">
+                                        <div class="rounded-circle p-3 mb-3 d-flex align-items-center justify-content-center" style="background: rgba(90, 79, 207, 0.08); width: 64px; height: 64px;">
+                                            <i class="bi bi-folder-x fs-1" style="color: #5A4FCF;"></i>
+                                        </div>
+                                        <div class="fw-bold text-dark fs-6 mb-1">ပြသရန် Subject မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</div>
+                                        <small class="text-muted">ရှာဖွေမှုစကားလုံး သို့မဟုတ် Filter များကို ပြောင်းလဲရှာဖွေကြည့်ပါ</small>
+                                    </div>
+                                </td>
+                            </tr>
                         }
                     </tbody>
                 </table>

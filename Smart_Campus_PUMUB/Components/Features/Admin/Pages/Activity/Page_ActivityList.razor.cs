@@ -34,8 +34,29 @@ public partial class Page_ActivityList
     private string SelectedLocationInput = "All";
     private string SelectedLocation = "All";
 
+    // Custom Dropdown Open States
+    private bool isLocationDropdownOpen = false;
+
+    private void ToggleLocationDropdown()
+    {
+        isLocationDropdownOpen = !isLocationDropdownOpen;
+    }
+
+    private void SelectLocation(string? loc)
+    {
+        SelectedLocationInput = loc ?? "All";
+        isLocationDropdownOpen = false;
+        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isLocationDropdownOpen = false;
+    }
+
     private async Task ApplyFilter()
     {
+        CloseAllDropdowns();
         SearchTerm = SearchInput;
         SelectedLocation = SelectedLocationInput;
         CurrentPage = 1;
@@ -44,6 +65,7 @@ public partial class Page_ActivityList
 
     private async Task ResetFilter()
     {
+        CloseAllDropdowns();
         SearchInput = "";
         SearchTerm = "";
         SelectedLocationInput = "All";
@@ -116,12 +138,17 @@ public partial class Page_ActivityList
     {
         IsLoading = true;
         ErrorMessage = "";
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<ActivityModel>>(
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<ActivityModel>>(
                 $"activity/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&location={Uri.EscapeDataString(SelectedLocation)}", 
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
             if (response != null)
             {
                 ActivityList = response.Items;
@@ -132,7 +159,11 @@ public partial class Page_ActivityList
         {
             ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
         }
-        finally { IsLoading = false; }
+        finally 
+        { 
+            IsLoading = false; 
+            StateHasChanged();
+        }
     }
 
     private string statusMessage = string.Empty;

@@ -27,29 +27,59 @@ public partial class Page_SubjectList
     private string SelectedSemesterInput = "All";
     private string SelectedSemester = "All";
 
-    private void ApplyFilter()
+    // Custom Dropdown Open States
+    private bool isSemesterDropdownOpen = false;
+
+    private void ToggleSemesterDropdown()
     {
+        isSemesterDropdownOpen = !isSemesterDropdownOpen;
+    }
+
+    private void SelectSemester(string? semester)
+    {
+        SelectedSemesterInput = semester ?? "All";
+        isSemesterDropdownOpen = false;
+        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isSemesterDropdownOpen = false;
+    }
+
+    private async Task ApplyFilter()
+    {
+        CloseAllDropdowns();
+        IsLoading = true;
+        StateHasChanged();
+        await Task.Delay(1000);
         SearchTerm = SearchInput;
         SelectedSemester = SelectedSemesterInput;
         CurrentPage = 1;
+        IsLoading = false;
         StateHasChanged();
     }
 
-    private void ResetFilter()
+    private async Task ResetFilter()
     {
+        CloseAllDropdowns();
+        IsLoading = true;
+        StateHasChanged();
+        await Task.Delay(1000);
         SearchInput = "";
         SearchTerm = "";
         SelectedSemesterInput = "All";
         SelectedSemester = "All";
         CurrentPage = 1;
+        IsLoading = false;
         StateHasChanged();
     }
 
-    private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private async Task HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            ApplyFilter();
+            await ApplyFilter();
         }
     }
 
@@ -88,9 +118,13 @@ public partial class Page_SubjectList
         }
     }
 
-    private void OnPageChanged(int newPage)
+    private async Task OnPageChanged(int newPage)
     {
+        IsLoading = true;
+        StateHasChanged();
+        await Task.Delay(1000);
         CurrentPage = newPage;
+        IsLoading = false;
         StateHasChanged();
     }
 
@@ -119,9 +153,20 @@ public partial class Page_SubjectList
     private async Task LoadSubjects()
     {
         IsLoading = true;
-        // API Route ကို "api/subject" ဟု ပြောင်းလိုက်ပါ
-        SubjectList = await HttpClientService.ExecuteAsync<List<SubjectModel>>("subject", EnumHttpMethod.Get) ?? new();
-        IsLoading = false;
+        StateHasChanged();
+        try
+        {
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<List<SubjectModel>>("subject", EnumHttpMethod.Get);
+            await Task.WhenAll(fetchTask, delayTask);
+            SubjectList = await fetchTask ?? new();
+        }
+        catch { }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
 
     private string statusMessage = string.Empty;

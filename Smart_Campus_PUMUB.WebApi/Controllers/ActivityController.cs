@@ -282,7 +282,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         // Campus events (Football, Tennis etc.) တွေ IsSystemLog() = false ဖြစ်တဲ့အတွက် ဖယ်ထွက်သွားမည်
         var recentActivities = allActivities
             .Where(x => IsSystemLog(x.ActivityTitle ?? ""))
-            .Take(10)
+            .Take(6)
             .Select(x => new
             {
                 ActivityId = x.ActivityId,

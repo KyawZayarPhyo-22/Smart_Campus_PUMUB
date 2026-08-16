@@ -152,7 +152,9 @@ public class StudentRegistrationsController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] string? level = null)
+        [FromQuery] string? level = null,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null)
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
@@ -183,6 +185,18 @@ public class StudentRegistrationsController : ControllerBase
         if (!string.IsNullOrWhiteSpace(level) && !level.Equals("All", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(s => s.AcademicYearLevel == level);
+        }
+
+        if (fromDate.HasValue)
+        {
+            var fDate = fromDate.Value.Date;
+            query = query.Where(s => s.CreatedDatetime >= fDate);
+        }
+
+        if (toDate.HasValue)
+        {
+            var tDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(s => s.CreatedDatetime <= tDate);
         }
 
         var totalCount = query.Count();

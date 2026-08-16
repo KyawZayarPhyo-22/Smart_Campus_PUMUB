@@ -7,37 +7,201 @@
 @using System.Linq
 @using Microsoft.AspNetCore.Components
 
+<style>
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
+
+    .badge-faculty {
+        background: rgba(90, 79, 207, 0.12) !important;
+        color: #1e1b4b !important;
+        border: 1px solid rgba(90, 79, 207, 0.3) !important;
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .custom-table td {
+        padding: 0.85rem 1rem;
+        color: #1f2937;
+        font-weight: 600;
+        vertical-align: middle;
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    .btn-action {
+        border-radius: 6px;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: transform 0.2s;
+    }
+
+        .btn-action:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+</style>
+
+@if (isFacultyDropdownOpen || isPositionDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
+
 <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
     <div class="d-flex align-items-center">
-        <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
-            <i class="bi bi-person-workspace fs-5 text-white"></i>
+        <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+            <i class="bi bi-person-workspace fs-5" style="color: #5A4FCF;"></i>
         </div>
-        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Tutor Directory</h4>
+        <div>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Tutor Directory</h4>
+            <small class="text-secondary">ဆရာ/ဆရာမများနှင့် သင်ကြားရေးဝန်ထမ်းများ စာရင်း စီမံခန့်ခွဲခြင်း</small>
+        </div>
     </div>
 </div>
 
-<div class="material-card p-3 mb-4">
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
     <div class="row g-3 align-items-center">
+        <!-- Search Input -->
         <div class="col">
             <div class="position-relative">
-                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by name, phone..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        @* <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedRoleInput">
-                <option value="All">All Roles</option>
-                @if (RoleList != null)
-                {
-                    @foreach (var role in RoleList)
-                    {
-                        <option value="@role.RoleName">@role.RoleName</option>
-                    }
-                }
-            </select> *@
-        @* </div> *@
+        <!-- Faculty Custom Dropdown Filter (approx 6 items height with scroll) -->
+        <div class="col-md-3">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleFacultyDropdown" disabled="@isFacultyAdminLocked">
+                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? "All Faculties" : SelectedFacultyInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
 
+                @if (isFacultyDropdownOpen)
+                {
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedFacultyInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectFaculty("All")'>
+                            <span>All Faculties</span>
+                            @if (SelectedFacultyInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (FacultyList != null)
+                        {
+                            @foreach (var fac in FacultyList)
+                            {
+                                <div class="dropdown-item-custom @(SelectedFacultyInput == fac.FacultyName ? "selected" : "")" 
+                                     @onclick='() => SelectFaculty(fac.FacultyName)'>
+                                    <span>@fac.FacultyName</span>
+                                    @if (SelectedFacultyInput == fac.FacultyName) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Position Custom Dropdown Filter (approx 6 items height with scroll) -->
+        <div class="col-md-3">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="TogglePositionDropdown">
+                    <span class="text-truncate">@(SelectedPositionInput == "All" ? "All Positions" : SelectedPositionInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isPositionDropdownOpen)
+                {
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedPositionInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectPosition("All")'>
+                            <span>All Positions</span>
+                            @if (SelectedPositionInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (PositionList != null)
+                        {
+                            @foreach (var pos in PositionList)
+                            {
+                                <div class="dropdown-item-custom @(SelectedPositionInput == pos.PositionName ? "selected" : "")" 
+                                     @onclick='() => SelectPosition(pos.PositionName)'>
+                                    <span>@pos.PositionName</span>
+                                    @if (SelectedPositionInput == pos.PositionName) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Search and Reset Buttons -->
         <div class="col-md-2 d-flex gap-2">
             <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
                 <i class="bi bi-search"></i>
@@ -47,6 +211,7 @@
             </button>
         </div>
 
+        <!-- Add Tutor Button -->
         <AuthorizeView Policy="Tutor.Create">
             <div class="col-auto">
                 <NavLink href="/admin/tutor/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Tutor">
@@ -57,84 +222,98 @@
     </div>
 </div>
 
-<div class="tech-card p-4">
-    @if (IsLoading)
-    {
-        <div class="text-center text-white p-3">
-            <div class="spinner-border text-primary me-2" role="status"></div> Loading Tutors Directory...
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-tech align-middle text-white">
-                <thead>
-                    <tr>
-                        <th>No.</th>
-                        <th>Profile</th>
-                        <th>Name</th>
-                        <th>Faculty</th>
-                        <th>Position</th>
-                        <th>Phone</th>
-                        @if (canManageTutor)
-                        {
-                            <th class="text-center">Actions</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @{ 
-                        int count = (CurrentPage - 1) * PageSize + 1; 
-                    }
-                    @if (FilteredTutors != null && FilteredTutors.Any())
+<div class="material-card table-container mb-5">
+    <div class="table-responsive">
+        <table class="table custom-table align-middle">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 50px;">No.</th>
+                    <th class="text-center" style="width: 70px;">Profile</th>
+                    <th>Name</th>
+                    <th>Faculty</th>
+                    <th>Position</th>
+                    <th>Phone</th>
+                    @if (canManageTutor)
                     {
-                        @foreach (var tutor in FilteredTutors)
-                        {
-                            <tr>
-                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                                <td>
-                                    <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
-                                         class="rounded-circle" width="50" height="50" style="object-fit: cover;">
-                                </td>
-                                <td>@tutor.TutorName</td>
-                                <td>@(string.IsNullOrEmpty(tutor.FacultyName) ? "-" : tutor.FacultyName)</td>
-                                <td>@tutor.PositionName</td>
-                                <td>@tutor.Phone</td>
-                                
-                                @if (canManageTutor)
+                        <th class="text-center" style="width: 160px;">Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (IsLoading)
+                {
+                    <tr>
+                        <td colspan="@(canManageTutor ? 7 : 6)">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 250px;">
+                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                                    <span class="visually-hidden">ရယူနေပါသည်...</span>
+                                </div>
+                                <div class="text-muted fs-6 fw-bold" style="font-weight: 700;">ဆရာ/ဆရာမ အချက်အလက်များ ရယူနေပါသည်...</div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else if (FilteredTutors != null && FilteredTutors.Any())
+                {
+                    int count = (CurrentPage - 1) * PageSize + 1;
+                    @foreach (var tutor in FilteredTutors)
+                    {
+                        <tr>
+                            <td class="text-center fw-bold text-dark">@count.ToString("D2")</td>
+                            <td class="text-center">
+                                <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
+                                     class="rounded-circle shadow-sm" width="45" height="45" style="object-fit: cover;">
+                            </td>
+                            <td class="fw-bold text-dark">@tutor.TutorName</td>
+                            <td class="fw-bold text-dark">
+                                @if (!string.IsNullOrEmpty(tutor.FacultyName) && tutor.FacultyName != "-")
                                 {
-                                    <td class="text-center">
+                                    <span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">@tutor.FacultyName</span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td class="fw-bold text-dark">@tutor.PositionName</td>
+                            <td class="fw-bold text-dark">@tutor.Phone</td>
+                            
+                            @if (canManageTutor)
+                            {
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-1">
                                         <AuthorizeView Policy="Tutor.Edit">
-                                            <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-sm btn-outline-info me-2">
-                                                <i class="bi bi-pencil me-1.5"></i> Edit
+                                            <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-outline-info btn-action" title="Edit">
+                                                <i class="bi bi-pencil me-1"></i> Edit
                                             </NavLink>
                                         </AuthorizeView>
                                         
                                         <AuthorizeView Policy="Tutor.Delete">
-                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteModal(tutor)">
-                                                <i class="bi bi-trash me-1.5"></i> Delete
+                                            <button class="btn btn-outline-danger btn-action" @onclick="() => OpenDeleteModal(tutor)" title="Delete">
+                                                <i class="bi bi-trash me-1"></i> Delete
                                             </button>
                                         </AuthorizeView>
-                                    </td>
-                                }
-                            </tr>
-                            count++;
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="@(canManageTutor ? 7 : 6)" class="text-center text-muted py-4">
-                                No tutors found matching the criteria.
-                            </td>
+                                    </div>
+                                </td>
+                            }
                         </tr>
+                        count++;
                     }
-                </tbody>
-            </table>
-        </div>
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="@(canManageTutor ? 7 : 6)" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            ဆရာ/ဆရာမ မှတ်တမ်းများ မတွေ့ရှိပါ။
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-        <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
-    }
+    <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
 </div>
 
 @if (ShowModal)

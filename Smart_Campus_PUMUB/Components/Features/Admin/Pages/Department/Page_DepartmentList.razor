@@ -86,37 +86,142 @@
         font-size: 0.85rem;
         transition: all 0.2s ease;
     }
+
+    .badge-faculty {
+        background: rgba(90, 79, 207, 0.12) !important;
+        color: #1e1b4b !important;
+        border: 1px solid rgba(90, 79, 207, 0.3) !important;
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
 </style>
+
+@if (isFacultyDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
 
 <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
     <div class="d-flex align-items-center">
-        <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
-            <i class="bi bi-diagram-3 fs-5 text-white"></i>
+        <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+            <i class="bi bi-diagram-3 fs-5" style="color: #5A4FCF;"></i>
         </div>
-        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Department Directory</h4>
+        <div>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Department Directory</h4>
+            <small class="text-secondary">တက္ကသိုလ်ဌာနများနှင့် ဌာနခွဲများ စီမံခန့်ခွဲခြင်း</small>
+        </div>
     </div>
 </div>
 
 <!-- 🔹 Filter Section -->
-<div class="material-card p-3 mb-4">
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
     <div class="row g-3 align-items-center">
         <!-- Search Input -->
         <div class="col">
             <div class="position-relative">
-                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Department Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Department Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <!-- Faculty Dropdown -->
+        <!-- Faculty Dropdown (approx 6 items height with scroll) -->
         <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedFacultyInput">
-                <option value="All">All Faculties</option>
-                @foreach (var fac in FacultyList.Select(f => f.FacultyName).Distinct().Where(f => !string.IsNullOrEmpty(f)))
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleFacultyDropdown">
+                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? "All Faculties" : SelectedFacultyInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isFacultyDropdownOpen)
                 {
-                    <option value="@fac">@fac</option>
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedFacultyInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectFaculty("All")'>
+                            <span>All Faculties</span>
+                            @if (SelectedFacultyInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @foreach (var fac in FacultyList.Select(f => f.FacultyName).Distinct().Where(f => !string.IsNullOrEmpty(f)))
+                        {
+                            <div class="dropdown-item-custom @(SelectedFacultyInput == fac ? "selected" : "")" 
+                                 @onclick='() => SelectFaculty(fac)'>
+                                <span>@fac</span>
+                                @if (SelectedFacultyInput == fac) { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                        }
+                    </div>
                 }
-            </select>
+            </div>
         </div>
 
         <!-- Search and Reset Buttons -->
@@ -146,7 +251,14 @@
         {
             <div class="text-center my-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-muted mt-2">Department စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">Department စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else if (FilteredDepartments == null || !FilteredDepartments.Any())
+        {
+            <div class="text-center my-5 text-dark">
+                <i class="bi bi-folder-x display-4 text-secondary"></i>
+                <p class="mt-3 mb-0 small fw-bold text-dark">ပြသရန် Department မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
             </div>
         }
         else
@@ -164,28 +276,6 @@
                             }
                         </tr>
                     </thead>
-                    @* <tbody>
-                    @{ int count = 1; }
-                    @foreach (var item in FilteredDepartments)
-                    {
-                        <tr class="table-row-hover">
-                            <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                            <td class="fw-semibold">@item.DepartmentName</td>
-                            <td><span class="badge bg-primary bg-opacity-10 text-primary">@item.FacultyName</span></td>
-                            <td>
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    <NavLink href="@($"/admin/department/edit/{item.DepartmentId}")" class="btn btn-action-edit">
-                                        <i class="bi bi-pencil me-1"></i> Edit
-                                    </NavLink>
-                                    <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(item)">
-                                        <i class="bi bi-trash me-1"></i> Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        count++;
-                    }
-                </tbody> *@
                     <tbody>
                         @{
                             int count = (CurrentPage - 1) * PageSize + 1;
@@ -193,13 +283,10 @@
                         @foreach (var item in FilteredDepartments)
                         {
                             <tr class="table-row-hover">
-                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                                <td class="fw-semibold">@item.DepartmentName</td>
+                                <td class="fw-bold text-dark">@count.ToString("D2")</td>
+                                <td class="fw-bold text-dark">@item.DepartmentName</td>
 
-                                @* 💡 Faculty Name ကို text-info သို့ ပြောင်းထားပါသည် *@
-                                <td><span class="badge bg-info bg-opacity-10 text-info">@item.FacultyName</span></td>
-
-                                @* <td><span class="badge bg-info bg-opacity-10 text-info">@item.FacultyName</span></td> *@
+                                <td><span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">@item.FacultyName</span></td>
 
                                 @if (canManageDepartment)
                                 {

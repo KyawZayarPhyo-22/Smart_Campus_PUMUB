@@ -191,17 +191,87 @@
 
     .modal-info-row:last-child { border-bottom: none; }
     .modal-info-label { color: #64748b; font-weight: 500; }
-    .modal-info-val { color: #e2e8f0; font-weight: 600; }
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px;
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
 </style>
+
+@if (isStatusDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
 
 <!-- ── Page Header ──────────────────────────────────────────────────── -->
 <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
     <div class="d-flex align-items-center gap-3">
-        <div class="rounded p-2 shadow-sm" style="background: linear-gradient(135deg,#5a4fcf,#2563eb);">
-            <i class="bi bi-person-check-fill fs-5 text-white"></i>
+        <div class="rounded p-2 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+            <i class="bi bi-person-check fs-5" style="color: #5A4FCF;"></i>
         </div>
         <div>
-            <h4 class="fw-bolder text-white mb-0">Account Register Requests</h4>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Account Register Requests</h4>
             <small class="text-secondary">Semester I ကျောင်းသားများ Account Request စီမံချက်</small>
         </div>
     </div>
@@ -213,26 +283,53 @@
 </div>
 
 <!-- ── Filter Row ───────────────────────────────────────────────────── -->
-<div class="material-card p-3 mb-4">
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
     <div class="row g-3 align-items-center">
 
         <!-- Search -->
         <div class="col">
             <div class="position-relative">
-                <i class="bi bi-search position-absolute text-muted" style="top:50%;left:12px;transform:translateY(-50%);"></i>
-                <input type="text" class="form-control material-input" style="padding-left:2.2rem;"
+                <i class="bi bi-search position-absolute text-muted" style="top:50%;left:14px;transform:translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;"
                        placeholder="Search by name, email, form no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <!-- Status filter -->
-        <div class="col-md-2">
-            <select class="form-select material-input" @bind="SelectedStatusInput">
-                <option value="All">All Status</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-            </select>
+        <!-- Status filter (Custom Dropdown) -->
+        <div class="col-md-3">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleStatusDropdown">
+                    <span class="text-truncate">@(SelectedStatusInput == "All" ? "All Status" : SelectedStatusInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isStatusDropdownOpen)
+                {
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedStatusInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectStatus("All")'>
+                            <span>All Status</span>
+                            @if (SelectedStatusInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        <div class="dropdown-item-custom @(SelectedStatusInput == "Pending" ? "selected" : "")" 
+                             @onclick='() => SelectStatus("Pending")'>
+                            <span>Pending</span>
+                            @if (SelectedStatusInput == "Pending") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        <div class="dropdown-item-custom @(SelectedStatusInput == "Approved" ? "selected" : "")" 
+                             @onclick='() => SelectStatus("Approved")'>
+                            <span>Approved</span>
+                            @if (SelectedStatusInput == "Approved") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        <div class="dropdown-item-custom @(SelectedStatusInput == "Rejected" ? "selected" : "")" 
+                             @onclick='() => SelectStatus("Rejected")'>
+                            <span>Rejected</span>
+                            @if (SelectedStatusInput == "Rejected") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
 
         <!-- Buttons -->
@@ -248,12 +345,19 @@
 </div>
 
 <!-- Table Section -->
-<div class="material-card p-0 overflow-hidden mb-4">
-    @if (Items == null || !Items.Any())
+<div class="tech-card p-4">
+    @if (IsLoading)
     {
-        <div class="text-center py-5 text-muted">
-            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            No records found.
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary"></div>
+            <div class="text-dark mt-3 small fw-bold">Account Register Request စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+        </div>
+    }
+    else if (Items == null || !Items.Any())
+    {
+        <div class="text-center py-5 text-dark fw-bold">
+            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+            ပြသရန် Account Request မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။
         </div>
     }
     else
@@ -262,7 +366,7 @@
             <table class="table table-hover align-middle mb-0 acc-table">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th style="width: 5%;">NO.</th>
                         <th>Name</th>
                         <th>Email / Phone</th>
                         <th>Form No</th>
@@ -279,74 +383,73 @@
                     }
                     @foreach (var item in Items)
                     {
-                        <tr>
-                            <td class="fw-bold text-muted">@rowNo.ToString("D2")</td>
+                        <tr class="table-row-hover">
+                            <td class="fw-bold text-dark">@rowNo.ToString("D2")</td>
                             <td>
-                                <div class="fw-semibold text-white">@item.FullName</div>
+                                <div class="fw-bold text-dark">@item.FullName</div>
                             </td>
                             <td>
-                                <div style="font-size:0.83rem; color:#93c5fd;">@item.Email</div>
+                                <div class="fw-bold text-primary" style="font-size:0.83rem;">@item.Email</div>
                                 @if (!string.IsNullOrEmpty(item.Phone))
                                 {
-                                    <div style="font-size:0.78rem; color:#64748b;">@item.Phone</div>
+                                    <div class="fw-bold text-secondary small">@item.Phone</div>
                                 }
                             </td>
-                            <td><code class="text-info">@(item.FormNo ?? "-")</code></td>
-                            <td><code class="text-warning">@(item.ExamSeatNo ?? "-")</code></td>
+                            <td><code class="fw-bold text-info">@(item.FormNo ?? "-")</code></td>
+                            <td><code class="fw-bold text-warning">@(item.ExamSeatNo ?? "-")</code></td>
                             <td>
-                                <span class="@StatusBadgeClass(item.Status)">@item.Status</span>
+                                <span class="@StatusBadgeClass(item.Status) fw-bold">@item.Status</span>
                                 @if (item.Status == "Rejected" && !string.IsNullOrEmpty(item.RejectionReason))
                                 {
-                                    <div style="font-size:0.74rem; color:#94a3b8; margin-top:3px; max-width:180px;" title="@item.RejectionReason">
+                                    <div class="fw-bold text-secondary" style="font-size:0.74rem; margin-top:3px; max-width:180px;" title="@item.RejectionReason">
                                         @(item.RejectionReason.Length > 40 ? item.RejectionReason[..40] + "…" : item.RejectionReason)
                                     </div>
                                 }
                             </td>
-                            <td class="text-secondary">@item.CreatedDateTime?.ToString("dd-MM-yyyy HH:mm")</td>
+                            <td class="fw-bold text-dark">@item.CreatedDateTime?.ToString("dd-MM-yyyy HH:mm")</td>
                             <td>
                                 <div class="d-flex justify-content-center gap-2">
                                      @if (item.Status == "Pending")
                                      {
-                                         <button class="btn-action-approve" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
+                                         <button class="btn-action-approve fw-bold" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
                                               <i class="bi bi-check-circle-fill"></i> Approve
                                          </button>
-                                         <button class="btn-action-reject" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
+                                         <button class="btn-action-reject fw-bold" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
                                               <i class="bi bi-x-circle-fill"></i> Reject
                                          </button>
                                      }
                                      else
                                      {
-                                         <span style="font-size:0.78rem; color:#475569;">
+                                         <span class="fw-bold text-dark" style="font-size:0.8rem;">
                                              @item.ReviewedBy — @item.ReviewedDateTime?.ToString("dd-MM-yyyy")
                                          </span>
                                      }
                                  </div>
                             </td>
                             <td class="text-center">
-                                @if (item.NewStudentAccId.HasValue && item.NewStudentAccId > 0)
+                                @if (item.Status == "Approved")
                                 {
-                                    @if (item.AccountStatus == "Active")
+                                    @if ((item.AccountStatus ?? "Active") == "Active")
                                     {
-                                        <button class="btn btn-sm btn-success" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
-                                            <i class="bi bi-shield-check me-1"></i> Active
+                                        <button class="btn btn-sm btn-success fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-shield-check me-1 text-white"></i> Active
                                         </button>
                                     }
                                     else
                                     {
-                                        <button class="btn btn-sm btn-danger" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
-                                            <i class="bi bi-shield-slash me-1"></i> Inactive
+                                        <button class="btn btn-sm btn-danger fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-shield-slash me-1 text-white"></i> Inactive
                                         </button>
                                     }
                                 }
                                 else
                                 {
-                                    <span class="text-muted" style="font-size:0.78rem;">-</span>
+                                    <span class="text-muted fw-bold" style="font-size:0.8rem;">-</span>
                                 }
                             </td>
                         </tr>
                         rowNo++;
                     }
-                }
                 </tbody>
             </table>
         </div>

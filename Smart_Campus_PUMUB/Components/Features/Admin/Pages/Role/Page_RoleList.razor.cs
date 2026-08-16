@@ -82,12 +82,17 @@ public partial class Page_RoleList
     {
         IsLoading = true;
         ErrorMessage = "";
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<RoleModel>>(
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<RoleModel>>(
                 $"role/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
 
             if (response != null)
             {
@@ -102,6 +107,7 @@ public partial class Page_RoleList
         finally
         {
             IsLoading = false;
+            StateHasChanged();
         }
     }
 

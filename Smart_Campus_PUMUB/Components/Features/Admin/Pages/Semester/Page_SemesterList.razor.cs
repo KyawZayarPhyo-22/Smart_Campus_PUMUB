@@ -100,12 +100,17 @@ public partial class Page_SemesterList
     {
         IsLoading = true;
         ErrorMessage = "";
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<SemesterModel>>(
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<SemesterModel>>(
                 $"semester/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
             if (response != null)
             {
                 SemesterList = response.Items;
@@ -116,7 +121,11 @@ public partial class Page_SemesterList
         {
             ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
         }
-        finally { IsLoading = false; }
+        finally 
+        { 
+            IsLoading = false; 
+            StateHasChanged();
+        }
     }
 
     private void OpenDeleteModal(SemesterModel semester)

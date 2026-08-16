@@ -14,42 +14,132 @@
     .btn-action-edit:hover { background: #0d6efd; color: #ffffff; }
     .btn-action-delete { background: rgba(220, 53, 69, 0.1); color: #ff6b6b; border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 6px; padding: 6px 14px; transition: all 0.2s ease; }
     .btn-action-delete:hover { background: #dc3545; color: #ffffff; }
-    .btn-add-modern { background: linear-gradient(135deg, #0d6efd, #0052cc); border: none; border-radius: 8px; padding: 10px 20px; font-weight: 500; transition: all 0.2s ease; }
+    
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
 </style>
+
+@if (isCategoryDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
 
 <div class="tab-pane fade show active" id="v-pills-books">
     <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
         <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
-                <i class="bi bi-book-half fs-5 text-white"></i>
+            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+                <i class="bi bi-book-half fs-5" style="color: #5A4FCF;"></i>
             </div>
             <div>
                 <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Book Directory</h4>
-                <p class="text-muted small mb-0">Manage all e-books and library resources.</p>
+                <small class="text-secondary">စာကြည့်တိုက်ရှိ စာအုပ်များနှင့် အီလက်ထရောနစ် စာပေအရင်းအမြစ်များ စီမံခန့်ခွဲခြင်း</small>
             </div>
         </div>
     </div>
 
     <!-- 🔹 Filter Section -->
-    <div class="material-card p-3 mb-4">
+    <div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
         <div class="row g-3 align-items-center">
             <!-- Search Input -->
             <div class="col">
                 <div class="position-relative">
-                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                    <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Book Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Book Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
-            <!-- Category Dropdown -->
+            <!-- Category Dropdown (approx 6 items height with scroll) -->
             <div class="col-md-3">
-                <select class="form-select material-input" @bind="SelectedCategoryIdInput">
-                    <option value="0">All Categories</option>
-                    @foreach (var cat in CategoryList)
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="ToggleCategoryDropdown">
+                        <span class="text-truncate">@GetSelectedCategoryName()</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isCategoryDropdownOpen)
                     {
-                        <option value="@cat.CategoryId">@cat.CategoryName</option>
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(SelectedCategoryIdInput == 0 ? "selected" : "")" 
+                                 @onclick='() => SelectCategory(0)'>
+                                <span>All Categories</span>
+                                @if (SelectedCategoryIdInput == 0) { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var cat in CategoryList)
+                            {
+                                <div class="dropdown-item-custom @(SelectedCategoryIdInput == cat.CategoryId ? "selected" : "")" 
+                                     @onclick='() => SelectCategory(cat.CategoryId)'>
+                                    <span>@cat.CategoryName</span>
+                                    @if (SelectedCategoryIdInput == cat.CategoryId) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
                     }
-                </select>
+                </div>
             </div>
 
             <!-- Search and Reset Buttons -->
@@ -76,7 +166,17 @@
     <div class="tech-card p-4">
 
         @if (IsLoading) {
-            <div class="text-center my-5"><div class="spinner-border text-info"></div></div>
+            <div class="text-center my-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="text-dark mt-3 small fw-bold">စာအုပ်စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            </div>
+        }
+        else if (FilteredBooks == null || !FilteredBooks.Any())
+        {
+            <div class="text-center my-5 text-dark">
+                <i class="bi bi-folder-x display-4 text-secondary"></i>
+                <p class="mt-3 mb-0 small fw-bold text-dark">ပြသရန် စာအုပ်မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
+            </div>
         }
         else {
             <div class="table-responsive custom-table">
@@ -86,7 +186,6 @@
                             <th style="width: 10%;">NO.</th>
                             <th style="width: 15%;">Cover</th>
                             <th style="width: 40%;">Book Name</th>
-                            @* <th style="width: 40%;">Fith Path</th> *@
                             @if (canManageBook)
                             {
                                 <th style="width: 35%; text-align: center;">Actions</th>
@@ -99,20 +198,29 @@
                         }
                         @foreach (var book in FilteredBooks) {
                             <tr class="table-row-hover">
-                                <td class="fw-bold text-muted">@count.ToString("D2")</td>
+                                <td class="fw-bold text-dark">@count.ToString("D2")</td>
                                 <td>
-                                    <img src="@($"https://localhost:7297{book.Image}")" class="rounded" style="width: 40px; height: 50px; object-fit: cover;" />
+                                    @if (!string.IsNullOrEmpty(book.Image))
+                                    {
+                                        <img src="@($"https://localhost:7297{book.Image}")" class="rounded" style="width: 40px; height: 50px; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 50px;">
+                                            <i class="bi bi-book text-light"></i>
+                                        </div>
+                                    }
                                 </td>
-                                <td class="fw-semibold">
+                                <td class="fw-bold text-dark">
                                     @if (!string.IsNullOrEmpty(book.FilePath))
                                     {
-                                        <a href="@($"https://localhost:7297/api/book/download/{book.BookId}")" download class="text-info text-decoration-none">
+                                        <a href="@($"https://localhost:7297/api/book/download/{book.BookId}")" download class="text-primary text-decoration-none fw-bold">
                                             <i class="bi bi-file-earmark-pdf text-danger me-1"></i>@book.BookName
                                         </a>
                                     }
                                     else
                                     {
-                                        <span class="text-light">@book.BookName</span>
+                                        <span class="text-dark fw-bold">@book.BookName</span>
                                     }
                                 </td>
                                 @if (canManageBook)
@@ -156,9 +264,7 @@
                 </div>
 
                 <div class="modal-body text-center">
-
                     Are you sure to delete <strong>@SelectedBook?.BookName</strong>?
-
                 </div>
 
                 <div class="modal-footer border-0">
@@ -179,4 +285,3 @@
         </div>
     </div>
 }
-
