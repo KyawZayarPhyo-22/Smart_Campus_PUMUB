@@ -1,0 +1,745 @@
+@page "/admin/enrollment-results"
+@layout AdminLayout
+@rendermode InteractiveServer
+@using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
+@using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Web
+@inject HttpClientService HttpClientService
+
+<style>
+    .material-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .material-input {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        color: #495057;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .material-input:focus {
+        background-color: #ffffff;
+        border-color: #696cff;
+        box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.15);
+        color: #495057;
+        outline: none;
+    }
+
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
+
+    .table-container {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .custom-table {
+        margin-bottom: 0;
+    }
+
+    .custom-table thead th {
+        background-color: #696cff;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: none;
+        padding: 1rem;
+        white-space: nowrap;
+    }
+
+    .custom-table tbody tr {
+        border-bottom: 1px solid #f0f0f5;
+        transition: all 0.2s ease;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .custom-table td {
+        padding: 0.85rem 1rem;
+        color: #495057;
+        vertical-align: middle;
+        border: none;
+        font-size: 0.9rem;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
+
+    .badge-modern {
+        padding: 0.4em 0.7em;
+        font-weight: 500;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-theme-primary {
+        background-color: #5A4FCF !important;
+        background: #5A4FCF !important;
+        border-color: #5A4FCF !important;
+        color: #ffffff !important;
+    }
+    .btn-theme-primary:hover {
+        background-color: #483eb0 !important;
+        background: #483eb0 !important;
+        border-color: #483eb0 !important;
+        color: #ffffff !important;
+    }
+</style>
+
+@if (isSemesterDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
+
+<div class="d-flex align-items-center mb-4 mt-2">
+    <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+        <i class="bi bi-journal-check fs-5" style="color: #5A4FCF;"></i>
+    </div>
+    <div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Enrollment Results</h4>
+        <small class="text-secondary">ကျောင်းသား/သူများ၏ ဘာသာရပ်စာရင်းသွင်း ရလဒ်များ စီမံခန့်ခွဲခြင်း</small>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
+    <div class="row g-3 align-items-center">
+        <!-- Search Input -->
+        <div class="col-md-6">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by name, roll no or subject..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+            </div>
+        </div>
+
+        <!-- Semester Dropdown (approx 6 items height with scroll) -->
+        <div class="col-md-4">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleSemesterDropdown">
+                    <span class="text-truncate">@(SelectedSemesterInput == "All" ? "All Semesters" : SelectedSemesterInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isSemesterDropdownOpen)
+                {
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedSemesterInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectSemester("All")'>
+                            <span>All Semesters</span>
+                            @if (SelectedSemesterInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (AvailableSemesters != null)
+                        {
+                            @foreach (var sem in AvailableSemesters)
+                            {
+                                <div class="dropdown-item-custom @(SelectedSemesterInput == sem ? "selected" : "")" 
+                                     @onclick='() => SelectSemester(sem)'>
+                                    <span>@sem</span>
+                                    @if (SelectedSemesterInput == sem) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Search and Reset Buttons -->
+        <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
+            <button class="btn btn-theme-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Table Section -->
+<div class="material-card table-container mb-5">
+    <div class="table-responsive">
+        <table class="table custom-table align-middle">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 60px;">No</th>
+                    <th>Student Name</th>
+                    <th class="text-center">Roll No.</th>
+                    <th class="text-center">Semester</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (IsLoading)
+                {
+                    <tr>
+                        <td colspan="5">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 250px;">
+                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                                    <span class="visually-hidden">ရယူနေပါသည်...</span>
+                                </div>
+                                <div class="text-muted fs-6 fw-bold" style="font-weight: 700;">Enrollment Result အချက်အလက်များ ရယူနေပါသည်...</div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else if (PagedResults != null && PagedResults.Any())
+                {
+                    var index = 1;
+                    foreach (var result in PagedResults)
+                    {
+                        int rowNumber = (CurrentPage - 1) * PageSize + index;
+                        <tr>
+                            <td class="text-center text-muted fw-bold">@rowNumber.ToString("D2")</td>
+                            <td style="font-weight: 500; color: #495057;">@result.StudentName</td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.85rem; font-weight: 600;">
+                                    @(string.IsNullOrWhiteSpace(result.RollNo) ? "-" : result.RollNo)
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill fw-bold" style="background: #4F46E5; color: #ffffff !important; font-size: 0.82rem; padding: 6px 12px; letter-spacing: 0.3px;">
+                                    @(string.IsNullOrWhiteSpace(result.SemesterName) ? "-" : result.SemesterName)
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-outline-info btn-action" style="padding: 0.25rem 0.6rem;" @onclick="() => OpenViewModal(result)" title="View Details">
+                                    <i class="bi bi-file-earmark-person me-1"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            Enrollment Result မှတ်တမ်းများ မတွေ့ရှိပါ။
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Component -->
+    <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+</div>
+
+@if (ShowDetailModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1050; overflow-y: auto;">
+        <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1051; max-width: 900px;">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; background-color: #ffffff; color: #212529;">
+
+                <!-- Modal Header -->
+                <div class="modal-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between" style="background-color: #f8fafc; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark d-flex align-items-center mb-0" style="font-size: 1.15rem;">
+                            <i class="bi bi-journal-text text-primary me-2 fs-5"></i>
+                            <span>Course Description & Enrollment Form</span>
+                        </h5>
+                        @if (DetailData != null)
+                        {
+                            <div class="small text-muted mt-1">
+                                Student: <strong class="text-dark">@DetailData.StudentName</strong> 
+                                @if (!string.IsNullOrEmpty(DetailData.RollNo))
+                                {
+                                    <text> | Roll No: <strong class="text-dark">@DetailData.RollNo</strong></text>
+                                }
+                                @if (!string.IsNullOrEmpty(DetailData.SemesterName))
+                                {
+                                    <text> | Semester: <strong class="text-primary">@DetailData.SemesterName</strong></text>
+                                }
+                                @if (!string.IsNullOrEmpty(DetailData.MajorName))
+                                {
+                                    <text> | Major: <strong class="text-info">@DetailData.MajorName</strong></text>
+                                }
+                            </div>
+                        }
+                        else if (SelectedResult != null)
+                        {
+                            <div class="small text-muted mt-1">
+                                Student: <strong class="text-dark">@SelectedResult.StudentName</strong> 
+                                @if (!string.IsNullOrEmpty(SelectedResult.RollNo))
+                                {
+                                    <text> | Roll No: <strong class="text-dark">@SelectedResult.RollNo</strong></text>
+                                }
+                                @if (!string.IsNullOrEmpty(SelectedResult.SemesterName))
+                                {
+                                    <text> | Semester: <strong class="text-primary">@SelectedResult.SemesterName</strong></text>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <button type="button" class="btn-close" @onclick="CloseViewModal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    @if (IsDetailLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading subjects...</span>
+                            </div>
+                            <div class="text-muted small mt-2">Loading student subjects and prerequisites...</div>
+                        </div>
+                    }
+                    else if (DetailData != null && DetailData.Subjects.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle mb-0" style="border: 1px solid #dee2e6;">
+                                <thead style="background-color: #f8fafc; border-bottom: 2px solid #dee2e6;">
+                                    <tr class="text-center align-middle" style="font-weight: 600; font-size: 0.9rem; color: #495057;">
+                                        <th style="width: 50px; padding: 10px 8px;">Sr.</th>
+                                        <th style="width: 120px; padding: 10px 8px;">Subject<br/>Code</th>
+                                        <th style="padding: 10px 12px; text-align: left;">Course Description</th>
+                                        <th style="width: 140px; padding: 10px 8px;">Grade</th>
+                                        <th style="width: 220px; padding: 10px 8px;">Pre-requisite</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="font-size: 0.9rem; color: #212529;">
+                                    @{ int sCount = 1; }
+                                    @foreach (var sub in DetailData.Subjects)
+                                    {
+                                        <tr>
+                                            <td class="text-center fw-semibold text-muted">@sCount</td>
+                                            <td class="text-center fw-bold text-primary">@sub.SubjectCode</td>
+                                            <td>
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <span>@sub.SubjectName</span>
+                                                    @if (sub.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective)
+                                                    {
+                                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 ms-2 py-0.5 px-1.5" style="font-size: 0.75rem;">Elective</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <select class="form-select form-select-sm" @bind="sub.Grade" style="min-width: 100px;">
+                                                    <option value="">-- Grade --</option>
+                                                    @if (AvailableGrades != null)
+                                                    {
+                                                        @foreach (var g in AvailableGrades)
+                                                        {
+                                                            <option value="@g.Name">@g.Name</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </td>
+                                            <td class="text-muted small" style="font-size: 0.85rem;">
+                                                @if (!string.IsNullOrEmpty(sub.PrerequisiteInfo) && sub.PrerequisiteInfo != "-")
+                                                {
+                                                    <span class="badge bg-light text-dark border">
+                                                        <i class="bi bi-arrow-return-right me-1 text-primary"></i>@sub.PrerequisiteInfo
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                        sCount++;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-journal-x fs-1 d-block mb-2 text-secondary"></i>
+                            ဤကျောင်းသား၏ Semester/Major အတွက် ဘာသာရပ်များ မတွေ့ရှိပါ။
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(saveMessage))
+                    {
+                        <div class="alert @(isSaveSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show mt-3 mb-0 py-2" role="alert">
+                            <i class="bi @(isSaveSuccess ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i>
+                            @saveMessage
+                        </div>
+                    }
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between align-items-center" style="background-color: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CloseViewModal">Close</button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary px-4 d-inline-flex align-items-center" @onclick="SaveGrades" disabled="@(isSaving || IsDetailLoading || DetailData == null || !DetailData.Subjects.Any())">
+                            @if (isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Saving...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-check2-circle me-1.5"></i>
+                                <span>Save Grades</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public List<StudentEnrollmentResultModel>? AllResults { get; set; }
+    public List<GradeModel>? AvailableGrades { get; set; }
+    public List<SemesterModel> SemesterList { get; set; } = new();
+    
+    // Filters
+    private string SearchInput { get; set; } = "";
+    private string SelectedSemesterInput { get; set; } = "All";
+
+    private string SearchTerm { get; set; } = "";
+    private string SelectedSemester { get; set; } = "All";
+
+    // Pagination
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 10;
+    private int TotalPages { get; set; } = 1;
+
+    public bool IsLoading { get; set; } = true;
+    private bool ShowDetailModal { get; set; } = false;
+    private bool IsDetailLoading { get; set; } = false;
+    private bool isSaving { get; set; } = false;
+    private bool isSaveSuccess { get; set; } = false;
+    private string saveMessage { get; set; } = "";
+    private StudentEnrollmentResultModel? SelectedResult { get; set; }
+    private StudentEnrollmentDetailResponseModel? DetailData { get; set; }
+
+    private IEnumerable<string> AvailableSemesters
+    {
+        get
+        {
+            var apiSemesters = SemesterList
+                .Where(s => !string.IsNullOrWhiteSpace(s.SemesterName))
+                .Select(s => s.SemesterName!.Trim());
+
+            var resultSemesters = (AllResults ?? new List<StudentEnrollmentResultModel>())
+                .Where(r => !string.IsNullOrWhiteSpace(r.SemesterName))
+                .Select(r => r.SemesterName!.Trim());
+
+            return apiSemesters.Union(resultSemesters).Distinct().OrderBy(s => s);
+        }
+    }
+
+    private IEnumerable<StudentEnrollmentResultModel> GetFilteredResults()
+    {
+        if (AllResults == null) return Enumerable.Empty<StudentEnrollmentResultModel>();
+
+        var query = AllResults.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            var term = SearchTerm.Trim();
+            query = query.Where(r =>
+                (r.StudentName != null && r.StudentName.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (r.RollNo != null && r.RollNo.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (r.SubjectName != null && r.SubjectName.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (r.SubjectCode != null && r.SubjectCode.Contains(term, StringComparison.OrdinalIgnoreCase))
+            );
+        }
+
+        if (SelectedSemester != "All" && !string.IsNullOrWhiteSpace(SelectedSemester))
+        {
+            query = query.Where(r => string.Equals(r.SemesterName?.Trim(), SelectedSemester.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        return query.ToList();
+    }
+
+    private IEnumerable<StudentEnrollmentResultModel> PagedResults
+    {
+        get
+        {
+            var filtered = GetFilteredResults().ToList();
+            int count = filtered.Count;
+            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
+            TotalPages = calcPages < 1 ? 1 : calcPages;
+
+            if (CurrentPage > TotalPages)
+            {
+                CurrentPage = TotalPages;
+            }
+
+            return filtered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        }
+    }
+
+    // Custom Dropdown Open States
+    private bool isSemesterDropdownOpen = false;
+
+    private void ToggleSemesterDropdown()
+    {
+        isSemesterDropdownOpen = !isSemesterDropdownOpen;
+    }
+
+    private void SelectSemester(string? semesterName)
+    {
+        SelectedSemesterInput = semesterName ?? "All";
+        isSemesterDropdownOpen = false;
+        // Search button ကို နှိပ်မှသာ Filter လုပ်မည် (Auto-search မလုပ်ပါ)
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isSemesterDropdownOpen = false;
+    }
+
+    private async Task ApplyFilter()
+    {
+        CloseAllDropdowns();
+        SearchTerm = SearchInput;
+        SelectedSemester = SelectedSemesterInput;
+        CurrentPage = 1;
+        IsLoading = true;
+        StateHasChanged();
+        await Task.Delay(1000);
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task ResetFilter()
+    {
+        CloseAllDropdowns();
+        SearchInput = "";
+        SelectedSemesterInput = "All";
+        SearchTerm = "";
+        SelectedSemester = "All";
+        CurrentPage = 1;
+        IsLoading = true;
+        StateHasChanged();
+        await Task.Delay(1000);
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private void HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            _ = ApplyFilter();
+        }
+    }
+
+    private async Task OnPageChanged(int newPage)
+    {
+        CurrentPage = newPage;
+        IsLoading = true;
+        StateHasChanged();
+        await Task.Delay(1000);
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task OpenViewModal(StudentEnrollmentResultModel result)
+    {
+        SelectedResult = result;
+        ShowDetailModal = true;
+        IsDetailLoading = true;
+        saveMessage = "";
+        DetailData = null;
+
+        try
+        {
+            var regId = result.RegistrationId ?? result.EnrollmentId;
+            var url = $"Enrollment/registration/{regId}/details";
+            DetailData = await HttpClientService.ExecuteAsync<StudentEnrollmentDetailResponseModel>(url, EnumHttpMethod.Get);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading details: {ex.Message}");
+        }
+        finally
+        {
+            IsDetailLoading = false;
+        }
+    }
+
+    private void CloseViewModal()
+    {
+        ShowDetailModal = false;
+        SelectedResult = null;
+        DetailData = null;
+        saveMessage = "";
+    }
+
+    private async Task SaveGrades()
+    {
+        if (DetailData == null || !DetailData.Subjects.Any()) return;
+
+        isSaving = true;
+        saveMessage = "";
+
+        try
+        {
+            var req = new SaveStudentGradesRequestModel
+            {
+                RegistrationId = DetailData.RegistrationId,
+                StudentId = DetailData.StudentId,
+                SemesterId = DetailData.SemesterId,
+                Grades = DetailData.Subjects.Select(s => new SaveGradeItemModel
+                {
+                    SubjectId = s.SubjectId,
+                    Grade = s.Grade
+                }).ToList()
+            };
+
+            var res = await HttpClientService.ExecuteAsync<ActionResponseModel>("Enrollment/save-student-grades", EnumHttpMethod.Post, req);
+            if (res != null && res.IsSuccess)
+            {
+                isSaveSuccess = true;
+                saveMessage = "Grades saved successfully!";
+            }
+            else
+            {
+                isSaveSuccess = false;
+                saveMessage = res?.Message ?? "Failed to save grades.";
+            }
+        }
+        catch (Exception ex)
+        {
+            isSaveSuccess = false;
+            saveMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadResults(), LoadGrades(), LoadSemesters());
+    }
+
+    private async Task LoadSemesters()
+    {
+        try
+        {
+            SemesterList = await HttpClientService.ExecuteAsync<List<SemesterModel>>("Semester", EnumHttpMethod.Get) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading semesters: {ex.Message}");
+        }
+    }
+
+    private async Task LoadGrades()
+    {
+        try
+        {
+            AvailableGrades = await HttpClientService.ExecuteAsync<List<GradeModel>>("Grade", EnumHttpMethod.Get);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading grades: {ex.Message}");
+        }
+    }
+
+    private async Task LoadResults()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        try
+        {
+            var delayTask = Task.Delay(1000);
+            var url = "Enrollment/results";
+            var fetchTask = HttpClientService.ExecuteAsync<List<StudentEnrollmentResultModel>>(url, EnumHttpMethod.Get);
+
+            await Task.WhenAll(fetchTask, delayTask);
+            AllResults = await fetchTask;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading results: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -281,7 +281,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         // Include system logs only for audit display
         var recentActivities = allActivities
             .Where(x => IsSystemLog(x.ActivityTitle ?? ""))
-            .Take(10)
+            .Take(6)
             .Select(x => new
             {
                 ActivityId = x.ActivityId,

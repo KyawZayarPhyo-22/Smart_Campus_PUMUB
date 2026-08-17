@@ -1,0 +1,89 @@
+@page "/student/enrollment"
+@namespace Smart_Campus_PUMUB.Components.Features.Student
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <div class="page-header mb-4">
+        <h3><i class="bi bi-journal-plus me-2 text-primary"></i>Subject Enrollment</h3>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger d-flex align-items-center mb-4">
+                    <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Enrollment Failed:</strong> @ErrorMessage
+                        @if (MissingPrerequisites != null && MissingPrerequisites.Any())
+                        {
+                            <ul class="mt-2 mb-0">
+                                @foreach (var pId in MissingPrerequisites)
+                                {
+                                    <li>Missing Prerequisite: <strong>@GetSubjectName(pId)</strong></li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(SuccessMessage))
+            {
+                <div class="alert alert-success d-flex align-items-center mb-4">
+                    <i class="bi bi-check-circle-fill me-3 fs-4"></i>
+                    <div>@SuccessMessage</div>
+                </div>
+            }
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Select Student</label>
+                    <select @bind="SelectedStudentId" class="form-select">
+                        <option value="0">-- Select Student --</option>
+                        @foreach (var student in StudentList)
+                        {
+                            <option value="@student.StudentId">@student.EnrollmentNo - @student.StudentName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Select Semester</label>
+                    <select @bind="SelectedSemesterId" class="form-select">
+                        <option value="0">-- Select Semester --</option>
+                        @foreach (var sem in SemesterList)
+                        {
+                            <option value="@sem.SemesterId">@sem.SemesterName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Select Subject</label>
+                    <select @bind="SelectedSubjectId" class="form-select">
+                        <option value="0">-- Select Subject --</option>
+                        @foreach (var sub in SubjectList)
+                        {
+                            <option value="@sub.SubjectId">@sub.SubjectCode - @sub.SubjectName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top text-end">
+                <button class="btn btn-primary px-5 fw-bold" @onclick="EnrollStudent" disabled="@IsProcessing">
+                    @if (IsProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Processing...</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-check-fill me-2"></i> <span>Enroll Now</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

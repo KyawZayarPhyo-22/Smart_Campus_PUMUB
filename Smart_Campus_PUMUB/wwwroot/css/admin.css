@@ -252,6 +252,168 @@ body {
     color: var(--accent-cyan);
 }
 
+/* ── Collapsible Sidebar Dropdowns ────────────────────────────────────── */
+.sidebar-dropdown-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.68rem 0.95rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b !important;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    margin-bottom: 3px;
+}
+
+.sidebar-dropdown-btn:hover {
+    color: #5A4FCF !important;
+    background: rgba(90, 79, 207, 0.08) !important;
+    border-color: rgba(90, 79, 207, 0.15) !important;
+}
+
+.sidebar-dropdown-btn.open {
+    color: #5A4FCF !important;
+    background: rgba(90, 79, 207, 0.08) !important;
+    border-color: rgba(90, 79, 207, 0.2) !important;
+}
+
+.sidebar-dropdown-btn i.sidebar-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    width: 1.35rem;
+    text-align: center;
+    margin-right: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.sidebar-dropdown-btn:hover i.sidebar-icon {
+    transform: scale(1.1);
+}
+
+.sidebar-chevron {
+    font-size: 0.75rem;
+    margin-left: auto;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #64748b;
+}
+
+.sidebar-dropdown-btn.open .sidebar-chevron {
+    transform: rotate(180deg);
+    color: #5A4FCF;
+}
+
+.sidebar-dropdown-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(90, 79, 207, 0.1) !important;
+    color: #5A4FCF !important;
+    border: 1px solid rgba(90, 79, 207, 0.2) !important;
+    margin-left: auto;
+    margin-right: 6px;
+}
+
+.sidebar-submenu {
+    padding-left: 1.1rem;
+    margin-left: 1rem;
+    border-left: 2px solid rgba(90, 79, 207, 0.25);
+    margin-top: 4px;
+    margin-bottom: 8px;
+    animation: sidebarSubmenuFade 0.2s ease-out;
+}
+
+@keyframes sidebarSubmenuFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.sidebar-sub-link {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #475569 !important;
+    border-radius: 8px;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    margin-bottom: 3px;
+}
+
+.sidebar-sub-link i {
+    font-size: 0.95rem;
+    width: 1.2rem;
+    margin-right: 0.65rem;
+    color: #64748b;
+    transition: color 0.15s;
+}
+
+.sidebar-sub-link:hover {
+    color: #5A4FCF !important;
+    background: rgba(90, 79, 207, 0.08) !important;
+    text-decoration: none !important;
+}
+
+.sidebar-sub-link:hover i {
+    color: #5A4FCF;
+}
+
+.sidebar-sub-link.active {
+    color: #ffffff !important;
+    background: #5A4FCF !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(90, 79, 207, 0.3) !important;
+}
+
+.sidebar-sub-link.active i {
+    color: #ffffff !important;
+}
+
+/* ── Modern Logout Button ────────────────────────────────────────────── */
+.btn-logout-modern {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding: 10px 16px !important;
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid #be123c !important;
+    border-radius: 10px !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35) !important;
+}
+
+.btn-logout-modern i {
+    font-size: 1.05rem !important;
+    transition: transform 0.2s ease !important;
+    color: #ffffff !important;
+}
+
+.btn-logout-modern:hover {
+    background: linear-gradient(135deg, #be123c 0%, #9f1239 100%) !important;
+    color: #ffffff !important;
+    border-color: #9f1239 !important;
+    box-shadow: 0 6px 18px rgba(225, 29, 72, 0.5) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-logout-modern:hover i {
+    color: #ffffff !important;
+    transform: translateX(3px) !important;
+}
+
 /* Collapsed sidebar: hide labels & section headings */
 .admin-sidebar.collapsed .sidebar-label,
 .admin-sidebar.collapsed .sidebar-section-label span {
@@ -306,7 +468,7 @@ body {
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border);
     gap: 0.75rem;
-    z-index: 1020;
+    z-index: 1070;
     top: 0;
 }
 
@@ -417,6 +579,154 @@ main.admin-body,
 .stat-card .stat-change {
     font-size: 0.75rem;
     font-weight: 600;
+}
+
+/* ── Modern KPI Cards ────────────────────────────────────────────────── */
+.kpi-card-modern {
+    background: #ffffff !important;
+    border: 1.5px solid #f1f5f9 !important;
+    border-radius: 18px !important;
+    padding: 1.25rem 1.35rem !important;
+    box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.kpi-card-modern:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 14px 28px -6px rgba(90, 79, 207, 0.1) !important;
+    border-color: #cbd5e1 !important;
+}
+
+.kpi-card-modern::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3.5px;
+    border-radius: 0 0 18px 18px;
+}
+
+.kpi-theme-sky::after { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.kpi-theme-purple::after { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+.kpi-theme-emerald::after { background: linear-gradient(90deg, #059669, #34d399); }
+.kpi-theme-rose::after { background: linear-gradient(90deg, #e11d48, #fb7185); }
+
+.kpi-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.kpi-theme-sky .kpi-icon-box { background: rgba(2, 132, 199, 0.1); color: #0284c7; }
+.kpi-theme-purple .kpi-icon-box { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+.kpi-theme-emerald .kpi-icon-box { background: rgba(5, 150, 105, 0.1); color: #059669; }
+.kpi-theme-rose .kpi-icon-box { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
+
+.kpi-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.2px;
+}
+
+.kpi-pill-sky { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
+.kpi-pill-purple { background: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
+.kpi-pill-emerald { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.kpi-pill-rose { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+
+.kpi-pulse-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #e11d48;
+    border-radius: 50%;
+    display: inline-block;
+    animation: kpiPulseAnim 1.5s infinite;
+}
+
+@keyframes kpiPulseAnim {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+.kpi-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0f172a !important;
+    line-height: 1.1;
+    margin-top: 0.6rem;
+    letter-spacing: -0.5px;
+}
+
+.kpi-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b !important;
+    margin-top: 0.25rem;
+    text-transform: capitalize;
+}
+
+.chart-card-modern {
+    background: #ffffff !important;
+    border: 1.5px solid #f1f5f9 !important;
+    border-radius: 18px !important;
+    padding: 1.3rem !important;
+    box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s ease;
+}
+
+.chart-card-modern:hover {
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07) !important;
+}
+
+.chart-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.chart-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.chart-header-icon-cyan { background: rgba(6, 182, 212, 0.1); color: #0891b2; }
+.chart-header-icon-purple { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+.chart-header-icon-blue { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+
+.chart-header-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.chart-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 3px 10px;
 }
 
 /* ── Tech Card (content panels) ─────────────────────────────────────── */
@@ -939,6 +1249,15 @@ main.admin-body,
     color: #9ca3af !important;
 }
 
+/* Badges text colors */
+.admin-body .badge.bg-success,
+.admin-body .badge.bg-danger,
+.admin-body .badge.bg-primary,
+.admin-body .badge-modern.bg-success,
+.admin-body .badge-modern.bg-danger {
+    color: #ffffff !important;
+}
+
 /* Overriding cards (.tech-card and .material-card) */
 .admin-body .tech-card,
 .admin-body .material-card {
@@ -997,6 +1316,20 @@ main.admin-body,
 .admin-body .custom-table td .text-white,
 .admin-body .custom-table td .fw-bold {
     color: #1f2937 !important;
+}
+
+/* Status badges inside tables - MUST be white text for all status badges */
+.admin-body .custom-table td .badge.bg-success,
+.admin-body .custom-table td .badge.bg-danger,
+.admin-body .custom-table td .badge.bg-warning,
+.admin-body .custom-table td .badge.bg-primary,
+.admin-body .custom-table td .badge.text-white,
+.admin-body .custom-table td .badge-modern.bg-success,
+.admin-body .custom-table td .badge-modern.bg-danger,
+.admin-body .custom-table td .badge-modern.bg-warning,
+.admin-body .custom-table td .badge-modern.bg-primary,
+.admin-body .custom-table td .badge-modern.text-white {
+    color: #ffffff !important;
 }
 
 /* Modals */

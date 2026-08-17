@@ -584,11 +584,12 @@
     else
     {
     <div class="stepper-wrapper">
-        <div class="stepper-progress" style="width: @((CurrentStep - 1) * 33.33)%"></div>
+        <div class="stepper-progress" style="width: @((CurrentStep - 1) * 25)%"></div>
         <div class="step-block @(CurrentStep >= 1 ? "active" : "")"><div class="step-circle">1</div><div class="step-label">Personal Info</div></div>
         <div class="step-block @(CurrentStep >= 2 ? "active" : "")"><div class="step-circle">2</div><div class="step-label">Academic Info</div></div>
-        <div class="step-block @(CurrentStep >= 3 ? "active" : "")"><div class="step-circle">3</div><div class="step-label">Family Info</div></div>
-        <div class="step-block @(CurrentStep >= 4 ? "active" : "")"><div class="step-circle">4</div><div class="step-label">Submit</div></div>
+        <div class="step-block @(CurrentStep >= 3 ? "active" : "")"><div class="step-circle">3</div><div class="step-label">Subject Grade</div></div>
+        <div class="step-block @(CurrentStep >= 4 ? "active" : "")"><div class="step-circle">4</div><div class="step-label">Family Info</div></div>
+        <div class="step-block @(CurrentStep >= 5 ? "active" : "")"><div class="step-circle">5</div><div class="step-label">Submit</div></div>
     </div>
 
     @if (CurrentStep == 1)
@@ -916,11 +917,213 @@
 
         <div class="form-footer">
             <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
-            <button class="btn-next" @onclick="NextStep">Next: Family Info <i class="fas fa-arrow-right"></i></button>
+            <button class="btn-next" @onclick="NextStep">Next: Subject Grade <i class="fas fa-arrow-right"></i></button>
         </div>
     }
 
     @if (CurrentStep == 3)
+    {
+        var coreAndRetakes = UpcomingSubjects?.Where(s => s.SubjectType != Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective || s.IsRetake).ToList() ?? new();
+        var electives = UpcomingSubjects?.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake).ToList() ?? new();
+        int maxElective = GetMaxElectiveForCurrentSemester();
+        int selectedElectiveCount = electives.Count(e => e.IsSelected);
+
+        <div class="input-grid">
+            <div class="input-group" style="border-right: 1px dashed #e2e8f0; padding-right: 20px;">
+                <label class="input-label" style="font-size: 1.1rem; color: #1e40af;"><i class="fas fa-book me-2"></i> မဖြစ်မနေ တက်ရောက်ရမည့် ဘာသာရပ်များ (Core & Retake)</label>
+                
+                @if (coreAndRetakes.Any())
+                {
+                    <div class="table-responsive" style="margin-top: 10px;">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>ဘာသာရပ် (Subject)</th>
+                                    <th>ကုဒ် (Code)</th>
+                                    <th style="text-align: center; width: 110px;">အမျိုးအစား</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sub in coreAndRetakes)
+                                {
+                                    <tr style="@(sub.IsRetake ? "background-color: rgba(245, 158, 11, 0.06);" : "")">
+                                        <td>
+                                            <span style="font-weight: 500;">@sub.SubjectName</span>
+                                            @if (sub.IsRetake && !string.IsNullOrEmpty(sub.SemesterName))
+                                            {
+                                                <small style="display: block; color: #d97706; font-size: 0.78rem; font-weight: 600;">
+                                                    <i class="fas fa-undo-alt me-1"></i> @sub.SemesterName မှ Retake
+                                                </small>
+                                            }
+                                        </td>
+                                        <td><span style="font-weight: 600; color: #1e293b;">@sub.SubjectCode</span></td>
+                                        <td style="text-align: center;">
+                                            @if (sub.IsRetake)
+                                            {
+                                                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); font-weight: 700; padding: 4px 10px; border-radius: 6px;">
+                                                    <i class="fas fa-redo-alt me-1"></i> Retake
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.2); font-weight: 600; padding: 4px 8px; border-radius: 6px;">
+                                                    Core
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div style="padding: 10px; color: #94a3b8; font-style: italic;">
+                        မှတ်တမ်း မရှိသေးပါ။
+                    </div>
+                }
+
+                @if (electives.Any())
+                {
+                    <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label class="input-label" style="font-size: 1.05rem; color: #b45309; margin-bottom: 0;">
+                                <i class="fas fa-check-double me-2"></i> Elective ဘာသာရပ် ရွေးချယ်ရန်
+                            </label>
+                            <span class="badge" style="background: @(selectedElectiveCount == maxElective ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)"); color: @(selectedElectiveCount == maxElective ? "#059669" : "#d97706"); border: 1px solid @(selectedElectiveCount == maxElective ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"); font-weight: 600; padding: 4px 10px; border-radius: 6px;">
+                                ရွေးချယ်ထားမှု: @selectedElectiveCount / @maxElective ဘာသာ
+                            </span>
+                        </div>
+                        <small style="color: #64748b; display: block; margin-bottom: 10px; font-size: 0.85rem;">
+                            (Pre-Requisite ပြည့်မီသော ဘာသာရပ်များထဲမှ အများဆုံး @maxElective ဘာသာ ရွေးချယ်ပါ)
+                        </small>
+
+                        <div class="table-responsive">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 55px; text-align: center;">ရွေးရန်</th>
+                                        <th>ဘာသာရပ် (Subject)</th>
+                                        <th>Pre-Requisite လိုအပ်ချက်</th>
+                                        <th style="text-align: center; width: 140px;">အခြေအနေ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ele in electives)
+                                    {
+                                        var isEligible = ele.IsPrerequisiteSatisfied;
+                                        <tr style="@(ele.IsSelected ? "background-color: rgba(37, 99, 235, 0.06);" : (!isEligible ? "background-color: rgba(241, 245, 249, 0.6); opacity: 0.75;" : "")) cursor: @(isEligible ? "pointer" : "not-allowed");"
+                                            @onclick="() => { if (isEligible) ToggleElectiveSelection(ele); }">
+                                            <td style="text-align: center;" @onclick:stopPropagation="true">
+                                                <input type="checkbox"
+                                                       checked="@ele.IsSelected"
+                                                       disabled="@(!isEligible)"
+                                                       @onchange="() => ToggleElectiveSelection(ele)"
+                                                       style="width: 18px; height: 18px; cursor: @(isEligible ? "pointer" : "not-allowed"); accent-color: #2563eb;" />
+                                            </td>
+                                            <td>
+                                                <span style="font-weight: 600; color: #1e293b;">@ele.SubjectName</span>
+                                                <small style="display: block; color: #64748b; font-weight: 500;">@ele.SubjectCode</small>
+                                            </td>
+                                            <td>
+                                                <span style="font-size: 0.88rem; color: #475569;">@ele.PrerequisiteInfo</span>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                @if (isEligible)
+                                                {
+                                                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">
+                                                        <i class="fas fa-check-circle me-1"></i> ရွေးချယ်နိုင်သည်
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;" title="@ele.PrerequisiteStatusMessage">
+                                                        <i class="fas fa-ban me-1"></i> မပြည့်မီပါ
+                                                    </span>
+                                                    <small style="display: block; color: #dc2626; font-size: 0.72rem; margin-top: 2px;">Pre-Requisite မအောင်ပါ</small>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="input-group">
+                <label class="input-label" style="font-size: 1.1rem; color: #047857;"><i class="fas fa-history me-2"></i> အရင် Semester ရဲ့ အမှတ်များ (Previous Grades)</label>
+                <div class="table-responsive" style="margin-top: 10px;">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>ဘာသာရပ် (Subject)</th>
+                                <th>ကုဒ် (Code)</th>
+                                <th style="text-align: center; width: 140px;">ရမှတ် (Grade)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (PreviousSubjects != null && PreviousSubjects.Any())
+                            {
+                                @foreach (var pSub in PreviousSubjects)
+                                {
+                                    <tr style="@(pSub.IsRetake ? "background-color: rgba(239, 68, 68, 0.05);" : "")">
+                                        <td>
+                                            <span style="font-weight: 500;">@pSub.SubjectName</span>
+                                            @if (!string.IsNullOrEmpty(pSub.SemesterName))
+                                            {
+                                                <small style="display: block; color: @(pSub.IsRetake ? "#dc2626" : "#64748b"); font-size: 0.78rem; font-weight: 600;">
+                                                    @if (pSub.IsRetake)
+                                                    {
+                                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                                        <span>@pSub.SemesterName (Retake Subject)</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@pSub.SemesterName</span>
+                                                    }
+                                                </small>
+                                            }
+                                        </td>
+                                        <td><span style="font-weight: 600; color: #1e293b;">@pSub.SubjectCode</span></td>
+                                        <td style="text-align: center;">
+                                            @if (!string.IsNullOrWhiteSpace(pSub.Grade))
+                                            {
+                                                var isFailGrade = pSub.Grade == "D" || pSub.Grade == "F";
+                                                <span class="badge" style="background: @(isFailGrade ? "rgba(239, 68, 68, 0.12)" : "rgba(37,99,235,0.12)"); color: @(isFailGrade ? "#dc2626" : "#1d4ed8"); font-weight: 700; font-size: 0.92rem; padding: 5px 14px; border-radius: 6px; border: 1px solid @(isFailGrade ? "rgba(239, 68, 68, 0.3)" : "rgba(37,99,235,0.25)"); display: inline-block;">
+                                                    @pSub.Grade
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span style="color: #94a3b8; font-style: italic; font-size: 0.88rem;">မရှိသေးပါ</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="3" style="text-align: center; padding: 20px; color: #94a3b8; font-style: italic;">
+                                        အရင် Semester ဘာသာရပ်များ မတွေ့ရှိပါ။
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="form-footer">
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-next" @onclick="NextStep">Next: Family Info <i class="fas fa-arrow-right"></i></button>
+        </div>
+    }
+
+    @if (CurrentStep == 4)
     {
         <div class="input-grid">
             <div class="input-group full-width" style="border-bottom: 1px dashed #e2e8f0; padding-bottom: 20px; margin-bottom: 10px;">
@@ -1046,7 +1249,7 @@
         </div>
     }
 
-    @if (CurrentStep == 4)
+    @if (CurrentStep == 5)
     {
         <div class="input-grid">
             <div class="input-group full-width">

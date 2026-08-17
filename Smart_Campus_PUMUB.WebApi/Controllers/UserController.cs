@@ -225,9 +225,7 @@ public class UserController : ControllerBase
                            RoleId = x.u.RoleId,
                            RoleName = x.r.RoleName,
                            FacultyId = x.u.FacultyId,
-                           FacultyName = (x.r.RoleName == "Super Admin" || x.u.RoleId == 4) 
-                                ? string.Join(" & ", _db.Faculties.Where(k => k.IsDelete == false || k.IsDelete == null).Select(k => k.FacultyName))
-                                : (x.f != null ? x.f.FacultyName : null),
+                           FacultyName = x.f != null ? x.f.FacultyName : null,
                            FullName = x.u.FullName,
                            UserName = x.u.UserName,
                            RoleNo = x.u.RoleNo,
@@ -600,16 +598,45 @@ public class UserController : ControllerBase
     [AllowAnonymous]
     public IActionResult GetCountByRole()
     {
-        var result = _db.Users
+        var roleColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Super Admin", "#6366f1" },
+            { "Admin", "#06b6d4" },
+            { "Tutor", "#8b5cf6" },
+            { "Student", "#10b981" }
+        };
+
+        var roleOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Super Admin", 1 },
+            { "Admin", 2 },
+            { "Tutor", 3 },
+            { "Student", 4 }
+        };
+
+        var rawRoles = _db.Users
             .Include(u => u.Role)
-            .Where(u => u.IsDelete == false)
-            .GroupBy(u => u.Role != null ? u.Role.RoleName : "Unknown")
+            .Where(u => u.IsDelete == false || u.IsDelete == null)
+            .Select(u => u.Role != null ? u.Role.RoleName : "Unknown")
+            .ToList();
+
+        var result = rawRoles
+            .GroupBy(r => r)
             .Select(g => new
             {
                 name = g.Key,
                 y = (double)g.Count(),
-                color = (g.Key == "Admin" || g.Key == "ADMIN") ? "#22d3ee" : ((g.Key == "Student" || g.Key == "STUDENT") ? "#10b981" : "#8b5cf6")
-            }).ToList();
+                color = roleColors.ContainsKey(g.Key) ? roleColors[g.Key] : "#3b82f6",
+                order = roleOrder.ContainsKey(g.Key) ? roleOrder[g.Key] : 99
+            })
+            .OrderBy(x => x.order)
+            .Select(x => new
+            {
+                name = x.name,
+                y = x.y,
+                color = x.color
+            })
+            .ToList();
 
         return Ok(result);
     }
@@ -647,49 +674,85 @@ public class UserController : ControllerBase
 
         var years = new List<string> { "2022-2023", "2023-2024", "2024-2025", "2025-2026", "2026-2027" };
 
-        var usersWithFaculty = (from u in _db.Users
-                                join f in _db.Faculties on u.FacultyId equals f.FacultyId into facultyGroup
-                                from f in facultyGroup.DefaultIfEmpty()
-                                join s in _db.Students on u.UserId equals s.UserId into studentGroup
-                                from s in studentGroup.DefaultIfEmpty()
-                                where (u.IsDelete == false || u.IsDelete == null)
-                                select new
-                                {
-                                    u.UserId,
-                                    u.CreatedDateTime,
-                                    FacultyName = f != null ? f.FacultyName : "",
-                                    ClassYear = s != null && !string.IsNullOrEmpty(s.CurrentClassYear) ? s.CurrentClassYear : null
-                                }).ToList();
+        // User Management ထဲမှ DISTINCT Student Users များကိုသာ တိုက်ရိုက် ရယူခြင်း (Cartesian duplication မဖြစ်စေရန်)
+        var studentUsers = (from u in _db.Users
+                            join r in _db.Roles on u.RoleId equals r.RoleId into roleGroup
+                            from r in roleGroup.DefaultIfEmpty()
+                            join f in _db.Faculties on u.FacultyId equals f.FacultyId into facultyGroup
+                            from f in facultyGroup.DefaultIfEmpty()
+                            where (u.IsDelete == false || u.IsDelete == null) &&
+                                  (u.RoleId == 3 || (r != null && r.RoleName == "Student"))
+                            select new
+                            {
+                                u.UserId,
+                                u.FacultyId,
+                                FacultyName = f != null ? f.FacultyName : "",
+                                u.CreatedDateTime
+                            }).Distinct().ToList();
+
+        // User တစ်ယောက်ချင်းစီ၏ Latest Registration AcademicYear ကို ရှာဖွေခြင်း
+        var userIds = studentUsers.Select(u => u.UserId).ToList();
+        var regYears = _db.StudentRegistrations
+            .Where(r => r.UserId.HasValue && userIds.Contains(r.UserId.Value) && (r.IsDelete == false || r.IsDelete == null))
+            .OrderByDescending(r => r.RegistrationId)
+            .Select(r => new { r.UserId, r.AcademicYearRange })
+            .ToList()
+            .GroupBy(r => r.UserId!.Value)
+            .ToDictionary(g => g.Key, g => g.First().AcademicYearRange);
 
         int[] fcCounts = new int[5];
         int[] feCounts = new int[5];
 
-        foreach (var item in usersWithFaculty)
+        foreach (var user in studentUsers)
         {
-            int yearIdx = 4;
-            
-            if (item.CreatedDateTime.HasValue)
+            string? academicYear = null;
+            if (regYears.TryGetValue(user.UserId, out var registeredYear) && !string.IsNullOrEmpty(registeredYear))
             {
-                int y = item.CreatedDateTime.Value.Year;
-                if (y == 2022) yearIdx = 0;
-                else if (y == 2023) yearIdx = 1;
-                else if (y == 2024) yearIdx = 2;
-                else if (y == 2025) yearIdx = 3;
-                else if (y >= 2026) yearIdx = 4;
-                else yearIdx = Math.Abs(item.UserId) % 5;
+                academicYear = registeredYear;
+            }
+            else if (user.CreatedDateTime != null)
+            {
+                academicYear = $"{user.CreatedDateTime.Value.Year}-{user.CreatedDateTime.Value.Year + 1}";
             }
             else
             {
-                yearIdx = Math.Abs(item.UserId) % 5;
+                academicYear = "2026-2027";
             }
 
-            if (item.FacultyName.Contains("Computing", StringComparison.OrdinalIgnoreCase) || item.FacultyName.Contains("Computer", StringComparison.OrdinalIgnoreCase))
+            int yearIdx = 4; // Default to 2026-2027
+            if (!string.IsNullOrEmpty(academicYear))
+            {
+                var ay = academicYear.Trim();
+                if (ay.Contains("2022")) yearIdx = 0;
+                else if (ay.Contains("2023")) yearIdx = 1;
+                else if (ay.Contains("2024")) yearIdx = 2;
+                else if (ay.Contains("2025")) yearIdx = 3;
+                else if (ay.Contains("2026") || ay.Contains("2027")) yearIdx = 4;
+                else yearIdx = 4;
+            }
+
+            bool isComputing = user.FacultyId == 1 ||
+                               user.FacultyName.Contains("Computing", StringComparison.OrdinalIgnoreCase) ||
+                               user.FacultyName.Contains("Computer", StringComparison.OrdinalIgnoreCase) ||
+                               user.FacultyName.Contains("Information", StringComparison.OrdinalIgnoreCase);
+
+            bool isEngineering = user.FacultyId == 2 ||
+                                 user.FacultyName.Contains("Engineering", StringComparison.OrdinalIgnoreCase);
+
+            if (isComputing)
             {
                 fcCounts[yearIdx]++;
             }
-            else
+            else if (isEngineering)
             {
                 feCounts[yearIdx]++;
+            }
+            else
+            {
+                if (user.UserId % 2 == 1)
+                    fcCounts[yearIdx]++;
+                else
+                    feCounts[yearIdx]++;
             }
         }
 

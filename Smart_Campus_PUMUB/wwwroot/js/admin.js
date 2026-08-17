@@ -62,36 +62,47 @@ document.addEventListener("DOMContentLoaded", function () {
    We destroy any existing instance first to prevent duplicate renders.
    ===================================================================== */
 function initCharts(roleDistributionData, facultyDistributionData) {
+    const roleColors = {
+        "Admin": "#06b6d4",
+        "ADMIN": "#06b6d4",
+        "Super Admin": "#6366f1",
+        "SUPER ADMIN": "#6366f1",
+        "Student": "#10b981",
+        "STUDENT": "#10b981",
+        "Tutor": "#8b5cf6",
+        "TUTOR": "#8b5cf6"
+    };
+
+    const roleOrder = {
+        "Super Admin": 1,
+        "SUPER ADMIN": 1,
+        "Admin": 2,
+        "ADMIN": 2,
+        "Tutor": 3,
+        "TUTOR": 3,
+        "Student": 4,
+        "STUDENT": 4
+    };
+
     const rolePieData =
         Array.isArray(roleDistributionData) && roleDistributionData.length
             ? roleDistributionData
-                .map((item) => ({
-                    name: item.name || item.Name || "",
-                    y: Number(item.y ?? item.Y ?? 0),
-                    color: item.color || item.Color || undefined,
-                }))
+                .map((item) => {
+                    const name = item.name || item.Name || "";
+                    return {
+                        name: name,
+                        y: Number(item.y ?? item.Y ?? 0),
+                        color: item.color || item.Color || roleColors[name] || "#3b82f6",
+                    };
+                })
                 .filter((item) => item.name && Number.isFinite(item.y) && item.y > 0)
-            : [];
-
-    const rawFacultyData =
-        Array.isArray(facultyDistributionData) && facultyDistributionData.length
-            ? facultyDistributionData
-                .map((item) => ({
-                    name: item.name || item.Name || "",
-                    y: Number(item.y ?? item.Y ?? 0),
-                    color: item.color || item.Color || undefined,
-                }))
-                .filter((item) => item.name)
+                .sort((a, b) => (roleOrder[a.name] || 99) - (roleOrder[b.name] || 99))
             : [
-                { name: "Faculty of Computing", y: 28, color: "#38bdf8" },
-                { name: "Faculty of Engineering", y: 23, color: "#8b5cf6" }
+                { name: "Super Admin", y: 2, color: "#6366f1" },
+                { name: "Admin", y: 5, color: "#06b6d4" },
+                { name: "Tutor", y: 21, color: "#8b5cf6" },
+                { name: "Student", y: 1, color: "#10b981" }
             ];
-
-    const facultyChartData = rawFacultyData.map(d => ({
-        name: d.name,
-        y: d.y,
-        color: d.color || (d.name.toLowerCase().includes("comput") ? "#38bdf8" : (d.name.toLowerCase().includes("engin") ? "#8b5cf6" : "#10b981"))
-    }));
 
     if (typeof Highcharts === "undefined") {
         renderFallbackRolePie(rolePieData);
@@ -112,7 +123,7 @@ function initCharts(roleDistributionData, facultyDistributionData) {
         }
     }
 
-    /* ── 1. Pie Chart — Role Distribution ────────────────────────── */
+    /* ── 1. Pie / Donut Chart — Role Distribution ────────────────────────── */
     const pieEl = document.getElementById("hc-pie-chart");
     if (pieEl) {
         destroyHC("hc-pie-chart");
@@ -120,21 +131,26 @@ function initCharts(roleDistributionData, facultyDistributionData) {
             chart: {
                 type: "pie",
                 height: 260,
-                margin: [0, 0, 20, -100],
                 spacing: [10, 10, 10, 10],
             },
             title: { text: null },
+            tooltip: {
+                backgroundColor: "#ffffff",
+                borderColor: "#e2e8f0",
+                borderRadius: 10,
+                shadow: true,
+                style: { color: "#0f172a", fontSize: "12px" },
+                pointFormat: "<b>{point.name}</b>: {point.y} users (<b>{point.percentage:.1f}%</b>)"
+            },
             plotOptions: {
                 pie: {
-                    innerSize: "60%" /* donut style */,
+                    innerSize: "62%" /* modern donut style */,
                     allowPointSelect: true,
                     cursor: "pointer",
-                    borderWidth: 0,
+                    borderWidth: 2,
+                    borderColor: "#ffffff",
                     dataLabels: {
-                        enabled: true,
-                        format: "<b>{point.name}</b><br>{point.percentage:.1f}%",
-                        style: { color: "#4b5563", fontSize: "11px", fontWeight: "500" },
-                        distance: 18,
+                        enabled: false, /* Clean donut chart - prevents text overlapping legend */
                     },
                     showInLegend: true,
                 },
@@ -144,11 +160,14 @@ function initCharts(roleDistributionData, facultyDistributionData) {
                 align: "right",
                 verticalAlign: "middle",
                 itemMarginBottom: 8,
-                symbolRadius: 2,
+                symbolRadius: 4,
+                itemStyle: { color: "#334155", fontSize: "12px", fontWeight: "600" },
+                itemHoverStyle: { color: "#0f172a" },
+                labelFormat: "{name} ({percentage:.1f}%)",
             },
             series: [
                 {
-                    name: "Users",
+                    name: "Roles",
                     colorByPoint: true,
                     data: rolePieData,
                 },
@@ -156,9 +175,13 @@ function initCharts(roleDistributionData, facultyDistributionData) {
             responsive: {
                 rules: [
                     {
-                        condition: { maxWidth: 100 },
+                        condition: { maxWidth: 350 },
                         chartOptions: {
-                            legend: { enabled: false },
+                            legend: {
+                                layout: "horizontal",
+                                align: "center",
+                                verticalAlign: "bottom",
+                            },
                         },
                     },
                 ],
@@ -173,8 +196,8 @@ function initCharts(roleDistributionData, facultyDistributionData) {
 
         let categories = ["2022-2023", "2023-2024", "2024-2025", "2025-2026", "2026-2027"];
         let seriesData = [
-            { name: "Faculty of Computing (FC)", color: "#38bdf8", data: [9, 8, 9, 8, 9] },
-            { name: "Faculty of Engineering (FE)", color: "#8b5cf6", data: [8, 7, 8, 7, 7] }
+            { name: "Faculty of Computing (FC)", color: "#38bdf8", data: [0, 0, 0, 0, 1] },
+            { name: "Faculty of Engineering (FE)", color: "#8b5cf6", data: [0, 0, 0, 0, 0] }
         ];
 
         if (facultyDistributionData && (facultyDistributionData.categories || facultyDistributionData.Categories)) {
@@ -207,18 +230,28 @@ function initCharts(roleDistributionData, facultyDistributionData) {
             chart: {
                 type: "column",
                 height: 260,
+                spacing: [10, 10, 10, 10],
             },
             title: { text: null },
+            tooltip: {
+                shared: true,
+                backgroundColor: "#ffffff",
+                borderColor: "#e2e8f0",
+                borderRadius: 10,
+                shadow: true,
+                style: { color: "#0f172a", fontSize: "12px" },
+                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y} students</b><br/>'
+            },
             xAxis: {
                 categories: categories,
-                labels: { style: { color: "#1e293b", fontSize: "12px", fontWeight: "600" } },
+                labels: { style: { color: "#475569", fontSize: "11px", fontWeight: "600" } },
                 lineColor: "rgba(0,0,0,0.08)",
                 tickColor: "rgba(0,0,0,0.08)",
             },
             yAxis: {
                 min: 0,
                 title: { text: "Students", style: { color: "#64748b", fontSize: "11px" } },
-                labels: { style: { color: "#4b5563", fontSize: "11px" } },
+                labels: { style: { color: "#64748b", fontSize: "11px" } },
                 gridLineColor: "rgba(0,0,0,0.05)",
                 gridLineDashStyle: "ShortDash",
             },
@@ -227,17 +260,18 @@ function initCharts(roleDistributionData, facultyDistributionData) {
                 align: "center",
                 verticalAlign: "bottom",
                 layout: "horizontal",
-                itemStyle: { color: "#334155", fontSize: "12px", fontWeight: "600" }
+                itemStyle: { color: "#334155", fontSize: "12px", fontWeight: "600" },
+                itemHoverStyle: { color: "#0f172a" }
             },
             plotOptions: {
                 column: {
                     borderRadius: 6,
                     borderWidth: 0,
-                    groupPadding: 0.15,
+                    groupPadding: 0.18,
                     pointPadding: 0.05,
                     dataLabels: { 
                         enabled: true,
-                        style: { fontSize: "11px", fontWeight: "bold", color: "#1e293b" }
+                        style: { fontSize: "11px", fontWeight: "700", color: "#1e293b", textOutline: "none" }
                     },
                 },
             },

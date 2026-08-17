@@ -93,6 +93,69 @@
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         }
 
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px;
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
+
     @@media print {
         body * {
             visibility: hidden;
@@ -130,19 +193,27 @@
     }
 </style>
 
+@if (isAdmSemesterDropdownOpen || isAdmMajorDropdownOpen || isAdmStatusDropdownOpen || isPaySemesterDropdownOpen || isPayMethodDropdownOpen || isPayStatusDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-4 mt-2 no-print">
     <div class="d-flex align-items-center">
-        <div class="bg-primary rounded p-2 me-3 shadow-sm">
-            <i class="bi bi-file-earmark-bar-graph fs-5 text-white"></i>
+        <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+            <i class="bi bi-file-earmark-bar-graph fs-5" style="color: #5A4FCF;"></i>
         </div>
-        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">System Reports</h4>
+        <div>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">System Reports</h4>
+            <small class="text-secondary">ကျောင်းအပ်နှံမှုနှင့် ငွေပေးချေမှုဆိုင်ရာ အစီရင်ခံစာများ</small>
+        </div>
     </div>
 
     <div>
-        <button class="btn btn-secondary btn-action me-2" @onclick="PrintReport">
+        <button class="btn btn-secondary btn-action me-2 fw-bold" @onclick="PrintReport">
             <i class="bi bi-printer me-1"></i> Print
         </button>
-        <button class="btn btn-success btn-action" @onclick="@(ActiveTab == 1 ? ExportAdmissionToExcel : ExportPaymentToExcel)">
+        <button class="btn btn-success btn-action fw-bold" @onclick="@(ActiveTab == 1 ? ExportAdmissionToExcel : ExportPaymentToExcel)">
             <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
         </button>
     </div>
@@ -151,12 +222,12 @@
 <div class="material-card mb-4 no-print">
     <ul class="nav nav-tabs nav-tabs-custom border-0 d-flex">
         <li class="nav-item">
-            <a class="nav-link @(ActiveTab == 1 ? "active" : "")" @onclick="() => ActiveTab = 1">
+            <a class="nav-link fw-bold @(ActiveTab == 1 ? "active" : "")" @onclick="() => ActiveTab = 1">
                 <i class="bi bi-person-check me-2"></i> Admission Report
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link @(ActiveTab == 2 ? "active" : "")" @onclick="() => ActiveTab = 2">
+            <a class="nav-link fw-bold @(ActiveTab == 2 ? "active" : "")" @onclick="() => ActiveTab = 2">
                 <i class="bi bi-wallet2 me-2"></i> Payment Report
             </a>
         </li>
@@ -165,47 +236,113 @@
 
 @if (ActiveTab == 1)
 {
-    <div class="material-card p-4 mb-4 no-print">
-        <div class="row g-3 align-items-center">
-            <div class="col-md-4">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Date Range Filter</label>
+    <div class="material-card p-4 mb-4 no-print" style="position: relative; z-index: 1045;">
+        <div class="row g-3 align-items-end">
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Date Range Filter</label>
                 <div class="d-flex align-items-center gap-2">
-                    <input type="date" class="form-control material-input" @bind="AdmFromDate" />
-                    <span class="text-muted fw-bold">~</span>
-                    <input type="date" class="form-control material-input" @bind="AdmToDate" />
+                    <input type="date" class="form-control material-input flex-fill" style="padding: 0.55rem 0.6rem; font-size: 0.85rem;" @bind="AdmFromDate" />
+                    <span class="fw-bold" style="color: #000000 !important;">~</span>
+                    <input type="date" class="form-control material-input flex-fill" style="padding: 0.55rem 0.6rem; font-size: 0.85rem;" @bind="AdmToDate" />
                 </div>
             </div>
-            <div class="col-md-2">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Academic Year</label>
-                <select class="form-select material-input" @bind="AdmSelectedYear">
-                    <option value="All">All Years</option>
-                    @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+
+            <!-- Semester Filter (was Academic Year) -->
+            <div class="col-xl-2 col-lg-2 col-md-3">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Semester</label>
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="ToggleAdmSemesterDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
+                        <span class="text-truncate">@(AdmSelectedYear == "All" ? "All Semesters" : AdmSelectedYear)</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isAdmSemesterDropdownOpen)
                     {
-                        <option value="@lvl">@lvl</option>
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(AdmSelectedYear == "All" ? "selected" : "")" 
+                                 @onclick='() => SelectAdmSemester("All")'>
+                                <span>All Semesters</span>
+                                @if (AdmSelectedYear == "All") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                            {
+                                var currentLvl = lvl!;
+                                <div class="dropdown-item-custom @(AdmSelectedYear == currentLvl ? "selected" : "")" 
+                                     @onclick='() => SelectAdmSemester(currentLvl)'>
+                                    <span>@currentLvl</span>
+                                    @if (AdmSelectedYear == currentLvl) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
                     }
-                </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Major</label>
-                <select class="form-select material-input" @bind="AdmSelectedMajor">
-                    <option value="All">All Majors</option>
-                    @foreach (var maj in RawStudentList.Select(s => s.Major).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+
+            <!-- Major Filter -->
+            <div class="col-xl-2 col-lg-2 col-md-3">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Major</label>
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="ToggleAdmMajorDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
+                        <span class="text-truncate">@(AdmSelectedMajor == "All" ? "All Majors" : AdmSelectedMajor)</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isAdmMajorDropdownOpen)
                     {
-                        <option value="@maj">@maj</option>
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(AdmSelectedMajor == "All" ? "selected" : "")" 
+                                 @onclick='() => SelectAdmMajor("All")'>
+                                <span>All Majors</span>
+                                @if (AdmSelectedMajor == "All") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var maj in RawStudentList.Select(s => s.Major).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                            {
+                                var currentMaj = maj!;
+                                <div class="dropdown-item-custom @(AdmSelectedMajor == currentMaj ? "selected" : "")" 
+                                     @onclick='() => SelectAdmMajor(currentMaj)'>
+                                    <span>@currentMaj</span>
+                                    @if (AdmSelectedMajor == currentMaj) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
                     }
-                </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Status</label>
-                <select class="form-select material-input" @bind="AdmSelectedStatus">
-                    <option value="All">All</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Rejected">Rejected</option>
-                </select>
+
+            <!-- Status Filter -->
+            <div class="col-xl-2 col-lg-2 col-md-6">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Status</label>
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="ToggleAdmStatusDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
+                        <span class="text-truncate">@(AdmSelectedStatus == "All" ? "All" : AdmSelectedStatus)</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isAdmStatusDropdownOpen)
+                    {
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(AdmSelectedStatus == "All" ? "selected" : "")" 
+                                 @onclick='() => SelectAdmStatus("All")'>
+                                <span>All</span>
+                                @if (AdmSelectedStatus == "All") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var st in new[] { "Approved", "Pending", "Rejected" })
+                            {
+                                <div class="dropdown-item-custom @(AdmSelectedStatus == st ? "selected" : "")" 
+                                     @onclick='() => SelectAdmStatus(st)'>
+                                    <span>@st</span>
+                                    @if (AdmSelectedStatus == st) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="d-block small mb-2 fw-bold text-uppercase">&nbsp;</label>
+
+            <div class="col-xl-2 col-lg-2 col-md-6">
                 <div class="d-flex gap-2">
                     <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ApplyAdmissionFilter" title="Search">
                         <i class="bi bi-search"></i>
@@ -223,7 +360,7 @@
         {
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-muted mt-2">Data များ ဆွဲယူနေပါသည်...</div>
+                <div class="mt-2 fw-bold" style="color: #000000 !important; font-size: 0.95rem;">Admission Report ဒေတာများကို ဆွဲယူနေပါသည်...</div>
             </div>
         }
         else
@@ -232,13 +369,13 @@
                 <table class="table custom-table align-middle">
                     <thead>
                         <tr>
-                            <th class="text-center">No.</th>
-                            <th>Admission Date</th>
-                            <th>Roll No</th>
-                            <th>Name</th>
-                            <th>Major</th>
-                            <th>Academic Year</th>
-                            <th class="text-center">Status</th>
+                            <th class="text-center fw-bold">No.</th>
+                            <th class="fw-bold">Admission Date</th>
+                            <th class="fw-bold">Roll No</th>
+                            <th class="fw-bold">Name</th>
+                            <th class="fw-bold">Major</th>
+                            <th class="fw-bold">Semester</th>
+                            <th class="text-center fw-bold">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -250,13 +387,13 @@
                             var currentStatus = string.IsNullOrEmpty(s.Status) ? "Pending" : s.Status;
                             <tr style="font-size: 0.9rem;">
                                 <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
-                                <td><i class="bi bi-calendar-check me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
-                                <td class="fw-bold text-info">@s.RollNo</td>
+                                <td class="fw-bold text-white"><i class="bi bi-calendar-check me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
+                                <td class="fw-bold text-info"><code class="text-info fw-bold">@s.RollNo</code></td>
                                 <td class="text-white fw-bold">@s.StudentNameMm</td>
-                                <td>@s.Major</td>
-                                <td><span class="badge bg-primary bg-opacity-25 text-primary border border-primary px-2 py-1" style="border-radius: 6px;">@s.AcademicYearLevel</span></td>
+                                <td class="fw-bold text-white">@s.Major</td>
+                                <td><span class="badge rounded-pill fw-bold" style="background: #4F46E5; color: #ffffff !important; font-size: 0.82rem; padding: 6px 12px; letter-spacing: 0.3px;">@s.AcademicYearLevel</span></td>
                                 <td class="text-center">
-                                    <span class="badge px-2 py-1 @(currentStatus == "Approved" ? "bg-success" : currentStatus == "Rejected" ? "bg-danger" : "bg-warning text-dark")" style="border-radius: 6px;">
+                                    <span class="badge px-2 py-1 fw-bold @(currentStatus == "Approved" ? "bg-success text-white" : currentStatus == "Rejected" ? "bg-danger text-white" : "bg-warning text-dark")" style="border-radius: 6px;">
                                         @currentStatus
                                     </span>
                                 </td>
@@ -264,11 +401,11 @@
                             count++;
                         }
 
-                        <tr style="background-color: #1a1a27; font-size: 0.9rem;">
+                        <tr style="background-color: #1a1a27; font-size: 0.9rem;" class="fw-bold">
                             <td colspan="7" class="text-center py-3">
-                                <span class="me-4 text-info"><i class="bi bi-people me-1"></i> Total Registrations: <strong>@TotalRegistrations</strong></span>
-                                <span class="me-4 text-success"><i class="bi bi-check-circle me-1"></i> Approved: <strong>@TotalApprovedReg</strong></span>
-                                <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Rejected: <strong>@TotalRejectedReg</strong></span>
+                                <span class="me-4 text-info fw-bold"><i class="bi bi-people me-1"></i> Total Registrations: <strong class="text-white">@TotalRegistrations</strong></span>
+                                <span class="me-4 text-success fw-bold"><i class="bi bi-check-circle me-1"></i> Approved: <strong class="text-white">@TotalApprovedReg</strong></span>
+                                <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i> Rejected: <strong class="text-white">@TotalRejectedReg</strong></span>
                             </td>
                         </tr>
                     </tbody>
@@ -283,46 +420,112 @@
 
 @if (ActiveTab == 2)
 {
-    <div class="material-card p-4 mb-4 no-print">
-        <div class="row g-3 align-items-center">
-            <div class="col-md-4">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Date Range Filter</label>
+    <div class="material-card p-4 mb-4 no-print" style="position: relative; z-index: 1045;">
+        <div class="row g-3 align-items-end">
+            <div class="col-xl-4 col-lg-4 col-md-6">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Date Range Filter</label>
                 <div class="d-flex align-items-center gap-2">
-                    <input type="date" class="form-control material-input" @bind="PayFromDate" />
-                    <span class="text-muted fw-bold">~</span>
-                    <input type="date" class="form-control material-input" @bind="PayToDate" />
+                    <input type="date" class="form-control material-input flex-fill" style="padding: 0.55rem 0.6rem; font-size: 0.85rem;" @bind="PayFromDate" />
+                    <span class="fw-bold" style="color: #000000 !important;">~</span>
+                    <input type="date" class="form-control material-input flex-fill" style="padding: 0.55rem 0.6rem; font-size: 0.85rem;" @bind="PayToDate" />
                 </div>
             </div>
-            <div class="col-md-2">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Academic Year</label>
-                <select class="form-select material-input" @bind="PaySelectedYear">
-                    <option value="All">All Years</option>
-                    @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+
+            <!-- Semester Filter -->
+            <div class="col-xl-2 col-lg-2 col-md-3">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Semester</label>
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="TogglePaySemesterDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
+                        <span class="text-truncate">@(PaySelectedYear == "All" ? "All Semesters" : PaySelectedYear)</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isPaySemesterDropdownOpen)
                     {
-                        <option value="@lvl">@lvl</option>
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(PaySelectedYear == "All" ? "selected" : "")" 
+                                 @onclick='() => SelectPaySemester("All")'>
+                                <span>All Semesters</span>
+                                @if (PaySelectedYear == "All") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                            {
+                                var currentLvl = lvl!;
+                                <div class="dropdown-item-custom @(PaySelectedYear == currentLvl ? "selected" : "")" 
+                                     @onclick='() => SelectPaySemester(currentLvl)'>
+                                    <span>@currentLvl</span>
+                                    @if (PaySelectedYear == currentLvl) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
                     }
-                </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Payment Method</label>
-                <select class="form-select material-input" @bind="PaySelectedMethod">
-                    <option value="All">All Methods</option>
-                    <option value="KBZPay">KBZPay</option>
-                    <option value="WavePay">WavePay</option>
-                    <option value="Cash">Cash</option>
-                </select>
+
+            <!-- Payment Method Filter -->
+            <div class="col-xl-2 col-lg-2 col-md-3">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Payment Method</label>
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="TogglePayMethodDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
+                        <span class="text-truncate">@(PaySelectedMethod == "All" ? "All Methods" : PaySelectedMethod)</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isPayMethodDropdownOpen)
+                    {
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(PaySelectedMethod == "All" ? "selected" : "")" 
+                                 @onclick='() => SelectPayMethod("All")'>
+                                <span>All Methods</span>
+                                @if (PaySelectedMethod == "All") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var meth in new[] { "KBZPay", "WavePay", "Cash" })
+                            {
+                                <div class="dropdown-item-custom @(PaySelectedMethod == meth ? "selected" : "")" 
+                                     @onclick='() => SelectPayMethod(meth)'>
+                                    <span>@meth</span>
+                                    @if (PaySelectedMethod == meth) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="text-muted small mb-2 fw-bold text-uppercase">Status</label>
-                <select class="form-select material-input" @bind="PaySelectedStatus">
-                    <option value="All">All</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Rejected">Rejected</option>
-                </select>
+
+            <!-- Status Filter -->
+            <div class="col-xl-2 col-lg-2 col-md-6">
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Status</label>
+                <div class="custom-dropdown-container">
+                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                            @onclick="TogglePayStatusDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
+                        <span class="text-truncate">@(PaySelectedStatus == "All" ? "All" : PaySelectedStatus)</span>
+                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                    </button>
+
+                    @if (isPayStatusDropdownOpen)
+                    {
+                        <div class="custom-dropdown-menu shadow">
+                            <div class="dropdown-item-custom @(PaySelectedStatus == "All" ? "selected" : "")" 
+                                 @onclick='() => SelectPayStatus("All")'>
+                                <span>All</span>
+                                @if (PaySelectedStatus == "All") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            @foreach (var st in new[] { "Approved", "Pending", "Rejected" })
+                            {
+                                <div class="dropdown-item-custom @(PaySelectedStatus == st ? "selected" : "")" 
+                                 @onclick='() => SelectPayStatus(st)'>
+                                    <span>@st</span>
+                                    @if (PaySelectedStatus == st) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="d-block small mb-2 fw-bold text-uppercase">&nbsp;</label>
+
+            <div class="col-xl-2 col-lg-2 col-md-6">
                 <div class="d-flex gap-2">
                     <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ApplyPaymentFilter" title="Search">
                         <i class="bi bi-search"></i>
@@ -340,7 +543,7 @@
         {
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-muted mt-2">Data များ ဆွဲယူနေပါသည်...</div>
+                <div class="mt-2 fw-bold" style="color: #000000 !important; font-size: 0.95rem;">Payment Report ဒေတာများကို ဆွဲယူနေပါသည်...</div>
             </div>
         }
         else
@@ -349,13 +552,13 @@
                 <table class="table custom-table align-middle">
                     <thead>
                         <tr>
-                            <th class="text-center">No.</th>
-                            <th>Date</th>
-                            <th>Roll No</th>
-                            <th>Name</th>
-                            <th>Method</th>
-                            <th class="text-end">Amount Paid</th>
-                            <th class="text-center">Status</th>
+                            <th class="text-center fw-bold">No.</th>
+                            <th class="fw-bold">Date</th>
+                            <th class="fw-bold">Roll No</th>
+                            <th class="fw-bold">Name</th>
+                            <th class="fw-bold">Method</th>
+                            <th class="text-end fw-bold">Amount Paid</th>
+                            <th class="text-center fw-bold">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -368,16 +571,16 @@
                             totalAmount += p.AmountPaid;
                             <tr style="font-size: 0.9rem;">
                                 <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
-                                <td><i class="bi bi-calendar-event me-2 text-muted"></i>@p.PaymentDate.ToString("dd-MM-yyyy")</td>
-                                <td class="fw-bold text-info">@p.RollNo</td>
+                                <td class="fw-bold text-white"><i class="bi bi-calendar-event me-2 text-muted"></i>@p.PaymentDate.ToString("dd-MM-yyyy")</td>
+                                <td class="fw-bold text-info"><code class="text-info fw-bold">@p.RollNo</code></td>
                                 <td class="text-white fw-bold">
                                     @p.StudentName
-                                    <span class="d-block text-muted fw-normal mt-1" style="font-size: 0.8rem;">@p.Major | @p.AcademicYear</span>
+                                    <span class="d-block text-muted fw-bold mt-1" style="font-size: 0.8rem;">@p.Major | @p.AcademicYear</span>
                                 </td>
-                                <td>@p.PaymentMethod</td>
-                                <td class="text-end text-success fw-bold">@p.AmountPaid.ToString("N0") <span class="text-muted fw-normal" style="font-size: 0.8rem;">MMK</span></td>
+                                <td class="fw-bold text-white">@p.PaymentMethod</td>
+                                <td class="text-end text-success fw-bold">@p.AmountPaid.ToString("N0") <span class="text-muted fw-bold" style="font-size: 0.8rem;">MMK</span></td>
                                 <td class="text-center">
-                                    <span class="badge px-2 py-1 @(p.Status == "Approved" ? "bg-success" : p.Status == "Rejected" ? "bg-danger" : "bg-warning text-dark")" style="border-radius: 6px;">
+                                    <span class="badge px-2 py-1 fw-bold @(p.Status == "Approved" ? "bg-success text-white" : p.Status == "Rejected" ? "bg-danger text-white" : "bg-warning text-dark")" style="border-radius: 6px;">
                                         @p.Status
                                     </span>
                                 </td>
@@ -385,15 +588,15 @@
                             count++;
                         }
 
-                        <tr style="background-color: #1a1a27; font-size: 0.9rem;">
+                        <tr style="background-color: #1a1a27; font-size: 0.9rem;" class="fw-bold">
                             <td colspan="4" class="py-3 ps-4">
-                                <span class="me-4 text-info"><i class="bi bi-wallet2 me-1"></i> Total: <strong>@TotalPayments</strong></span>
-                                <span class="me-4 text-success"><i class="bi bi-check-circle me-1"></i> Approved: <strong>@TotalApprovedPay</strong></span>
-                                <span class="text-danger"><i class="bi bi-x-circle me-1"></i> Rejected: <strong>@TotalRejectedPay</strong></span>
+                                <span class="me-4 text-info fw-bold"><i class="bi bi-wallet2 me-1"></i> Total: <strong class="text-white">@TotalPayments</strong></span>
+                                <span class="me-4 text-success fw-bold"><i class="bi bi-check-circle me-1"></i> Approved: <strong class="text-white">@TotalApprovedPay</strong></span>
+                                <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i> Rejected: <strong class="text-white">@TotalRejectedPay</strong></span>
                             </td>
                             <td colspan="3" class="text-end py-3 pe-4">
                                 <span class="text-white fw-bold text-uppercase me-2" style="font-size: 0.8rem; letter-spacing: 1px;">Total Revenue:</span>
-                                <span class="text-success fw-bold fs-5">@TotalRevenue.ToString("N0") <span class="text-muted" style="font-size: 0.8rem;">MMK</span></span>
+                                <span class="text-success fw-bold fs-5">@TotalRevenue.ToString("N0") <span class="text-muted fw-bold" style="font-size: 0.8rem;">MMK</span></span>
                             </td>
                         </tr>
                     </tbody>

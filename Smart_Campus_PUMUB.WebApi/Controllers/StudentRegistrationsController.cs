@@ -152,7 +152,9 @@ public class StudentRegistrationsController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] string? level = null)
+        [FromQuery] string? level = null,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null)
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
@@ -183,6 +185,18 @@ public class StudentRegistrationsController : ControllerBase
         if (!string.IsNullOrWhiteSpace(level) && !level.Equals("All", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(s => s.AcademicYearLevel == level);
+        }
+
+        if (fromDate.HasValue)
+        {
+            var fDate = fromDate.Value.Date;
+            query = query.Where(s => s.CreatedDatetime >= fDate);
+        }
+
+        if (toDate.HasValue)
+        {
+            var tDate = toDate.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(s => s.CreatedDatetime <= tDate);
         }
 
         var totalCount = query.Count();
@@ -423,23 +437,119 @@ public class StudentRegistrationsController : ControllerBase
         }
 
         // =========================================================
-        // Semester Progression Validation
+        // Semester & Student Record Lookup
         // =========================================================
         var studentRecord = _db.Students
             .AsNoTracking()
             .FirstOrDefault(x => x.UserId == request.UserId && (x.IsDelete == false || x.IsDelete == null));
 
+        var targetSemester = _db.Semesters
+            .AsNoTracking()
+            .FirstOrDefault(x => x.SemesterName == request.academic_year_level && x.IsDelete == false);
+
+        int targetSeq = targetSemester?.Sequence ?? 1;
+
+        // Check if student has FAILED this target semester
+        bool isSemesterFailed = false;
+        if (studentRecord != null)
+        {
+            var semResults = new string?[]
+            {
+                studentRecord.Sem1_Result, studentRecord.Sem2_Result, studentRecord.Sem3_Result,
+                studentRecord.Sem4_Result, studentRecord.Sem5_Result, studentRecord.Sem6_Result,
+                studentRecord.Sem7_Result, studentRecord.Sem8_Result, studentRecord.Sem9_Result
+            };
+
+            if (targetSeq >= 1 && targetSeq <= 9)
+            {
+                var semRes = semResults[targetSeq - 1];
+                if (string.Equals(semRes, "Fail", StringComparison.OrdinalIgnoreCase))
+                {
+                    isSemesterFailed = true;
+                }
+            }
+        }
+
+        // Also check if any completed past registration of this user for this semester was graded and failed
+        if (!isSemesterFailed)
+        {
+            var pastUserRegIds = _db.StudentRegistrations
+                .AsNoTracking()
+                .Where(x => (x.IsDelete == false || x.IsDelete == null) &&
+                            x.AcademicYearLevel == request.academic_year_level &&
+                            (isNewStudent ? x.NewStudentAccId == request.NewStudentAccId : x.UserId == request.UserId))
+                .Select(x => x.RegistrationId)
+                .ToList();
+
+            if (pastUserRegIds.Any())
+            {
+                var latestRegId = pastUserRegIds.Last();
+                var pastResults = _db.StudentSubjectResults
+                    .AsNoTracking()
+                    .Where(r => r.RegistrationId == latestRegId && r.SubjectId.HasValue && r.SubjectId > 0)
+                    .ToList();
+
+                if (pastResults.Any() && pastResults.All(r => !string.IsNullOrEmpty(r.Grade)))
+                {
+                    int total = pastResults.Count;
+                    int pass = pastResults.Count(r => r.IsPass);
+                    if (total > 0 && pass <= total / 2.0)
+                    {
+                        isSemesterFailed = true;
+                    }
+                }
+            }
+        }
+
+        // =========================================================
+        // Duplicate Registration Validation
+        // =========================================================
+        var existingRegQuery = _db.StudentRegistrations
+            .AsNoTracking()
+            .Where(x => (x.IsDelete == false || x.IsDelete == null) &&
+                        x.AcademicYearRange == request.academic_year_range &&
+                        x.AcademicYearLevel == request.academic_year_level &&
+                        (x.Status == null || x.Status != "Rejected"));
+
+        var existingUserReg = isNewStudent
+            ? existingRegQuery.Where(x => x.NewStudentAccId == request.NewStudentAccId)
+            : existingRegQuery.Where(x => x.UserId == request.UserId);
+
+        // If the student failed this semester, they are allowed to repeat/re-register!
+        // Only block if they haven't failed (i.e. already enrolled and pending/approved/passed).
+        if (!isSemesterFailed && existingUserReg.Any())
+        {
+            return BadRequest(new StudentRegistrationResponseModel
+            {
+                IsSuccess = false,
+                Message = $"သင်သည် {request.academic_year_range} ပညာသင်နှစ်အတွက် {request.academic_year_level} သို့ ကျောင်းအပ်နှံထားပြီးဖြစ်ပါသည်။ ထပ်မံကျောင်းအပ်၍ မရပါ။"
+            });
+        }
+
+        // RollNo validation (Same Roll No cannot be registered by ANOTHER person in the same semester)
+        if (!string.IsNullOrWhiteSpace(request.roll_no))
+        {
+            var existingRollNoReg = isNewStudent
+                ? existingRegQuery.Where(x => x.RollNo == request.roll_no && x.NewStudentAccId != request.NewStudentAccId)
+                : existingRegQuery.Where(x => x.RollNo == request.roll_no && x.UserId != request.UserId);
+
+            if (existingRollNoReg.Any())
+            {
+                return BadRequest(new StudentRegistrationResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"သင်ဖြည့်သွင်းထားသော ခုံအမှတ် (Roll No - {request.roll_no}) သည် ဤ Semester တွင် အခြားသူတစ်ဦးမှ အသုံးပြုထားပြီးဖြစ်ပါသည်။"
+                });
+            }
+        }
+
+        // =========================================================
+        // Semester Progression Validation
+        // =========================================================
         if (studentRecord != null && !string.IsNullOrWhiteSpace(request.academic_year_level))
         {
-            // Find the target semester in the DB to get its Sequence number
-            var targetSemester = _db.Semesters
-                .AsNoTracking()
-                .FirstOrDefault(x => x.SemesterName == request.academic_year_level && x.IsDelete == false);
-
             if (targetSemester?.Sequence != null)
             {
-                int targetSeq = targetSemester.Sequence.Value;
-
                 // Collect results array; index 0 = Sem1, index 8 = Sem9
                 var semResults = new string?[]
                 {
@@ -492,7 +602,7 @@ public class StudentRegistrationsController : ControllerBase
                     }
                     else
                     {
-                        reason = $"Semester {allowedSeq} ကို ဦးစွာ Pass ရပမည်မဟုတ်မနေ တင်သွင်းရမည်ဖြစ်ပြီး Semester {targetSeq} ကို ကျော်လိုက်၍ မရပါ။";
+                        reason = $"Semester {allowedSeq} ကို ဦးစွာ Pass ရမည်ဖြစ်ပြီး Semester {targetSeq} ကို ကျော်လိုက်၍ မရပါ။";
                     }
 
                     return BadRequest(new StudentRegistrationResponseModel
@@ -655,6 +765,38 @@ public class StudentRegistrationsController : ControllerBase
 
         _db.StudentRegistrations.Add(newReg);
         int result = _db.SaveChanges();
+
+        if (result > 0 && !string.IsNullOrWhiteSpace(request.selected_subject_ids))
+        {
+            int? realStudentId = null;
+            if (newReg.UserId.HasValue)
+            {
+                var studentRec = _db.Students.FirstOrDefault(s => s.UserId == newReg.UserId.Value);
+                realStudentId = studentRec?.StudentId;
+            }
+
+            var subIdStrings = request.selected_subject_ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var subIdStr in subIdStrings)
+            {
+                if (int.TryParse(subIdStr, out int subId) && subId > 0)
+                {
+                    var subjectObj = _db.Subjects.FirstOrDefault(s => s.SubjectId == subId);
+                    var newResult = new StudentSubjectResult
+                    {
+                        RegistrationId = newReg.RegistrationId,
+                        StudentId = realStudentId,
+                        SubjectId = subId,
+                        SemesterId = subjectObj?.SemesterId,
+                        Grade = null,
+                        IsPass = false,
+                        CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                        CreatedBy = string.IsNullOrEmpty(request.created_by) ? "System" : request.created_by
+                    };
+                    _db.StudentSubjectResults.Add(newResult);
+                }
+            }
+            _db.SaveChanges();
+        }
 
         return StatusCode(201, new StudentRegistrationResponseModel
         {

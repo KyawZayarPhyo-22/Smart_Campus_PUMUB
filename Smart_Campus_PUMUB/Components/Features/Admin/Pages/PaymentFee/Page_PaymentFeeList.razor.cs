@@ -100,12 +100,17 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
         {
             IsLoading = true;
             ErrorMessage = "";
+            StateHasChanged();
             try
             {
-                var response = await HttpClientService.ExecuteAsync<PagedResult<PaymentFeeModel>>(
+                var delayTask = Task.Delay(1000);
+                var fetchTask = HttpClientService.ExecuteAsync<PagedResult<PaymentFeeModel>>(
                     $"payment-fees/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                     EnumHttpMethod.Get
                 );
+
+                await Task.WhenAll(fetchTask, delayTask);
+                var response = await fetchTask;
                 if (response != null)
                 {
                     FeeList = response.Items;
@@ -116,7 +121,11 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.PaymentFee
             {
                 ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
             }
-            finally { IsLoading = false; }
+            finally 
+            { 
+                IsLoading = false; 
+                StateHasChanged();
+            }
         }
 
         private void OpenDeleteModal(PaymentFeeModel fee)

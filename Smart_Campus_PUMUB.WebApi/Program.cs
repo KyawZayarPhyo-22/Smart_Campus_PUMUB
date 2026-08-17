@@ -61,6 +61,8 @@ builder.Services.AddDbContext<SmartCampusDbContext>(opt => opt.UseSqlServer(buil
 // Mail Service
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IFacultyDataScopeService, FacultyDataScopeService>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IGradeService, GradeService>();
 
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("Jwt").Bind(jwtSettings);

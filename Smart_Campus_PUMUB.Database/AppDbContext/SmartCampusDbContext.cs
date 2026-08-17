@@ -23,6 +23,8 @@ public partial class SmartCampusDbContext : DbContext
 
     public virtual DbSet<Department> Departments { get; set; }
 
+    public virtual DbSet<Grade> Grades { get; set; }
+
     public virtual DbSet<Faculty> Faculties { get; set; }
 
     public virtual DbSet<PaymentFee> PaymentFees { get; set; }
@@ -57,6 +59,9 @@ public partial class SmartCampusDbContext : DbContext
     public virtual DbSet<Major> Majors { get; set; }
     public virtual DbSet<RoleHierarchy> RoleHierarchies { get; set; }
 
+    public virtual DbSet<SubjectPrerequisite> SubjectPrerequisites { get; set; }
+    public virtual DbSet<StudentSubjectEnrollment> StudentSubjectEnrollments { get; set; }
+    public virtual DbSet<StudentSubjectResult> StudentSubjectResults { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -204,6 +209,11 @@ public partial class SmartCampusDbContext : DbContext
                 .HasForeignKey(d => d.FacultyId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Subject_Faculty");
+
+            entity.HasOne(d => d.Major).WithMany(p => p.Subjects)
+                .HasForeignKey(d => d.MajorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Subject_Major");
         });
 
         modelBuilder.Entity<Tutor>(entity =>
@@ -279,6 +289,25 @@ public partial class SmartCampusDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(d => d.ChildRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SubjectPrerequisite>(entity =>
+        {
+            entity.HasIndex(e => new { e.SubjectId, e.PrerequisiteSubjectId }, "UQ_Subject_Prereq").IsUnique();
+            entity.ToTable(t => t.HasCheckConstraint("CK_No_Self_Prereq", "[Subject_Id] <> [Prerequisite_Subject_Id]"));
+        });
+
+        modelBuilder.Entity<StudentSubjectEnrollment>(entity =>
+        {
+            entity.HasIndex(e => new { e.StudentId, e.SubjectId, e.SemesterId }, "UQ_Student_Subject_Semester").IsUnique();
+        });
+
+        modelBuilder.Entity<StudentSubjectResult>(entity =>
+        {
+            entity.HasOne(d => d.Enrollment).WithOne(p => p.Result)
+                .HasForeignKey<StudentSubjectResult>(d => d.EnrollmentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Result_Enrollment");
         });
 
         OnModelCreatingPartial(modelBuilder);

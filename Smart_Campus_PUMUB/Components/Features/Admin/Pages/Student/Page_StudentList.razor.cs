@@ -34,8 +34,46 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private DateTime? FromDateInput { get; set; }
     private DateTime? ToDateInput { get; set; } = DateTime.Today;
 
+    // Custom Dropdown Open States
+    private bool isLevelDropdownOpen = false;
+    private List<SemesterModel> SemesterList { get; set; } = new();
+
+    private IEnumerable<string> AvailableSemesters
+    {
+        get
+        {
+            var apiSemesters = (SemesterList ?? new())
+                .Where(s => !string.IsNullOrWhiteSpace(s.SemesterName))
+                .Select(s => s.SemesterName!.Trim());
+
+            var dataSemesters = (StudentList ?? new())
+                .Where(s => !string.IsNullOrWhiteSpace(s.AcademicYearLevel))
+                .Select(s => s.AcademicYearLevel!.Trim());
+
+            return apiSemesters.Union(dataSemesters).Distinct();
+        }
+    }
+
+    private void ToggleLevelDropdown()
+    {
+        isLevelDropdownOpen = !isLevelDropdownOpen;
+    }
+
+    private void SelectLevel(string? level)
+    {
+        SelectedLevelInput = level ?? "All";
+        isLevelDropdownOpen = false;
+        // Search button ကို နှိပ်မှသာ Filter လုပ်မည် (Auto-search မလုပ်ပါ)
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isLevelDropdownOpen = false;
+    }
+
     private async Task ApplyFilter()
     {
+        CloseAllDropdowns();
         SearchTerm = SearchInput;
         SelectedLevel = SelectedLevelInput;
         FromDate = FromDateInput;
@@ -46,6 +84,7 @@ public partial class Page_StudentList : ComponentBase, IDisposable
 
     private async Task ResetFilter()
     {
+        CloseAllDropdowns();
         SearchInput = "";
         SelectedLevelInput = "All";
         FromDateInput = null;
@@ -94,7 +133,24 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     protected override async Task OnInitializedAsync()
     {
         NotifierService.OnRegistrationSubmitted += HandleRegistrationSubmitted;
+        await LoadSemesters();
         await LoadStudents();
+    }
+
+    private async Task LoadSemesters()
+    {
+        try
+        {
+            var response = await HttpClientService.ExecuteAsync<List<SemesterModel>>("semester", EnumHttpMethod.Get);
+            if (response != null)
+            {
+                SemesterList = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading semesters: {ex.Message}");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -121,25 +177,42 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private async Task LoadStudents()
     {
         IsLoading = true;
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<StudentRegistrationDataModel>>(
-                $"StudentRegistrations/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&level={Uri.EscapeDataString(SelectedLevel)}",
-                EnumHttpMethod.Get
-            );
+            var delayTask = Task.Delay(1000);
+            string fromDateStr = FromDate.HasValue ? $"&fromDate={FromDate.Value:yyyy-MM-dd}" : "";
+            string toDateStr = ToDate.HasValue ? $"&toDate={ToDate.Value:yyyy-MM-dd}" : "";
+
+            var url = $"StudentRegistrations/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&level={Uri.EscapeDataString(SelectedLevel)}{fromDateStr}{toDateStr}";
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<StudentRegistrationDataModel>>(url, EnumHttpMethod.Get);
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
 
             if (response != null)
             {
-                StudentList = response.Items;
+                StudentList = response.Items ?? new();
                 TotalCount = response.TotalCount;
-                TotalPages = response.TotalPages;
+                TotalPages = response.TotalPages < 1 ? 1 : response.TotalPages;
+            }
+            else
+            {
+                StudentList = new();
+                TotalCount = 0;
+                TotalPages = 1;
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading student registrations: {ex.Message}");
+            StudentList = new();
         }
-        finally { IsLoading = false; }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
 
     private List<PaymentFeeModel> PaymentFees { get; set; } = new();
@@ -272,11 +345,11 @@ public partial class Page_StudentList : ComponentBase, IDisposable
 
     private string GetStatusClass(string? status) => status switch
     {
-        "Approved" => "bg-success",
-        "Pending Confirmation" => "bg-warning text-dark",
-        "Pending" => "bg-warning text-dark",
-        "Rejected" => "bg-danger",
-        _ => "bg-secondary"
+        "Approved" => "bg-success text-white",
+        "Pending Confirmation" => "bg-warning text-white",
+        "Pending" => "bg-warning text-white",
+        "Rejected" => "bg-danger text-white",
+        _ => "bg-secondary text-white"
     };
 
     private string GetFacultyDisplayName(StudentRegistrationDataModel s)

@@ -27,8 +27,29 @@ public partial class Page_DepartmentList : ComponentBase
     private string SelectedFacultyInput = "All";
     private string SelectedFaculty = "All";
 
+    // Custom Dropdown Open States
+    private bool isFacultyDropdownOpen = false;
+
+    private void ToggleFacultyDropdown()
+    {
+        isFacultyDropdownOpen = !isFacultyDropdownOpen;
+    }
+
+    private void SelectFaculty(string? facultyName)
+    {
+        SelectedFacultyInput = facultyName ?? "All";
+        isFacultyDropdownOpen = false;
+        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isFacultyDropdownOpen = false;
+    }
+
     private async Task ApplyFilter()
     {
+        CloseAllDropdowns();
         SearchTerm = SearchInput;
         SelectedFaculty = SelectedFacultyInput;
         CurrentPage = 1;
@@ -37,6 +58,7 @@ public partial class Page_DepartmentList : ComponentBase
 
     private async Task ResetFilter()
     {
+        CloseAllDropdowns();
         SearchInput = "";
         SearchTerm = "";
         SelectedFacultyInput = "All";
@@ -111,12 +133,17 @@ public partial class Page_DepartmentList : ComponentBase
     private async Task LoadDepartments()
     {
         IsLoading = true;
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<DepartmentModel>>(
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<DepartmentModel>>(
                 $"department/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&facultyName={Uri.EscapeDataString(SelectedFaculty)}", 
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
             if (response != null)
             {
                 DepartmentList = response.Items;
@@ -124,7 +151,11 @@ public partial class Page_DepartmentList : ComponentBase
             }
         }
         catch { }
-        finally { IsLoading = false; }
+        finally 
+        { 
+            IsLoading = false; 
+            StateHasChanged();
+        }
     }
 
     private void OpenDeleteModal(DepartmentModel dept)

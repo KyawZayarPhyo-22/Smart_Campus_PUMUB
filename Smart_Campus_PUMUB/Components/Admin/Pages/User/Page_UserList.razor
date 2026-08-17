@@ -67,48 +67,178 @@
         background: #dc3545;
         color: #fff;
     }
+
+    .badge-faculty {
+        background: rgba(90, 79, 207, 0.12) !important;
+        color: #1e1b4b !important;
+        border: 1px solid rgba(90, 79, 207, 0.3) !important;
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
 </style>
+
+@if (isRoleDropdownOpen || isFacultyDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
 
 <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
     <div class="d-flex align-items-center">
-        <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
-            <i class="bi bi-people-fill fs-5 text-white"></i>
+        <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+            <i class="bi bi-people-fill fs-5" style="color: #5A4FCF;"></i>
         </div>
-        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">User Management</h4>
+        <div>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">User Management</h4>
+            <small class="text-secondary">အသုံးပြုသူ အကောင့်များနှင့် အခန်းကဏ္ဍများ စီမံခန့်ခွဲခြင်း</small>
+        </div>
     </div>
 </div>
 
 <!-- 🔹 Filter Section -->
-<div class="material-card p-3 mb-4">
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
     <div class="row g-3 align-items-center">
         <!-- Search Input -->
         <div class="col">
             <div class="position-relative">
-                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Username or Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Username or Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <!-- Role Dropdown -->
-        <div class="col-md-2">
-            <select class="form-select material-input" @bind="SelectedRoleInput">
-                <option value="All">All Roles</option>
-                @foreach (var role in RoleList)
+        <!-- Role Custom Dropdown (approx 6 items height with scroll) -->
+        <div class="col-md-3">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleRoleDropdown">
+                    <span class="text-truncate">@(SelectedRoleInput == "All" ? "All Roles" : SelectedRoleInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isRoleDropdownOpen)
                 {
-                    <option value="@role.RoleName">@role.RoleName</option>
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedRoleInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectRole("All")'>
+                            <span>All Roles</span>
+                            @if (SelectedRoleInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (RoleList != null)
+                        {
+                            @foreach (var role in RoleList)
+                            {
+                                <div class="dropdown-item-custom @(SelectedRoleInput == role.RoleName ? "selected" : "")" 
+                                     @onclick='() => SelectRole(role.RoleName)'>
+                                    <span>@role.RoleName</span>
+                                    @if (SelectedRoleInput == role.RoleName) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
                 }
-            </select>
+            </div>
         </div>
 
-        <!-- Faculty Dropdown -->
+        <!-- Faculty Custom Dropdown (approx 6 items height with scroll) -->
         <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedFacultyInput">
-                <option value="All">All Faculties</option>
-                @foreach (var faculty in FacultyList)
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleFacultyDropdown">
+                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? "All Faculties" : SelectedFacultyInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isFacultyDropdownOpen)
                 {
-                    <option value="@faculty.FacultyName">@faculty.FacultyName</option>
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedFacultyInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectFaculty("All")'>
+                            <span>All Faculties</span>
+                            @if (SelectedFacultyInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (FacultyList != null)
+                        {
+                            @foreach (var faculty in FacultyList)
+                            {
+                                <div class="dropdown-item-custom @(SelectedFacultyInput == faculty.FacultyName ? "selected" : "")" 
+                                     @onclick='() => SelectFaculty(faculty.FacultyName)'>
+                                    <span>@faculty.FacultyName</span>
+                                    @if (SelectedFacultyInput == faculty.FacultyName) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
                 }
-            </select>
+            </div>
         </div>
 
         <!-- Search and Reset Buttons -->
@@ -125,7 +255,7 @@
         <AuthorizeView Policy="User.Create">
             <div class="col-auto">
                 <NavLink href="/admin/user/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add User">
-                    <i class="bi bi-person-plus"></i>
+                    <i class="bi bi-plus-lg"></i>
                 </NavLink>
             </div>
         </AuthorizeView>
@@ -138,6 +268,7 @@
             {
                 <div class="text-center my-5">
                     <div class="spinner-border text-primary"></div>
+                    <div class="text-dark mt-3 small fw-bold">အသုံးပြုသူ စာရင်းများကို ဆွဲယူနေပါသည်...</div>
                 </div>
             }
             else
@@ -149,7 +280,6 @@
                                 <th>No.</th>
                                 <th>Username</th>
                                 <th>Roll No</th>
-                                <th>Email</th>
                                 <th>Role</th>
                                 <th>Faculty</th>
                                 <th class="text-center">Status</th>
@@ -166,75 +296,58 @@
                             @foreach (var user in FilteredUsers)
                             {
                                 <tr class="table-row-hover">
-                                    <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                                    <td><code class="text-info">@user.UserName</code></td>
-                                    <td><span class="text-white">@(user.RoleNo ?? "-")</span></td>
+                                    <td class="fw-bold text-dark">@count.ToString("D2")</td>
+                                    <td class="fw-bold text-dark"><code class="text-info fw-bold">@user.UserName</code></td>
+                                    <td class="fw-bold text-dark">@(user.RoleNo ?? "-")</td>
                                     <td>
-                                        @if (!string.IsNullOrEmpty(user.Email))
+                                        @if (user.RoleName?.ToLower().Contains("admin") == true)
                                         {
-                                            <span style="font-size:0.83rem; color:#93c5fd;">@user.Email</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted" style="font-size:0.8rem;">-</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        <span
-                                            class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">
-                                            @user.RoleName
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if (user.RoleName == "Super Admin" || user.RoleId == 4)
-                                        {
-                                            <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.35); font-weight: 600; font-size: 0.8rem;">
-                                                Faculty of Computing & Faculty of Engineering
+                                            <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #5A4FCF; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                <i class="bi bi-shield-lock-fill me-1.5 small" style="color: #ffffff !important;"></i>@user.RoleName
                                             </span>
                                         }
-                                        else if (!string.IsNullOrEmpty(user.FacultyName))
+                                        else if (user.RoleName?.ToLower().Contains("tutor") == true || user.RoleName?.ToLower().Contains("teacher") == true)
                                         {
-                                            @if (user.FacultyName.Contains("&"))
-                                            {
-                                                <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.35); font-weight: 600; font-size: 0.8rem;">
-                                                    @user.FacultyName
-                                                </span>
-                                            }
-                                            else if (user.FacultyName.Contains("Computing", StringComparison.OrdinalIgnoreCase) || user.FacultyName.Contains("Computer", StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.35); font-weight: 600; font-size: 0.8rem;">
-                                                    @user.FacultyName
-                                                </span>
-                                            }
-                                            else if (user.FacultyName.Contains("Engineering", StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                <span class="badge rounded-pill px-3 py-1.5" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed; border: 1px solid rgba(124, 58, 237, 0.35); font-weight: 600; font-size: 0.8rem;">
-                                                    @user.FacultyName
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-3 py-1.5" style="font-size: 0.8rem;">
-                                                    @user.FacultyName
-                                                </span>
-                                            }
+                                            <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #0d9488; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                <i class="bi bi-person-badge-fill me-1.5 small" style="color: #ffffff !important;"></i>@user.RoleName
+                                            </span>
+                                        }
+                                        else if (user.RoleName?.ToLower().Contains("student") == true)
+                                        {
+                                            <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #2563eb; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                <i class="bi bi-mortarboard-fill me-1.5 small" style="color: #ffffff !important;"></i>@user.RoleName
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted" style="font-size:0.8rem;">-</span>
+                                            <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #4f46e5; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                <i class="bi bi-person-fill me-1.5 small" style="color: #ffffff !important;"></i>@(user.RoleName ?? "-")
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(user.FacultyName))
+                                        {
+                                            <span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">
+                                                @user.FacultyName
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small fw-bold">-</span>
                                         }
                                     </td>
                                     <td class="text-center">
                                         @if (user.Status == "Active")
                                         {
-                                            <button class="btn btn-sm btn-success" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => ToggleUserStatus(user)" disabled="@IsProcessing">
-                                                <i class="bi bi-shield-check me-1"></i> Active
+                                            <button class="btn btn-sm btn-success fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => ToggleUserStatus(user)" disabled="@IsProcessing">
+                                                <i class="bi bi-shield-check me-1 text-white"></i> Active
                                             </button>
                                         }
                                         else
                                         {
-                                            <button class="btn btn-sm btn-danger" style="font-size:0.78rem; font-weight:600; padding:4px 10px; border-radius:6px; min-width: 90px;" @onclick="() => ToggleUserStatus(user)" disabled="@IsProcessing">
-                                                <i class="bi bi-shield-slash me-1"></i> Inactive
+                                            <button class="btn btn-sm btn-danger fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => ToggleUserStatus(user)" disabled="@IsProcessing">
+                                                <i class="bi bi-shield-slash me-1 text-white"></i> Inactive
                                             </button>
                                         }
                                     </td>
@@ -257,6 +370,21 @@
                                     }
                                 </tr>
                                 count++;
+                            }
+
+                            @if (!FilteredUsers.Any())
+                            {
+                                <tr>
+                                    <td colspan="@(canManageUser ? 7 : 6)" class="text-center py-5" style="text-align: center;">
+                                        <div class="d-flex flex-column align-items-center justify-content-center py-4 w-100 text-center" style="min-height: 180px;">
+                                            <div class="rounded-circle p-3 mb-3 d-flex align-items-center justify-content-center" style="background: rgba(90, 79, 207, 0.08); width: 64px; height: 64px;">
+                                                <i class="bi bi-people fs-1" style="color: #5A4FCF;"></i>
+                                            </div>
+                                            <div class="fw-bold text-dark fs-6 mb-1">ပြသရန် User မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</div>
+                                            <small class="text-muted">ရှာဖွေမှုစကားလုံး သို့မဟုတ် Filter များကို ပြောင်းလဲရှာဖွေကြည့်ပါ</small>
+                                        </div>
+                                    </td>
+                                </tr>
                             }
                         </tbody>
                     </table>

@@ -3,18 +3,17 @@
 @rendermode InteractiveServer
 
 <style>
-    /* Dark Theme Material Card */
     .material-card {
-        background-color: #1e1e2d;
+        background-color: #ffffff;
         border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     .material-input {
-        background-color: #2b2b40;
-        border: 1px solid #323248;
-        color: #e4e6ef;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        color: #495057;
         border-radius: 8px;
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
@@ -22,10 +21,10 @@
     }
 
     .material-input:focus {
-        background-color: #323248;
+        background-color: #ffffff;
         border-color: #696cff;
-        box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
-        color: #ffffff;
+        box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.15);
+        color: #495057;
         outline: none;
     }
 
@@ -36,89 +35,183 @@
 
     .custom-table {
         margin-bottom: 0;
-        background-color: transparent;
     }
 
     .custom-table thead th {
-        background-color: #1a1a27;
-        color: #a1a5b7;
+        background-color: #696cff;
+        color: #ffffff;
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-bottom: 1px solid #2b2b40;
+        border-bottom: none;
         padding: 1rem;
         white-space: nowrap;
     }
 
     .custom-table tbody tr {
-        border-bottom: 1px solid #2b2b40;
+        border-bottom: 1px solid #f0f0f5;
         transition: all 0.2s ease;
     }
 
     .custom-table tbody tr:hover {
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: #f8f9fa;
     }
 
     .custom-table td {
         padding: 0.85rem 1rem;
-        color: #cdcdde;
+        color: #495057;
         vertical-align: middle;
         border: none;
         font-size: 0.9rem;
     }
 
-    .result-dropdown {
-        background-color: #2b2b40;
-        border: 1px solid #323248;
-        color: #e4e6ef;
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px;
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
         border-radius: 6px;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.85rem;
-        width: 90px;
         cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
     }
 
-    .result-dropdown.pass {
-        border-color: #10b981;
-        color: #10b981;
-    }
-
-    .result-dropdown.fail {
-        border-color: #ef4444;
-        color: #ef4444;
-    }
-
-    .result-dropdown.none {
-        border-color: #6b7280;
-        color: #a1a5b7;
-    }
-
-    .result-dropdown.credit {
-        border-color: #696cff;
-        color: #696cff;
-    }
-
-    .status-select {
-        background-color: #2b2b40;
-        border: 1px solid #323248;
-        color: #e4e6ef;
-        border-radius: 6px;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.85rem;
-        width: 100px;
-        cursor: pointer;
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
         font-weight: 600;
     }
 
-    .status-select.active {
-        border-color: #10b981;
-        color: #10b981;
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
     }
 
-    .status-select.inactive {
+    .btn-theme-primary {
+        background-color: #5A4FCF !important;
+        background: #5A4FCF !important;
+        border-color: #5A4FCF !important;
+        color: #ffffff !important;
+    }
+    .btn-theme-primary:hover {
+        background-color: #483eb0 !important;
+        background: #483eb0 !important;
+        border-color: #483eb0 !important;
+        color: #ffffff !important;
+    }
+
+    .search-input {
+        padding-left: 2.75rem !important;
+    }
+
+    .badge-faculty-major {
+        background-color: #eef2ff;
+        color: #1e1b4b !important;
+        border: 1.5px solid #c7d2fe;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+        border-radius: 50rem;
+        padding: 5px 16px;
+        display: inline-block;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .btn-view-action {
+        background: #3b82f6 !important;
+        background-color: #3b82f6 !important;
+        border: 1px solid #3b82f6 !important;
+        color: #ffffff !important;
+        border-radius: 6px;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25);
+    }
+    .btn-view-action:hover {
+        background: #2563eb !important;
+        background-color: #2563eb !important;
+        border-color: #2563eb !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.35);
+    }
+    .btn-view-action i,
+    .btn-view-action span {
+        color: #ffffff !important;
+    }
+
+    .result-select-control {
+        border-radius: 6px;
+        padding: 0.35rem 0.6rem;
+        transition: all 0.2s ease;
+    }
+    .result-select-control.pass {
+        border-color: #10b981;
+        color: #059669;
+        background-color: #f0fdf4;
+    }
+    .result-select-control.fail {
         border-color: #ef4444;
-        color: #ef4444;
+        color: #dc2626;
+        background-color: #fef2f2;
+    }
+    .result-select-control.credit {
+        border-color: #696cff;
+        color: #5A4FCF;
+        background-color: #f5f5ff;
+    }
+    .result-select-control.none {
+        border-color: #cbd5e1;
+        color: #64748b;
+        background-color: #ffffff;
     }
 
     .toast-custom {
@@ -136,65 +229,103 @@
         gap: 8px;
         animation: slideIn 0.3s ease-out;
     }
-
-
 </style>
 
+@if (isFacultyDropdownOpen || isMajorDropdownOpen || isYearDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
+
 <div class="d-flex align-items-center mb-4 mt-2">
-    <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
-        <i class="bi bi-person-lines-fill fs-5 text-white"></i>
+    <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+        <i class="bi bi-person-lines-fill fs-5" style="color: #5A4FCF;"></i>
     </div>
-    <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Student Directory</h4>
+    <div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Student Directory</h4>
+        <small class="text-secondary">ကျောင်းသား/သူများ၏ Semester စာမေးပွဲ အောင်/ကျ မှတ်တမ်းများ စီမံခန့်ခွဲခြင်း</small>
+    </div>
 </div>
 
 <!-- Filter Section -->
-<div class="material-card p-3 mb-4">
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
     <div class="row g-3 align-items-center">
         <!-- Search Input -->
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="position-relative">
-                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchInput" @bind:after="ApplyFilter" @onkeyup="HandleKeyUp" />
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.75rem !important;" placeholder="Search by name or roll no..." @bind="SearchInput" @bind:after="ApplyFilter" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
         <!-- Faculty Dropdown -->
         <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedFacultyInput" @bind:after="OnFacultyChanged" disabled="@isFacultyAdminLocked">
-                <option value="All">All Faculties</option>
-                @foreach (var faculty in AvailableFaculties)
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleFacultyDropdown" disabled="@isFacultyAdminLocked">
+                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? "All Faculties" : SelectedFacultyInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isFacultyDropdownOpen)
                 {
-                    <option value="@faculty">@faculty</option>
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedFacultyInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectFaculty("All")'>
+                            <span>All Faculties</span>
+                            @if (SelectedFacultyInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (AvailableFaculties != null)
+                        {
+                            @foreach (var faculty in AvailableFaculties)
+                            {
+                                <div class="dropdown-item-custom @(SelectedFacultyInput == faculty ? "selected" : "")" 
+                                     @onclick='() => SelectFaculty(faculty)'>
+                                    <span>@faculty</span>
+                                    @if (SelectedFacultyInput == faculty) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
                 }
-            </select>
+            </div>
         </div>
 
         <!-- Major Dropdown -->
-        <div class="col-md-2">
-            <select class="form-select material-input" @bind="SelectedMajorInput" @bind:after="ApplyFilter">
-                <option value="All">All Majors</option>
-                @foreach (var major in AvailableMajors)
-                {
-                    <option value="@major">@major</option>
-                }
-            </select>
-        </div>
+        <div class="col-md-3">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleMajorDropdown">
+                    <span class="text-truncate">@(SelectedMajorInput == "All" ? "All Majors" : SelectedMajorInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
 
-        <!-- Year Dropdown -->
-        <div class="col-md-2">
-            <select class="form-select material-input" @bind="SelectedYearInput" @bind:after="ApplyFilter">
-                <option value="All">All Class Years</option>
-                @foreach (var year in AvailableClassYears)
+                @if (isMajorDropdownOpen)
                 {
-                    <option value="@year">@year</option>
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedMajorInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectMajor("All")'>
+                            <span>All Majors</span>
+                            @if (SelectedMajorInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (AvailableMajors != null)
+                        {
+                            @foreach (var major in AvailableMajors)
+                            {
+                                <div class="dropdown-item-custom @(SelectedMajorInput == major ? "selected" : "")" 
+                                     @onclick='() => SelectMajor(major)'>
+                                    <span>@major</span>
+                                    @if (SelectedMajorInput == major) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
                 }
-            </select>
+            </div>
         </div>
-
 
         <!-- Search and Reset Buttons -->
         <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
-            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+            <button class="btn btn-theme-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
                 <i class="bi bi-search"></i>
             </button>
             <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
@@ -204,44 +335,46 @@
     </div>
 </div>
 
-
 <!-- Table Section -->
 <div class="material-card table-container mb-5">
     <div class="table-responsive">
         <table class="table custom-table align-middle">
             <thead>
                 <tr>
-                    <th class="text-center">No.</th>
-                    <th>Roll No</th>
-                    <th>Full Name</th>
-                    <th class="text-center">Faculty</th>
-                    <th class="text-center">Sem 1</th>
-                    <th class="text-center">Sem 2</th>
-                    <th class="text-center">Sem 3</th>
-                    <th class="text-center">Sem 4</th>
-                    <th class="text-center">Sem 5</th>
-                    <th class="text-center">Sem 6</th>
-                    <th class="text-center">Sem 7</th>
-                    <th class="text-center">Sem 8</th>
-                    <th class="text-center">Sem 9</th>
+                    <th class="text-center" style="width: 60px; color: #ffffff !important;">No.</th>
+                    <th class="text-center" style="width: 140px; color: #ffffff !important;">Roll No</th>
+                    <th style="color: #ffffff !important;">Full Name</th>
+                    <th class="text-center" style="color: #ffffff !important;">Faculty</th>
+                    <th class="text-center" style="color: #ffffff !important;">Major</th>
+                    <th class="text-center" style="width: 110px; color: #ffffff !important;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 @if (IsLoading)
                 {
                     <tr>
-                        <td colspan="13" class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status" style="width: 1.5rem; height: 1.5rem;">
-                                <span class="visually-hidden">Loading...</span>
+                        <td colspan="6">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 200px;">
+                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div class="text-muted fs-6 fw-bold">Student Directory အချက်အလက်များ ရယူနေပါသည်...</div>
                             </div>
-                            <div class="text-muted mt-2 fs-6">Fetching data...</div>
                         </td>
                     </tr>
                 }
                 else if (!FilteredStudents.Any())
                 {
                     <tr>
-                        <td colspan="13" class="text-center py-4 text-muted">No students found.</td>
+                        <td colspan="6" class="text-center py-5" style="text-align: center;">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-4 w-100 text-center" style="min-height: 180px;">
+                                <div class="rounded-circle p-3 mb-3 d-flex align-items-center justify-content-center" style="background: rgba(90, 79, 207, 0.08); width: 64px; height: 64px;">
+                                    <i class="bi bi-inbox fs-1" style="color: #5A4FCF;"></i>
+                                </div>
+                                <div class="fw-bold text-dark fs-6 mb-1">ကျောင်းသား/သူ မှတ်တမ်းများ မတွေ့ရှိပါ။</div>
+                                <small class="text-muted">ရှာဖွေမှုစကားလုံး သို့မဟုတ် Filter များကို ပြောင်းလဲရှာဖွေကြည့်ပါ</small>
+                            </div>
+                        </td>
                     </tr>
                 }
                 else
@@ -250,85 +383,28 @@
                     @foreach (var s in FilteredStudents)
                     {
                         <tr>
-                            <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
-                            <td class="fw-bold text-info">@(s.CurrentRollNo ?? "-")</td>
-                            <td class="fw-bold text-white">@(s.FullName ?? "N/A")</td>
+                            <td class="text-center text-dark fw-bold" style="font-weight: 700; font-size: 0.9rem;">@count.ToString("D2")</td>
                             <td class="text-center">
-                                <span class="px-2 py-1 rounded fw-medium d-inline-block" style="background: rgba(105, 108, 255, 0.15); color: #696cff !important; border: 1px solid rgba(105, 108, 255, 0.3); font-size: 0.82rem; white-space: nowrap;">
+                                <span class="badge bg-light text-dark border px-2.5 py-1.5 fw-bold" style="font-size: 0.86rem; font-weight: 700; color: #0f172a !important;">
+                                    @(string.IsNullOrWhiteSpace(s.CurrentRollNo) ? "-" : s.CurrentRollNo)
+                                </span>
+                            </td>
+                            <td class="fw-bold text-dark" style="font-weight: 700; color: #0f172a !important; font-size: 0.92rem;">@(s.FullName ?? "N/A")</td>
+                            <td class="text-center">
+                                <span class="badge-faculty-major">
                                     @(string.IsNullOrWhiteSpace(s.FacultyName) ? "-" : s.FacultyName)
                                 </span>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem1_Result)" value="@(s.Sem1_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 1, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
+                                <span class="badge-faculty-major">
+                                    @(string.IsNullOrWhiteSpace(s.CurrentMajor) ? "-" : s.CurrentMajor)
+                                </span>
                             </td>
                             <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem2_Result)" value="@(s.Sem2_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 2, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem3_Result)" value="@(s.Sem3_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 3, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem4_Result)" value="@(s.Sem4_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 4, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem5_Result)" value="@(s.Sem5_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 5, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem6_Result)" value="@(s.Sem6_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 6, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem7_Result)" value="@(s.Sem7_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 7, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem8_Result)" value="@(s.Sem8_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 8, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
-                                <select class="result-dropdown @GetDropdownClass(s.Sem9_Result)" value="@(s.Sem9_Result ?? "None")" disabled="@(!canManageStudent)" @onchange="@(async (e) => await UpdateResult(s, 9, e.Value?.ToString()))">
-                                    <option value="None">မရှိ</option>
-                                    <option value="Pass">အောင်</option>
-                                    <option value="Fail">ကျ</option>
-                                    <option value="Credit_Transferred">Credit</option>
-                                </select>
+                                <button class="btn btn-view-action" style="background-color: #3b82f6 !important; color: #ffffff !important; border-color: #3b82f6 !important;" @onclick="() => OpenViewModal(s)" title="View Semester Results">
+                                    <i class="bi bi-file-earmark-person" style="color: #ffffff !important;"></i>
+                                    <span style="color: #ffffff !important; font-weight: 700;">View</span>
+                                </button>
                             </td>
                         </tr>
                         count++;
@@ -342,6 +418,160 @@
     <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
 </div>
 
+<!-- Semester Results Modal Dialog -->
+@if (ShowDetailModal && SelectedStudent != null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1050; overflow-y: auto;">
+        <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1051; max-width: 850px;">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; background-color: #ffffff; color: #212529; overflow: hidden;">
+
+                <!-- Modal Header -->
+                <div class="modal-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark d-flex align-items-center mb-1" style="font-size: 1.15rem;">
+                            <div class="rounded p-2 me-2.5 d-inline-flex align-items-center justify-content-center shadow-sm" style="background: rgba(90, 79, 207, 0.12); border: 1.5px solid #5A4FCF; width: 36px; height: 36px; border-radius: 8px;">
+                                <i class="bi bi-mortarboard-fill text-primary" style="color: #5A4FCF !important; font-size: 1rem;"></i>
+                            </div>
+                            <span>Semester Examination Results</span>
+                        </h5>
+                        <div class="small text-muted">
+                            Student: <strong class="text-dark">@SelectedStudent.FullName</strong> 
+                            @if (!string.IsNullOrEmpty(SelectedStudent.CurrentRollNo))
+                            {
+                                <text> | Roll No: <strong class="text-dark">@SelectedStudent.CurrentRollNo</strong></text>
+                            }
+                            @if (!string.IsNullOrEmpty(SelectedStudent.FacultyName))
+                            {
+                                <text> | Faculty: <strong style="color: #5A4FCF;">@SelectedStudent.FacultyName</strong></text>
+                            }
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" @onclick="CloseViewModal" aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4">
+                    <!-- Student Summary Card -->
+                    <div class="p-3 mb-4 rounded-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-6 col-md-3">
+                                <span class="text-muted d-block small fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 700;">FULL NAME</span>
+                                <span class="fw-bold text-dark" style="font-size: 0.95rem; font-weight: 700;">@(SelectedStudent.FullName ?? "-")</span>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <span class="text-muted d-block small fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 700;">ROLL NO</span>
+                                <span class="badge bg-light text-dark border px-2.5 py-1 fw-bold" style="font-size: 0.88rem; font-weight: 700; color: #0f172a !important;">@(SelectedStudent.CurrentRollNo ?? "-")</span>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <span class="text-muted d-block small fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 700;">FACULTY</span>
+                                <span class="badge-faculty-major">@(SelectedStudent.FacultyName ?? "-")</span>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <span class="text-muted d-block small fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px; font-weight: 700;">CURRENT MAJOR</span>
+                                <span class="badge-faculty-major">@(SelectedStudent.CurrentMajor ?? "-")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Header for Table -->
+                    <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+                        <h6 class="fw-bold mb-0 text-dark d-flex align-items-center" style="font-size: 0.95rem;">
+                            <i class="bi bi-card-checklist me-2" style="color: #5A4FCF;"></i>
+                            <span>Semester စာမေးပွဲ အောင်/ကျ ရလဒ်များ (Semester 1 - 9)</span>
+                        </h6>
+                        @if (!canManageStudent)
+                        {
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2 py-1" style="font-size: 0.75rem;">
+                                <i class="bi bi-lock-fill me-1"></i> Read Only
+                            </span>
+                        }
+                    </div>
+
+                    <!-- Semester Results Table -->
+                    <div class="table-responsive rounded-3 border" style="border-color: #e2e8f0 !important; max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 2;">
+                                <tr style="font-size: 0.78rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <th class="text-center" style="width: 60px; padding: 10px 8px;">No.</th>
+                                    <th style="padding: 10px 14px;">Semester</th>
+                                    <th class="text-center" style="width: 170px; padding: 10px 8px;">Status Badge</th>
+                                    <th class="text-center" style="width: 190px; padding: 10px 12px;">Result Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 1; i <= 9; i++)
+                                {
+                                    int semNum = i;
+                                    var resultVal = GetSemesterResult(SelectedStudent, semNum);
+                                    var semName = GetSemesterDisplayName(semNum);
+                                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                                        <td class="text-center fw-bold text-muted" style="font-size: 0.85rem;">@semNum.ToString("D2")</td>
+                                        <td style="padding: 10px 14px;">
+                                            <div class="d-flex align-items-center">
+                                                <div class="rounded p-1.5 me-2.5 d-flex align-items-center justify-content-center" style="background: rgba(90, 79, 207, 0.08); width: 32px; height: 32px; border-radius: 6px;">
+                                                    <i class="bi bi-calendar-event text-primary" style="font-size: 0.95rem; color: #5A4FCF !important;"></i>
+                                                </div>
+                                                <span class="fw-bold text-dark" style="font-size: 0.92rem;">@semName</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (resultVal == "Pass")
+                                            {
+                                                <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #10b981; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                    <i class="bi bi-check-circle-fill me-1.5"></i>အောင် (Pass)
+                                                </span>
+                                            }
+                                            else if (resultVal == "Fail")
+                                            {
+                                                <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #ef4444; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                    <i class="bi bi-x-circle-fill me-1.5"></i>ကျ (Fail)
+                                                </span>
+                                            }
+                                            else if (resultVal == "Credit_Transferred" || resultVal == "Credit")
+                                            {
+                                                <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #5A4FCF; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                    <i class="bi bi-arrow-left-right me-1.5"></i>Credit
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #64748b; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
+                                                    <i class="bi bi-dash-circle me-1.5"></i>မရှိ (None)
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <select class="form-select form-select-sm result-select-control @GetDropdownClass(resultVal)" 
+                                                    value="@(resultVal ?? "None")" 
+                                                    disabled="@(!canManageStudent)" 
+                                                    @onchange="@(async (e) => await UpdateResult(SelectedStudent, semNum, e.Value?.ToString()))"
+                                                    style="max-width: 155px; margin: 0 auto; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                                <option value="None">မရှိ (None)</option>
+                                                <option value="Pass">အောင် (Pass)</option>
+                                                <option value="Fail">ကျ (Fail)</option>
+                                                <option value="Credit_Transferred">Credit</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between align-items-center" style="background-color: #f8fafc;">
+                    <div class="text-muted small d-flex align-items-center">
+                        <i class="bi bi-info-circle text-primary me-1.5"></i>
+                        <span>ရလဒ်ပြောင်းလဲမှုများကို ချက်ချင်း အလိုအလျောက် သိမ်းဆည်းပေးပါသည်။</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary px-4 fw-medium" @onclick="CloseViewModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @if (ShowToast)
 {
     <div class="toast-custom">
@@ -349,3 +579,4 @@
         <span>@ToastMessage</span>
     </div>
 }
+

@@ -88,7 +88,9 @@ public class TutorController : ControllerBase
         [FromQuery] int pageSize = 10,
         [FromQuery] string? searchTerm = null,
         [FromQuery] string? roleName = null,
-        [FromQuery] int? facultyId = null)
+        [FromQuery] int? facultyId = null,
+        [FromQuery] string? facultyName = null,
+        [FromQuery] string? positionName = null)
     {
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
@@ -127,6 +129,11 @@ public class TutorController : ControllerBase
             query = query.Where(t => t.FacultyId == facultyId.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(facultyName) && !facultyName.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(t => t.FacultyName == facultyName);
+        }
+
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             query = query.Where(t => t.TutorName != null && t.TutorName.Contains(searchTerm));
@@ -135,6 +142,11 @@ public class TutorController : ControllerBase
         if (!string.IsNullOrWhiteSpace(roleName) && !roleName.Equals("All", StringComparison.OrdinalIgnoreCase))
         {
             query = query.Where(t => t.RoleName == roleName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(positionName) && !positionName.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(t => t.PositionName == positionName);
         }
 
         var totalCount = query.Count();

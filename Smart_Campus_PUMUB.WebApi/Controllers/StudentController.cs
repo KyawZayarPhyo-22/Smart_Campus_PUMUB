@@ -95,43 +95,92 @@ public class StudentController : ControllerBase
             studentsQuery = studentsQuery.Where(x => x.User.FacultyId == facultyId.Value);
         }
 
-        var lst = studentsQuery
+        var studentsList = studentsQuery
             .OrderByDescending(s => s.StudentId)
-            .ToList()
-            .Select(s =>
-            {
-                var currentMajorText = (s.CurrentMajor ?? "").Trim();
-                // Match Student.CurrentMajor with Major.MajorName to resolve Faculty
-                var matchedMajor = majors.FirstOrDefault(m =>
-                    !string.IsNullOrEmpty(currentMajorText) && (
-                        string.Equals(m.MajorName.Trim(), currentMajorText, StringComparison.OrdinalIgnoreCase) ||
-                        m.MajorName.Trim().ToLower().Contains(currentMajorText.ToLower()) ||
-                        currentMajorText.ToLower().Contains(m.MajorName.Trim().ToLower())
-                    )
-                );
-
-                return new StudentModel
-                {
-                    StudentId = s.StudentId,
-                    UserId = s.UserId,
-                    FullName = s.User.FullName,
-                    CurrentClassYear = s.CurrentClassYear,
-                    CurrentMajor = s.CurrentMajor,
-                    FacultyName = s.User?.Faculty?.FacultyName ?? matchedMajor?.Faculty?.FacultyName,
-                    CurrentRollNo = s.User.RoleNo,
-                    Status = s.Status ?? "Active",
-                    Sem1_Result = s.Sem1_Result,
-                    Sem2_Result = s.Sem2_Result,
-                    Sem3_Result = s.Sem3_Result,
-                    Sem4_Result = s.Sem4_Result,
-                    Sem5_Result = s.Sem5_Result,
-                    Sem6_Result = s.Sem6_Result,
-                    Sem7_Result = s.Sem7_Result,
-                    Sem8_Result = s.Sem8_Result,
-                    Sem9_Result = s.Sem9_Result
-                };
-            })
             .ToList();
+
+        var userIds = studentsList.Select(s => s.UserId).Distinct().ToList();
+
+        var latestRegs = _db.StudentRegistrations
+            .Where(r => r.UserId != null && userIds.Contains(r.UserId.Value) && (r.IsDelete == false || r.IsDelete == null))
+            .OrderByDescending(r => r.RegistrationId)
+            .ToList()
+            .GroupBy(r => r.UserId!.Value)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var latestInfos = _db.StudentPersonalInfos
+            .Where(p => userIds.Contains(p.UserId))
+            .OrderByDescending(p => p.Id)
+            .ToList()
+            .GroupBy(p => p.UserId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        bool updatedAny = false;
+        var lst = studentsList.Select(s =>
+        {
+            latestRegs.TryGetValue(s.UserId, out var reg);
+            latestInfos.TryGetValue(s.UserId, out var info);
+
+            var majorName = !string.IsNullOrWhiteSpace(s.CurrentMajor) && s.CurrentMajor != "N/A"
+                ? s.CurrentMajor.Trim()
+                : (!string.IsNullOrWhiteSpace(reg?.Major) && reg.Major != "N/A"
+                    ? reg.Major.Trim()
+                    : (!string.IsNullOrWhiteSpace(info?.major) && info.major != "N/A" ? info.major.Trim() : ""));
+
+            var classYear = !string.IsNullOrWhiteSpace(s.CurrentClassYear) && s.CurrentClassYear != "N/A"
+                ? s.CurrentClassYear.Trim()
+                : (!string.IsNullOrWhiteSpace(reg?.AcademicYearLevel) && reg.AcademicYearLevel != "N/A"
+                    ? reg.AcademicYearLevel.Trim()
+                    : (!string.IsNullOrWhiteSpace(info?.academic_year_level) && info.academic_year_level != "N/A" ? info.academic_year_level.Trim() : ""));
+
+            // Sync back to student entity if it was empty so DB stays up-to-date
+            if ((string.IsNullOrWhiteSpace(s.CurrentMajor) || s.CurrentMajor == "N/A") && !string.IsNullOrWhiteSpace(majorName))
+            {
+                s.CurrentMajor = majorName;
+                updatedAny = true;
+            }
+            if ((string.IsNullOrWhiteSpace(s.CurrentClassYear) || s.CurrentClassYear == "N/A") && !string.IsNullOrWhiteSpace(classYear))
+            {
+                s.CurrentClassYear = classYear;
+                updatedAny = true;
+            }
+
+            var currentMajorText = (majorName ?? "").Trim();
+            // Student.CurrentMajor (string) နဲ့ Major.MajorName တူတာ သို့မဟုတ် ပါဝင်တာ ရှာ → Faculty ရမည်
+            var matchedMajor = majors.FirstOrDefault(m =>
+                !string.IsNullOrEmpty(currentMajorText) && (
+                    string.Equals(m.MajorName.Trim(), currentMajorText, StringComparison.OrdinalIgnoreCase) ||
+                    m.MajorName.Trim().ToLower().Contains(currentMajorText.ToLower()) ||
+                    currentMajorText.ToLower().Contains(m.MajorName.Trim().ToLower())
+                )
+            );
+
+            return new StudentModel
+            {
+                StudentId = s.StudentId,
+                UserId = s.UserId,
+                FullName = s.User.FullName,
+                CurrentClassYear = classYear,
+                CurrentMajor = majorName,
+                FacultyName = s.User?.Faculty?.FacultyName ?? matchedMajor?.Faculty?.FacultyName,
+                CurrentRollNo = s.User.RoleNo,
+                Status = s.Status ?? "Active",
+                Sem1_Result = s.Sem1_Result,
+                Sem2_Result = s.Sem2_Result,
+                Sem3_Result = s.Sem3_Result,
+                Sem4_Result = s.Sem4_Result,
+                Sem5_Result = s.Sem5_Result,
+                Sem6_Result = s.Sem6_Result,
+                Sem7_Result = s.Sem7_Result,
+                Sem8_Result = s.Sem8_Result,
+                Sem9_Result = s.Sem9_Result
+            };
+        }).ToList();
+
+        if (updatedAny)
+        {
+            _db.SaveChanges();
+        }
 
         return Ok(lst);
     }
@@ -592,7 +641,7 @@ public class StudentController : ControllerBase
         }
     }
 
-    // GET: api/student/count/active (Active student count)
+    // 🎯 ၆။ GET: api/student/count/active 
     [HttpGet("count/active")]
     [AllowAnonymous]
     public IActionResult GetActiveStudentCount()

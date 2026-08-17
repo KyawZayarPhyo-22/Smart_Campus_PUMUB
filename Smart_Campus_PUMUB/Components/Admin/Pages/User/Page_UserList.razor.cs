@@ -29,8 +29,42 @@ public partial class Page_UserList
     private string SelectedFacultyInput = "All";
     private string SelectedFaculty = "All";
 
+    private bool isRoleDropdownOpen = false;
+    private bool isFacultyDropdownOpen = false;
+
+    private void ToggleRoleDropdown()
+    {
+        isRoleDropdownOpen = !isRoleDropdownOpen;
+        if (isRoleDropdownOpen) isFacultyDropdownOpen = false;
+    }
+
+    private void ToggleFacultyDropdown()
+    {
+        isFacultyDropdownOpen = !isFacultyDropdownOpen;
+        if (isFacultyDropdownOpen) isRoleDropdownOpen = false;
+    }
+
+    private void SelectRole(string? roleName)
+    {
+        SelectedRoleInput = roleName ?? "All";
+        isRoleDropdownOpen = false;
+    }
+
+    private void SelectFaculty(string? facultyName)
+    {
+        SelectedFacultyInput = facultyName ?? "All";
+        isFacultyDropdownOpen = false;
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isRoleDropdownOpen = false;
+        isFacultyDropdownOpen = false;
+    }
+
     private async Task ApplyFilter()
     {
+        CloseAllDropdowns();
         SearchTerm = SearchInput;
         SelectedRole = SelectedRoleInput;
         SelectedFaculty = SelectedFacultyInput;
@@ -40,6 +74,7 @@ public partial class Page_UserList
 
     private async Task ResetFilter()
     {
+        CloseAllDropdowns();
         SearchInput = "";
         SearchTerm = "";
         SelectedRoleInput = "All";
@@ -143,6 +178,7 @@ public partial class Page_UserList
         ErrorMessage = "";
         try
         {
+            await Task.Delay(1000);
             var response = await HttpClientService.ExecuteAsync<PagedResult<UserModel>>(
                 $"user/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}&facultyName={Uri.EscapeDataString(SelectedFaculty)}",
                 EnumHttpMethod.Get

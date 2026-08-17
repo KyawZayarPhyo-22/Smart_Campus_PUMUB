@@ -23,6 +23,10 @@ public class StudentPersonalInfoController : ControllerBase
         // Faculty-based scoping: join PersonalInfo → User to filter by FacultyId
         IQueryable<StudentPersonalInfo> query = _db.StudentPersonalInfos;
 
+        var users = _db.Users.AsNoTracking().ToDictionary(u => u.UserId, u => u);
+        var faculties = _db.Faculties.Where(f => f.IsDelete == false || f.IsDelete == null).AsNoTracking().ToDictionary(f => f.FacultyId, f => f.FacultyName);
+        var majors = _db.Majors.Where(m => m.IsDelete == false || m.IsDelete == null).AsNoTracking().ToList();
+
         if (facultyId.HasValue && facultyId.Value > 0)
         {
             // Only return records whose linked User belongs to the specified Faculty
@@ -31,105 +35,188 @@ public class StudentPersonalInfoController : ControllerBase
                 .Select(u => u.UserId)
                 .ToHashSet();
 
-            query = query.Where(info => userIdsInFaculty.Contains(info.UserId));
+            var majorsInFaculty = majors
+                .Where(m => m.FacultyId == facultyId.Value)
+                .Select(m => m.MajorName.Trim().ToLower())
+                .ToHashSet();
+
+            query = query.Where(info => userIdsInFaculty.Contains(info.UserId) ||
+                (info.major != null && majorsInFaculty.Contains(info.major.Trim().ToLower())));
         }
 
         var infos = query.ToList();
+        var response = infos.Select(info => MapToResponse(info, users, faculties, majors)).ToList();
+
+        return Ok(response);
+    }
+
+    [HttpGet("paginate")]
+    public IActionResult GetPaginatedPersonalInfos(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] int? facultyId = null,
+        [FromQuery] string? major = null)
+    {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
+        IQueryable<StudentPersonalInfo> query = _db.StudentPersonalInfos;
+
         var users = _db.Users.AsNoTracking().ToDictionary(u => u.UserId, u => u);
         var faculties = _db.Faculties.Where(f => f.IsDelete == false || f.IsDelete == null).AsNoTracking().ToDictionary(f => f.FacultyId, f => f.FacultyName);
         var majors = _db.Majors.Where(m => m.IsDelete == false || m.IsDelete == null).AsNoTracking().ToList();
 
-        var response = infos.Select(info =>
+        if (facultyId.HasValue && facultyId.Value > 0)
         {
-            int? resolvedFacultyId = null;
-            if (info.UserId > 0 && users.TryGetValue(info.UserId, out var u) && u.FacultyId.HasValue && u.FacultyId.Value > 0)
+            var userIdsInFaculty = _db.Users
+                .Where(u => u.FacultyId == facultyId.Value)
+                .Select(u => u.UserId)
+                .ToHashSet();
+
+            var majorsInFaculty = majors
+                .Where(m => m.FacultyId == facultyId.Value)
+                .Select(m => m.MajorName.Trim().ToLower())
+                .ToHashSet();
+
+            query = query.Where(info => userIdsInFaculty.Contains(info.UserId) ||
+                (info.major != null && majorsInFaculty.Contains(info.major.Trim().ToLower())));
+        }
+
+        if (!string.IsNullOrWhiteSpace(major) && !string.Equals(major.Trim(), "All", StringComparison.OrdinalIgnoreCase))
+        {
+            var mLower = major.Trim().ToLower();
+            query = query.Where(x => x.major != null && (x.major.ToLower() == mLower || x.major.ToLower().Contains(mLower)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            query = query.Where(x =>
+                (x.student_name_mm != null && x.student_name_mm.ToLower().Contains(term)) ||
+                (x.student_name_en != null && x.student_name_en.ToLower().Contains(term)) ||
+                (x.roll_no != null && x.roll_no.ToLower().Contains(term)) ||
+                (x.father_name != null && x.father_name.ToLower().Contains(term)) ||
+                (x.mother_name != null && x.mother_name.ToLower().Contains(term)) ||
+                (x.email != null && x.email.ToLower().Contains(term)) ||
+                (x.app_student_phone != null && x.app_student_phone.ToLower().Contains(term)) ||
+                (x.matric_roll_no != null && x.matric_roll_no.ToLower().Contains(term)) ||
+                (x.university_reg_no != null && x.university_reg_no.ToLower().Contains(term)) ||
+                (x.major != null && x.major.ToLower().Contains(term))
+            );
+        }
+
+        int total = query.Count();
+
+        var pagedInfos = query
+            .OrderByDescending(x => x.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var items = pagedInfos.Select(info => MapToResponse(info, users, faculties, majors)).ToList();
+
+        return Ok(new PagedResult<StudentPersonalInfoResponse>
+        {
+            Items = items,
+            TotalCount = total,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        });
+    }
+
+    private static StudentPersonalInfoResponse MapToResponse(
+        StudentPersonalInfo info,
+        Dictionary<int, User> users,
+        Dictionary<int, string> faculties,
+        List<Major> majors)
+    {
+        int? resolvedFacultyId = null;
+        if (info.UserId > 0 && users.TryGetValue(info.UserId, out var u) && u.FacultyId.HasValue && u.FacultyId.Value > 0)
+        {
+            resolvedFacultyId = u.FacultyId.Value;
+        }
+
+        if ((!resolvedFacultyId.HasValue || resolvedFacultyId.Value <= 0) && !string.IsNullOrWhiteSpace(info.major))
+        {
+            var majorText = info.major.Trim().ToLower();
+            var matchedMajor = majors.FirstOrDefault(m =>
+                string.Equals(m.MajorName.Trim(), info.major.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                m.MajorName.Trim().ToLower().Contains(majorText) ||
+                majorText.Contains(m.MajorName.Trim().ToLower())
+            );
+            if (matchedMajor != null && matchedMajor.FacultyId > 0)
             {
-                resolvedFacultyId = u.FacultyId.Value;
+                resolvedFacultyId = matchedMajor.FacultyId;
             }
+        }
 
-            if ((!resolvedFacultyId.HasValue || resolvedFacultyId.Value <= 0) && !string.IsNullOrWhiteSpace(info.major))
-            {
-                var majorText = info.major.Trim().ToLower();
-                var matchedMajor = majors.FirstOrDefault(m =>
-                    string.Equals(m.MajorName.Trim(), info.major.Trim(), StringComparison.OrdinalIgnoreCase) ||
-                    m.MajorName.Trim().ToLower().Contains(majorText) ||
-                    majorText.Contains(m.MajorName.Trim().ToLower())
-                );
-                if (matchedMajor != null && matchedMajor.FacultyId > 0)
-                {
-                    resolvedFacultyId = matchedMajor.FacultyId;
-                }
-            }
+        string? facultyName = null;
+        if (resolvedFacultyId.HasValue && resolvedFacultyId.Value > 0 && faculties.TryGetValue(resolvedFacultyId.Value, out var fname))
+        {
+            facultyName = fname;
+        }
 
-            string? facultyName = null;
-            if (resolvedFacultyId.HasValue && resolvedFacultyId.Value > 0 && faculties.TryGetValue(resolvedFacultyId.Value, out var fname))
-            {
-                facultyName = fname;
-            }
-
-            return new StudentPersonalInfoResponse
-            {
-                Id = info.Id,
-                UserId = info.UserId,
-                NewStudentAccId = info.NewStudentAccId,
-                AdmissionSerialNo = info.AdmissionSerialNo,
-                academic_year_range = info.academic_year_range,
-                academic_year_level = info.academic_year_level,
-                major = info.major,
-                FacultyId = resolvedFacultyId,
-                FacultyName = facultyName,
-                roll_no = info.roll_no,
-                university_reg_no = info.university_reg_no,
-                admission_year = info.admission_year,
-                student_name_mm = info.student_name_mm,
-                student_name_en = info.student_name_en,
-                mother_name = info.mother_name,
-                father_name = info.father_name,
-                gender_relation = info.gender_relation,
-                ethnicity = info.ethnicity,
-                religion = info.religion,
-                pob = info.pob,
-                birth_place_region = info.birth_place_region,
-                student_nrc_no = info.student_nrc_no,
-                nationality_status = info.nationality_status,
-                dob = info.dob,
-                email = info.email,
-                blood_type = info.blood_type,
-                covid_vaccine_status = info.covid_vaccine_status,
-                current_address = info.current_address,
-                permanent_address_mm = info.permanent_address_mm,
-                permanent_address_en = info.permanent_address_en,
-                matric_roll_no = info.matric_roll_no,
-                matric_passed_year = info.matric_passed_year,
-                exam_center = info.exam_center,
-                father_occupation = info.father_occupation,
-                mother_occupation = info.mother_occupation,
-                past_exam_major = info.past_exam_major,
-                past_exam_roll_no = info.past_exam_roll_no,
-                past_exam_year = info.past_exam_year,
-                past_exam_status = info.past_exam_status,
-                previous_year_roll_no = info.previous_year_roll_no,
-                guardian_name = info.guardian_name,
-                guardian_relationship = info.guardian_relationship,
-                guardian_occupation = info.guardian_occupation,
-                guardian_address_phone = info.guardian_address_phone,
-                app_guardian_name = info.app_guardian_name,
-                app_guardian_nrc = info.app_guardian_nrc,
-                app_guardian_phone = info.app_guardian_phone,
-                app_guardian_address = info.app_guardian_address,
-                app_student_name = info.app_student_name,
-                app_student_phone = info.app_student_phone,
-                stipend_requested = info.stipend_requested,
-                nrc_state = info.nrc_state,
-                nrc_township = info.nrc_township,
-                nrc_type = info.nrc_type,
-                nrc_number = info.nrc_number,
-                CreatedDateTime = info.CreatedDateTime,
-                ModifiedDateTime = info.ModifiedDateTime
-            };
-        }).ToList();
-
-        return Ok(response);
+        return new StudentPersonalInfoResponse
+        {
+            Id = info.Id,
+            UserId = info.UserId,
+            NewStudentAccId = info.NewStudentAccId,
+            AdmissionSerialNo = info.AdmissionSerialNo,
+            academic_year_range = info.academic_year_range,
+            academic_year_level = info.academic_year_level,
+            major = info.major,
+            FacultyId = resolvedFacultyId,
+            FacultyName = facultyName,
+            roll_no = info.roll_no,
+            university_reg_no = info.university_reg_no,
+            admission_year = info.admission_year,
+            student_name_mm = info.student_name_mm,
+            student_name_en = info.student_name_en,
+            mother_name = info.mother_name,
+            father_name = info.father_name,
+            gender_relation = info.gender_relation,
+            ethnicity = info.ethnicity,
+            religion = info.religion,
+            pob = info.pob,
+            birth_place_region = info.birth_place_region,
+            student_nrc_no = info.student_nrc_no,
+            nationality_status = info.nationality_status,
+            dob = info.dob,
+            email = info.email,
+            blood_type = info.blood_type,
+            covid_vaccine_status = info.covid_vaccine_status,
+            current_address = info.current_address,
+            permanent_address_mm = info.permanent_address_mm,
+            permanent_address_en = info.permanent_address_en,
+            matric_roll_no = info.matric_roll_no,
+            matric_passed_year = info.matric_passed_year,
+            exam_center = info.exam_center,
+            father_occupation = info.father_occupation,
+            mother_occupation = info.mother_occupation,
+            past_exam_major = info.past_exam_major,
+            past_exam_roll_no = info.past_exam_roll_no,
+            past_exam_year = info.past_exam_year,
+            past_exam_status = info.past_exam_status,
+            previous_year_roll_no = info.previous_year_roll_no,
+            guardian_name = info.guardian_name,
+            guardian_relationship = info.guardian_relationship,
+            guardian_occupation = info.guardian_occupation,
+            guardian_address_phone = info.guardian_address_phone,
+            app_guardian_name = info.app_guardian_name,
+            app_guardian_nrc = info.app_guardian_nrc,
+            app_guardian_phone = info.app_guardian_phone,
+            app_guardian_address = info.app_guardian_address,
+            app_student_name = info.app_student_name,
+            app_student_phone = info.app_student_phone,
+            stipend_requested = info.stipend_requested,
+            nrc_state = info.nrc_state,
+            nrc_township = info.nrc_township,
+            nrc_type = info.nrc_type,
+            nrc_number = info.nrc_number,
+            CreatedDateTime = info.CreatedDateTime,
+            ModifiedDateTime = info.ModifiedDateTime
+        };
     }
 
     [HttpGet("by-roll/{rollNo}")]

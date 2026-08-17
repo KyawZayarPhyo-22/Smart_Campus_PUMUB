@@ -33,19 +33,25 @@ public partial class Page_RegistrationReport : ComponentBase
     private string ActiveAdmSelectedYear { get; set; } = "All";
     private string ActiveAdmSelectedStatus { get; set; } = "All";
 
-    private void ApplyAdmissionFilter()
+    private async Task ApplyAdmissionFilter()
     {
+        IsLoading = true;
+        StateHasChanged();
         ActiveAdmFromDate = AdmFromDate;
         ActiveAdmToDate = AdmToDate;
         ActiveAdmSelectedMajor = AdmSelectedMajor;
         ActiveAdmSelectedYear = AdmSelectedYear;
         ActiveAdmSelectedStatus = AdmSelectedStatus;
         CurrentPageAdm = 1;
+        await Task.Delay(1000);
+        IsLoading = false;
         StateHasChanged();
     }
 
-    private void ResetAdmissionFilter()
+    private async Task ResetAdmissionFilter()
     {
+        IsLoading = true;
+        StateHasChanged();
         AdmFromDate = null;
         AdmToDate = DateTime.Today;
         AdmSelectedMajor = "All";
@@ -58,6 +64,8 @@ public partial class Page_RegistrationReport : ComponentBase
         ActiveAdmSelectedYear = "All";
         ActiveAdmSelectedStatus = "All";
         CurrentPageAdm = 1;
+        await Task.Delay(1000);
+        IsLoading = false;
         StateHasChanged();
     }
 
@@ -74,19 +82,25 @@ public partial class Page_RegistrationReport : ComponentBase
     private string ActivePaySelectedMethod { get; set; } = "All";
     private string ActivePaySelectedStatus { get; set; } = "All";
 
-    private void ApplyPaymentFilter()
+    private async Task ApplyPaymentFilter()
     {
+        IsLoading = true;
+        StateHasChanged();
         ActivePayFromDate = PayFromDate;
         ActivePayToDate = PayToDate;
         ActivePaySelectedYear = PaySelectedYear;
         ActivePaySelectedMethod = PaySelectedMethod;
         ActivePaySelectedStatus = PaySelectedStatus;
         CurrentPagePay = 1;
+        await Task.Delay(1000);
+        IsLoading = false;
         StateHasChanged();
     }
 
-    private void ResetPaymentFilter()
+    private async Task ResetPaymentFilter()
     {
+        IsLoading = true;
+        StateHasChanged();
         PayFromDate = null;
         PayToDate = DateTime.Today;
         PaySelectedYear = "All";
@@ -99,25 +113,140 @@ public partial class Page_RegistrationReport : ComponentBase
         ActivePaySelectedMethod = "All";
         ActivePaySelectedStatus = "All";
         CurrentPagePay = 1;
+        await Task.Delay(1000);
+        IsLoading = false;
         StateHasChanged();
+    }
+
+    // Dropdown States for Admission Report
+    private bool isAdmSemesterDropdownOpen = false;
+    private bool isAdmMajorDropdownOpen = false;
+    private bool isAdmStatusDropdownOpen = false;
+
+    // Dropdown States for Payment Report
+    private bool isPaySemesterDropdownOpen = false;
+    private bool isPayMethodDropdownOpen = false;
+    private bool isPayStatusDropdownOpen = false;
+
+    private void ToggleAdmSemesterDropdown()
+    {
+        isAdmSemesterDropdownOpen = !isAdmSemesterDropdownOpen;
+        isAdmMajorDropdownOpen = false;
+        isAdmStatusDropdownOpen = false;
+    }
+
+    private void SelectAdmSemester(string sem)
+    {
+        AdmSelectedYear = sem;
+        isAdmSemesterDropdownOpen = false;
+    }
+
+    private void ToggleAdmMajorDropdown()
+    {
+        isAdmMajorDropdownOpen = !isAdmMajorDropdownOpen;
+        isAdmSemesterDropdownOpen = false;
+        isAdmStatusDropdownOpen = false;
+    }
+
+    private void SelectAdmMajor(string major)
+    {
+        AdmSelectedMajor = major;
+        isAdmMajorDropdownOpen = false;
+    }
+
+    private void ToggleAdmStatusDropdown()
+    {
+        isAdmStatusDropdownOpen = !isAdmStatusDropdownOpen;
+        isAdmSemesterDropdownOpen = false;
+        isAdmMajorDropdownOpen = false;
+    }
+
+    private void SelectAdmStatus(string status)
+    {
+        AdmSelectedStatus = status;
+        isAdmStatusDropdownOpen = false;
+    }
+
+    private void TogglePaySemesterDropdown()
+    {
+        isPaySemesterDropdownOpen = !isPaySemesterDropdownOpen;
+        isPayMethodDropdownOpen = false;
+        isPayStatusDropdownOpen = false;
+    }
+
+    private void SelectPaySemester(string sem)
+    {
+        PaySelectedYear = sem;
+        isPaySemesterDropdownOpen = false;
+    }
+
+    private void TogglePayMethodDropdown()
+    {
+        isPayMethodDropdownOpen = !isPayMethodDropdownOpen;
+        isPaySemesterDropdownOpen = false;
+        isPayStatusDropdownOpen = false;
+    }
+
+    private void SelectPayMethod(string method)
+    {
+        PaySelectedMethod = method;
+        isPayMethodDropdownOpen = false;
+    }
+
+    private void TogglePayStatusDropdown()
+    {
+        isPayStatusDropdownOpen = !isPayStatusDropdownOpen;
+        isPaySemesterDropdownOpen = false;
+        isPayMethodDropdownOpen = false;
+    }
+
+    private void SelectPayStatus(string status)
+    {
+        PaySelectedStatus = status;
+        isPayStatusDropdownOpen = false;
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isAdmSemesterDropdownOpen = false;
+        isAdmMajorDropdownOpen = false;
+        isAdmStatusDropdownOpen = false;
+        isPaySemesterDropdownOpen = false;
+        isPayMethodDropdownOpen = false;
+        isPayStatusDropdownOpen = false;
     }
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
-        ApplyAdmissionFilter();
-        ApplyPaymentFilter();
+        ActiveAdmFromDate = AdmFromDate;
+        ActiveAdmToDate = AdmToDate;
+        ActiveAdmSelectedMajor = AdmSelectedMajor;
+        ActiveAdmSelectedYear = AdmSelectedYear;
+        ActiveAdmSelectedStatus = AdmSelectedStatus;
+
+        ActivePayFromDate = PayFromDate;
+        ActivePayToDate = PayToDate;
+        ActivePaySelectedYear = PaySelectedYear;
+        ActivePaySelectedMethod = PaySelectedMethod;
+        ActivePaySelectedStatus = PaySelectedStatus;
     }
 
     private async Task LoadData()
     {
         IsLoading = true;
+        StateHasChanged();
         try
         {
+            await Task.Delay(1000);
             var response = await HttpClientService.ExecuteAsync<List<StudentRegistrationDataModel>>("StudentRegistrations", EnumHttpMethod.Get);
             if (response != null) RawStudentList = response;
         }
-        finally { IsLoading = false; }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
 
     // =================================================================
@@ -212,15 +341,23 @@ public partial class Page_RegistrationReport : ComponentBase
     private int CurrentPagePay { get; set; } = 1;
     private int TotalPagesPay { get; set; } = 1;
 
-    private void OnPageChangedAdm(int newPage)
+    private async Task OnPageChangedAdm(int newPage)
     {
+        IsLoading = true;
         CurrentPageAdm = newPage;
+        StateHasChanged();
+        await Task.Delay(1000);
+        IsLoading = false;
         StateHasChanged();
     }
 
-    private void OnPageChangedPay(int newPage)
+    private async Task OnPageChangedPay(int newPage)
     {
+        IsLoading = true;
         CurrentPagePay = newPage;
+        StateHasChanged();
+        await Task.Delay(1000);
+        IsLoading = false;
         StateHasChanged();
     }
 

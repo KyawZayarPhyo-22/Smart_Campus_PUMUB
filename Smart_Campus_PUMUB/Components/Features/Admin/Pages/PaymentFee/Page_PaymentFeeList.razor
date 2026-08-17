@@ -63,15 +63,21 @@
             background: #dc3545;
             color: #ffffff;
         }
+    .search-input {
+        padding-left: 2.6rem !important;
+    }
 </style>
 
 <div class="tab-pane fade show active" id="v-pills-payment-fee">
     <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
         <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm" style="background: #5A4FCF;">
-                <i class="bi bi-cash-stack fs-5 text-white"></i>
+            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+                <i class="bi bi-cash-stack fs-5" style="color: #5A4FCF;"></i>
             </div>
-            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Payment Fee Directory</h4>
+            <div>
+                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Payment Fee Directory</h4>
+                <small class="text-secondary">ကျောင်းလခနှင့် အခြားအခကြေးငွေများ သတ်မှတ်ချက် စီမံခန့်ခွဲခြင်း</small>
+            </div>
         </div>
     </div>
 
@@ -81,8 +87,8 @@
             <!-- Search Input -->
             <div class="col">
                 <div class="position-relative">
-                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                    <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by Semester or Fee Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Semester or Fee Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
@@ -112,8 +118,12 @@
         {
             <div class="text-center my-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-muted mt-2">နှုန်းထားစာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">နှုန်းထားစာရင်းများကို ဆွဲယူနေပါသည်...</div>
             </div>
+        }
+        else if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">@ErrorMessage</div>
         }
         else
         {
@@ -121,14 +131,14 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>No.</th>
-                            <th>Semester (Class Year)</th>
-                            <th>Fee Name</th>
-                            <th>Amount</th>
-                            <th>Status</th>
+                            <th style="width: 10%;">No.</th>
+                            <th style="width: 25%;">Semester (Class Year)</th>
+                            <th style="width: 25%;">Fee Name</th>
+                            <th style="width: 15%;">Amount</th>
+                            <th style="width: 10%;">Status</th>
                             @if (canManagePaymentFee)
                             {
-                                <th class="text-center">Actions</th>
+                                <th style="width: 15%; text-align: center;">Actions</th>
                             }
                         </tr>
                     </thead>
@@ -136,7 +146,7 @@
                         @if (!FilteredFees.Any())
                         {
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">သတ်မှတ်ထားသော နှုန်းထားစာရင်းများ မရှိသေးပါ။</td>
+                                <td colspan="6" class="text-center text-dark fw-bold py-4">သတ်မှတ်ထားသော နှုန်းထားစာရင်းများ မရှိသေးပါ။</td>
                             </tr>
                         }
                         else
@@ -145,11 +155,11 @@
                             @foreach (var fee in FilteredFees)
                             {
                                 <tr class="table-row-hover">
-                                    <td class="fw-bold text-muted">@count.ToString("D2")</td>
-                                    <td class="fw-semibold">
+                                    <td class="fw-bold text-dark">@count.ToString("D2")</td>
+                                    <td class="fw-bold text-dark">
                                         @if (fee.ClassYear == "All Semesters" || fee.ClassYear == "All")
                                         {
-                                            <span class="badge bg-info bg-opacity-25 text-info border border-info px-2 py-1">
+                                            <span class="badge bg-info bg-opacity-25 text-info border border-info px-2 py-1 fw-bold">
                                                 🌐 All Semesters
                                             </span>
                                         }
@@ -158,10 +168,10 @@
                                             @fee.ClassYear
                                         }
                                     </td>
-                                    <td>@(string.IsNullOrEmpty(fee.FeeName) ? "ကျောင်းလခ" : fee.FeeName)</td>
-                                    <td class="fw-bold text-primary">@fee.MontlyAmount.ToString("N0") MMK</td>
+                                    <td class="fw-bold text-dark">@(string.IsNullOrEmpty(fee.FeeName) ? "ကျောင်းလခ" : fee.FeeName)</td>
+                                    <td class="fw-bold text-dark">@fee.MontlyAmount.ToString("N0") MMK</td>
                                     <td>
-                                        <span class="badge @(fee.Status == "Active" ? "bg-success" : "bg-secondary")">
+                                        <span class="badge fw-bold @(fee.Status == "Active" ? "bg-success" : "bg-secondary")" style="color: #ffffff !important;">
                                             @fee.Status
                                         </span>
                                     </td>

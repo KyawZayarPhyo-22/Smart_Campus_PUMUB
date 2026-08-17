@@ -123,7 +123,10 @@
 @code {
     [Parameter] public int CurrentPage { get; set; } = 1;
     [Parameter] public int TotalPages { get; set; } = 1;
+    [Parameter] public int? TotalCount { get; set; }
+    [Parameter] public int? PageSize { get; set; }
     [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private async Task ChangePage(int newPage)
     {

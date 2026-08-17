@@ -5,6 +5,207 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
+<style>
+    .profile-pill {
+        background: #ffffff !important;
+        border: 1.5px solid #e2e8f0 !important;
+        padding: 4px 14px 4px 5px !important;
+        border-radius: 9999px !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        cursor: pointer;
+    }
+
+    .profile-pill:hover,
+    .profile-pill.active {
+        background: #f8fafc !important;
+        border-color: #c7d2fe !important;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15) !important;
+        transform: translateY(-1px);
+    }
+
+    .profile-avatar-wrapper {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
+
+    .profile-avatar-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5A4FCF 0%, #4338CA 100%);
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.82rem;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        box-shadow: 0 2px 6px rgba(90, 79, 207, 0.35);
+    }
+
+    .status-indicator-dot {
+        position: absolute;
+        bottom: 0px;
+        right: 0px;
+        width: 10px;
+        height: 10px;
+        background-color: #10b981;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .profile-role-badge {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        background: #eef2ff !important;
+        color: #4f46e5 !important;
+        border: 1px solid #c7d2fe;
+        border-radius: 20px;
+        padding: 1px 8px;
+        display: inline-block;
+    }
+
+    .chevron-icon {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        transition: transform 0.25s ease, color 0.2s ease;
+    }
+
+    .profile-pill:hover .chevron-icon,
+    .profile-pill.active .chevron-icon {
+        color: #5A4FCF;
+    }
+
+    .chevron-rotated {
+        transform: rotate(180deg);
+    }
+
+    .admin-topnav {
+        z-index: 1070 !important;
+    }
+
+    .profile-dropdown-card {
+        min-width: 270px;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 12px;
+        box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.06);
+        z-index: 1100;
+        animation: dropdownSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @@keyframes dropdownSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .profile-card-header {
+        background: linear-gradient(135deg, rgba(90, 79, 207, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%);
+        border: 1px solid rgba(90, 79, 207, 0.15);
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .profile-card-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5A4FCF 0%, #4338CA 100%);
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        user-select: none;
+        box-shadow: 0 3px 8px rgba(90, 79, 207, 0.3);
+    }
+
+    .profile-card-name {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 2px;
+        line-height: 1.2;
+    }
+
+    .profile-card-subtitle {
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .profile-online-badge {
+        width: 7px;
+        height: 7px;
+        background-color: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .btn-logout-modern {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #be123c !important;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.35);
+    }
+
+    .btn-logout-modern i {
+        font-size: 1.05rem;
+        transition: transform 0.2s ease;
+        color: #ffffff !important;
+    }
+
+    .btn-logout-modern:hover {
+        background: linear-gradient(135deg, #be123c 0%, #9f1239 100%) !important;
+        color: #ffffff !important;
+        border-color: #9f1239 !important;
+        box-shadow: 0 6px 18px rgba(225, 29, 72, 0.5) !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-logout-modern:hover i {
+        color: #ffffff !important;
+        transform: translateX(3px);
+    }
+</style>
+
 <header class="admin-topnav sticky-top">
     <div class="d-flex align-items-center gap-3">
 
@@ -40,50 +241,57 @@
         <!-- Profile Dropdown -->
         <AuthorizeView>
             <Authorized>
-                <div class="dropdown position-relative">
+                <div class="position-relative" style="z-index: 1090;">
                     <button type="button"
-                            class="profile-pill d-flex align-items-center gap-2 border-0"
+                            class="profile-pill d-flex align-items-center gap-2 border-0 @(isProfileMenuOpen ? "active" : "")"
                             id="profileDropdown"
                             @onclick="ToggleProfileMenu"
-                            @onfocusout="CloseProfileMenu"
                             aria-expanded="@(isProfileMenuOpen ? "true" : "false")">
-                        <div class="position-relative">
-                            <img src="@($"https://ui-avatars.com/api/?name={context.User.Identity?.Name}&background=4f46e5&color=fff&bold=true")"
-                                 alt="Admin"
-                                 width="36"
-                                 height="36"
-                                 class="rounded-circle shadow-sm" style="border: 2px solid #6366f1;" />
-                            <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle"></span>
+                        <div class="profile-avatar-wrapper">
+                            <div class="profile-avatar-circle shadow-sm">
+                                @GetInitials(context.User.Identity?.Name)
+                            </div>
+                            <span class="status-indicator-dot"></span>
                         </div>
                         <div class="d-none d-sm-block lh-1 text-start me-1">
-                            <span class="d-block fw-bold text-dark" style="font-size:0.85rem;">@context.User.Identity?.Name</span>
-                            <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-0 border-0" style="font-size:0.65rem; font-weight: 700; background: #e0e7ff !important; color: #4338ca !important;">
+                            <span class="d-block fw-bold text-dark" style="font-size:0.85rem; letter-spacing: 0.2px;">@context.User.Identity?.Name</span>
+                            <span class="profile-role-badge">
                                 @(context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "ADMIN")
                             </span>
                         </div>
-                        <i class="bi bi-chevron-down text-muted" style="font-size:0.75rem;"></i>
+                        <i class="bi bi-chevron-down chevron-icon @(isProfileMenuOpen ? "chevron-rotated" : "")"></i>
                     </button>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-2 @(isProfileMenuOpen ? "show" : "")"
-                        aria-labelledby="profileDropdown"
-                        style="min-width:220px; position: absolute; right: 0; border-radius: 16px; background: #ffffff;">
-                        <li class="p-2 mb-2 bg-light rounded-3 d-flex align-items-center gap-2">
-                            <img src="@($"https://ui-avatars.com/api/?name={context.User.Identity?.Name}&background=4f46e5&color=fff&bold=true")"
-                                 width="32" height="32" class="rounded-circle" />
-                            <div class="lh-1 overflow-hidden">
-                                <strong class="d-block text-dark text-truncate" style="font-size: 0.85rem;">@context.User.Identity?.Name</strong>
-                                <small class="text-muted" style="font-size: 0.72rem;">Administrator Account</small>
+                    @if (isProfileMenuOpen)
+                    {
+                        <!-- Outside click backdrop (z-index 1091) -->
+                        <div style="position: fixed; inset: 0; z-index: 1091; background: transparent;" @onclick="CloseProfileMenuImmediately"></div>
+
+                        <!-- Dropdown card sits ABOVE backdrop (z-index 1095) -->
+                        <div class="profile-dropdown-card" style="z-index: 1095;" aria-labelledby="profileDropdown">
+                            <div class="profile-card-header mb-2">
+                                <div class="profile-card-avatar shadow-sm">
+                                    @GetInitials(context.User.Identity?.Name)
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="profile-card-name text-truncate">@context.User.Identity?.Name</div>
+                                    <div class="profile-card-subtitle">
+                                        <span class="profile-online-badge"></span>
+                                        <span>@(context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Administrator")</span>
+                                    </div>
+                                </div>
                             </div>
-                        </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <button class="dropdown-item d-flex align-items-center gap-2 text-danger rounded-2 py-2 px-3 fw-semibold border-0 w-100 text-start" 
-                                    style="background: #fef2f2;" 
-                                    @onclick="Logout">
-                                <i class="bi bi-box-arrow-right fs-6"></i> Logout
-                            </button>
-                        </li>
-                    </ul>
+                            <div class="my-2" style="border-top: 1px solid #f1f5f9;"></div>
+                            <div>
+                                <button type="button" 
+                                        class="btn-logout-modern border-0" 
+                                        @onclick="Logout">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    }
                 </div>
             </Authorized>
             <NotAuthorized>
@@ -152,23 +360,44 @@
         isProfileMenuOpen = !isProfileMenuOpen;
     }
 
-    private async Task CloseProfileMenu()
+    private void CloseProfileMenuImmediately()
     {
-        await Task.Delay(250);
         isProfileMenuOpen = false;
+    }
+
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "AD";
+
+        var parts = name.Split(new[] { ' ', '_', '.', '-' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+        {
+            return $"{char.ToUpper(parts[0][0])}{char.ToUpper(parts[1][0])}";
+        }
+        else if (name.Length >= 2)
+        {
+            return name.Substring(0, 2).ToUpper();
+        }
+        return name.Substring(0, 1).ToUpper();
     }
 
     private async Task Logout()
     {
         isProfileMenuOpen = false;
-        var customAuth = (CustomAuthStateProvider)AuthStateProvider;
-        await customAuth.MarkUserAsLoggedOut();
         try
         {
-            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "isLoggedIn", "false");
             await JSRuntime.InvokeVoidAsync("authFunctions.logout");
         }
         catch { }
-        NavigationManager.NavigateTo("/login", forceLoad: true);
+
+        try
+        {
+            var customAuth = (CustomAuthStateProvider)AuthStateProvider;
+            await customAuth.MarkUserAsLoggedOut();
+        }
+        catch { }
+
+        NavigationManager.NavigateTo("/login?loggedOut=true", forceLoad: true);
     }
 }

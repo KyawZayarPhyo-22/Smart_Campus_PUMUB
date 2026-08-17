@@ -217,6 +217,7 @@ public class SubjectCreateRequestModel
     public int SemesterId { get; set; }
 
     public int? FacultyId { get; set; }
+    public int? MajorId { get; set; }
 
     [Required(ErrorMessage = "Subject Name သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [StringLength(150, ErrorMessage = "Subject Name သည် စာလုံးရေ ၁၁၀ ထက် မကျော်ရပါ။")]
@@ -225,7 +226,14 @@ public class SubjectCreateRequestModel
     [Required(ErrorMessage = "Subject Code သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [StringLength(50, ErrorMessage = "Subject Code သည် စာလုံးရေ ၅၀ ထက် မကျော်ရပါ။")]
     public string? SubjectCode { get; set; }
+
+    [Required(ErrorMessage = "Subject Type သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    [Range(1, 2, ErrorMessage = "မှန်ကန်သော Subject Type ကို ရွေးချယ်ပေးပါ။")]
+    public Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType SubjectType { get; set; } = Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.None;
+
     public string? CreatedBy { get; set; }
+
+    public List<int> PrerequisiteSubjectIds { get; set; } = new();
 }
 
 public class SubjectUpdateRequestModel
@@ -235,6 +243,7 @@ public class SubjectUpdateRequestModel
     public int SemesterId { get; set; }
 
     public int? FacultyId { get; set; }
+    public int? MajorId { get; set; }
 
     [Required(ErrorMessage = "Subject Name သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [StringLength(150, ErrorMessage = "Subject Name သည် စာလုံးရေ ၁၅၀ ထက် မကျော်ရပါ။")]
@@ -243,7 +252,14 @@ public class SubjectUpdateRequestModel
     [Required(ErrorMessage = "Subject Code သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
     [StringLength(50, ErrorMessage = "Subject Code သည် စာလုံးရေ ၅၀ ထက် မကျော်ရပါ။")]
     public string? SubjectCode { get; set; }
+
+    [Required(ErrorMessage = "Subject Type သည် မဖြစ်မနေ လိုအပ်ပါသည်။")]
+    [Range(1, 2, ErrorMessage = "မှန်ကန်သော Subject Type ကို ရွေးချယ်ပေးပါ။")]
+    public Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType SubjectType { get; set; } = Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.None;
+
     public string? ModifiedBy { get; set; }
+
+    public List<int> PrerequisiteSubjectIds { get; set; } = new();
 }
 
 public class SubjectResponseModel : ActionResponseModel
@@ -258,6 +274,77 @@ public class SubjectModel
     public int SemesterId { get; set; }
     public int? FacultyId { get; set; }
     public string? FacultyName { get; set; }
+    public int? MajorId { get; set; }
+    public string? MajorName { get; set; }
     public string? SubjectName { get; set; }
     public string? SubjectCode { get; set; }
+    public Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType SubjectType { get; set; } = Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.None;
+    public string SubjectTypeName => SubjectType.ToString();
+    public List<int> PrerequisiteSubjectIds { get; set; } = new();
+    public string? PrerequisiteInfo { get; set; }
+    public bool IsPrerequisiteSatisfied { get; set; } = true;
+    public string? PrerequisiteStatusMessage { get; set; }
+    public bool IsRetake { get; set; } = false;
+    public bool IsSelected { get; set; } = false;
+}
+
+public class StudentEnrollmentResultModel
+{
+    public int EnrollmentId { get; set; }
+    public int? RegistrationId { get; set; }
+    public int StudentId { get; set; }
+    public string? StudentName { get; set; }
+    public string? RollNo { get; set; }
+    public string? Major { get; set; }
+    public int SemesterId { get; set; }
+    public string? SemesterName { get; set; }
+    public int SubjectId { get; set; }
+    public string? SubjectCode { get; set; }
+    public string? SubjectName { get; set; }
+    public DateTime EnrollmentDate { get; set; }
+    public decimal? MaxMarks { get; set; }
+    public decimal? MarksObtained { get; set; }
+    public string? Grade { get; set; }
+    public bool IsPass { get; set; }
+}
+
+public class StudentSubjectGradeItemModel
+{
+    public int SubjectId { get; set; }
+    public string SubjectCode { get; set; } = string.Empty;
+    public string SubjectName { get; set; } = string.Empty;
+    public string? SemesterName { get; set; }
+    public Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType SubjectType { get; set; } = Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.None;
+    public string SubjectTypeName => SubjectType.ToString();
+    public string? PrerequisiteInfo { get; set; }
+    public string? Grade { get; set; }
+    public int? ResultId { get; set; }
+    public bool IsPass { get; set; }
+    public bool IsRetake { get; set; } = false;
+}
+
+public class StudentEnrollmentDetailResponseModel
+{
+    public int RegistrationId { get; set; }
+    public int? StudentId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
+    public string RollNo { get; set; } = string.Empty;
+    public int SemesterId { get; set; }
+    public string SemesterName { get; set; } = string.Empty;
+    public string MajorName { get; set; } = string.Empty;
+    public List<StudentSubjectGradeItemModel> Subjects { get; set; } = new();
+}
+
+public class SaveStudentGradesRequestModel
+{
+    public int RegistrationId { get; set; }
+    public int? StudentId { get; set; }
+    public int SemesterId { get; set; }
+    public List<SaveGradeItemModel> Grades { get; set; } = new();
+}
+
+public class SaveGradeItemModel
+{
+    public int SubjectId { get; set; }
+    public string? Grade { get; set; }
 }

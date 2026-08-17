@@ -238,4 +238,6 @@ public partial class StudentRegistration
     [ForeignKey("UserId")]
     [InverseProperty("StudentRegistrations")]
     public virtual User? User { get; set; }
+
+    public virtual ICollection<StudentSubjectResult> Results { get; set; } = new List<StudentSubjectResult>();
 }

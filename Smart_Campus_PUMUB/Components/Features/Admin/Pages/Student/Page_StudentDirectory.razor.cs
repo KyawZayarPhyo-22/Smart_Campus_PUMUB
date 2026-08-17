@@ -40,6 +40,10 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
         private bool ShowToast { get; set; } = false;
         private string ToastMessage { get; set; } = "";
 
+        // Modal State
+        private bool ShowDetailModal { get; set; } = false;
+        private StudentModel? SelectedStudent { get; set; } = null;
+
         // Pagination
         private int CurrentPage { get; set; } = 1;
         private int PageSize { get; set; } = 10;
@@ -112,7 +116,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
                 var majorTask = HttpClientService.ExecuteAsync<List<MajorModel>>("major", EnumHttpMethod.Get);
                 var semesterTask = HttpClientService.ExecuteAsync<List<SemesterModel>>("Semester", EnumHttpMethod.Get);
 
-                await Task.WhenAll(studentTask, facultyTask, majorTask, semesterTask);
+                var delayTask = Task.Delay(1000);
+                await Task.WhenAll(studentTask, facultyTask, majorTask, semesterTask, delayTask);
 
                 StudentList = await studentTask ?? new();
                 FacultyList = await facultyTask ?? new();
@@ -129,36 +134,96 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
             }
         }
 
-        private void OnFacultyChanged()
-        {
-            SelectedMajorInput = "All";
-            ApplyFilter();
-        }
+    // Custom Dropdown Open States
+    private bool isFacultyDropdownOpen = false;
+    private bool isMajorDropdownOpen = false;
+    private bool isYearDropdownOpen = false;
 
-        private void ApplyFilter()
-        {
-            SearchTerm = SearchInput;
-            SelectedFaculty = SelectedFacultyInput;
-            SelectedMajor = SelectedMajorInput;
-            SelectedYear = SelectedYearInput;
-            CurrentPage = 1;
-            StateHasChanged();
-        }
+    private void ToggleFacultyDropdown()
+    {
+        if (isFacultyAdminLocked) return;
+        isMajorDropdownOpen = false;
+        isYearDropdownOpen = false;
+        isFacultyDropdownOpen = !isFacultyDropdownOpen;
+    }
 
-        private void ResetFilter()
+    private void ToggleMajorDropdown()
+    {
+        isFacultyDropdownOpen = false;
+        isYearDropdownOpen = false;
+        isMajorDropdownOpen = !isMajorDropdownOpen;
+    }
+
+    private void ToggleYearDropdown()
+    {
+        isFacultyDropdownOpen = false;
+        isMajorDropdownOpen = false;
+        isYearDropdownOpen = !isYearDropdownOpen;
+    }
+
+    private void SelectFaculty(string? facultyName)
+    {
+        SelectedFacultyInput = facultyName ?? "All";
+        SelectedMajorInput = "All";
+        isFacultyDropdownOpen = false;
+        // Search button ကို နှိပ်မှသာ Filter လုပ်မည် (Auto-search မလုပ်ပါ)
+    }
+
+    private void SelectMajor(string? majorName)
+    {
+        SelectedMajorInput = majorName ?? "All";
+        isMajorDropdownOpen = false;
+        // Search button ကို နှိပ်မှသာ Filter လုပ်မည် (Auto-search မလုပ်ပါ)
+    }
+
+    private void SelectYear(string? yearName)
+    {
+        SelectedYearInput = yearName ?? "All";
+        isYearDropdownOpen = false;
+        // Search button ကို နှိပ်မှသာ Filter လုပ်မည် (Auto-search မလုပ်ပါ)
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isFacultyDropdownOpen = false;
+        isMajorDropdownOpen = false;
+        isYearDropdownOpen = false;
+    }
+
+    private void OnFacultyChanged()
+    {
+        SelectedMajorInput = "All";
+    }
+
+    private void ApplyFilter()
+    {
+        CloseAllDropdowns();
+        SearchTerm = SearchInput;
+        SelectedFaculty = SelectedFacultyInput;
+        SelectedMajor = SelectedMajorInput;
+        SelectedYear = SelectedYearInput;
+        CurrentPage = 1;
+        StateHasChanged();
+    }
+
+    private void ResetFilter()
+    {
+        CloseAllDropdowns();
+        SearchInput = "";
+        if (!isFacultyAdminLocked)
         {
-            SearchInput = "";
             SelectedFacultyInput = "All";
-            SelectedMajorInput = "All";
-            SelectedYearInput = "All";
-
-            SearchTerm = "";
             SelectedFaculty = "All";
-            SelectedMajor = "All";
-            SelectedYear = "All";
-            CurrentPage = 1;
-            StateHasChanged();
         }
+        SelectedMajorInput = "All";
+        SelectedYearInput = "All";
+
+        SearchTerm = "";
+        SelectedMajor = "All";
+        SelectedYear = "All";
+        CurrentPage = 1;
+        StateHasChanged();
+    }
 
         private IEnumerable<string> AvailableFaculties
         {
@@ -297,11 +362,51 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
             }
         }
 
+        private void OpenViewModal(StudentModel student)
+        {
+            SelectedStudent = student;
+            ShowDetailModal = true;
+        }
+
+        private void CloseViewModal()
+        {
+            ShowDetailModal = false;
+            SelectedStudent = null;
+        }
+
+        private string GetSemesterDisplayName(int semNum)
+        {
+            var sem = SemesterList.FirstOrDefault(s => s.Sequence == semNum);
+            if (sem != null && !string.IsNullOrWhiteSpace(sem.SemesterName))
+            {
+                return sem.SemesterName;
+            }
+            return $"Semester {semNum}";
+        }
+
+        private string? GetSemesterResult(StudentModel? student, int semNum)
+        {
+            if (student == null) return null;
+            return semNum switch
+            {
+                1 => student.Sem1_Result,
+                2 => student.Sem2_Result,
+                3 => student.Sem3_Result,
+                4 => student.Sem4_Result,
+                5 => student.Sem5_Result,
+                6 => student.Sem6_Result,
+                7 => student.Sem7_Result,
+                8 => student.Sem8_Result,
+                9 => student.Sem9_Result,
+                _ => null
+            };
+        }
+
         private string GetDropdownClass(string? result) => result switch
         {
             "Pass" => "pass",
             "Fail" => "fail",
-            "Credit_Transferred" => "credit",
+            "Credit_Transferred" or "Credit" => "credit",
             _ => "none"
         };
 

@@ -29,6 +29,8 @@ public class SubjectController : ControllerBase
         var query = _db.Subjects
                            .Include(s => s.Semester)
                            .Include(s => s.Faculty)
+                           .Include(s => s.Major)
+                           .Include(s => s.Prerequisites)
                            .Where(x => x.IsDelete == false || x.IsDelete == null);
 
         // Hierarchical RBAC Data Scoping:
@@ -46,10 +48,14 @@ public class SubjectController : ControllerBase
                                SubjectId   = s.SubjectId,
                                SubjectName = s.SubjectName,
                                SubjectCode = s.SubjectCode,
+                               SubjectType = s.SubjectType,
                                SemesterId  = s.SemesterId,
                                SemesterName = s.Semester.SemesterName,
                                FacultyId   = s.FacultyId,
-                               FacultyName = s.Faculty != null ? s.Faculty.FacultyName : null
+                               FacultyName = s.Faculty != null ? s.Faculty.FacultyName : null,
+                               MajorId     = s.MajorId,
+                               MajorName   = s.Major != null ? s.Major.MajorName : null,
+                               PrerequisiteSubjectIds = s.Prerequisites.Select(p => p.PrerequisiteSubjectId).ToList()
                            }).ToList();
         return Ok(subjects);
     }
@@ -65,6 +71,8 @@ public class SubjectController : ControllerBase
         var item = _db.Subjects
                        .Include(s => s.Semester)
                        .Include(s => s.Faculty)
+                       .Include(s => s.Major)
+                       .Include(s => s.Prerequisites)
                        .FirstOrDefault(x => x.SubjectId == id && (x.IsDelete == false || x.IsDelete == null));
 
         if (item is null)
@@ -75,11 +83,58 @@ public class SubjectController : ControllerBase
             SubjectId    = item.SubjectId,
             SubjectName  = item.SubjectName,
             SubjectCode  = item.SubjectCode,
+            SubjectType  = item.SubjectType,
             SemesterId   = item.SemesterId,
             SemesterName = item.Semester?.SemesterName,
             FacultyId    = item.FacultyId,
-            FacultyName  = item.Faculty?.FacultyName
+            FacultyName  = item.Faculty?.FacultyName,
+            MajorId      = item.MajorId,
+            MajorName    = item.Major?.MajorName,
+            PrerequisiteSubjectIds = item.Prerequisites.Select(p => p.PrerequisiteSubjectId).ToList()
         });
+    }
+
+    // GET: api/subject/by-semester/{semesterId}
+    [HttpGet("by-semester/{semesterId}")]
+    [AllowAnonymous]
+    public IActionResult GetBySemester(int semesterId, [FromQuery] int? facultyId, [FromQuery] int? majorId)
+    {
+        if (semesterId <= 0)
+            return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "မှားယွင်းသော Semester ID ဖြစ်နေပါသည်။" });
+
+        var query = _db.Subjects
+                       .Include(s => s.Semester)
+                       .Include(s => s.Faculty)
+                       .Include(s => s.Major)
+                       .Where(x => x.SemesterId == semesterId && (x.IsDelete == false || x.IsDelete == null));
+
+        if (facultyId.HasValue && facultyId > 0)
+        {
+            query = query.Where(x => x.FacultyId == facultyId.Value || x.FacultyId == null);
+        }
+
+        if (majorId.HasValue && majorId > 0)
+        {
+            query = query.Where(x => x.MajorId == majorId.Value || x.MajorId == null);
+        }
+
+        var subjects = query
+                       .OrderBy(s => s.SubjectName)
+                       .Select(s => new SubjectModel
+                       {
+                           SubjectId    = s.SubjectId,
+                           SubjectName  = s.SubjectName,
+                           SubjectCode  = s.SubjectCode,
+                           SubjectType  = s.SubjectType,
+                           SemesterId   = s.SemesterId,
+                           SemesterName = s.Semester.SemesterName,
+                           FacultyId    = s.FacultyId,
+                           FacultyName  = s.Faculty != null ? s.Faculty.FacultyName : null,
+                           MajorId      = s.MajorId,
+                           MajorName    = s.Major != null ? s.Major.MajorName : null
+                       }).ToList();
+
+        return Ok(subjects);
     }
 
     // GET: api/subject/paginate
@@ -90,6 +145,8 @@ public class SubjectController : ControllerBase
         var query = _db.Subjects
                         .Include(s => s.Semester)
                         .Include(s => s.Faculty)
+                        .Include(s => s.Major)
+                        .Include(s => s.Prerequisites)
                         .Where(x => x.IsDelete == false || x.IsDelete == null)
                         .AsQueryable();
 
@@ -108,7 +165,8 @@ public class SubjectController : ControllerBase
                 x.SubjectName.ToLower().Contains(term) ||
                 x.SubjectCode.ToLower().Contains(term) ||
                 (x.Semester != null && x.Semester.SemesterName.ToLower().Contains(term)) ||
-                (x.Faculty != null && x.Faculty.FacultyName.ToLower().Contains(term)));
+                (x.Faculty != null && x.Faculty.FacultyName.ToLower().Contains(term)) ||
+                (x.Major != null && x.Major.MajorName.ToLower().Contains(term)));
         }
 
         int total = query.Count();
@@ -122,10 +180,14 @@ public class SubjectController : ControllerBase
                 SubjectId    = s.SubjectId,
                 SubjectName  = s.SubjectName,
                 SubjectCode  = s.SubjectCode,
+                SubjectType  = s.SubjectType,
                 SemesterId   = s.SemesterId,
                 SemesterName = s.Semester.SemesterName,
                 FacultyId    = s.FacultyId,
-                FacultyName  = s.Faculty != null ? s.Faculty.FacultyName : null
+                FacultyName  = s.Faculty != null ? s.Faculty.FacultyName : null,
+                MajorId      = s.MajorId,
+                MajorName    = s.Major != null ? s.Major.MajorName : null,
+                PrerequisiteSubjectIds = s.Prerequisites.Select(p => p.PrerequisiteSubjectId).ToList()
             }).ToList();
 
         return Ok(new PagedResult<SubjectModel>
@@ -144,6 +206,9 @@ public class SubjectController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
+        if (request.SubjectType == EnumSubjectType.None)
+            return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Subject Type (Core သို့မဟုတ် Elective) ကို ရွေးချယ်ပေးပါ။" });
+
         var semester = _db.Semesters.FirstOrDefault(s => s.SemesterId == request.SemesterId);
         if (semester is null || semester.IsDelete == true)
             return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "ပေးထားသော Semester ID သည် မရှိပါ (သို့မဟုတ်) ဖျက်သိမ်းထားပါသည်။" });
@@ -156,6 +221,14 @@ public class SubjectController : ControllerBase
                 return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "ပေးထားသော Faculty ID သည် မရှိပါ (သို့မဟုတ်) ဖျက်သိမ်းထားပါသည်။" });
         }
 
+        // Major FK validation (if provided)
+        if (request.MajorId.HasValue && request.MajorId > 0)
+        {
+            var major = _db.Majors.FirstOrDefault(m => m.MajorId == request.MajorId && (m.IsDelete == false || m.IsDelete == null));
+            if (major is null)
+                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "ပေးထားသော Major ID သည် မရှိပါ (သို့မဟုတ်) ဖျက်သိမ်းထားပါသည်။" });
+        }
+
         var isDuplicate = _db.Subjects.Any(x => x.SemesterId == request.SemesterId
                                           && (x.SubjectName.Trim().ToLower() == request.SubjectName!.Trim().ToLower()
                                               || x.SubjectCode.Trim().ToLower() == request.SubjectCode!.Trim().ToLower())
@@ -163,16 +236,33 @@ public class SubjectController : ControllerBase
         if (isDuplicate)
             return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "ဤ Semester အောက်တွင် ဘာသာရပ်အမည် သို့မဟုတ် ဘာသာရပ်ကုဒ် (Subject Code) ရှိနှင့်ပြီးသား ဖြစ်နေပါသည်။" });
 
-        _db.Subjects.Add(new Subject
+        var newSubject = new Subject
         {
             SemesterId  = request.SemesterId,
             FacultyId   = request.FacultyId,
+            MajorId     = request.MajorId,
             SubjectName = request.SubjectName!.Trim(),
             SubjectCode = request.SubjectCode!.Trim().ToUpper(),
+            SubjectType = request.SubjectType,
             CreatedDateTime = DateTime.Now,
             CreatedBy   = request.CreatedBy,
             IsDelete    = false
-        });
+        };
+
+        if (request.PrerequisiteSubjectIds != null && request.PrerequisiteSubjectIds.Any())
+        {
+            foreach (var pId in request.PrerequisiteSubjectIds)
+            {
+                newSubject.Prerequisites.Add(new SubjectPrerequisite 
+                { 
+                    PrerequisiteSubjectId = pId,
+                    CreatedBy = request.CreatedBy,
+                    CreatedDateTime = DateTime.Now
+                });
+            }
+        }
+
+        _db.Subjects.Add(newSubject);
 
         int result = _db.SaveChanges();
 
@@ -198,7 +288,12 @@ public class SubjectController : ControllerBase
 
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        var item = _db.Subjects.FirstOrDefault(x => x.SubjectId == id && (x.IsDelete == false || x.IsDelete == null));
+        if (request.SubjectType == EnumSubjectType.None)
+            return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "Subject Type (Core သို့မဟုတ် Elective) ကို ရွေးချယ်ပေးပါ။" });
+
+        var item = _db.Subjects
+            .Include(s => s.Prerequisites)
+            .FirstOrDefault(x => x.SubjectId == id && (x.IsDelete == false || x.IsDelete == null));
         if (item is null)
             return NotFound(new ActionResponseModel { IsSuccess = false, Message = "ပြင်ဆင်ရန် ဘာသာရပ်ဒေတာ ရှာမတွေ့ပါ။" });
 
@@ -214,6 +309,14 @@ public class SubjectController : ControllerBase
                 return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "ပေးထားသော Faculty ID သည် မရှိပါ (သို့မဟုတ်) ဖျက်သိမ်းထားပါသည်။" });
         }
 
+        // Major FK validation (if provided)
+        if (request.MajorId.HasValue && request.MajorId > 0)
+        {
+            var major = _db.Majors.FirstOrDefault(m => m.MajorId == request.MajorId && (m.IsDelete == false || m.IsDelete == null));
+            if (major is null)
+                return BadRequest(new ActionResponseModel { IsSuccess = false, Message = "ပေးထားသော Major ID သည် မရှိပါ (သို့မဟုတ်) ဖျက်သိမ်းထားပါသည်။" });
+        }
+
         var isDuplicateOnOther = _db.Subjects.Any(x => x.SemesterId == request.SemesterId
                                                    && (x.SubjectName.Trim().ToLower() == request.SubjectName!.Trim().ToLower()
                                                        || x.SubjectCode.Trim().ToLower() == request.SubjectCode!.Trim().ToLower())
@@ -224,10 +327,27 @@ public class SubjectController : ControllerBase
 
         item.SemesterId      = request.SemesterId;
         item.FacultyId       = request.FacultyId;
+        item.MajorId         = request.MajorId;
         item.SubjectName     = request.SubjectName!.Trim();
         item.SubjectCode     = request.SubjectCode!.Trim().ToUpper();
+        item.SubjectType     = request.SubjectType;
         item.ModifiedDateTime = DateTime.Now;
         item.ModifiedBy      = request.ModifiedBy;
+
+        // Update prerequisites
+        _db.SubjectPrerequisites.RemoveRange(item.Prerequisites);
+        if (request.PrerequisiteSubjectIds != null && request.PrerequisiteSubjectIds.Any())
+        {
+            foreach (var pId in request.PrerequisiteSubjectIds)
+            {
+                item.Prerequisites.Add(new SubjectPrerequisite 
+                { 
+                    PrerequisiteSubjectId = pId,
+                    CreatedBy = request.ModifiedBy,
+                    CreatedDateTime = DateTime.Now
+                });
+            }
+        }
 
         int result = _db.SaveChanges();
 
@@ -249,8 +369,11 @@ public class SubjectController : ControllerBase
                 SubjectId   = item.SubjectId,
                 SemesterId  = item.SemesterId,
                 FacultyId   = item.FacultyId,
+                MajorId     = item.MajorId,
                 SubjectName = item.SubjectName,
-                SubjectCode = item.SubjectCode
+                SubjectCode = item.SubjectCode,
+                SubjectType = item.SubjectType,
+                PrerequisiteSubjectIds = item.Prerequisites.Select(p => p.PrerequisiteSubjectId).ToList()
             }
         });
     }

@@ -13,9 +13,13 @@ public class DynamicPolicyProvider : DefaultAuthorizationPolicyProvider
         var policy = await base.GetPolicyAsync(policyName);
         if (policy != null) return policy;
 
-        // Dynamically create policy requiring the "Permission" claim
+        // Dynamically create policy requiring the "Permission" claim or Super Admin role
         return new AuthorizationPolicyBuilder()
-            .RequireClaim("Permission", policyName)
+            .RequireAssertion(ctx =>
+                ctx.User.IsInRole("Super Admin") ||
+                ctx.User.IsInRole("super_admin") ||
+                ctx.User.HasClaim("RoleId", "4") ||
+                ctx.User.HasClaim(c => c.Type == "Permission" && c.Value == policyName))
             .Build();
     }
 }

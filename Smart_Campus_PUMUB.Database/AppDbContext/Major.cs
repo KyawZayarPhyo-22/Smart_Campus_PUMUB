@@ -33,4 +33,7 @@ public partial class Major
     [ForeignKey("FacultyId")]
     [InverseProperty("Majors")]
     public virtual Faculty Faculty { get; set; } = null!;
+
+    [InverseProperty("Major")]
+    public virtual ICollection<Subject> Subjects { get; set; } = new List<Subject>();
 }

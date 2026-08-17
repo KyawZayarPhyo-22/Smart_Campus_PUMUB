@@ -119,29 +119,47 @@ public class RegisterAccController : ControllerBase
         int totalCount = await query.CountAsync();
         int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        var items = await (from r in query
-                           join n in _db.NewStudentAccs on r.RegisterAccId equals n.RegisterAccId into joined
-                           from n in joined.DefaultIfEmpty()
-                           orderby r.CreatedDateTime descending
-                           select new RegisterAccListItem
-                           {
-                               RegisterAccId = r.RegisterAccId,
-                               FullName = r.FullName,
-                               Email = r.Email,
-                               Phone = r.Phone,
-                               FormNo = r.FormNo,
-                               ExamSeatNo = r.ExamSeatNo,
-                               Status = r.Status,
-                               RejectionReason = r.RejectionReason,
-                               CreatedDateTime = r.CreatedDateTime,
-                               ReviewedDateTime = r.ReviewedDateTime,
-                               ReviewedBy = r.ReviewedBy,
-                               NewStudentAccId = n != null ? n.NewStudentAccId : (int?)null,
-                               AccountStatus = n != null ? n.AccountStatus : null
-                           })
-                           .Skip((pageNumber - 1) * pageSize)
-                           .Take(pageSize)
-                           .ToListAsync();
+        var rawList = await query
+            .OrderByDescending(r => r.CreatedDateTime)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var regIds = rawList.Select(r => r.RegisterAccId).ToList();
+
+        var newAccs = await _db.NewStudentAccs
+            .Where(n => n.RegisterAccId.HasValue && regIds.Contains(n.RegisterAccId.Value))
+            .ToListAsync();
+
+        var items = rawList.Select(r =>
+        {
+            var matchedAcc = newAccs.FirstOrDefault(n => n.RegisterAccId == r.RegisterAccId);
+
+            int? newStudentAccId = matchedAcc?.NewStudentAccId;
+            string? accStatus = null;
+
+            if (r.Status == "Approved")
+            {
+                accStatus = matchedAcc?.AccountStatus ?? "Active";
+            }
+
+            return new RegisterAccListItem
+            {
+                RegisterAccId = r.RegisterAccId,
+                FullName = r.FullName,
+                Email = r.Email,
+                Phone = r.Phone,
+                FormNo = r.FormNo,
+                ExamSeatNo = r.ExamSeatNo,
+                Status = r.Status,
+                RejectionReason = r.RejectionReason,
+                CreatedDateTime = r.CreatedDateTime,
+                ReviewedDateTime = r.ReviewedDateTime,
+                ReviewedBy = r.ReviewedBy,
+                NewStudentAccId = newStudentAccId,
+                AccountStatus = accStatus
+            };
+        }).ToList();
 
         return Ok(new RegisterAccPagedResponse
         {
@@ -288,6 +306,63 @@ public class RegisterAccController : ControllerBase
         {
             IsSuccess = true,
             Message = "Request Reject လုပ်ပြီးပါပြီ။ Email ဖြင့် အကြောင်းကြားပြီးပါပြီ။"
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PUT /api/registeracc/{id}/status — Admin toggles Active / Inactive
+    // ─────────────────────────────────────────────────────────────────────────
+    [HttpPut("{id}/status")]
+    [Permission("RegisterAcc.Edit")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] NewStudentAccUpdateStatusRequest request)
+    {
+        var entity = await _db.RegisterAccounts.FindAsync(id);
+        if (entity == null)
+            return NotFound(new RegisterAccActionResponse { IsSuccess = false, Message = "ရှာမတွေ့ပါ။" });
+
+        var trimmedStatus = (request?.AccountStatus ?? "Active").Trim();
+        bool isTargetActive = string.Equals(trimmedStatus, "Active", StringComparison.OrdinalIgnoreCase);
+        string newStatus = isTargetActive ? "Active" : "Inactive";
+
+        // Find NewStudentAcc specifically linked to this RegisterAccId
+        var newAcc = await _db.NewStudentAccs.FirstOrDefaultAsync(n => n.RegisterAccId == entity.RegisterAccId);
+
+        if (newAcc != null)
+        {
+            newAcc.AccountStatus = newStatus;
+            newAcc.ModifiedDateTime = DateTime.Now;
+            newAcc.ModifiedBy = request?.ModifiedBy ?? "Admin";
+        }
+        else if (entity.Status == "Approved")
+        {
+            // Auto create NewStudentAcc if missing for approved record
+            string baseUsername = GenerateUsername(entity.FullName, entity.ExamSeatNo ?? entity.RegisterAccId.ToString());
+            string finalUsername = await EnsureUniqueUsernameInNewStudentAcc(baseUsername);
+            string plainPassword = GeneratePassword();
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+
+            var createdNewAcc = new NewStudentAcc
+            {
+                RegisterAccId = entity.RegisterAccId,
+                FullName = entity.FullName,
+                Email = entity.Email,
+                Phone = entity.Phone,
+                Username = finalUsername,
+                PasswordHash = hashedPassword,
+                AccountStatus = newStatus,
+                MustChangePassword = true,
+                CreatedDateTime = DateTime.Now,
+                CreatedBy = request?.ModifiedBy ?? "Admin"
+            };
+            _db.NewStudentAccs.Add(createdNewAcc);
+        }
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new RegisterAccActionResponse
+        {
+            IsSuccess = true,
+            Message = $"Account Status ကို {newStatus} သို့ အောင်မြင်စွာ ပြောင်းလဲပြီးပါပြီ။"
         });
     }
 

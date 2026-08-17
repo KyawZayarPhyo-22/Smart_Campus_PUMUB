@@ -57,7 +57,8 @@ public class StudentRegistrationCreateRequestModel
     public string? nrc_state { get; set; }     // State code (e.g. "11")
     public string? nrc_township { get; set; }  // Township code (e.g. "THAKANA")
     public string? nrc_type { get; set; }
-    public string? nrc_number { get; set; }    // Number string (e.g. "122344")
+    public string? nrc_number { get; set; }    // Textbox ရိုက်ချက် (ဥပမာ - "122344")
+    public string? selected_subject_ids { get; set; }
 
     // 📷 Images Upload Fields
     public IFormFile? StudentImageFile { get; set; }
@@ -82,4 +83,12 @@ public class StudentRegistrationResponseModel
     public bool IsSuccess { get; set; }
     public string? Message { get; set; }
     public object? Data { get; set; }
+}
+
+public class SubjectGradeBindingModel
+{
+    public int SubjectId { get; set; }
+    public string SubjectName { get; set; } = "";
+    public string SubjectCode { get; set; } = "";
+    public string? Grade { get; set; }
 }

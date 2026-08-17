@@ -1,6 +1,7 @@
 @page "/admin/subject/create"
 @layout AdminLayout
 @using Smart_Campus_PUMUB.WebApi.Models
+@using Smart_Campus_PUMUB.Database.AppDbContext
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Subject
 @using Microsoft.AspNetCore.Components.Authorization
 @rendermode InteractiveServer
@@ -22,7 +23,7 @@
         <DataAnnotationsValidator />
 
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">Semester ရွေးချယ်ရန်</label>
                 <InputSelect @bind-Value="subject.SemesterId" class="form-select">
                     <option value="0">-- Semester တစ်ခုကို ရွေးပါ --</option>
@@ -34,7 +35,7 @@
                 <ValidationMessage For="@(() => subject.SemesterId)" class="text-danger" />
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">Faculty ရွေးချယ်ရန် <span class="text-muted small">(Optional)</span></label>
                 <InputSelect @bind-Value="subject.FacultyId" class="form-select">
                     <option value="">-- Faculty ရွေးပါ (မဖြစ်မနေ မဟုတ်) --</option>
@@ -45,17 +46,60 @@
                 </InputSelect>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <label class="form-label">Major ရွေးချယ်ရန် <span class="text-muted small">(Optional)</span></label>
+                <InputSelect @bind-Value="subject.MajorId" class="form-select">
+                    <option value="">-- Major ရွေးပါ (မဖြစ်မနေ မဟုတ်) --</option>
+                    @foreach (var maj in FilteredMajors)
+                    {
+                        <option value="@maj.MajorId">@maj.MajorName</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="col-md-4">
                 <label class="form-label">Subject Name</label>
                 <InputText @bind-Value="subject.SubjectName" class="form-control"
                            placeholder="ဥပမာ - Engineering Mathematics I" />
                 <ValidationMessage For="@(() => subject.SubjectName)" class="text-danger" />
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">Subject Code</label>
                 <InputText @bind-Value="subject.SubjectCode" class="form-control" placeholder="ဥပမာ - MATH-101" />
                 <ValidationMessage For="@(() => subject.SubjectCode)" class="text-danger" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Subject Type</label>
+                <InputSelect @bind-Value="subject.SubjectType" class="form-select">
+                    @foreach (var type in Enum.GetValues<EnumSubjectType>())
+                    {
+                        if (type == EnumSubjectType.None)
+                        {
+                            <option value="@type">-- Subject Type ရွေးချယ်ပါ --</option>
+                        }
+                        else
+                        {
+                            <option value="@type">@type.ToString()</option>
+                        }
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => subject.SubjectType)" class="text-danger" />
+            </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+            <div class="col-md-12">
+                <label class="form-label">Prerequisite Subjects <span class="text-muted small">(Optional)</span></label>
+                <InputSelect @bind-Value="SelectedPrerequisiteId" class="form-select bg-white">
+                    <option value="0">-- Prerequisite ဘာသာရပ်ကို ရွေးပါ --</option>
+                    @foreach (var sub in SubjectList)
+                    {
+                        <option value="@sub.SubjectId">@sub.SubjectCode - @sub.SubjectName</option>
+                    }
+                </InputSelect>
+                <div class="form-text">Prerequisite ဘာသာရပ်မရှိပါက မရွေးချယ်ဘဲ ထားနိုင်ပါသည်။</div>
             </div>
         </div>
 

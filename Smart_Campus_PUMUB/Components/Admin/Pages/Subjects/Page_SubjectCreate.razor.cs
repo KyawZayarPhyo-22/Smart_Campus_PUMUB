@@ -16,6 +16,15 @@ public partial class Page_SubjectCreate
     private SubjectCreateRequestModel subject = new();
     private List<SemesterModel> SemesterList = new();
     private List<FacultyModel> FacultyList = new();
+    private List<MajorModel> MajorList = new();
+    private List<SubjectModel> SubjectList = new();
+
+    private IEnumerable<MajorModel> FilteredMajors =>
+        subject.FacultyId.HasValue && subject.FacultyId > 0
+            ? MajorList.Where(m => m.FacultyId == subject.FacultyId.Value)
+            : MajorList;
+
+    private int SelectedPrerequisiteId = 0;
 
     private bool IsProcessing = false;
     private string? ErrorMessage;
@@ -24,6 +33,8 @@ public partial class Page_SubjectCreate
     {
         SemesterList = await HttpClientService.ExecuteAsync<List<SemesterModel>>("semester", EnumHttpMethod.Get) ?? new();
         FacultyList  = await HttpClientService.ExecuteAsync<List<FacultyModel>>("faculty", EnumHttpMethod.Get) ?? new();
+        MajorList    = await HttpClientService.ExecuteAsync<List<MajorModel>>("major", EnumHttpMethod.Get) ?? new();
+        SubjectList  = await HttpClientService.ExecuteAsync<List<SubjectModel>>("subject", EnumHttpMethod.Get) ?? new();
     }
 
     private async Task SaveSubject()
@@ -33,6 +44,15 @@ public partial class Page_SubjectCreate
         IsProcessing = true;
         try
         {
+            if (SelectedPrerequisiteId > 0)
+            {
+                subject.PrerequisiteSubjectIds = new List<int> { SelectedPrerequisiteId };
+            }
+            else
+            {
+                subject.PrerequisiteSubjectIds = new List<int>();
+            }
+            
             var response = await HttpClientService.ExecuteAsync<SubjectResponseModel>("subject", EnumHttpMethod.Post, subject);
 
             if (response != null && response.IsSuccess)

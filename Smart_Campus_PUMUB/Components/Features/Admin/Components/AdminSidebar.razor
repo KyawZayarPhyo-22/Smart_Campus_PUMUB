@@ -1,154 +1,216 @@
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
 <div class="sidebar-nav-wrapper">
 
-    <!-- ── MAIN MENU ──────────────────────────── -->
-    <div class="sidebar-section-label">
-        <span class="sidebar-label">Main Menu</span>
-    </div>
-
-    <NavLink href="/admin/dashboard" class="sidebar-nav-link" Match="NavLinkMatch.All">
-        <i class="bi bi-speedometer2"></i>
-
+    <!-- ── 1. DASHBOARD (Direct Link) ──────────── -->
+    <NavLink href="/admin/dashboard" class="sidebar-nav-link mb-2" Match="NavLinkMatch.All">
+        <i class="bi bi-speedometer2 text-info"></i>
         <span class="sidebar-label">Dashboard</span>
     </NavLink>
+
+    <!-- ── 2. STUDENTS DROPDOWN ────────────────── -->
     <AuthorizeView Policy="Student.View">
         <Authorized>
-            <NavLink href="/admin/student-databank" class="sidebar-nav-link">
-                <i class="bi bi-database"></i>
-                <span class="sidebar-label">Student Databank</span>
-            </NavLink>
-            <NavLink href="/admin/student" class="sidebar-nav-link">
-                <i class="bi bi-people"></i>
-                <span class="sidebar-label">Register Databank</span>
-            </NavLink>
-            <NavLink href="/admin/student-directory" class="sidebar-nav-link">
-                <i class="bi bi-person-lines-fill"></i>
-                <span class="sidebar-label">Student Directory (Pass/Fail)</span>
-            </NavLink>
+            <div class="sidebar-group-wrapper mb-1">
+                <button type="button" class="sidebar-dropdown-btn @(isStudentsOpen ? "open" : "")" @onclick='() => ToggleGroup("students")'>
+                    <i class="bi bi-mortarboard-fill sidebar-icon text-info"></i>
+                    <span class="sidebar-label">Students</span>
+                    <span class="sidebar-dropdown-badge sidebar-label">5</span>
+                    <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
+                </button>
+
+                @if (isStudentsOpen)
+                {
+                    <div class="sidebar-submenu">
+                        <NavLink href="/admin/student-databank" class="sidebar-sub-link">
+                            <i class="bi bi-database"></i>
+                            <span class="sidebar-label">Student Databank</span>
+                        </NavLink>
+                        <NavLink href="/admin/student" class="sidebar-sub-link">
+                            <i class="bi bi-people"></i>
+                            <span class="sidebar-label">Register Databank</span>
+                        </NavLink>
+                        <NavLink href="/admin/student-directory" class="sidebar-sub-link">
+                            <i class="bi bi-person-lines-fill"></i>
+                            <span class="sidebar-label">Student Directory</span>
+                        </NavLink>
+                        <NavLink href="/admin/enrollment-results" class="sidebar-sub-link">
+                            <i class="bi bi-journal-check"></i>
+                            <span class="sidebar-label">Enrollment Results</span>
+                        </NavLink>
+                        <NavLink href="/admin/reports" class="sidebar-sub-link">
+                            <i class="bi bi-file-earmark-bar-graph"></i>
+                            <span class="sidebar-label">Admission Report</span>
+                        </NavLink>
+                    </div>
+                }
+            </div>
         </Authorized>
     </AuthorizeView>
 
-    <NavLink href="/admin/tutors" class="sidebar-nav-link">
-        <i class="bi bi-person-workspace"></i>
-        <span class="sidebar-label">Tutor Directory</span>
-    </NavLink>
+    <!-- ── 3. ACADEMICS & STAFF DROPDOWN ───────── -->
+    <div class="sidebar-group-wrapper mb-1">
+        <button type="button" class="sidebar-dropdown-btn @(isAcademicsOpen ? "open" : "")" @onclick='() => ToggleGroup("academics")'>
+            <i class="bi bi-bank2 sidebar-icon text-primary"></i>
+            <span class="sidebar-label">Academics</span>
+            <span class="sidebar-dropdown-badge sidebar-label">7</span>
+            <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
+        </button>
 
-    @* <NavLink href="/admin/library" class="sidebar-nav-link">
-        <i class="bi bi-book"></i>
-        <span class="sidebar-label">Library System</span>
-    </NavLink> *@
+        @if (isAcademicsOpen)
+        {
+            <div class="sidebar-submenu">
+                <NavLink href="/admin/faculties" class="sidebar-sub-link">
+                    <i class="bi bi-building"></i>
+                    <span class="sidebar-label">Faculty</span>
+                </NavLink>
+                <NavLink href="/admin/departments" class="sidebar-sub-link">
+                    <i class="bi bi-diagram-3"></i>
+                    <span class="sidebar-label">Department</span>
+                </NavLink>
+                <NavLink href="/admin/majors" class="sidebar-sub-link">
+                    <i class="bi bi-collection"></i>
+                    <span class="sidebar-label">Major</span>
+                </NavLink>
+                <NavLink href="/admin/subjects" class="sidebar-sub-link">
+                    <i class="bi bi-journal-bookmark"></i>
+                    <span class="sidebar-label">Subject</span>
+                </NavLink>
+                <NavLink href="/admin/semesters" class="sidebar-sub-link">
+                    <i class="bi bi-calendar2-range"></i>
+                    <span class="sidebar-label">Semester</span>
+                </NavLink>
+                <NavLink href="/admin/tutors" class="sidebar-sub-link">
+                    <i class="bi bi-person-workspace"></i>
+                    <span class="sidebar-label">Tutor Directory</span>
+                </NavLink>
+                <NavLink href="/admin/positions" class="sidebar-sub-link">
+                    <i class="bi bi-person-badge"></i>
+                    <span class="sidebar-label">Position</span>
+                </NavLink>
+            </div>
+        }
+    </div>
 
+    <!-- ── 4. CAMPUS & FINANCE DROPDOWN ────────── -->
+    <div class="sidebar-group-wrapper mb-1">
+        <button type="button" class="sidebar-dropdown-btn @(isCampusOpen ? "open" : "")" @onclick='() => ToggleGroup("campus")'>
+            <i class="bi bi-grid-1x2-fill sidebar-icon text-warning"></i>
+            <span class="sidebar-label">Campus & Finance</span>
+            <span class="sidebar-dropdown-badge sidebar-label">5</span>
+            <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
+        </button>
 
-     <AuthorizeView Policy="view.role">
-        <Authorized>
-    <NavLink href="/admin/roles" class="sidebar-nav-link">
-        <i class="bi bi-shield-check"></i>
-        <span class="sidebar-label">Roles</span>
-    </NavLink>
-        </Authorized>
-    </AuthorizeView>
+        @if (isCampusOpen)
+        {
+            <div class="sidebar-submenu">
+                <NavLink href="/admin/payment-fees" class="sidebar-sub-link">
+                    <i class="bi bi-cash-stack"></i>
+                    <span class="sidebar-label">Payment Fees</span>
+                </NavLink>
+                <NavLink href="/admin/books" class="sidebar-sub-link">
+                    <i class="bi bi-book-half"></i>
+                    <span class="sidebar-label">Books</span>
+                </NavLink>
+                <NavLink href="/admin/categories" class="sidebar-sub-link">
+                    <i class="bi bi-tags"></i>
+                    <span class="sidebar-label">Category</span>
+                </NavLink>
+                <NavLink href="/admin/activities" class="sidebar-sub-link">
+                    <i class="bi bi-clipboard-check"></i>
+                    <span class="sidebar-label">Activities</span>
+                </NavLink>
+                <NavLink href="/admin/rules" class="sidebar-sub-link">
+                    <i class="bi bi-file-earmark-ruled"></i>
+                    <span class="sidebar-label">Rules</span>
+                </NavLink>
+            </div>
+        }
+    </div>
 
-    <NavLink href="/admin/positions" class="sidebar-nav-link">
-        <i class="bi bi-person-badge"></i>
-        <span class="sidebar-label">Position</span>
-    </NavLink>
+    <!-- ── 5. ADMINISTRATION DROPDOWN ──────────── -->
+    <div class="sidebar-group-wrapper mb-1">
+        <button type="button" class="sidebar-dropdown-btn @(isSystemOpen ? "open" : "")" @onclick='() => ToggleGroup("system")'>
+            <i class="bi bi-gear-fill sidebar-icon text-danger"></i>
+            <span class="sidebar-label">Administration</span>
+            <span class="sidebar-dropdown-badge sidebar-label">4</span>
+            <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
+        </button>
 
-    <NavLink href="/admin/faculties" class="sidebar-nav-link">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-             id="Apartment--Streamline-Outlined-Material" height="24" width="24">
-            <desc>
-                Apartment Streamline Icon: https://streamlinehq.com
-            </desc>
-            <path fill="#000000"
-                  d="M3 21V7.125h4.125V3h9.75v8.25H21V21H13.325v-4.125h-2.65V21H3Zm1.5 -1.5h2.625v-2.625H4.5V19.5Zm0 -4.125h2.625V12.75H4.5v2.625Zm0 -4.125h2.625v-2.625H4.5v2.625Zm4.125 4.125h2.625V12.75h-2.625v2.625Zm0 -4.125h2.625v-2.625h-2.625v2.625Zm0 -4.125h2.625V4.5h-2.625v2.625Zm4.125 8.25h2.625V12.75H12.75v2.625Zm0 -4.125h2.625v-2.625H12.75v2.625Zm0 -4.125h2.625V4.5H12.75v2.625ZM16.875 19.5H19.5v-2.625h-2.625V19.5Zm0 -4.125H19.5V12.75h-2.625v2.625Z"
-                  stroke-width="0.5"></path>
-        </svg>
-        @* <i class="bi bi-person-badge"></i> *@
-        <span class="sidebar-label">Faculty</span>
-    </NavLink>
-
-    <NavLink href="/admin/semesters" class="sidebar-nav-link">
-        <i class="bi bi-calendar2-range"></i>
-        <span class="sidebar-label">Semester</span>
-    </NavLink>
-
-    <NavLink href="/admin/categories" class="sidebar-nav-link">
-        <i class="bi bi-tags"></i>
-        <span class="sidebar-label">Category</span>
-    </NavLink>
-
-    <NavLink href="/admin/payment-fees" class="sidebar-nav-link">
-        <i class="bi bi-cash-stack"></i>
-        <span class="sidebar-label">Payment Fees</span>
-    </NavLink>
-
-    <NavLink href="/admin/departments" class="sidebar-nav-link">
-        <i class="bi bi-diagram-3"></i>
-        <span class="sidebar-label">Department</span>
-    </NavLink>
-
-    <NavLink href="/admin/majors" class="sidebar-nav-link">
-        <i class="bi bi-collection"></i>
-        <span class="sidebar-label">Major</span>
-    </NavLink>
-
-    <NavLink href="/admin/subjects" class="sidebar-nav-link">
-        <i class="bi bi-journal-bookmark"></i>
-        <span class="sidebar-label">Subject</span>
-    </NavLink>
-
-    <!-- ── COMMUNICATIONS ─────────────────────── -->
-    @* <div class="sidebar-section-label mt-2">
-        <span class="sidebar-label">Communications</span>
-    </div> *@
-
-    @* <NavLink href="/admin/events" class="sidebar-nav-link">
-        <i class="bi bi-calendar-event"></i>
-        <span class="sidebar-label">Activities &amp; Events</span>
-    </NavLink> *@
-
-    <NavLink href="/admin/activities" class="sidebar-nav-link">
-        <i class="bi bi-clipboard-check"></i>
-        <span class="sidebar-label">Activities</span>
-    </NavLink>
-
-    @* <NavLink href="/admin/alert" class="sidebar-nav-link">
-        <i class="bi bi-megaphone"></i>
-        <span class="sidebar-label">Important Alerts</span>
-    </NavLink> *@
-
-    <NavLink href="/admin/rules" class="sidebar-nav-link">
-        <i class="bi bi-file-earmark-ruled"></i>
-        <span class="sidebar-label">Rules</span>
-    </NavLink>
-
-    <NavLink href="/admin/permissions" class="sidebar-nav-link">
-        <i class="bi bi-shield-lock"></i>
-        <span class="sidebar-label">Permissions</span>
-    </NavLink>
-
-    <NavLink href="/admin/books" class="sidebar-nav-link">
-        <i class="bi bi-book-half"></i>
-        <span class="sidebar-label">Books</span>
-    </NavLink>
-
-    <!-- ── SYSTEM ───────────────────────────────────────────────────── -->
-    @* <div class="sidebar-section-label mt-2">
-        <span class="sidebar-label">System</span>
-    </div> *@
-
-    <NavLink href="/admin/users" class="sidebar-nav-link">
-        <i class="bi bi-people-fill"></i>
-        <span class="sidebar-label">User Management</span>
-    </NavLink>
-
-    <NavLink href="/admin/acc-register" class="sidebar-nav-link">
-        <i class="bi bi-person-check-fill"></i>
-        <span class="sidebar-label">Acc Register</span>
-    </NavLink>
-
-    <NavLink href="/admin/reports" class="sidebar-nav-link">
-        <i class="bi bi-people-fill"></i>
-        <span class="sidebar-label">Student Admission Report</span>
-    </NavLink>
+        @if (isSystemOpen)
+        {
+            <div class="sidebar-submenu">
+                <NavLink href="/admin/users" class="sidebar-sub-link">
+                    <i class="bi bi-people-fill"></i>
+                    <span class="sidebar-label">User Management</span>
+                </NavLink>
+                <NavLink href="/admin/acc-register" class="sidebar-sub-link">
+                    <i class="bi bi-person-check-fill"></i>
+                    <span class="sidebar-label">Acc Register</span>
+                </NavLink>
+                <AuthorizeView Policy="view.role">
+                    <Authorized>
+                        <NavLink href="/admin/roles" class="sidebar-sub-link">
+                            <i class="bi bi-shield-check"></i>
+                            <span class="sidebar-label">Roles</span>
+                        </NavLink>
+                    </Authorized>
+                </AuthorizeView>
+                <NavLink href="/admin/permissions" class="sidebar-sub-link">
+                    <i class="bi bi-shield-lock"></i>
+                    <span class="sidebar-label">Permissions</span>
+                </NavLink>
+            </div>
+        }
+    </div>
 
 </div>
+
+@code {
+    private bool isStudentsOpen = false;
+    private bool isAcademicsOpen = false;
+    private bool isCampusOpen = false;
+    private bool isSystemOpen = false;
+
+    protected override void OnInitialized()
+    {
+        AutoExpandActiveCategory();
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        AutoExpandActiveCategory();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void AutoExpandActiveCategory()
+    {
+        var uri = NavigationManager.Uri.ToLower();
+        if (uri.Contains("student") || uri.Contains("enrollment") || uri.Contains("report"))
+            isStudentsOpen = true;
+        if (uri.Contains("facult") || uri.Contains("department") || uri.Contains("major") || uri.Contains("subject") || uri.Contains("semester") || uri.Contains("tutor") || uri.Contains("position"))
+            isAcademicsOpen = true;
+        if (uri.Contains("payment") || uri.Contains("fee") || uri.Contains("book") || uri.Contains("categor") || uri.Contains("activit") || uri.Contains("rule"))
+            isCampusOpen = true;
+        if (uri.Contains("user") || uri.Contains("acc-register") || uri.Contains("role") || uri.Contains("permission"))
+            isSystemOpen = true;
+    }
+
+    private void ToggleGroup(string group)
+    {
+        switch (group)
+        {
+            case "students": isStudentsOpen = !isStudentsOpen; break;
+            case "academics": isAcademicsOpen = !isAcademicsOpen; break;
+            case "campus": isCampusOpen = !isCampusOpen; break;
+            case "system": isSystemOpen = !isSystemOpen; break;
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

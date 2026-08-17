@@ -108,12 +108,17 @@ public partial class Page_PositionList
     {
         IsLoading = true;
         ErrorMessage = "";
+        StateHasChanged();
         try
         {
-            var response = await HttpClientService.ExecuteAsync<PagedResult<PositionModel>>(
+            var delayTask = Task.Delay(1000);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<PositionModel>>(
                 $"position/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
 
             if (response != null)
             {
@@ -128,6 +133,7 @@ public partial class Page_PositionList
         finally
         {
             IsLoading = false;
+            StateHasChanged();
         }
     }
 

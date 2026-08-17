@@ -61,17 +61,51 @@
 
         .custom-table td {
             padding: 0.85rem 1rem;
-            color: #cdcdde;
+            color: #1f2937;
+            font-weight: 600;
             vertical-align: middle;
             border: none;
             font-size: 0.9rem;
         }
+
+    .badge-faculty {
+        background: rgba(90, 79, 207, 0.12) !important;
+        color: #1e1b4b !important;
+        border: 1px solid rgba(90, 79, 207, 0.3) !important;
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        display: inline-block;
+    }
 
     .badge-modern {
         padding: 0.4em 0.7em;
         font-weight: 500;
         border-radius: 6px;
         letter-spacing: 0.5px;
+    }
+
+    .badge-modern.bg-success,
+    .badge.bg-success {
+        background-color: #10b981 !important;
+        color: #ffffff !important;
+    }
+
+    .badge-modern.bg-danger,
+    .badge.bg-danger {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+    }
+
+    .badge-modern.bg-warning,
+    .badge.bg-warning {
+        background-color: #f59e0b !important;
+        color: #ffffff !important;
+    }
+
+    .search-input {
+        padding-left: 2.6rem !important;
     }
 
     .btn-action {
@@ -87,52 +121,139 @@
         }
 
         .btn-action:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
+        font-weight: 600;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
 </style>
 
+@if (isLevelDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
+
 <div class="d-flex align-items-center mb-4 mt-2">
-    <div class="bg-primary rounded p-2 me-3 shadow-sm">
-        <i class="bi bi-people fs-5 text-white"></i>
+    <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+        <i class="bi bi-people fs-5" style="color: #5A4FCF;"></i>
     </div>
-    <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Register Databank</h4>
+    <div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Register Databank</h4>
+        <small class="text-secondary">ကျောင်းသား/သူများ၏ ကျောင်းအပ်နှံမှု မှတ်တမ်းများ စီမံခန့်ခွဲခြင်း</small>
+    </div>
 </div>
 
 <!-- 🔹 Filter Section -->
-<div class="material-card p-3 mb-4">
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
     <div class="row g-3 align-items-center">
         <!-- Search Input -->
         <div class="col-md-3">
             <div class="position-relative">
-                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 12px; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control material-input w-100" style="padding-left: 2.2rem;" placeholder="Search by name or roll no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by name or roll no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <!-- Level Dropdown -->
+        <!-- Semester Dropdown (approx 6 items height with scroll) -->
         <div class="col-md-3">
-            <select class="form-select material-input" @bind="SelectedLevelInput">
-                <option value="All">All Academic Levels</option>
-                @foreach (var level in StudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleLevelDropdown">
+                    <span class="text-truncate">@(SelectedLevelInput == "All" ? "All Semesters" : SelectedLevelInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isLevelDropdownOpen)
                 {
-                    <option value="@level">@level</option>
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedLevelInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectLevel("All")'>
+                            <span>All Semesters</span>
+                            @if (SelectedLevelInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (AvailableSemesters != null)
+                        {
+                            @foreach (var sem in AvailableSemesters)
+                            {
+                                <div class="dropdown-item-custom @(SelectedLevelInput == sem ? "selected" : "")" 
+                                     @onclick='() => SelectLevel(sem)'>
+                                    <span>@sem</span>
+                                    @if (SelectedLevelInput == sem) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
                 }
-            </select>
+            </div>
         </div>
 
-        <!-- 💡 From Date & To Date Range Picker -->
+        <!-- 💡 From Date & To Date Range Picker (Student Report style) -->
         <div class="col-md-4">
             <div class="d-flex align-items-center gap-2">
-                <div class="flex-grow-1 position-relative">
-                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #2b2b40; padding: 0 4px; color: #a1a5b7 !important;">From</span>
-                    <input type="text" id="fromDateInput" class="form-control material-input w-100" @bind="FromDateInput" @bind:format="dd-MM-yyyy" placeholder="dd-mm-yyyy" autocomplete="off" />
-                </div>
+                <input type="date" class="form-control material-input" @bind="FromDateInput" />
                 <span class="text-muted fw-bold">~</span>
-                <div class="flex-grow-1 position-relative">
-                    <span class="position-absolute text-muted" style="font-size: 0.75rem; top: -8px; left: 10px; background: #2b2b40; padding: 0 4px; color: #a1a5b7 !important;">To</span>
-                    <input type="text" id="toDateInput" class="form-control material-input w-100" @bind="ToDateInput" @bind:format="dd-MM-yyyy" placeholder="dd-mm-yyyy" autocomplete="off" />
-                </div>
+                <input type="date" class="form-control material-input" @bind="ToDateInput" />
             </div>
         </div>
 
@@ -154,13 +275,12 @@
         <table class="table custom-table align-middle">
             <thead>
                 <tr>
-                    <th class="text-center">No.</th>
+                    <th class="text-center" style="width: 50px;">No.</th>
                     <th>Date</th>
-                    <th>Roll No</th>
+                    <th class="text-center">Roll No</th>
                     <th>Name</th>
                     <th>Faculty</th>
-                    <th>Year</th>
-                    <th>Amount</th>
+                    <th class="text-center">Semester</th>
                     <th class="text-center">Reg Status</th>
                     <th class="text-center">Pay Status</th>
                     <th class="text-center">Actions</th>
@@ -170,47 +290,50 @@
                 @if (IsLoading)
                 {
                     <tr>
-                        <td colspan="10">
+                        <td colspan="9">
                             <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 250px;">
                                 <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
-                                    <span class="visually-hidden">Loading...</span>
+                                    <span class="visually-hidden">ရယူနေပါသည်...</span>
                                 </div>
-                                <div class="text-muted fs-6 font-semibold">Fetching data...</div>
+                                <div class="text-muted fs-6 fw-bold" style="font-weight: 700;">ကျောင်းအပ်နှံမှု မှတ်တမ်းများ ရယူနေပါသည်...</div>
                             </div>
                         </td>
                     </tr>
                 }
-                else
+                else if (FilteredStudents != null && FilteredStudents.Any())
                 {
                     int count = (CurrentPage - 1) * PageSize + 1;
                     @foreach (var s in FilteredStudents)
                     {
                         <tr>
-                            <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
-                            <td><i class="bi bi-calendar2-event me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
-                            <td class="fw-bold text-info">@s.RollNo</td>
-                            <td class="fw-bold text-white">@s.StudentNameMm</td>
-                            <td>@GetFacultyDisplayName(s)</td>
-                            <td><span class="badge bg-primary bg-opacity-25 text-primary border border-primary badge-modern">@s.AcademicYearLevel</span></td>
-
-                            <td class="text-success fw-bold">
-                                @(s.RegistrationPayments.FirstOrDefault()?.AmountPaid.ToString("N0") ?? "-") MMK
+                            <td class="text-center fw-bold text-dark">@count.ToString("D2")</td>
+                            <td class="fw-bold text-dark">@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.85rem; font-weight: 700;">
+                                    @(string.IsNullOrWhiteSpace(s.RollNo) ? "-" : s.RollNo)
+                                </span>
+                            </td>
+                            <td class="fw-bold text-dark">@s.StudentNameMm</td>
+                            <td class="fw-bold text-dark"><span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">@GetFacultyDisplayName(s)</span></td>
+                            <td class="text-center">
+                                <span class="badge rounded-pill fw-bold" style="background: #4F46E5; color: #ffffff !important; font-size: 0.82rem; padding: 6px 12px; letter-spacing: 0.3px;">@s.AcademicYearLevel</span>
                             </td>
 
                             <td class="text-center">
-                                <span class="badge badge-modern @GetStatusClass(s.Status)">@FormatStatus(s.Status)</span>
+                                <span class="badge badge-modern @GetStatusClass(s.Status)" style="color: #ffffff !important;">@FormatStatus(s.Status)</span>
                             </td>
 
                             <td class="text-center">
                                 @if (s.RegistrationPayments.Any())
                                 {
-                                    <span class="badge badge-modern @GetStatusClass(s.RegistrationPayments.First().Status)">
-                                        @FormatStatus(s.RegistrationPayments.First().Status)
+                                    var payStatus = s.RegistrationPayments.First().Status;
+                                    <span class="badge badge-modern @GetStatusClass(payStatus)" style="color: #ffffff !important;">
+                                        @FormatStatus(payStatus)
                                     </span>
                                 }
                                 else
                                 {
-                                    <span class="text-muted">-</span>
+                                    <span class="text-muted fw-bold">-</span>
                                 }
                             </td>
 
@@ -227,6 +350,15 @@
                         </tr>
                         count++;
                     }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            ကျောင်းအပ်နှံမှု မှတ်တမ်းများ မတွေ့ရှိပါ။
+                        </td>
+                    </tr>
                 }
             </tbody>
         </table>

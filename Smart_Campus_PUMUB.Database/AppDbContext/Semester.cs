@@ -23,6 +23,15 @@ public partial class Semester
     [Column("Sequence")]
     public int? Sequence { get; set; }
 
+    [Column("Max_Elective")]
+    public int? MaxElective { get; set; } = 0;
+
+    [Column("Max_Elective_CS")]
+    public int? MaxElectiveCS { get; set; } = 0;
+
+    [Column("Max_Elective_CT")]
+    public int? MaxElectiveCT { get; set; } = 0;
+
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }
 

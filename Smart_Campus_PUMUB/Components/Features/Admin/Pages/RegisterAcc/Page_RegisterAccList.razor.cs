@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
@@ -52,11 +53,31 @@ public partial class Page_RegisterAccList
         await LoadData();
     }
 
+    private bool isStatusDropdownOpen = false;
+
+    private void ToggleStatusDropdown()
+    {
+        isStatusDropdownOpen = !isStatusDropdownOpen;
+    }
+
+    private void SelectStatus(string status)
+    {
+        SelectedStatusInput = status;
+        isStatusDropdownOpen = false;
+    }
+
+    private void CloseAllDropdowns()
+    {
+        isStatusDropdownOpen = false;
+    }
+
     private async Task LoadData()
     {
         IsLoading = true;
+        StateHasChanged();
         try
         {
+            await Task.Delay(1000);
             var response = await HttpClientService.ExecuteAsync<RegisterAccPagedResponse>(
                 $"registeracc?pageNumber={CurrentPage}&pageSize={PageSize}" +
                 $"&status={Uri.EscapeDataString(SelectedStatus)}" +
@@ -78,12 +99,14 @@ public partial class Page_RegisterAccList
         finally
         {
             IsLoading = false;
+            StateHasChanged();
         }
     }
 
     // ── Filter Handlers ────────────────────────────────────────────────────
     private async Task ApplyFilter()
     {
+        isStatusDropdownOpen = false;
         SearchTerm = SearchInput;
         SelectedStatus = SelectedStatusInput;
         CurrentPage = 1;
@@ -92,6 +115,7 @@ public partial class Page_RegisterAccList
 
     private async Task ResetFilter()
     {
+        isStatusDropdownOpen = false;
         SearchInput = "";
         SearchTerm = "";
         SelectedStatusInput = "All";
@@ -241,7 +265,7 @@ public partial class Page_RegisterAccList
 
     private async Task ToggleStudentAccountStatus(RegisterAccListItem item)
     {
-        if (item.NewStudentAccId == null || item.NewStudentAccId <= 0) return;
+        if (item == null) return;
         IsProcessing = true;
         try
         {
@@ -254,8 +278,8 @@ public partial class Page_RegisterAccList
                 ModifiedBy = CurrentAdminName
             };
 
-            var response = await HttpClientService.ExecuteAsync<NewStudentAccActionResponse>(
-                $"newstudentacc/{item.NewStudentAccId}/status",
+            var response = await HttpClientService.ExecuteAsync<RegisterAccActionResponse>(
+                $"registeracc/{item.RegisterAccId}/status",
                 EnumHttpMethod.Put,
                 payload
             );

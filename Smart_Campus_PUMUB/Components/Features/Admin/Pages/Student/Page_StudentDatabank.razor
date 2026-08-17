@@ -37,17 +37,18 @@
 
     .custom-table {
         margin-bottom: 0;
+        width: 100%;
     }
 
     .custom-table thead th {
-        background-color: #696cff;
+        background-color: #5A4FCF;
         color: #ffffff;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         border-bottom: none;
-        padding: 1rem;
+        padding: 0.75rem 0.5rem;
         white-space: nowrap;
     }
 
@@ -61,114 +62,294 @@
     }
 
     .custom-table td {
-        padding: 0.85rem 1rem;
-        color: #495057;
+        padding: 0.75rem 0.5rem;
+        color: #1f2937;
+        font-weight: 600;
         vertical-align: middle;
         border: none;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
-    .page-title {
-        color: #3f4254;
+    .badge-faculty {
+        background: rgba(90, 79, 207, 0.12) !important;
+        color: #1e1b4b !important;
+        border: 1px solid rgba(90, 79, 207, 0.3) !important;
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .custom-dropdown-container {
+        position: relative;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 228px; /* Approximately 6 items */
+        overflow-y: auto;
+        z-index: 1050;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        padding: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .dropdown-item-custom {
+        padding: 8px 12px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        color: #374151;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 36px;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f3f4f6;
+        color: #5A4FCF;
         font-weight: 600;
-        margin-bottom: 1.5rem;
+    }
+
+    .dropdown-item-custom.selected {
+        background-color: rgba(90, 79, 207, 0.08);
+        color: #5A4FCF;
+        font-weight: 700;
+    }
+
+    .btn-theme-primary {
+        background-color: #5A4FCF !important;
+        background: #5A4FCF !important;
+        border-color: #5A4FCF !important;
+        color: #ffffff !important;
+    }
+    .btn-theme-primary:hover {
+        background-color: #483eb0 !important;
+        background: #483eb0 !important;
+        border-color: #483eb0 !important;
+        color: #ffffff !important;
     }
 </style>
 
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="page-title m-0">
-            <i class="bi bi-database me-2" style="color: #696cff;"></i>
-            Student Databank
-        </h2>
-    </div>
+@if (isFacultyDropdownOpen || isMajorDropdownOpen)
+{
+    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
+}
 
-    <div class="material-card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="d-flex gap-3 align-items-center">
-                <div class="input-group" style="width: 300px;">
-                    <span class="input-group-text bg-transparent border-end-0 material-input text-muted" style="border-color: #323248;">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control material-input border-start-0" placeholder="Search students..." @bind="SearchTerm" @bind:event="oninput">
-                </div>
-            </div>
-            <div>
-                <button class="btn btn-primary" style="background-color: #696cff; border-color: #696cff; border-radius: 8px;">
-                    <i class="bi bi-download me-1"></i> Export
-                </button>
+<div class="d-flex align-items-center mb-4 mt-2">
+    <div class="rounded p-2 me-3 shadow-sm" style="background: transparent; border: 1.5px solid #5A4FCF;">
+        <i class="bi bi-database fs-5" style="color: #5A4FCF;"></i>
+    </div>
+    <div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Student Databank</h4>
+        <small class="text-secondary">ကျောင်းသား/သူများ၏ ကိုယ်ရေးအချက်အလက် မှတ်တမ်းများ စီမံခန့်ခွဲခြင်း</small>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
+    <div class="row g-3 align-items-center">
+        <!-- Search Input -->
+        <div class="col-md-4">
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by student name, roll no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <div class="table-responsive table-container">
-            <table class="table custom-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Student Name</th>
-                        <th>Roll No.</th>
-                        <th>Faculty</th>
-                        <th>Major</th>
-                        <th>Academic Year</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th class="text-center">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (FilteredStudents != null && FilteredStudents.Any())
-                    {
-                        var index = 1;
-                        foreach (var student in FilteredStudents)
+        <!-- Faculty Dropdown (approx 6 items height with scroll) -->
+        <div class="col-md-3">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleFacultyDropdown" disabled="@isFacultyAdminLocked">
+                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? "All Faculties" : SelectedFacultyInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isFacultyDropdownOpen)
+                {
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedFacultyInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectFaculty("All")'>
+                            <span>All Faculties</span>
+                            @if (SelectedFacultyInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (AvailableFaculties != null)
                         {
-                            <tr>
-                                <td>@index</td>
-                                <td>
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-bold">@student.student_name_mm</span>
-                                        <span class="text-muted small">@student.student_name_en</span>
-                                    </div>
-                                </td>
-                                <td>@student.roll_no</td>
-                                <td>@(string.IsNullOrEmpty(student.FacultyName) ? "-" : student.FacultyName)</td>
-                                <td>
-                                    <span class="badge" style="background-color: rgba(105, 108, 255, 0.1); color: #696cff;">
-                                        @student.major
-                                    </span>
-                                </td>
-                                <td>@student.academic_year_range</td>
-                                <td>@student.email</td>
-                                <td>@student.app_student_phone</td>
-                                <td class="text-center">
-                                    <a href="/admin/student-databank/view/@(student.UserId ?? 0)/@(student.NewStudentAccId ?? 0)" class="btn btn-sm btn-outline-primary" style="border-radius: 6px;">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
-                                </td>
-                            </tr>
-                            index++;
+                            @foreach (var faculty in AvailableFaculties)
+                            {
+                                <div class="dropdown-item-custom @(SelectedFacultyInput == faculty ? "selected" : "")" 
+                                     @onclick='() => SelectFaculty(faculty)'>
+                                    <span>@faculty</span>
+                                    @if (SelectedFacultyInput == faculty) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
                         }
-                    }
-                    else if (IsLoading)
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Major Dropdown (approx 6 items height with scroll) -->
+        <div class="col-md-3">
+            <div class="custom-dropdown-container">
+                <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                        @onclick="ToggleMajorDropdown">
+                    <span class="text-truncate">@(SelectedMajorInput == "All" ? "All Majors" : SelectedMajorInput)</span>
+                    <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                </button>
+
+                @if (isMajorDropdownOpen)
+                {
+                    <div class="custom-dropdown-menu shadow">
+                        <div class="dropdown-item-custom @(SelectedMajorInput == "All" ? "selected" : "")" 
+                             @onclick='() => SelectMajor("All")'>
+                            <span>All Majors</span>
+                            @if (SelectedMajorInput == "All") { <i class="bi bi-check2 text-primary"></i> }
+                        </div>
+                        @if (AvailableMajors != null)
+                        {
+                            @foreach (var major in AvailableMajors)
+                            {
+                                <div class="dropdown-item-custom @(SelectedMajorInput == major ? "selected" : "")" 
+                                     @onclick='() => SelectMajor(major)'>
+                                    <span>@major</span>
+                                    @if (SelectedMajorInput == major) { <i class="bi bi-check2 text-primary"></i> }
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Search and Reset Buttons -->
+        <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
+            <button class="btn btn-theme-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Table Section -->
+<div class="material-card table-container mb-5">
+    <div class="table-responsive">
+        <table class="table custom-table align-middle">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 45px;">No</th>
+                    <th>Student Name</th>
+                    <th class="text-center" style="width: 110px;">Roll No.</th>
+                    <th>Faculty</th>
+                    <th class="text-center">Major</th>
+                    <th class="text-center" style="width: 110px;">Academic Year</th>
+                    <th style="width: 120px;">Phone</th>
+                    <th class="text-center" style="width: 85px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (IsLoading)
+                {
+                    <tr>
+                        <td colspan="8">
+                            <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 250px;">
+                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                                    <span class="visually-hidden">ရယူနေပါသည်...</span>
+                                </div>
+                                <div class="text-muted fs-6 fw-bold" style="font-weight: 700;">ကျောင်းသား Databank အချက်အလက်များ ရယူနေပါသည်...</div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else if (Students != null && Students.Any())
+                {
+                    var index = 1;
+                    foreach (var student in Students)
                     {
+                        int rowNumber = (CurrentPage - 1) * PageSize + index;
                         <tr>
-                            <td colspan="9" class="text-center py-5">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                            <td class="text-center fw-bold text-dark">@rowNumber.ToString("D2")</td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">@student.student_name_mm</span>
+                                    <span class="fw-semibold text-muted small">@student.student_name_en</span>
                                 </div>
                             </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="9" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
-                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                                No records found.
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.85rem; font-weight: 700;">
+                                    @(string.IsNullOrWhiteSpace(student.roll_no) ? "-" : student.roll_no)
+                                </span>
+                            </td>
+                            <td class="fw-bold text-dark">
+                                @if (!string.IsNullOrEmpty(student.FacultyName) && student.FacultyName != "-")
+                                {
+                                    <span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">@student.FacultyName</span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <span class="badge fw-bold" style="background-color: rgba(105, 108, 255, 0.1); color: #696cff; font-weight: 700;">
+                                    @student.major
+                                </span>
+                            </td>
+                            <td class="text-center fw-bold text-dark">@student.academic_year_range</td>
+                            <td class="fw-bold text-dark">@student.app_student_phone</td>
+                            <td class="text-center">
+                                <a href="/admin/student-databank/view/@(student.UserId ?? 0)/@(student.NewStudentAccId ?? 0)" class="btn btn-outline-info btn-action" style="padding: 0.25rem 0.6rem;" title="View Details">
+                                    <i class="bi bi-file-earmark-person me-1"></i> View
+                                </a>
                             </td>
                         </tr>
+                        index++;
                     }
-                </tbody>
-            </table>
-        </div>
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                            ကျောင်းသား Databank မှတ်တမ်းများ မတွေ့ရှိပါ။
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
+
+    <!-- Pagination Component -->
+    <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
 </div>
