@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Smart_Campus_PUMUB.Database.AppDbContext; // မင်းရဲ့ AppDbContext တည်နေရာ
+using Smart_Campus_PUMUB.Database.AppDbContext; // AppDbContext namespace
 using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using System;
@@ -25,7 +25,7 @@ public class StudentController : ControllerBase
         _scopeService = scopeService;
     }
 
-    // 🎯 ၁။ GET: api/student (ကျောင်းသားအားလုံးစာရင်း - Soft Delete မဖြစ်သေးတာပဲပြမည်)
+    // GET: api/student (Get active students)
     [HttpGet]
     [Permission("Student.View")]
     public IActionResult GetStudents([FromQuery] int? facultyId = null)
@@ -41,7 +41,7 @@ public class StudentController : ControllerBase
         }
 
         // 1. Get all active users who are students
-        var studentUsersQuery = _db.Users
+          var studentUsersQuery = _db.Users
             .Where(u => u.RoleId == 3 && (u.IsDelete == false || u.IsDelete == null));
 
         // Faculty-based scoping: if facultyId provided, filter users by faculty
@@ -185,7 +185,7 @@ public class StudentController : ControllerBase
         return Ok(lst);
     }
 
-    // 🎯 ၂။ GET: api/student/{id} (ကျောင်းသားတစ်ဦးချင်းစီ၏ အသေးစိတ်ကြည့်ရန်)
+    // GET: api/student/{id} (Get student details)
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin,admin")]
     public IActionResult GetStudent(int id)
@@ -325,27 +325,27 @@ public class StudentController : ControllerBase
         return Ok(data);
     }
 
-    // 🎯 ၃။ POST: api/student (ကျောင်းသားအသစ် စာရင်းသွင်းရန် - Validation ပါဝင်သည်)
+    // POST: api/student (Create new student with validation)
     [HttpPost]
     [Permission("Student.Create")]
     public IActionResult CreateStudent(StudentCreateRequestModel request)
     {
-        // Validation: မဖြစ်မနေလိုအပ်သော အချက်အလက်များ ရှိမရှိ စစ်ဆေးခြင်း
+        // Validate required fields
         if (request.UserId <= 0 || string.IsNullOrEmpty(request.CurrentClassYear) || string.IsNullOrEmpty(request.CurrentMajor))
         {
             return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "လိုအပ်သော ဒေတာများကို ပြည့်စုံစွာ ဖြည့်သွင်းပါ။" });
         }
 
-        // Validation: Roll No ပုံစံစစ်ဆေးခြင်း (MUB-1098 ကဲ့သို့ စာလုံး၊ ဂဏန်း နှင့် ဒက်ရှ် '-' သာ ခွင့်ပြုမည်)
+        // Validate Roll No format (alphanumeric & hyphen)
         if (!string.IsNullOrEmpty(request.CurrentRollNo))
         {
-            // Regex ရှင်းလင်းချက်: ^[a-zA-Z0-9-]+$ ဆိုသည်မှာ အင်္ဂလိပ်စာလုံး၊ ဂဏန်း နှင့် ဒက်ရှ်(-) မှလွဲ၍ အခြား သင်္ကေတများ မပါရဟု တားမြစ်ခြင်းဖြစ်သည်
+            // Regex format check for alphanumeric and hyphens
             if (!Regex.IsMatch(request.CurrentRollNo, "^[a-zA-Z0-9-]+$"))
             {
                 return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ခုံအမှတ် (Roll No) တွင် '-' မှလွဲ၍ အခြား အထူးသင်္ကေတ (Special Characters) များ မသုံးရပါ။" });
             }
 
-            // ခုံအမှတ် ထပ်နေခြင်း ရှိမရှိ စစ်ဆေးခြင်း
+            // Check for duplicate Roll No
             var isRollNoExist = _db.Students.Any(x => x.CurrentRollNo == request.CurrentRollNo && (x.IsDelete == false || x.IsDelete == null));
             if (isRollNoExist)
             {
@@ -353,7 +353,7 @@ public class StudentController : ControllerBase
             }
         }
 
-        // ကျောင်းသားအကောင့် (User_Id) အစစ်အမှန် ရှိမရှိ နှင့် ၎င်းသည် Student Role (Role_id = 4) ဟုတ်မဟုတ် စစ်ဆေးခြင်း
+        // Verify User existence & Student role (RoleId = 3)
         var userCheck = _db.Users.FirstOrDefault(u => u.UserId == request.UserId && u.IsDelete == false);
         if (userCheck is null)
         {
@@ -364,20 +364,20 @@ public class StudentController : ControllerBase
             return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားအကောင့် (Student Role) ဖြစ်မှသာ ကျောင်းသားစာရင်း သွင်းခွင့်ရှိသည်။" });
         }
 
-        // ဤ User သည် ကျောင်းသားစာရင်းထဲတွင် အသက်ဝင်လျက် ရှိပြီးသားဖြစ်နေပါက ထပ်မံ ထည့်ခွင့်မပြုရန် တားဆီးခြင်း
+        // Prevent duplicate active student record
         var isAlreadyStudent = _db.Students.Any(x => x.UserId == request.UserId && (x.IsDelete == false || x.IsDelete == null));
         if (isAlreadyStudent)
         {
             return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ဤအသုံးပြုသူသည် ကျောင်းသားစာရင်းထဲတွင် ရှိပြီးသား ဖြစ်နေပါသည်။" });
         }
 
-        // DB ထဲသို့ အသစ်ထည့်သွင်းခြင်း
+        // Insert into DB
         var newStudent = new Student
         {
             UserId = request.UserId,
             CurrentClassYear = request.CurrentClassYear,
             CurrentMajor = request.CurrentMajor,
-            CurrentRollNo = request.CurrentRollNo?.ToUpper(), // စာလုံးအကြီးဖြင့် သိမ်းဆည်းရန်
+            CurrentRollNo = request.CurrentRollNo?.ToUpper(), // Store in uppercase
             Status = "Active",
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
             IsDelete = false
@@ -402,7 +402,7 @@ public class StudentController : ControllerBase
         });
     }
 
-    // 🎯 ၄။ PUT: api/student/{id} (ကျောင်းသား အတန်းတက်ခြင်း/ခုံအမှတ် ပြောင်းခြင်း ပြင်ရန်)
+    // PUT: api/student/{id} (Update student record)
     [HttpPut("{id}")]
     [Permission("Student.Edit")]
     public IActionResult UpdateStudent(int id, StudentUpdateRequestModel request)
@@ -418,7 +418,7 @@ public class StudentController : ControllerBase
             return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "အတန်း နှင့် Major ဖြည့်သွင်းရန် လိုအပ်သည်။" });
         }
 
-        // Roll No ရိုက်ထားလျှင် Special Character ပါမပါ ထပ်မံစစ်ဆေးခြင်း
+        // Check special characters in Roll No if provided
         if (!string.IsNullOrEmpty(request.CurrentRollNo))
         {
             if (!Regex.IsMatch(request.CurrentRollNo, "^[a-zA-Z0-9-]+$"))
@@ -426,7 +426,7 @@ public class StudentController : ControllerBase
                 return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ခုံအမှတ် (Roll No) တွင် '-' မှလွဲ၍ အခြား အထူးသင်္ကေတများ မသုံးရပါ။" });
             }
 
-            // မိမိမှအပ အခြားသူတစ်ယောက်က ဤခုံအမှတ်ကို သုံးထားခြင်း ရှိမရှိ စစ်ဆေးခြင်း
+            // Check duplicate Roll No for other students
             var isRollNoDuplicate = _db.Students.Any(x => x.CurrentRollNo == request.CurrentRollNo && x.StudentId != id && (x.IsDelete == false || x.IsDelete == null));
             if (isRollNoDuplicate)
             {
@@ -434,7 +434,7 @@ public class StudentController : ControllerBase
             }
         }
 
-        // Data များ အစားထိုး ပြင်ဆင်ခြင်း
+        // Update properties
         item.CurrentClassYear = request.CurrentClassYear;
         item.CurrentMajor = request.CurrentMajor;
         item.CurrentRollNo = request.CurrentRollNo?.ToUpper();
@@ -471,7 +471,7 @@ public class StudentController : ControllerBase
     [Permission("Student.Edit")]
     public IActionResult PatchStudent(int id, StudentPatchRequestModel request)
     {
-        // ၁။ ပြင်ဆင်မည့် ကျောင်းသား ရှိမရှိ အရင်စစ်မည်
+        // 1. Check if student exists
         var item = _db.Students.FirstOrDefault(x => x.StudentId == id && (x.IsDelete == false || x.IsDelete == null));
         if (item is null)
         {
@@ -480,48 +480,48 @@ public class StudentController : ControllerBase
 
         int updateCount = 0;
 
-        // ၂။ အတန်း (Class Year) ပါလာလျှင် ပြင်မည်
+        // 2. Update Class Year if provided
         if (!string.IsNullOrEmpty(request.CurrentClassYear))
         {
             item.CurrentClassYear = request.CurrentClassYear;
             updateCount++;
         }
 
-        // ၃။ မေဂျာ (Major) ပါလာလျှင် ပြင်မည်
+        // 3. Update Major if provided
         if (!string.IsNullOrEmpty(request.CurrentMajor))
         {
             item.CurrentMajor = request.CurrentMajor;
             updateCount++;
         }
 
-        // ၄။ ခုံအမှတ် (Roll No) ပါလာလျှင် Validation စစ်ပြီးမှ ပြင်မည်
+        // 4. Update Roll No with validation
         if (!string.IsNullOrEmpty(request.CurrentRollNo))
         {
-            // Regex စစ်ဆေးခြင်း: ဒက်ရှ် (-) မှလွဲ၍ အခြား အထူးသင်္ကေတများ မပါရ
+            // Regex check: Alphanumeric and hyphens only
             if (!Regex.IsMatch(request.CurrentRollNo, "^[a-zA-Z0-9-]+$"))
             {
                 return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ခုံအမှတ် (Roll No) တွင် '-' မှလွဲ၍ အခြား အထူးသင်္ကေတများ မသုံးရပါ။" });
             }
 
-            // မိမိမှအပ အခြားကျောင်းသားတစ်ဦးဦးက ဤခုံအမှတ်ကို သုံးထားခြင်း ရှိမရှိ စစ်ဆေးခြင်း
+            // Check duplicate Roll No
             var isRollNoDuplicate = _db.Students.Any(x => x.CurrentRollNo == request.CurrentRollNo && x.StudentId != id && (x.IsDelete == false || x.IsDelete == null));
             if (isRollNoDuplicate)
             {
                 return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ဤ ခုံအမှတ် (Roll No) ကို အခြားကျောင်းသားတစ်ဦး အသုံးပြုထားပြီး ဖြစ်ပါသည်။" });
             }
 
-            item.CurrentRollNo = request.CurrentRollNo.ToUpper(); // စာလုံးအကြီးပြောင်းသိမ်းမည်
+            item.CurrentRollNo = request.CurrentRollNo.ToUpper(); // Save in uppercase
             updateCount++;
         }
 
-        // ၅။ အခြေအနေ (Status) ပါလာလျှင် ပြင်မည် (ဥပမာ - Active, Absent, Dropped)
+        // 5. Update Status if provided (e.g. Active, Absent, Dropped)
         if (!string.IsNullOrEmpty(request.Status))
         {
             item.Status = request.Status;
             updateCount++;
         }
 
-        // ၆။ Semester Results
+        // 6. Update Semester Results
         if (request.Sem1_Result != null) { item.Sem1_Result = request.Sem1_Result == "None" ? null : request.Sem1_Result; updateCount++; }
         if (request.Sem2_Result != null) { item.Sem2_Result = request.Sem2_Result == "None" ? null : request.Sem2_Result; updateCount++; }
         if (request.Sem3_Result != null) { item.Sem3_Result = request.Sem3_Result == "None" ? null : request.Sem3_Result; updateCount++; }
@@ -535,13 +535,13 @@ public class StudentController : ControllerBase
         // Check if student passed all 9 semesters -> Auto deactivate user account
         CheckAndAutoDeactivateGraduatedStudent(item);
 
-        // ၇။ ဘာအချက်အလက်မှ ပြောင်းလဲလာခြင်း မရှိလျှင် BadRequest ပြန်မည်
+        // 7. Return error if no fields updated
         if (updateCount == 0)
         {
             return BadRequest(new StudentResponseModel { IsSuccess = false, Message = "ပြင်ဆင်ရန် အချက်အလက်များ လိုအပ်ပါသည်။" });
         }
 
-        // ပြင်ဆင်သည့် အချိန်ကို မှတ်သားမည်
+        // Save timestamp
         item.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
         int result = _db.SaveChanges();
@@ -580,7 +580,7 @@ public class StudentController : ControllerBase
         });
     }
 
-    // 🎯 ၅။ DELETE: api/student/{id} (ကျောင်းသားအဖြစ်မှ ရပ်စဲရန် - Soft Delete)
+    // DELETE: api/student/{id} (Soft delete student)
     [HttpDelete("{id}")]
     [Permission("Student.Delete")]
     public IActionResult DeleteStudent(int id)
@@ -688,7 +688,7 @@ public class StudentController : ControllerBase
         return Ok(new { Count = count });
     }
 
-    // 🎯 ၇။ GET: api/student/profile/{userId} - ကျောင်းသား Profile ကြည့်ရန်
+    // GET: api/student/profile/{userId} - Get student profile
     [HttpGet("profile/{userId}")]
     public IActionResult GetStudentProfile(int userId)
     {
@@ -775,7 +775,7 @@ public class StudentController : ControllerBase
         });
     }
 
-    // 🎯 ၈။ PUT: api/student/profile/{userId}/image - Profile ဓာတ်ပုံ ပြောင်းရန်
+    // PUT: api/student/profile/{userId}/image - Update profile image
     [HttpPut("profile/{userId}/image")]
     public IActionResult UpdateStudentProfileImage(int userId, [FromBody] StudentProfileImageRequest request)
     {
