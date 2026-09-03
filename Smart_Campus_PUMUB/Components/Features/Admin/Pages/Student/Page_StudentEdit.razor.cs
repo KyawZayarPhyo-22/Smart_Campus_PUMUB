@@ -1,21 +1,53 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.Components.Features.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 
 namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student;
 
-public partial class Page_StudentEdit : ComponentBase
+public partial class Page_StudentEdit : ComponentBase, IDisposable
 {
     [Parameter] public int Id { get; set; }
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public NavigationManager Nav { get; set; } = null!;
+    [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AdminLanguageService LangService { get; set; } = null!;
 
     private StudentModel? studentModel;
     private StudentUpdateRequestModel updateModel = new();
     private List<UserModels> UserList = new();
     private bool isProcessing = false;
     private string statusMessage = "";
+
+    protected override void OnInitialized()
+    {
+        LangService.OnLanguageChanged += HandleLanguageChanged;
+    }
+
+    private void HandleLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedLang = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang) && savedLang != LangService.CurrentLanguage)
+                {
+                    LangService.SetLanguage(savedLang);
+                    StateHasChanged();
+                }
+            }
+            catch { }
+        }
+    }
 
     // protected override async Task OnParametersSetAsync()
     // {

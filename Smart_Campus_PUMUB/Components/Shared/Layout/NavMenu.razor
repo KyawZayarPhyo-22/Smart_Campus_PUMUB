@@ -11,13 +11,118 @@
 @rendermode InteractiveServer
 
 <style>
+    /* Navbar White Theme Styling */
+    #navbar,
+    #navbar.scrolled {
+        background: #ffffff !important;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    #navbar .nav-brand-text span:first-child,
+    #navbar.scrolled .nav-brand-text span:first-child {
+        color: #0f172a !important;
+        font-weight: 800;
+    }
+
+    #navbar .nav-brand-text span:last-child,
+    #navbar.scrolled .nav-brand-text span:last-child {
+        color: #64748b !important;
+        font-weight: 600;
+    }
+
+    .nav-links a,
+    .nav-link,
+    #navbar .nav-links a,
+    #navbar.scrolled .nav-links a,
+    #navbar .nav-link,
+    #navbar.scrolled .nav-link {
+        color: #334155 !important;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 8px 16px !important;
+        border-radius: 12px !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .nav-links a:hover,
+    .nav-link:hover,
+    #navbar .nav-links a:hover,
+    #navbar.scrolled .nav-links a:hover,
+    #navbar .nav-link:hover,
+    #navbar.scrolled .nav-link:hover {
+        color: #2563eb !important;
+        background: #eff6ff !important;
+    }
+
+    /* Active Pill State - Always Persistent Regardless of Scroll */
+    .nav-links a.active,
+    .nav-link.active,
+    #navbar .nav-links a.active,
+    #navbar.scrolled .nav-links a.active,
+    #navbar .nav-link.active,
+    #navbar.scrolled .nav-link.active,
+    ul.nav-links li a.active,
+    ul.nav-links li .nav-link.active {
+        color: #ffffff !important;
+        background-color: #2563eb !important;
+        background: #2563eb !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+        border-radius: 12px !important;
+    }
+
+    .btn-apply {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+        border-radius: 50px !important;
+        padding: 9px 22px !important;
+        font-weight: 600 !important;
+    }
+
+    .btn-apply:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45) !important;
+        transform: translateY(-2px);
+    }
+
+    .notification-trigger,
+    #navbar.scrolled .notification-trigger {
+        position: relative;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+        margin-left: 8px;
+        margin-right: 8px;
+    }
+
+    .notification-trigger:hover,
+    #navbar.scrolled .notification-trigger:hover {
+        background: #e2e8f0 !important;
+        color: #1e293b !important;
+    }
+
     /* User Profile Card Styling */
     .profile-trigger {
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: white;
+        color: #1e293b;
         font-size: 0.95rem;
         padding: 5px 10px;
         border-radius: 8px;
@@ -25,12 +130,11 @@
     }
 
     .user-circle {
-        width: 50px;
-        height: 50px;
-        background-color: #5A4FCF;
-        border: 2px solid rgba(255, 255, 255, 0.5);
+        width: 46px;
+        height: 46px;
+        background-color: #2563eb;
+        border: 2px solid #e2e8f0;
         border-radius: 50%;
-        /* အဝိုင်းဖြစ်စေတဲ့ code */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -38,13 +142,8 @@
         font-weight: bold;
         font-size: 1rem;
         transition: 0.3s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-
-    /* Hover လုပ်တဲ့အခါ အဝိုင်းလေး ပိုလှသွားအောင် */
-    @* .profile-trigger:hover .user-circle {
-        background-color: rgba(255, 255, 255, 0.4);
-        transform: scale(1.05);
-    } *@
 
     .profile-card {
         position: absolute;
@@ -54,6 +153,7 @@
         padding: 20px;
         border-radius: 20px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e2e8f0;
         width: 220px;
         z-index: 1000;
         text-align: left;
@@ -93,32 +193,6 @@
         background-color: #ef4444 !important;
         color: white !important;
     }
-
-    .notification-trigger {
-        position: relative;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.15);
-        color: white;
-        transition: 0.3s;
-        margin-left: 8px;
-        margin-right: 8px;
-    }
-
-    #navbar.scrolled .notification-trigger {
-        color: #5a4fcf !important;
-        background: #eff6ff !important;
-    }
-
-    #navbar.scrolled .notification-trigger:hover {
-        background: #5a4fcf !important;
-        color: white !important;
-    }
 </style>
 
 <nav id="navbar" class="scrolled">
@@ -132,8 +206,8 @@
                 </div>
             </div>
             <div class="nav-brand-text">
-                <span>Polytechnic University</span>
-                <span>Maubin · Est. 1999</span>
+                <span style="margin-bottom: 10px;">Polytechnic University</span>
+                <span style="text-transform:capitalize !important;color:#F59E0B !important;font-weight: bold;">(Maubin)</span>
             </div>
         </a>
 
@@ -153,12 +227,19 @@
             <li style="margin-bottom: -1rem;">
                 <NavLink class="nav-link" href="/rules" Match="NavLinkMatch.Prefix">Rules</NavLink>
             </li>
+            <AuthorizeView>
+                <Authorized>
+                    <li style="margin-bottom: -1rem;">
+                        <NavLink class="nav-link" href="/tutors" Match="NavLinkMatch.Prefix">Tutors</NavLink>
+                    </li>
+                </Authorized>
+            </AuthorizeView>
         </ul>
 
         <div class="nav-actions">
             <AuthorizeView>
                 <Authorized>
-                    @if (!context.User.IsInRole("Admin") && !context.User.IsInRole("admin") && !context.User.IsInRole("Tutor") && !context.User.IsInRole("tutor"))
+                    @if (isApplyNowEnabled && !context.User.IsInRole("Admin") && !context.User.IsInRole("admin") && !context.User.IsInRole("Super Admin") && !context.User.IsInRole("super_admin") && !context.User.IsInRole("SuperAdmin") && !context.User.IsInRole("Tutor") && !context.User.IsInRole("tutor") && !context.User.HasClaim(c => c.Type == System.Security.Claims.ClaimTypes.Role && (c.Value.ToLower().Contains("admin") || c.Value.ToLower().Contains("super") || c.Value.ToLower().Contains("tutor"))))
                     {
                         <NavLink href="register" class="btn-apply"><i class="fas fa-graduation-cap"></i> Apply Now</NavLink>
 
@@ -213,7 +294,7 @@
                     <div class="profile-trigger" @onclick="ToggleProfileMenu" style="cursor: pointer; display: flex; align-items: center;">
                         @if (!string.IsNullOrEmpty(userProfileImage))
                         {
-                            <img src="@(userProfileImage.StartsWith("data:") || userProfileImage.StartsWith("http") ? userProfileImage : $"https://localhost:7297{userProfileImage}")" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.8);" />
+                            <img src="@(userProfileImage.StartsWith("data:") || userProfileImage.StartsWith("http") ? userProfileImage : $"http://localhost:5077{userProfileImage}")" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.8);" />
                         }
                         else
                         {
@@ -228,14 +309,14 @@
                             <span class="user-name-text">@context.User.Identity?.Name</span>
                             <span class="status-text">Access Granted</span>
                             
-                            @if (context.User.IsInRole("Admin") || context.User.IsInRole("admin") || context.User.IsInRole("Tutor") || context.User.IsInRole("tutor") || context.User.IsInRole("Super Admin") || context.User.IsInRole("super_admin") || context.User.HasClaim(c => c.Type == System.Security.Claims.ClaimTypes.Role && (c.Value.ToLower().Contains("admin") || c.Value.ToLower().Contains("super"))))
+                            @if (context.User.IsInRole("Admin") || context.User.IsInRole("admin") || context.User.IsInRole("Super Admin") || context.User.IsInRole("super_admin") || context.User.IsInRole("SuperAdmin") || context.User.HasClaim(c => c.Type == System.Security.Claims.ClaimTypes.Role && (c.Value.ToLower().Contains("admin") || c.Value.ToLower().Contains("super"))))
                             {
                                 <a href="/admin/dashboard" style="display:flex; align-items:center; gap:8px; padding:10px 15px; border-radius:12px; background:#f0f4ff; color:#0d6efd; text-decoration:none; font-weight:600; font-size:0.88rem; margin-bottom:8px; transition:0.2s;" @onclick="ToggleProfileMenu">
                                     <i class="fas fa-tachometer-alt"></i> Dashboard
                                 </a>
                             }
 
-                            @if (context.User.IsInRole("Student") || context.User.IsInRole("student"))
+                            @if (context.User.IsInRole("Student") || context.User.IsInRole("student") || context.User.IsInRole("NewStudent") || context.User.IsInRole("newstudent") || context.User.HasClaim(c => c.Type == System.Security.Claims.ClaimTypes.Role && c.Value.ToLower().Contains("student")))
                             {
                                 <a href="/profile" style="display:flex; align-items:center; gap:8px; padding:10px 15px; border-radius:12px; background:#f0f4ff; color:#5a4fcf; text-decoration:none; font-weight:600; font-size:0.88rem; margin-bottom:8px; transition:0.2s;" @onclick="ToggleProfileMenu">
                                     <i class="fas fa-user-circle"></i> My Profile
@@ -244,7 +325,7 @@
                                     <i class="fas fa-user-edit"></i> Personal Info
                                 </a>
                             }
-                            @if (context.User.IsInRole("Tutor") || context.User.IsInRole("tutor"))
+                            @if (context.User.IsInRole("Tutor") || context.User.IsInRole("tutor") || context.User.HasClaim(c => c.Type == System.Security.Claims.ClaimTypes.Role && c.Value.ToLower().Contains("tutor")))
                             {
                                 <a href="/tutor/profile" style="display:flex; align-items:center; gap:8px; padding:10px 15px; border-radius:12px; background:#f0f4ff; color:#2563eb; text-decoration:none; font-weight:600; font-size:0.88rem; margin-bottom:8px; transition:0.2s;" @onclick="ToggleProfileMenu">
                                     <i class="fas fa-id-badge"></i> My Profile
@@ -278,7 +359,8 @@
 
     <AuthorizeView>
         <Authorized>
-            @if (!context.User.IsInRole("Admin") && !context.User.IsInRole("admin") && !context.User.IsInRole("Tutor") && !context.User.IsInRole("tutor"))
+            <NavLink href="tutors" @onclick="ToggleMobile">👨‍🏫 Tutors</NavLink>
+            @if (isApplyNowEnabled && !context.User.IsInRole("Admin") && !context.User.IsInRole("admin") && !context.User.IsInRole("Super Admin") && !context.User.IsInRole("super_admin") && !context.User.IsInRole("SuperAdmin") && !context.User.IsInRole("Tutor") && !context.User.IsInRole("tutor") && !context.User.HasClaim(c => c.Type == System.Security.Claims.ClaimTypes.Role && (c.Value.ToLower().Contains("admin") || c.Value.ToLower().Contains("super") || c.Value.ToLower().Contains("tutor"))))
             {
                 <NavLink href="register" @onclick="ToggleMobile">👤 Register</NavLink>
             }
@@ -295,6 +377,7 @@
     private bool isMobileMenuOpen = false;
     private bool isProfileMenuOpen = false;
     private bool isNotificationMenuOpen = false;
+    private bool isApplyNowEnabled = true;
 
     private int currentUserId = 0;
     private int unreadCount = 0;
@@ -377,10 +460,30 @@
                 currentUserId = 0;
                 userProfileImage = null;
             }
+
+            await CheckApplyNowVisibility();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error checking user state: {ex.Message}");
+        }
+    }
+
+    private async Task CheckApplyNowVisibility()
+    {
+        try
+        {
+            var res = await HttpClientService.ExecuteAsync<Smart_Campus_PUMUB.Components.Admin.Pages.Permission.ApplyNowStatusResponseModel>(
+                "permission/student-apply-now-status", EnumHttpMethod.Get);
+            if (res != null)
+            {
+                isApplyNowEnabled = res.IsEnabled;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching Apply Now visibility: {ex.Message}");
         }
     }
 
@@ -391,7 +494,7 @@
         try
         {
             var studentData = await HttpClientService.ExecuteAsync<StudentProfileResponse>(
-                $"student/profile/{currentUserId}", EnumHttpMethod.Get);
+                $"student/profile/{currentUserId}/image", EnumHttpMethod.Get);
             if (studentData != null && !string.IsNullOrEmpty(studentData.StudentImage))
             {
                 userProfileImage = studentData.StudentImage;
@@ -469,18 +572,18 @@
 
     private async Task HandleRegistrationStatusChanged(StudentRegistrationStatusChangedEventArgs args)
     {
-        if (args.UserId == currentUserId)
+        if (args.UserId == currentUserId || args.UserId == null)
         {
             await InvokeAsync(async () =>
             {
                 var newNoti = new NotificationItem
                 {
-                    Message = $"ကျောင်းအပ်နှံမှု အခြေအနေ: သင်၏ကျောင်းအပ်နှံမှုအချက်အလက်ကို Admin မှ {(args.Status == "Approved" ? "အတည်ပြုပြီးပါပြီ" : args.Status == "Rejected" ? "ငြင်းပယ်လိုက်ပါသည်" : args.Status)} ဖြစ်ပါသည်။",
+                    Message = $"ကျောင်းအပ်နှံမှု အခြေအနေ: သင်၏ကျောင်းအပ်နှံမှုအချက်အလက်ကို {(args.Status == "Approved" ? "အတည်ပြုပြီးပါပြီ" : args.Status == "Rejected" ? "ငြင်းပယ်လိုက်ပါသည်" : args.Status)} ဖြစ်ပါသည်။",
                     Type = args.Status == "Approved" ? "success" : "danger",
                     Timestamp = DateTime.Now,
                     IsRead = false
                 };
-                notifications.Add(newNoti);
+                notifications.Insert(0, newNoti);
                 unreadCount = notifications.Count(n => !n.IsRead);
                 await SaveNotifications();
                 StateHasChanged();
@@ -490,18 +593,18 @@
 
     private async Task HandlePaymentStatusChanged(StudentPaymentStatusChangedEventArgs args)
     {
-        if (args.UserId == currentUserId)
+        if (args.UserId == currentUserId || args.UserId == null)
         {
             await InvokeAsync(async () =>
             {
                 var newNoti = new NotificationItem
                 {
-                    Message = $"ငွေပေးချေမှု အခြေအနေ: သင်၏ငွေပေးချေမှုပြေစာကို Admin မှ {(args.Status == "Approved" ? "အတည်ပြုပြီးပါပြီ" : args.Status == "Rejected" ? "ငြင်းပယ်လိုက်ပါသည်" : args.Status)} ဖြစ်ပါသည်။",
+                    Message = $"ငွေပေးချေမှု အခြေအနေ: သင်၏ KBZPay (MMQR) ကျောင်းလခငွေပေးချေမှုကို {(args.Status == "Approved" ? "အောင်မြင်စွာ အတည်ပြုပြီးပါပြီ" : args.Status == "Rejected" ? "ငြင်းပယ်လိုက်ပါသည်" : args.Status)} ဖြစ်ပါသည်။",
                     Type = args.Status == "Approved" ? "success" : "danger",
                     Timestamp = DateTime.Now,
                     IsRead = false
                 };
-                notifications.Add(newNoti);
+                notifications.Insert(0, newNoti);
                 unreadCount = notifications.Count(n => !n.IsRead);
                 await SaveNotifications();
                 StateHasChanged();

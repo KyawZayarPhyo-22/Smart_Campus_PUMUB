@@ -90,36 +90,52 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         [Permission("Activity.Create")]
         public async Task<IActionResult> CreateActivity([FromForm] ActivityCreateRequestModel request)
         {
-            // 💡 Title တူတာကို စစ်ဆေးတဲ့ if condition မပါတော့တဲ့အတွက် 
-            // Title တူရင်လည်း အောင်မြင်စွာ သိမ်းဆည်းနိုင်ပါပြီ။
+            var uploadedPaths = new List<string>();
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-            string? imagePath = null;
-
-            if (request.ImageFile != null && request.ImageFile.Length > 0)
+            var filesToProcess = new List<IFormFile>();
+            if (request.ImageFiles != null && request.ImageFiles.Count > 0)
             {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
+                filesToProcess.AddRange(request.ImageFiles.Where(f => f.Length > 0));
+            }
+            if (request.ImageFile != null && request.ImageFile.Length > 0 && !filesToProcess.Contains(request.ImageFile))
+            {
+                filesToProcess.Add(request.ImageFile);
+            }
 
-                // Upload directory path setup
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
+            foreach (var file in filesToProcess)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
                 var filePath = Path.Combine(uploadsFolder, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    await request.ImageFile.CopyToAsync(stream);
+                    await file.CopyToAsync(stream);
                 }
 
-                // Relative URL path
-                imagePath = "/uploads/" + fileName;
+                uploadedPaths.Add("/uploads/" + fileName);
             }
+
+            string? finalImageValue = null;
+            if (uploadedPaths.Count == 1)
+            {
+                finalImageValue = uploadedPaths[0];
+            }
+            else if (uploadedPaths.Count > 1)
+            {
+                finalImageValue = System.Text.Json.JsonSerializer.Serialize(uploadedPaths);
+            }
+
+            var activityDate = request.ActivityDate ?? DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
             _db.Activities.Add(new Activity
             {
                 ActivityTitle = request.ActivityTitle,
-                Image = imagePath,
+                Image = finalImageValue,
                 Description = request.Description,
                 Location = request.Location,
+                CreatedDateTime = activityDate,
                 IsDelete = false
             });
 
@@ -129,30 +145,77 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
 
-        [HttpPost("update/{id}")] // Route ကိုသီးသန့်ခွဲထားပါ
+        [HttpPost("update/{id}")]
         [Permission("Activity.Edit")]
         public async Task<IActionResult> UpdateActivity(int id, [FromForm] ActivityUpdateRequestModel request)
         {
             var item = _db.Activities.FirstOrDefault(x => x.ActivityId == id && x.IsDelete == false);
             if (item is null) return NotFound(new { IsSuccess = false, Message = "Activity not found" });
 
-            // Replace image if uploaded
-            if (request.ImageFile != null && request.ImageFile.Length > 0)
+            var finalPaths = new List<string>();
+
+            // Parse remaining existing images if provided
+            if (!string.IsNullOrEmpty(request.ExistingImagesJson))
             {
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                try
+                {
+                    var existingList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(request.ExistingImagesJson);
+                    if (existingList != null) finalPaths.AddRange(existingList.Where(s => !string.IsNullOrWhiteSpace(s)));
+                }
+                catch { }
+            }
+            else if (!string.IsNullOrEmpty(request.Image))
+            {
+                finalPaths.AddRange(ActivityModel.GetImageList(request.Image));
+            }
+
+            // Save new uploaded images
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var filesToProcess = new List<IFormFile>();
+            if (request.ImageFiles != null && request.ImageFiles.Count > 0)
+            {
+                filesToProcess.AddRange(request.ImageFiles.Where(f => f.Length > 0));
+            }
+            if (request.ImageFile != null && request.ImageFile.Length > 0 && !filesToProcess.Contains(request.ImageFile))
+            {
+                filesToProcess.Add(request.ImageFile);
+            }
+
+            foreach (var file in filesToProcess)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
                 var filePath = Path.Combine(uploadsFolder, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    await request.ImageFile.CopyToAsync(stream);
+                    await file.CopyToAsync(stream);
                 }
-                item.Image = "/uploads/" + fileName;
+
+                finalPaths.Add("/uploads/" + fileName);
+            }
+
+            if (finalPaths.Count == 1)
+            {
+                item.Image = finalPaths[0];
+            }
+            else if (finalPaths.Count > 1)
+            {
+                item.Image = System.Text.Json.JsonSerializer.Serialize(finalPaths);
+            }
+            else if (filesToProcess.Count > 0 || !string.IsNullOrEmpty(request.ExistingImagesJson))
+            {
+                item.Image = null;
             }
 
             item.ActivityTitle = request.ActivityTitle ?? item.ActivityTitle;
             item.Description = request.Description ?? item.Description;
             item.Location = request.Location ?? item.Location;
+            if (request.ActivityDate.HasValue)
+            {
+                item.CreatedDateTime = request.ActivityDate.Value;
+            }
 
             await _db.SaveChangesAsync();
             AddActivityLog("Activity Updated", $"{item.ActivityTitle} was updated to the Activity.");

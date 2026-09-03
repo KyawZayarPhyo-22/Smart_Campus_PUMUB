@@ -1,0 +1,193 @@
+@namespace Smart_Campus_PUMUB.Components.Shared
+
+<div class="custom-select-container @(Disabled ? "disabled" : "") @CssClass" style="position: relative; @Style">
+    @if (isOpen)
+    {
+        <div class="custom-select-backdrop" @onclick="CloseDropdown"></div>
+    }
+
+    <div class="modern-input custom-select-trigger @(isOpen ? "is-open" : "")" 
+         @onclick="ToggleDropdown"
+         tabindex="@(Disabled ? "-1" : "0")"
+         style="display: flex; justify-content: space-between; align-items: center; cursor: @(Disabled ? "not-allowed" : "pointer"); user-select: none; padding: @TriggerPadding; background: @(Disabled ? "#f8fafc" : "#ffffff");">
+        <span class="text-truncate" style="color: @(string.IsNullOrEmpty(Value) ? "#94a3b8" : "#1e293b"); font-weight: @(string.IsNullOrEmpty(Value) ? "normal" : "600"); font-size: @FontSize;">
+            @(string.IsNullOrEmpty(Value) ? Placeholder : Value)
+        </span>
+        <i class="fas fa-chevron-down ms-1" style="font-size: 0.72rem; color: #94a3b8; transition: transform 0.2s ease; transform: @(isOpen ? "rotate(180deg)" : "rotate(0deg)"); flex-shrink: 0;"></i>
+    </div>
+
+    @if (isOpen && !Disabled)
+    {
+        <div class="custom-select-menu shadow-lg" style="position: absolute; top: calc(100% + 4px); left: 0; min-width: 100%; min-width: 140px; max-width: 260px; z-index: 1050; background: #ffffff; border-radius: 10px; border: 1.5px solid #cbd5e1; overflow: hidden; animation: dropdownFadeIn 0.15s ease-out;">
+            @if (ShowSearch && Items.Count > 6)
+            {
+                <div style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; background: #f8fafc;">
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <i class="fas fa-search" style="position: absolute; left: 8px; color: #94a3b8; font-size: 0.75rem;"></i>
+                        <input type="text"
+                               @bind="searchTerm"
+                               @bind:event="oninput"
+                               placeholder="@SearchPlaceholder"
+                               style="width: 100%; padding: 5px 8px 5px 26px; font-size: 0.82rem; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; background: #ffffff;"
+                               @onclick:stopPropagation />
+                    </div>
+                </div>
+            }
+
+            <div class="custom-select-list" style="max-height: @MaxHeight; overflow-y: auto; padding: 4px;">
+                @if (FilteredItems.Any())
+                {
+                    @foreach (var item in FilteredItems)
+                    {
+                        var isSelected = item == Value;
+                        <div class="custom-select-item @(isSelected ? "selected" : "")"
+                             @onclick="() => SelectItem(item)"
+                             @onclick:stopPropagation>
+                            <span>@item</span>
+                            @if (isSelected)
+                            {
+                                <i class="fas fa-check text-primary" style="font-size: 0.75rem;"></i>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="padding: 10px 8px; text-align: center; color: #94a3b8; font-size: 0.82rem;">
+                        @(LangService?.IsMyanmar == true ? "ရှာမတွေ့ပါ" : "No match found")
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .custom-select-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1040;
+        background: transparent;
+    }
+
+    .custom-select-trigger {
+        transition: all 0.2s ease;
+    }
+
+    .custom-select-trigger:hover:not(.disabled) {
+        border-color: #6366f1 !important;
+    }
+
+    .custom-select-trigger.is-open {
+        border-color: #4f46e5 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+    }
+
+    .custom-select-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-select-list::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .custom-select-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-select-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .custom-select-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 10px;
+        font-size: 0.86rem;
+        color: #334155;
+        font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.12s ease;
+        line-height: 1.3;
+    }
+
+    .custom-select-item:hover {
+        background: #f1f5f9;
+        color: #4f46e5;
+    }
+
+    .custom-select-item.selected {
+        background: #eef2ff;
+        color: #4f46e5;
+        font-weight: 600;
+    }
+
+    @@keyframes dropdownFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+@code {
+    [Inject] private Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService? LangService { get; set; }
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public List<string> Items { get; set; } = new();
+    [Parameter] public string Placeholder { get; set; } = "မြို့နယ်";
+    [Parameter] public string SearchPlaceholder { get; set; } = "ရှာဖွေရန်...";
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public string? Style { get; set; }
+    [Parameter] public string TriggerPadding { get; set; } = "14px 8px";
+    [Parameter] public string FontSize { get; set; } = "0.9rem";
+    [Parameter] public string MaxHeight { get; set; } = "190px";
+    [Parameter] public bool ShowSearch { get; set; } = true;
+    [Parameter] public EventCallback<string?> OnSelected { get; set; }
+
+    private bool isOpen = false;
+    private string searchTerm = "";
+
+    private IEnumerable<string> FilteredItems =>
+        string.IsNullOrWhiteSpace(searchTerm)
+            ? Items
+            : Items.Where(i => i.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private void ToggleDropdown()
+    {
+        if (Disabled) return;
+        isOpen = !isOpen;
+        if (isOpen) searchTerm = "";
+    }
+
+    private void CloseDropdown()
+    {
+        isOpen = false;
+        searchTerm = "";
+    }
+
+    private async Task SelectItem(string item)
+    {
+        Value = item;
+        isOpen = false;
+        searchTerm = "";
+        await ValueChanged.InvokeAsync(item);
+        if (OnSelected.HasDelegate)
+        {
+            await OnSelected.InvokeAsync(item);
+        }
+    }
+}

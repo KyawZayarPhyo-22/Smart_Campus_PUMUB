@@ -4,7 +4,7 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
-<PageTitle>Major Directory</PageTitle>
+<PageTitle>@(LangService.IsMyanmar ? "အထူးပြုဘာသာရပ်များ" : "Major Directory")</PageTitle>
 
 <style>
     .custom-table {
@@ -14,24 +14,24 @@
         border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-        .custom-table thead {
-            background: rgba(13, 110, 253, 0.1);
-            border-bottom: 2px solid rgba(13, 110, 253, 0.2);
-        }
+    .custom-table thead {
+        background: rgba(13, 110, 253, 0.1);
+        border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+    }
 
-        .custom-table th {
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            color: #0d6efd;
-            padding: 16px 20px;
-        }
+    .custom-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        color: #0d6efd;
+        padding: 16px 20px;
+    }
 
-        .custom-table td {
-            padding: 16px 20px;
-            color: #e2e8f0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
+    .custom-table td {
+        padding: 16px 20px;
+        color: #e2e8f0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
 
     .table-row-hover:hover {
         background: rgba(255, 255, 255, 0.02);
@@ -47,10 +47,10 @@
         transition: all 0.2s ease;
     }
 
-        .btn-action-edit:hover {
-            background: #0d6efd;
-            color: #ffffff;
-        }
+    .btn-action-edit:hover {
+        background: #0d6efd;
+        color: #ffffff;
+    }
 
     .btn-action-delete {
         background: rgba(220, 53, 69, 0.1);
@@ -61,10 +61,10 @@
         transition: all 0.2s ease;
     }
 
-        .btn-action-delete:hover {
-            background: #dc3545;
-            color: #ffffff;
-        }
+    .btn-action-delete:hover {
+        background: #dc3545;
+        color: #ffffff;
+    }
 
     .badge-faculty {
         background: rgba(90, 79, 207, 0.12) !important;
@@ -93,7 +93,7 @@
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        max-height: 228px; /* Approximately 6 items */
+        max-height: 228px;
         overflow-y: auto;
         z-index: 1050;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
@@ -134,13 +134,13 @@
 
     .dropdown-item-custom:hover {
         background-color: #f3f4f6;
-        color: #5A4FCF;
+        color: #0d6efd;
         font-weight: 600;
     }
 
     .dropdown-item-custom.selected {
-        background-color: rgba(90, 79, 207, 0.08);
-        color: #5A4FCF;
+        background-color: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
         font-weight: 700;
     }
 </style>
@@ -151,15 +151,18 @@
 }
 
 <div class="tab-pane fade show active" id="v-pills-major">
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-        <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-                <i class="bi bi-collection fs-5" style="color: #5A4FCF;"></i>
-            </div>
-            <div>
-                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Major Directory</h4>
-                <small class="text-secondary">တက္ကသိုလ်အထူးပြုဘာသာရပ်များနှင့် သင်ရိုးများ စီမံခန့်ခွဲခြင်း</small>
-            </div>
+    <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+            <i class="bi bi-collection fs-5" style="color: #0d6efd;"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "အထူးပြုဘာသာရပ်များ" : "Major Directory")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "တက္ကသိုလ်အထူးပြုဘာသာရပ်များ စီမံခန့်ခွဲခြင်း" : "Manage university majors and specializations")
+            </small>
         </div>
     </div>
 
@@ -170,11 +173,11 @@
             <div class="col">
                 <div class="position-relative">
                     <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Major Name or Faculty..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "အထူးပြုဘာသာရပ် အမည်ဖြင့် ရှာရန်..." : "Search by Major Name...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
-            <!-- Faculty Filter (approx 6 items height with scroll) -->
+            <!-- Faculty Filter -->
             <div class="col-md-3">
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
@@ -188,7 +191,7 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(string.IsNullOrEmpty(FacultyFilter) ? "selected" : "")" 
                                  @onclick='() => SelectFaculty("")'>
-                                <span>All Faculties</span>
+                                <span>@(LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties")</span>
                                 @if (string.IsNullOrEmpty(FacultyFilter)) { <i class="bi bi-check2 text-primary"></i> }
                             </div>
                             @foreach (var faculty in FacultyList)
@@ -206,17 +209,17 @@
 
             <!-- Search and Reset Buttons -->
             <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                     <i class="bi bi-search"></i>
                 </button>
-                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
 
             <!-- Add Button -->
             <div class="col-auto">
-                <NavLink href="/admin/major/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Major">
+                <NavLink href="/admin/major/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Major")">
                     <i class="bi bi-plus-lg"></i>
                 </NavLink>
             </div>
@@ -229,7 +232,7 @@
         {
             <div class="text-center my-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-dark mt-3 small fw-bold">Major စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading majors...")</div>
             </div>
         }
         else
@@ -238,10 +241,10 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 10%;">No.</th>
-                            <th style="width: 45%;">Major Name</th>
-                            <th style="width: 25%;">Faculty</th>
-                            <th style="width: 20%; text-align: center;">Actions</th>
+                            <th style="width: 10%;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th style="width: 45%;">@(LangService.IsMyanmar ? "အထူးပြုဘာသာရပ် အမည်" : "Major Name")</th>
+                            <th style="width: 25%;">@(LangService.IsMyanmar ? "မဟာဌာန" : "Faculty")</th>
+                            <th style="width: 20%; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -256,8 +259,12 @@
                                 <td><span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">@major.FacultyName</span></td>
                                 <td>
                                     <div class="d-flex justify-content-center align-items-center gap-2">
-                                        <NavLink href="@($"/admin/major/edit/{major.MajorId}")" class="btn btn-action-edit"><i class="bi bi-pencil me-1"></i> Edit</NavLink>
-                                        <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(major)"><i class="bi bi-trash me-1"></i> Delete</button>
+                                        <NavLink href="@($"/admin/major/edit/{major.MajorId}")" class="btn btn-action-edit d-inline-flex align-items-center">
+                                            <i class="bi bi-pencil me-1.5"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
+                                        </NavLink>
+                                        <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(major)">
+                                            <i class="bi bi-trash me-1.5"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -270,7 +277,7 @@
                                 <td colspan="4" class="text-center text-dark fw-bold py-4" style="text-align: center !important;">
                                     <div class="d-flex flex-column align-items-center justify-content-center w-100">
                                         <i class="bi bi-inbox fs-3 d-block mb-2 text-secondary"></i>
-                                        <span>Major မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</span>
+                                        <span>@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No majors found.")</span>
                                     </div>
                                 </td>
                             </tr>
@@ -296,14 +303,13 @@
                         <div class="rounded p-2" style="background: rgba(220,53,69,0.15);">
                             <i class="bi bi-exclamation-triangle text-danger fs-5"></i>
                         </div>
-                        <h5 class="text-danger mb-0 fw-bold">Delete Major</h5>
+                        <h5 class="text-danger mb-0 fw-bold">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Delete Major")</h5>
                     </div>
                 </div>
 
                 <div class="modal-body text-center pt-2">
-                    <p class="text-white mb-1">Are you sure you want to delete</p>
-                    <p class="fw-bold fs-6" style="color:#a78bfa;">@SelectedMajor?.MajorName</p>
-                    <p class="text-muted small">This action cannot be undone.</p>
+                    <p class="text-dark mb-1">@(LangService.IsMyanmar ? "အောက်ပါ အထူးပြုဘာသာရပ်ကို ဖျက်ရန် သေချာပါသလား?" : "Are you sure you want to delete")</p>
+                    <p class="fw-bold fs-6" style="color:#0d6efd;">@SelectedMajor?.MajorName</p>
 
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
@@ -322,13 +328,13 @@
                     <button class="btn btn-secondary"
                             @onclick="CloseDeleteModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
                     <button class="btn btn-danger"
                             @onclick="DeleteMajor"
                             disabled="@(IsProcessing || IsSuccess)">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
 

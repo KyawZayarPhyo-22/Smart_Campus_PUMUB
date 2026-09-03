@@ -1,21 +1,39 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.Components.Features.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Smart_Campus_PUMUB.WebApi.Models;
+
 namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Registrationreport;
 
-public partial class Page_RegistrationReport : ComponentBase
+public partial class Page_RegistrationReport : ComponentBase, IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] public AdminLanguageService LangService { get; set; } = null!;
 
     private List<StudentRegistrationDataModel> RawStudentList { get; set; } = new();
+    private List<MajorModel> MasterMajorList { get; set; } = new();
+    private List<SemesterModel> MasterSemesterList { get; set; } = new();
     private bool IsLoading { get; set; } = true;
+
+    private IEnumerable<string> AvailableSemesters =>
+        MasterSemesterList.Select(s => s.SemesterName ?? "")
+            .Union(RawStudentList.Select(s => s.AcademicYearLevel ?? ""))
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Distinct();
+
+    private IEnumerable<string> AvailableMajors =>
+        MasterMajorList.Select(m => m.MajorName ?? "")
+            .Union(RawStudentList.Select(s => s.Major ?? ""))
+            .Where(l => !string.IsNullOrWhiteSpace(l) && l != "-")
+            .Distinct();
 
     private int ActiveTab { get; set; } = 1;
 
@@ -218,6 +236,7 @@ public partial class Page_RegistrationReport : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += HandleLanguageChanged;
         await LoadData();
         ActiveAdmFromDate = AdmFromDate;
         ActiveAdmToDate = AdmToDate;
@@ -232,15 +251,53 @@ public partial class Page_RegistrationReport : ComponentBase
         ActivePaySelectedStatus = PaySelectedStatus;
     }
 
+    private void HandleLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedLang = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang) && savedLang != LangService.CurrentLanguage)
+                {
+                    LangService.SetLanguage(savedLang);
+                    StateHasChanged();
+                }
+            }
+            catch { }
+        }
+    }
+
     private async Task LoadData()
     {
         IsLoading = true;
         StateHasChanged();
         try
         {
-            await Task.Delay(1000);
+            await Task.Delay(500);
             var response = await HttpClientService.ExecuteAsync<List<StudentRegistrationDataModel>>("StudentRegistrations", EnumHttpMethod.Get);
             if (response != null) RawStudentList = response;
+
+            try
+            {
+                var majorResponse = await HttpClientService.ExecuteAsync<List<MajorModel>>("Major", EnumHttpMethod.Get);
+                if (majorResponse != null) MasterMajorList = majorResponse;
+            }
+            catch { }
+
+            try
+            {
+                var semResponse = await HttpClientService.ExecuteAsync<List<SemesterModel>>("Semester", EnumHttpMethod.Get);
+                if (semResponse != null) MasterSemesterList = semResponse.OrderBy(s => s.Sequence).ToList();
+            }
+            catch { }
         }
         finally
         {

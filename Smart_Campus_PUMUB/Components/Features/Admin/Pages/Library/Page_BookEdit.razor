@@ -50,7 +50,7 @@
                     <label class="form-label text-light">Book Cover Image</label>
                     <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
                     <div class="mt-2 text-center">
-                        <img src="@(!string.IsNullOrEmpty(PreviewImageUrl) ? PreviewImageUrl : $"https://localhost:7297{bookRequest.ExistingImage}")" 
+                        <img src="@(!string.IsNullOrEmpty(PreviewImageUrl) ? PreviewImageUrl : $"http://localhost:5077{bookRequest.ExistingImage}")" 
                              class="rounded img-thumbnail" style="max-height: 150px; object-fit: cover;" />
                     </div>
                 </div>

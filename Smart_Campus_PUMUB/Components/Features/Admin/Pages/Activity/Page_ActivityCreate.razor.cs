@@ -5,6 +5,7 @@ using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Activity;
@@ -18,52 +19,90 @@ public partial class Page_ActivityCreate
     [SupplyParameterFromForm] private ActivityCreateRequestModel activityModel { get; set; } = new();
     private string statusMessage = "";
     private bool isProcessing = false;
-    private string? PreviewImageUrl { get; set; }
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFilesSelected(InputFileChangeEventArgs e)
     {
-        var file = e.File;
-        if (file != null)
+        try
         {
-            activityModel.ImageFileName = file.Name;
-            using var ms = new MemoryStream();
-            await file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5).CopyToAsync(ms); // 5MB Max
-            var bytes = ms.ToArray();
-            activityModel.ImageBase64 = Convert.ToBase64String(bytes);
-            PreviewImageUrl = $"data:{file.ContentType};base64,{activityModel.ImageBase64}";
+            var files = e.GetMultipleFiles(20);
+            foreach (var file in files)
+            {
+                if (file != null)
+                {
+                    using var ms = new MemoryStream();
+                    await file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(ms); // 10MB Max per image
+                    var bytes = ms.ToArray();
+                    var base64 = Convert.ToBase64String(bytes);
+
+                    activityModel.Images.Add(new ImageUploadItem
+                    {
+                        FileName = file.Name,
+                        Base64 = base64,
+                        ContentType = file.ContentType
+                    });
+                }
+            }
         }
+        catch (Exception ex)
+        {
+            statusMessage = $"Image upload error: {ex.Message}";
+        }
+    }
+
+    private void RemoveImage(int index)
+    {
+        if (index >= 0 && index < activityModel.Images.Count)
+        {
+            activityModel.Images.RemoveAt(index);
+        }
+    }
+
+    private void ClearAllImages()
+    {
+        activityModel.Images.Clear();
     }
 
     private async Task SaveActivity()
     {
+        if (string.IsNullOrWhiteSpace(activityModel.ActivityTitle))
+        {
+            statusMessage = "Activity Title ထည့်သွင်းရန် လိုအပ်ပါသည်။";
+            return;
+        }
+
         isProcessing = true;
         statusMessage = "သိမ်းဆည်းနေပါသည်...";
 
         try
         {
-            // 💡 API ဘက်ကို File နဲ့ Data တစ်ပါတည်း ပို့ဖို့အတွက် MultipartFormDataContent သုံးခြင်း
             var content = new MultipartFormDataContent();
 
             content.Add(new StringContent(activityModel.ActivityTitle ?? ""), "ActivityTitle");
             content.Add(new StringContent(activityModel.Description ?? ""), "Description");
             content.Add(new StringContent(activityModel.Location ?? ""), "Location");
 
-            // Base64 မှ File သို့ ပြန်ပြောင်းပြီး ပို့ခြင်း
-            if (!string.IsNullOrEmpty(activityModel.ImageBase64))
+            if (activityModel.ActivityDate.HasValue)
             {
-                var fileBytes = Convert.FromBase64String(activityModel.ImageBase64);
-                var fileContent = new ByteArrayContent(fileBytes);
-                content.Add(fileContent, "ImageFile", activityModel.ImageFileName ?? "image.jpg");
+                content.Add(new StringContent(activityModel.ActivityDate.Value.ToString("yyyy-MM-ddTHH:mm:ss")), "ActivityDate");
             }
 
-            // HttpClientService ထဲတွင် SendAsync(HttpMethod.Post, "activity", content) ကို သုံး၍ ခေါ်ပါ
-            // အောက်ပါက မင်းဆီမှာရှိတဲ့ Service ရဲ့ ပုံစံပေါ်မူတည်ပြီး အနည်းငယ် ပြင်ပေးပါ
-            // အရင်က HttpClientService.ExecuteAsync... နေရာမှာ
-            // ဒီလိုလေး အစားထိုးလိုက်ပါ
+            // Send all images as ImageFiles
+            if (activityModel.Images != null && activityModel.Images.Any())
+            {
+                foreach (var img in activityModel.Images)
+                {
+                    if (!string.IsNullOrEmpty(img.Base64))
+                    {
+                        var fileBytes = Convert.FromBase64String(img.Base64);
+                        var fileContent = new ByteArrayContent(fileBytes);
+                        content.Add(fileContent, "ImageFiles", img.FileName);
+                    }
+                }
+            }
+
             var response = await HttpClientService.ExecuteMultipartAsync<ActivityCreateResponseModel>("activity", content);
             if (response != null && response.IsSuccess)
             {
-                //await JSRuntime.InvokeVoidAsync("alert", "Activity အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။");
                 NavigationManager.NavigateTo("/admin/activities");
             }
             else

@@ -18,62 +18,52 @@
       rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<div class="split-viewport-wrapper">
-    <div class="split-main-card @(activeTab == "register" ? "register-expanded" : "")">
+<div class="vesper-viewport">
+    <div class="vesper-card @(activeTab == "register" ? "card-expanded" : "")">
 
-        <div class="split-left-panel">
-            <div class="left-panel-overlay"></div>
-            <div class="left-panel-content">
-                <span class="welcome-text">Welcome to</span>
-                <div class="brand-emblem-sphere">
-                    <i class="fas fa-university"></i>
-                </div>
-                <h2 class="brand-title">Smart Campus</h2>
-                <p class="brand-description">
-                    A premier knowledge gateway dedicated to advancing technologies and empowering future innovations.
-                </p>
-                <div class="brand-meta-tags">
-                    <span>CREATOR MODE</span>
-                    <span>·</span>
-                    <span>DESIGNER MODE</span>
+        <!-- ── LEFT SIDE: Form & Authentication ─────────── -->
+        <div class="vesper-left-pane">
+            <!-- Brand Header -->
+            <div class="vesper-brand-header">
+                <img src="/images/pumub_logo.png" alt="PUMUB Logo" class="vesper-brand-logo" />
+                <div class="vesper-brand-text">
+                    <span class="vesper-brand-name">Polytechnic University</span>
+                    <span class="vesper-brand-sub">(Maubin)</span>
                 </div>
             </div>
-        </div>
 
-        <div class="split-right-panel">
-            <div class="right-panel-content">
-
+            <div class="vesper-form-body">
                 @if (isChangePasswordMode)
                 {
-                    <h3 class="form-main-headline">Change Password Required</h3>
-                    <p class="form-sub-headline">Please update your temporary password to secure your account.</p>
+                    <div class="vesper-heading-group">
+                        <h2 class="vesper-form-title">Password အသစ် ပြောင်းလဲရန်</h2>
+                        <p class="vesper-form-subtitle">အကောင့်လုံခြုံရေးအတွက် Password အသစ် သတ်မှတ်ပေးပါ။</p>
+                    </div>
 
-                    <div class="m3-form-engine">
-                        <div class="modern-field-container">
-                            <label class="modern-field-label">New Password</label>
-                            <div class="modern-input-capsule">
-                                <i class="fas fa-key field-icon-accent"></i>
-                                <input type="@NewPasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
-                                       placeholder="Enter new secure password" @bind="newPassword" @bind:event="oninput"
+                    <div class="vesper-form-engine">
+                        <div class="vesper-field-group">
+                            <label class="vesper-label">Password အသစ်</label>
+                            <div class="vesper-input-box">
+                                <i class="fas fa-key vesper-field-icon"></i>
+                                <input type="@NewPasswordInputType" class="vesper-native-input password-fix"
+                                       placeholder="Password အသစ် ထည့်ပါ" @bind="newPassword" @bind:event="oninput"
                                        @onkeydown="HandleChangePasswordKeyDown" />
 
-                                <button type="button" class="field-eye-toggler-btn" @onclick="ToggleNewPasswordVisibility"
-                                        tabindex="-1">
+                                <button type="button" class="vesper-eye-btn" @onclick="ToggleNewPasswordVisibility" tabindex="-1">
                                     <i class="fas @(isNewPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="modern-field-container">
-                            <label class="modern-field-label">Confirm New Password</label>
-                            <div class="modern-input-capsule">
-                                <i class="fas fa-key field-icon-accent"></i>
-                                <input type="@ConfirmPasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
-                                       placeholder="Re-enter new password to confirm" @bind="confirmPassword" @bind:event="oninput"
-                                       @onkeydown="HandleChangePasswordKeyDown" />
+                        <div class="vesper-field-group">
+                            <label class="vesper-label">Password အသစ်ကို ထပ်မံရိုက်ထည့်ပါ</label>
+                            <div class="vesper-input-box">
+                                <i class="fas fa-key vesper-field-icon"></i>
+                                <input type="@ConfirmPasswordInputType" class="vesper-native-input password-fix"
+                                       placeholder="Password အသစ်ကို ထပ်မံ အတည်ပြုပါ" @bind="confirmPassword"
+                                       @bind:event="oninput" @onkeydown="HandleChangePasswordKeyDown" />
 
-                                <button type="button" class="field-eye-toggler-btn" @onclick="ToggleConfirmPasswordVisibility"
-                                        tabindex="-1">
+                                <button type="button" class="vesper-eye-btn" @onclick="ToggleConfirmPasswordVisibility" tabindex="-1">
                                     <i class="fas @(isConfirmPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
                                 </button>
                             </div>
@@ -81,28 +71,28 @@
 
                         @if (!string.IsNullOrEmpty(errorMessage))
                         {
-                            <div class="luxury-error-banner alert-bounce">
-                                <div class="error-accent-edge"></div>
+                            <div class="vesper-alert-danger">
                                 <i class="fas fa-circle-exclamation"></i>
                                 <span>@errorMessage</span>
                             </div>
                         }
 
-                        <div class="action-button-layer" style="display: flex; gap: 12px;">
+                        <div class="vesper-btn-row" style="display: flex; gap: 12px; margin-top: 10px;">
                             @if (isChangingPassword)
                             {
-                                <button class="modern-action-btn-processing" disabled style="flex: 1;">
-                                    <div class="btn-spinner-loader"></div> Changing password...
+                                <button class="vesper-btn-primary disabled" disabled style="flex: 1;">
+                                    <div class="vesper-spinner"></div> ပြောင်းလဲနေပါသည်...
                                 </button>
                             }
                             else
                             {
-                                <button class="modern-action-btn" @onclick="HandleChangePassword" style="flex: 1;">
-                                    <span>Update Password</span>
+                                <button class="vesper-btn-primary" @onclick="HandleChangePassword" style="flex: 1;">
+                                    <span>Password ပြောင်းလဲမည်</span>
                                     <i class="fas fa-check-circle"></i>
                                 </button>
-                                <button class="modern-action-btn" @onclick="CancelChangePassword" style="flex: 1; background: #64748b !important; box-shadow: none !important;">
-                                    <span>Cancel</span>
+                                <button class="vesper-btn-primary" @onclick="CancelChangePassword"
+                                        style="flex: 1; background: #64748b !important; box-shadow: none !important;">
+                                    <span>မလုပ်တော့ပါ</span>
                                 </button>
                             }
                         </div>
@@ -110,45 +100,45 @@
                 }
                 else
                 {
-                    <!-- ── Tab switcher ─────────────────────── -->
-                    <div class="auth-tab-bar">
-                        <button class="auth-tab @(activeTab == "login" ? "active" : "")"
-                                @onclick='() => SwitchTab("login")'>
-                            <i class="fas fa-sign-in-alt"></i> Sign In
+                    <!-- Tab Switcher (Short & Crisp Labels) -->
+                    <div class="vesper-tab-bar">
+                        <button class="vesper-tab @(activeTab == "login" ? "active" : "")" @onclick='() => SwitchTab("login")'>
+                            <i class="fas fa-sign-in-alt"></i> အကောင့်ဝင်ရန်
                         </button>
-                        <button class="auth-tab @(activeTab == "register" ? "active" : "")"
-                                @onclick='() => SwitchTab("register")'>
-                            <i class="fas fa-user-plus"></i> Register Account
+                        <button class="vesper-tab @(activeTab == "register" ? "active" : "")" @onclick='() => SwitchTab("register")'>
+                            <i class="fas fa-user-plus"></i> အကောင့်သစ် လျှောက်ထားရန်
                         </button>
                     </div>
 
                     <!-- ── LOGIN FORM ─────────────────────────── -->
                     @if (activeTab == "login")
                     {
-                        <h3 class="form-main-headline">Sign In to Account</h3>
-                        <p class="form-sub-headline">Please enter your campus credentials below.</p>
+                        <div class="vesper-heading-group">
+                            <h2 class="vesper-form-title">အကောင့်ဝင်ရန်</h2>
+                            <p class="vesper-form-subtitle">ကျောင်းသုံး အကောင့်ဖြင့် စနစ်သို့ ဝင်ရောက်ပါ။</p>
+                        </div>
 
-                        <div class="m3-form-engine">
-                            <div class="modern-field-container">
-                                <label class="modern-field-label">Username Identity</label>
-                                <div class="modern-input-capsule">
-                                    <i class="fas fa-user-shield field-icon-accent"></i>
-                                    <input type="text" class="bootstrap-destroyer-input"
-                                           placeholder="Enter your account username" @bind="username" @bind:event="oninput"
-                                           @onkeydown="HandleKeyDown" />
+                        <div class="vesper-form-engine">
+                            <!-- Username -->
+                            <div class="vesper-field-group">
+                                <label class="vesper-label">အသုံးပြုသူအမည် (Username)</label>
+                                <div class="vesper-input-box">
+                                    <i class="fas fa-user-shield vesper-field-icon"></i>
+                                    <input type="text" class="vesper-native-input" placeholder="Username ထည့်ပါ"
+                                           @bind="username" @bind:event="oninput" @onkeydown="HandleKeyDown" />
                                 </div>
                             </div>
 
-                            <div class="modern-field-container">
-                                <label class="modern-field-label">Security Credentials</label>
-                                <div class="modern-input-capsule">
-                                    <i class="fas fa-key field-icon-accent"></i>
-                                    <input type="@PasswordInputType" class="bootstrap-destroyer-input password-padding-fix"
-                                           placeholder="Enter secure password" @bind="password" @bind:event="oninput"
+                            <!-- Password -->
+                            <div class="vesper-field-group">
+                                <label class="vesper-label">လျှို့ဝှက်နံပါတ် (Password)</label>
+                                <div class="vesper-input-box">
+                                    <i class="fas fa-key vesper-field-icon"></i>
+                                    <input type="@PasswordInputType" class="vesper-native-input password-fix"
+                                           placeholder="Password ထည့်ပါ" @bind="password" @bind:event="oninput"
                                            @onkeydown="HandleKeyDown" />
 
-                                    <button type="button" class="field-eye-toggler-btn" @onclick="TogglePasswordVisibility"
-                                            tabindex="-1">
+                                    <button type="button" class="vesper-eye-btn" @onclick="TogglePasswordVisibility" tabindex="-1">
                                         <i class="fas @(isPasswordRenderedText ? "fa-eye-slash" : "fa-eye")"></i>
                                     </button>
                                 </div>
@@ -156,33 +146,33 @@
 
                             @if (!string.IsNullOrEmpty(successMessage))
                             {
-                                <div class="luxury-error-banner alert-bounce" style="background: #ecfdf5 !important; border-color: #10b981 !important; color: #065f46 !important;">
-                                    <div class="error-accent-edge" style="background: #10b981 !important;"></div>
-                                    <i class="fas fa-check-circle" style="color: #10b981 !important;"></i>
+                                <div class="vesper-alert-success">
+                                    <i class="fas fa-check-circle"></i>
                                     <span>@successMessage</span>
                                 </div>
                             }
 
                             @if (!string.IsNullOrEmpty(errorMessage))
                             {
-                                <div class="luxury-error-banner alert-bounce">
-                                    <div class="error-accent-edge"></div>
+                                <div class="vesper-alert-danger">
                                     <i class="fas fa-circle-exclamation"></i>
                                     <span>@errorMessage</span>
                                 </div>
                             }
-                            <div class="action-button-layer">
+
+                            <!-- Submit Button -->
+                            <div class="vesper-btn-row">
                                 @if (isLoggingIn)
                                 {
-                                    <button class="modern-action-btn-processing" disabled>
-                                        <div class="btn-spinner-loader"></div> Authenticating user session...
+                                    <button class="vesper-btn-primary disabled" disabled>
+                                        <div class="vesper-spinner"></div> ဝင်ရောက်နေပါသည်...
                                     </button>
                                 }
                                 else
                                 {
-                                    <button class="modern-action-btn" @onclick="HandleLogin">
-                                        <span>Sign In Portal</span>
-                                        <i class="fas fa-arrow-right-long arrow-slide-motion"></i>
+                                    <button class="vesper-btn-primary" @onclick="HandleLogin">
+                                        <span>စနစ်သို့ ဝင်ရောက်မည်</span>
+                                        <i class="fas fa-arrow-right-long"></i>
                                     </button>
                                 }
                             </div>
@@ -194,81 +184,86 @@
                     {
                         @if (!registerSubmitted)
                         {
-                            <h3 class="form-main-headline">Request Account</h3>
-                            <p class="form-sub-headline">Semester I ကျောင်းသားများ Account Request တင်ပြပေးပါ။ Admin မှ စစ်ဆေးပြီး Email ဖြင့် အကြောင်းကြားမည်။</p>
+                            <div class="vesper-heading-group">
+                                <h2 class="vesper-form-title">အကောင့်သစ် လျှောက်ထားခြင်း</h2>
+                                <p class="vesper-form-subtitle">Semester I ကျောင်းသား/သူများ လျှောက်ထားနိုင်ပါသည်။ အတည်ပြုပြီးပါက Email ပို့ပေးပါမည်။</p>
+                            </div>
 
-                            <div class="m3-form-engine">
+                            <div class="vesper-form-engine">
                                 <!-- Full Name -->
-                                <div class="modern-field-container">
-                                    <label class="modern-field-label">Full Name <span style="color:#ef4444">*</span></label>
-                                    <div class="modern-input-capsule">
-                                        <i class="fas fa-user field-icon-accent"></i>
-                                        <input type="text" class="bootstrap-destroyer-input"
-                                               placeholder="Enter your full name" @bind="reg_FullName" @bind:event="oninput" />
+                                <div class="vesper-field-group">
+                                    <label class="vesper-label">အမည် (Full Name) <span class="text-req">*</span></label>
+                                    <div class="vesper-input-box">
+                                        <i class="fas fa-user vesper-field-icon"></i>
+                                        <input type="text" class="vesper-native-input" placeholder="အမည် အပြည့်အစုံ ရိုက်ထည့်ပါ"
+                                               @bind="reg_FullName" @bind:event="oninput" />
                                     </div>
                                 </div>
 
                                 <!-- Email -->
-                                <div class="modern-field-container">
-                                    <label class="modern-field-label">Email Address <span style="color:#ef4444">*</span></label>
-                                    <div class="modern-input-capsule">
-                                        <i class="fas fa-envelope field-icon-accent"></i>
-                                        <input type="email" class="bootstrap-destroyer-input"
-                                               placeholder="Enter your email address" @bind="reg_Email" @bind:event="oninput" />
+                                <div class="vesper-field-group">
+                                    <label class="vesper-label">အီးမေးလ် (Email) <span class="text-req">*</span></label>
+                                    <div class="vesper-input-box">
+                                        <i class="fas fa-envelope vesper-field-icon"></i>
+                                        <input type="email" class="vesper-native-input" placeholder="သင်၏ အီးမေးလ်လိပ်စာ ထည့်ပါ"
+                                               @bind="reg_Email" @bind:event="oninput" />
                                     </div>
                                 </div>
 
                                 <!-- Phone -->
-                                <div class="modern-field-container">
-                                    <label class="modern-field-label">Phone Number</label>
-                                    <div class="modern-input-capsule">
-                                        <i class="fas fa-phone field-icon-accent"></i>
-                                        <input type="text" class="bootstrap-destroyer-input"
-                                               placeholder="e.g. 09xxxxxxxxx" @bind="reg_Phone" @bind:event="oninput" />
+                                <div class="vesper-field-group">
+                                    <label class="vesper-label">ဖုန်းနံပါတ် (Phone) <span class="text-req">*</span></label>
+                                    <div class="vesper-input-box">
+                                        <i class="fas fa-phone vesper-field-icon"></i>
+                                        <input type="text" class="vesper-native-input" placeholder="ဥပမာ - 09xxxxxxxxx"
+                                               @bind="reg_Phone" @bind:event="oninput" maxlength="11" />
                                     </div>
                                 </div>
 
-                                <!-- Form No & Exam Seat No — side by side -->
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-                                    <div class="modern-field-container">
-                                        <label class="modern-field-label">Form No <span style="color:#ef4444">*</span></label>
-                                        <div class="modern-input-capsule">
-                                            <i class="fas fa-file-alt field-icon-accent"></i>
-                                            <input type="text" class="bootstrap-destroyer-input"
-                                                   placeholder="တက္ကသိုလ်ဝင် Form No" @bind="reg_FormNo" @bind:event="oninput" />
+                                <!-- Form No & Exam Seat No Side by Side -->
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items: end;">
+                                    <div class="vesper-field-group">
+                                        <label class="vesper-label" style="min-height: 20px; display:flex; align-items:center;">
+                                            Form No (ဝင်ခွင့်) <span class="text-req">*</span>
+                                        </label>
+                                        <div class="vesper-input-box">
+                                            <i class="fas fa-file-alt vesper-field-icon"></i>
+                                            <input type="text" class="vesper-native-input" placeholder="ဥပမာ - ၁၂၃၄"
+                                                   @bind="reg_FormNo" @bind:event="oninput" />
                                         </div>
                                     </div>
-                                    <div class="modern-field-container">
-                                        <label class="modern-field-label">Exam Seat No <span style="color:#ef4444">*</span></label>
-                                        <div class="modern-input-capsule">
-                                            <i class="fas fa-id-card field-icon-accent"></i>
-                                            <input type="text" class="bootstrap-destroyer-input"
-                                                   placeholder="ဝင်ခုံနံပါတ်" @bind="reg_ExamSeatNo" @bind:event="oninput" />
+                                    <div class="vesper-field-group">
+                                        <label class="vesper-label" style="min-height: 20px; display:flex; align-items:center;">
+                                            ခုံနံပါတ် (Exam Seat No) <span class="text-req">*</span>
+                                        </label>
+                                        <div class="vesper-input-box">
+                                            <i class="fas fa-id-card vesper-field-icon"></i>
+                                            <input type="text" class="vesper-native-input" placeholder="ဥပမာ - မအူ-၁၂၃"
+                                                   @bind="reg_ExamSeatNo" @bind:event="oninput" />
                                         </div>
                                     </div>
                                 </div>
 
                                 @if (!string.IsNullOrEmpty(registerError))
                                 {
-                                    <div class="luxury-error-banner alert-bounce">
-                                        <div class="error-accent-edge"></div>
+                                    <div class="vesper-alert-danger">
                                         <i class="fas fa-circle-exclamation"></i>
                                         <span>@registerError</span>
                                     </div>
                                 }
 
-                                <div class="action-button-layer">
+                                <div class="vesper-btn-row">
                                     @if (isRegistering)
                                     {
-                                        <button class="modern-action-btn-processing" disabled>
-                                            <div class="btn-spinner-loader"></div> Submitting request...
+                                        <button class="vesper-btn-primary disabled" disabled>
+                                            <div class="vesper-spinner"></div> တင်ပြနေပါသည်...
                                         </button>
                                     }
                                     else
                                     {
-                                        <button class="modern-action-btn" @onclick="HandleRegister">
-                                            <span>Submit Request</span>
-                                            <i class="fas fa-paper-plane arrow-slide-motion"></i>
+                                        <button class="vesper-btn-primary" @onclick="HandleRegister">
+                                            <span>အကောင့် လျှောက်ထားမည်</span>
+                                            <i class="fas fa-paper-plane"></i>
                                         </button>
                                     }
                                 </div>
@@ -276,28 +271,58 @@
                         }
                         else
                         {
-                            <!-- Success state after submission -->
-                            <div class="register-success-state">
-                                <div class="success-icon-ring">
+                            <!-- Register Success Confirmation -->
+                            <div class="vesper-success-box">
+                                <div class="vesper-success-icon-ring">
                                     <i class="fas fa-check"></i>
                                 </div>
-                                <h3 class="form-main-headline" style="text-align:center; color:#10b981 !important;">Request Submitted!</h3>
-                                <p class="form-sub-headline" style="text-align:center;">
-                                    Account Request တင်ပြမှု အောင်မြင်ပါသည်။<br />
-                                    Admin မှ စစ်ဆေးပြီးနောက် <strong style="color:#2563eb;">@reg_Email</strong> သို့ Email ဖြင့် အကြောင်းကြားပါမည်။
+                                <h3 class="vesper-form-title" style="color:#10b981 !important; text-align:center;">Request တင်ပြမှု အောင်မြင်ပါသည်</h3>
+                                <p class="vesper-form-subtitle" style="text-align:center;">
+                                    ကျောင်းသားအချက်အလက်များကို Admin မှ စစ်ဆေးအတည်ပြုပြီးနောက် <strong style="color:#1d4ed8;">@reg_Email</strong> သို့ Username နှင့် Password ကို အီးမေးလ်ဖြင့် အကြောင်းကြားပေးပါမည်။
                                 </p>
-                                <button class="modern-action-btn" @onclick='() => SwitchTab("login")' style="margin-top:8px;">
-                                    <span>Back to Sign In</span>
+                                <button class="vesper-btn-primary" @onclick='() => SwitchTab("login")' style="margin-top:12px;">
+                                    <span>အကောင့်ဝင်သည့် စာမျက်နှာသို့ သွားမည်</span>
                                     <i class="fas fa-sign-in-alt"></i>
                                 </button>
                             </div>
                         }
                     }
                 }
+            </div>
 
-                <div class="split-right-footer">
-                    <p>&copy; @DateTime.Now.Year PUMUB Subsystem. All Rights Reserved.</p>
+            <!-- Footer -->
+            <div class="vesper-footer">
+                <p>&copy; @DateTime.Now.Year Polytechnic University (Maubin) · AURA System</p>
+            </div>
+        </div>
+
+        <!-- ── RIGHT SIDE: Campus Photograph & University Brand Showcase ── -->
+        <div class="vesper-right-pane">
+            <!-- Top Branding Area -->
+            <div class="vesper-right-top">
+                <div class="d-flex flex-column align-items-center text-center">
+                    <h3 class="vesper-right-univ-title">Polytechnic University</h3>
+                    <span class="vesper-right-univ-sub">(Maubin)</span>
+                    <div class="vesper-right-logo-wrap" style="margin-bottom: 8px;">
+                        <img src="/puu.png" alt="PUMUB Logo" class="vesper-right-logo" />
+                    </div>
                 </div>
+            </div>
+
+            <!-- Central Campus Photo -->
+            <div class="vesper-photo-frame">
+                <img src="/pumub_building_hero.jpg?v=20260824_07" alt="Polytechnic University (Maubin) Main Building" class="vesper-hero-photo-full" />
+            </div>
+
+            <!-- Bottom Inspiring Sentences Area -->
+            <div class="vesper-right-bottom" style="margin-top:20px">
+                <div class="vesper-quote-pill">
+                    <i class="fas fa-graduation-cap me-2" style="color: #fbbf24; font-size: 1.05rem;"></i>
+                    <span>Shaping Future Engineers & Technological Leaders</span>
+                </div>
+                <p class="vesper-right-desc">
+                    ပညာရည်ပြည့်ဝပြီး နည်းပညာထူးချွန်သော အင်ဂျင်နီယာနှင့် IT ပညာရှင်များ မွေးထုတ်ပေးရာ Polytechnic University (Maubin)
+                </p>
             </div>
         </div>
 
@@ -305,137 +330,107 @@
 </div>
 
 <style>
-    .split-viewport-wrapper {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    /* ─── Overall Viewport ──────────────────────────────── */
+    .vesper-viewport {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        background: #edf2f7 !important;
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 40px 24px;
+        padding: 32px 20px;
+        position: relative;
     }
 
-    /* ─── Main Card ─────────────────────────────── */
-    .split-main-card {
+    /* ─── Main White Floating Card (Spacious Dimensions) ──── */
+    .vesper-card {
         width: 100%;
-        max-width: 960px;
-        min-height: 560px;
+        max-width: 1220px;
+        min-height: 600px;
         background: #ffffff !important;
         border-radius: 28px !important;
-        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
         display: flex;
+        padding: 26px;
+        gap: 30px;
+        transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
         overflow: hidden;
-        transition: max-width 0.35s ease;
     }
 
-    .split-main-card.register-expanded {
-        max-width: 1040px;
+    .vesper-card.card-expanded {
+        max-width: 1280px;
+        min-height: 660px;
     }
 
-    /* ─── Left Blue Panel ───────────────────────── */
-    .split-left-panel {
-        flex: 1.1;
-        background: url('/images/university-bg.jpg') no-repeat center center/cover;
-        background-color: #1e40af;
-        position: relative;
-        display: flex;
-        align-items: center;
-        padding: 48px;
-    }
-
-    .left-panel-overlay {
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: linear-gradient(135deg, rgba(29, 78, 216, 0.95), rgba(3, 105, 161, 0.9));
-        z-index: 1;
-    }
-
-    .left-panel-content {
-        position: relative;
-        z-index: 2;
-        color: #ffffff !important;
+    /* ─── Left Pane (Form) with Generous Breathing Room ─── */
+    .vesper-left-pane {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        justify-content: space-between;
+        padding: 20px 24px 12px 18px;
+        min-width: 0;
     }
 
-    .welcome-text {
-        font-size: 1.1rem;
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.8);
-        letter-spacing: 0.02em;
-    }
-
-    .brand-emblem-sphere {
-        width: 64px; height: 64px;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 20px;
+    /* Brand Header */
+    .vesper-brand-header {
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 1.6rem;
+        gap: 14px;
+        margin-bottom: 20px;
     }
 
-    .brand-title {
-        font-size: 2.2rem;
+    .vesper-brand-logo {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+    }
+
+    .vesper-brand-text {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+
+    .vesper-brand-name {
+        font-size: 1.18rem;
         font-weight: 800;
-        letter-spacing: -0.02em;
-        margin: 0;
+        color: #0f172a;
+        letter-spacing: -0.015em;
     }
 
-    .brand-description {
-        font-size: 0.92rem;
-        color: rgba(255, 255, 255, 0.75);
-        line-height: 1.6;
-        margin: 0;
-        max-width: 360px;
-    }
-
-    .brand-meta-tags {
-        display: flex;
-        gap: 10px;
-        font-size: 0.7rem;
+    .vesper-brand-sub {
+        font-size: 1.02rem;
         font-weight: 700;
-        color: rgba(255, 255, 255, 0.4);
-        letter-spacing: 0.08em;
-        margin-top: 24px;
+        color: #2563eb;
     }
 
-    /* ─── Right Panel ───────────────────────────── */
-    .split-right-panel {
-        flex: 1;
-        background: #ffffff !important;
-        display: flex;
-        align-items: center;
-        padding: 40px 48px;
-        overflow-y: auto;
-    }
-
-    .right-panel-content {
-        width: 100%;
+    .vesper-form-body {
         display: flex;
         flex-direction: column;
         gap: 20px;
+        flex: 1;
+        justify-content: center;
     }
 
-    /* ─── Auth Tab Bar ──────────────────────────── */
-    .auth-tab-bar {
+    /* Tab Switcher */
+    .vesper-tab-bar {
         display: flex;
-        gap: 4px;
+        gap: 6px;
         background: #f1f5f9;
+        border: 1px solid #e2e8f0;
         border-radius: 14px;
         padding: 5px;
+        margin-bottom: 12px;
     }
 
-    .auth-tab {
+    .vesper-tab {
         flex: 1;
-        padding: 9px 16px;
+        padding: 10px 16px;
         border: none;
         border-radius: 10px;
-        font-size: 0.85rem;
+        font-size: 0.88rem;
         font-weight: 600;
         color: #64748b;
         background: transparent;
@@ -444,90 +439,99 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 8px;
+        white-space: nowrap;
     }
 
-    .auth-tab.active {
+    .vesper-tab.active {
         background: #ffffff;
         color: #1d4ed8;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        font-weight: 700;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
     }
 
-    .auth-tab:hover:not(.active) {
-        color: #475569;
-        background: rgba(255,255,255,0.6);
+    /* Headings with Extra Spacing */
+    .vesper-heading-group {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-bottom: 14px;
     }
 
-    /* ─── Form Headline ─────────────────────────── */
-    .form-main-headline {
-        font-size: 1.5rem;
+    .vesper-form-title {
+        font-size: 1.55rem;
         font-weight: 800;
-        color: #0f172a !important;
+        color: #0f172a;
         margin: 0;
-        letter-spacing: -0.01em;
+        letter-spacing: -0.02em;
     }
 
-    .form-sub-headline {
-        font-size: 0.87rem;
-        color: #64748b !important;
+    .vesper-form-subtitle {
+        font-size: 0.86rem;
+        color: #64748b;
         margin: 0;
         line-height: 1.55;
     }
 
-    .m3-form-engine {
+    /* Inputs Engine */
+    .vesper-form-engine {
         display: flex;
         flex-direction: column;
         gap: 18px;
     }
 
-    .modern-field-container {
+    .vesper-field-group {
         display: flex;
         flex-direction: column;
         gap: 7px;
     }
 
-    .modern-field-label {
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #475569 !important;
+    .vesper-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #1e293b;
         padding-left: 2px;
     }
 
-    .modern-input-capsule {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 50px !important;
-        padding: 0 20px !important;
+    .text-req {
+        color: #ef4444;
+        margin-left: 2px;
+    }
+
+    .vesper-input-box {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 13px !important;
+        padding: 0 16px !important;
         display: flex !important;
         align-items: center !important;
         position: relative !important;
         width: 100% !important;
-        height: 50px !important;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+        height: 48px !important;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
         transition: all 0.2s ease;
     }
 
-    .modern-input-capsule:focus-within {
+    .vesper-input-box:focus-within {
         border-color: #2563eb !important;
         background: #ffffff !important;
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02), 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.12) !important;
     }
 
-    .field-icon-accent {
-        font-size: 0.95rem;
+    .vesper-field-icon {
+        font-size: 0.92rem;
         color: #94a3b8 !important;
         margin-right: 12px !important;
+        transition: color 0.2s ease;
     }
 
-    .modern-input-capsule:focus-within .field-icon-accent {
+    .vesper-input-box:focus-within .vesper-field-icon {
         color: #2563eb !important;
     }
 
-    .modern-input-capsule input,
-    .modern-input-capsule input[type="text"],
-    .modern-input-capsule input[type="password"],
-    .modern-input-capsule input[type="email"],
-    .bootstrap-destroyer-input {
+    .vesper-native-input {
         flex: 1 !important;
         width: 100% !important;
         height: 100% !important;
@@ -535,192 +539,315 @@
         background-color: transparent !important;
         border: none !important;
         color: #0f172a !important;
-        font-size: 0.92rem !important;
-        font-weight: 550 !important;
+        font-size: 0.94rem !important;
+        font-weight: 600 !important;
         outline: none !important;
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
     }
 
-    .bootstrap-destroyer-input::placeholder {
+    .vesper-native-input::placeholder {
         color: #94a3b8 !important;
         font-weight: 400;
     }
 
-    .password-padding-fix {
-        padding-right: 30px !important;
+    .password-fix {
+        padding-right: 32px !important;
     }
 
-    .field-eye-toggler-btn {
+    .vesper-eye-btn {
         position: absolute !important;
-        right: 20px !important;
+        right: 14px !important;
         top: 50% !important;
         transform: translateY(-50%) !important;
         background: transparent !important;
         border: none !important;
         color: #94a3b8 !important;
         cursor: pointer !important;
-        padding: 0 !important;
-        font-size: 0.95rem !important;
+        padding: 4px !important;
+        font-size: 0.92rem !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         z-index: 5 !important;
     }
 
-    .field-eye-toggler-btn:hover {
-        color: #475569 !important;
+    .vesper-eye-btn:hover {
+        color: #1e293b !important;
     }
 
-    /* ─── Action Button ─────────────────────────── */
-    .modern-action-btn {
+    /* ─── Browser Autofill Fix (Force Pure Crisp White) ───── */
+    .vesper-native-input:-webkit-autofill,
+    .vesper-native-input:-webkit-autofill:hover,
+    .vesper-native-input:-webkit-autofill:focus,
+    .vesper-native-input:-webkit-autofill:active,
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+        -webkit-text-fill-color: #0f172a !important;
+        background-color: #ffffff !important;
+        background-clip: content-box !important;
+        transition: background-color 5000s ease-in-out 0s !important;
+    }
+
+    /* Buttons */
+    .vesper-btn-row {
+        margin-top: 10px;
+    }
+
+    .vesper-btn-primary {
         width: 100% !important;
-        height: 50px !important;
-        background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+        height: 48px !important;
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: none !important;
-        border-radius: 50px !important;
-        font-size: 0.95rem !important;
+        border-radius: 13px !important;
+        font-size: 0.96rem !important;
         font-weight: 700 !important;
         cursor: pointer !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         gap: 8px !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25) !important;
+        box-shadow: 0 4px 16px rgba(29, 78, 216, 0.28) !important;
         transition: all 0.2s ease;
     }
 
-    .modern-action-btn:hover {
-        background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
-        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35) !important;
-        transform: translateY(-1px) !important;
+    .vesper-btn-primary:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%) !important;
+        box-shadow: 0 6px 20px rgba(29, 78, 216, 0.4) !important;
+        transform: translateY(-1px);
     }
 
-    .arrow-slide-motion {
-        transition: transform 0.2s ease;
-        font-size: 0.85rem;
-    }
-
-    .modern-action-btn:hover .arrow-slide-motion {
-        transform: translateX(4px);
-    }
-
-    .modern-action-btn-processing {
-        width: 100% !important;
-        height: 50px !important;
+    .vesper-btn-primary.disabled {
         background: #e2e8f0 !important;
         color: #94a3b8 !important;
-        border: none !important;
-        border-radius: 50px !important;
-        font-weight: 600 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 10px !important;
         cursor: not-allowed !important;
+        box-shadow: none !important;
+        transform: none !important;
     }
 
-    /* ─── Error Banner ──────────────────────────── */
-    .luxury-error-banner {
+    /* Alerts */
+    .vesper-alert-danger {
         background: #fef2f2 !important;
-        border: 1px solid #fca5a5 !important;
-        color: #991b1b !important;
-        padding: 12px 16px !important;
+        border: 1px solid #fecaca !important;
+        color: #b91c1c !important;
+        padding: 10px 14px !important;
         border-radius: 12px !important;
-        font-size: 0.85rem !important;
+        font-size: 0.84rem !important;
         display: flex !important;
         align-items: center !important;
         gap: 10px !important;
-        font-weight: 500 !important;
-        position: relative !important;
-        overflow: hidden !important;
+        font-weight: 600 !important;
     }
 
-    .error-accent-edge {
-        position: absolute;
-        left: 0; top: 0; bottom: 0;
-        width: 4px;
-        background: #ef4444 !important;
+    .vesper-alert-success {
+        background: #ecfdf5 !important;
+        border: 1px solid #a7f3d0 !important;
+        color: #047857 !important;
+        padding: 10px 14px !important;
+        border-radius: 12px !important;
+        font-size: 0.84rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        font-weight: 600 !important;
     }
 
-    /* ─── Register Success State ────────────────── */
-    .register-success-state {
+    /* Success State */
+    .vesper-success-box {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 16px;
-        text-align: center;
+        gap: 14px;
         padding: 20px 0;
     }
 
-    .success-icon-ring {
-        width: 72px; height: 72px;
-        background: linear-gradient(135deg, #10b981, #059669);
+    .vesper-success-icon-ring {
+        width: 68px;
+        height: 68px;
+        background: #10b981;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 1.8rem;
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
-        animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        font-size: 1.6rem;
+        box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
     }
 
-    @@keyframes popIn {
-        from { transform: scale(0.5); opacity: 0; }
-        to   { transform: scale(1);   opacity: 1; }
-    }
-
-    /* ─── Footer ────────────────────────────────── */
-    .split-right-footer {
+    /* Footer */
+    .vesper-footer {
+        margin-top: 20px;
+        font-size: 0.76rem;
+        color: #94a3b8;
         text-align: center;
-        font-size: 0.72rem;
-        color: #94a3b8 !important;
-        font-weight: 600;
-        margin-top: 8px;
+        font-weight: 500;
     }
 
-    /* ─── Responsive ────────────────────────────── */
-    @@media (max-width: 768px) {
-        .split-main-card {
-            flex-direction: column !important;
-            min-height: auto !important;
-            border-radius: 20px !important;
-        }
-
-        .split-left-panel {
-            padding: 36px 24px !important;
-            text-align: center !important;
-        }
-
-        .left-panel-content { align-items: center !important; }
-        .brand-description  { max-width: 100% !important; }
-        .split-right-panel  { padding: 32px 20px !important; }
-        .brand-meta-tags    { display: none !important; }
+    /* ─── RIGHT SIDE: Pure Full Photo Showcase (Brand Header, Dynamic Photo & Inspiring Footer) ───── */
+    .vesper-right-pane {
+        flex: 1.3;
+        border-radius: 24px !important;
+        position: relative;
+        overflow: hidden;
+        padding: 24px 24px 22px 24px !important;
+        background: linear-gradient(145deg, #3469e6 0%, #3469e6 50%, #3469e6 100%) !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2px;
+        min-height: 560px;
+        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
     }
 
-    /* ─── Animations ────────────────────────────── */
-    .alert-bounce {
-        animation: miniBounce 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Top Brand */
+    .vesper-right-top {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0 2px 0;
     }
 
-    @@keyframes miniBounce {
-        0%   { transform: scale(0.97); opacity: 0; }
-        100% { transform: scale(1);    opacity: 1; }
+    .vesper-right-univ-title {
+        font-size: 1.82rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     }
 
-    .btn-spinner-loader {
-        width: 16px; height: 16px;
-        border: 2px solid rgba(0, 0, 0, 0.1);
-        border-top-color: #94a3b8;
+    .vesper-right-univ-sub {
+        font-size: 1.28rem;
+        font-weight: 700;
+        color: #fbbf24; /* Golden Yellow Color */
+        letter-spacing: 0.5px;
+        margin-top: 2px;
+        margin-bottom: 2px;
+        text-shadow: 0 2px 8px rgba(251, 191, 36, 0.35);
+    }
+
+    .vesper-right-logo-wrap {
+        margin-top: 4px;
+        display: inline-flex;
+        padding: 3px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1.5px solid rgba(255, 255, 255, 0.22);
         border-radius: 50%;
-        animation: m3Spin 0.7s linear infinite;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
-    @@keyframes m3Spin {
-        to { transform: rotate(360deg); }
+    .vesper-right-logo {
+        width: 62px;
+        height: 62px;
+        border-radius: 50%;
+        background: #ffffff;
+        padding: 3px;
+        display: block;
+    }
+
+    /* Center Photo Frame - Dynamically fills and stretches without extra space */
+    .vesper-photo-frame {
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        margin: 2px 0;
+    }
+
+    .vesper-hero-photo-full {
+        width: 100%;
+        height: 100% !important;
+        min-height: 270px;
+        object-fit: cover !important;
+        object-position: center 60% !important;
+        display: block;
+        border-radius: 18px;
+        filter: none !important;
+        box-shadow: 0 14px 35px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .card-expanded .vesper-hero-photo-full {
+        min-height: 385px !important;
+    }
+
+    .vesper-card:hover .vesper-hero-photo-full {
+        transform: scale(1.015);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Bottom Sentences */
+    .vesper-right-bottom {
+        width: 100%;
+        text-align: center;
+        margin: 2px 0 0 0;
+        padding: 0 10px;
+    }
+
+    .vesper-quote-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin-bottom: 6px;
+        letter-spacing: 0.2px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .vesper-right-desc {
+        font-size: 0.88rem;
+        color: #e2e8f0;
+        margin: 0 auto;
+        line-height: 1.6;
+        max-width: 460px;
+        font-weight: 500;
+    }
+
+    /* Spinner */
+    .vesper-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: vSpin 0.7s linear infinite;
+    }
+
+    @@keyframes vSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ─── Responsive ────────────────────────────────────── */
+    @@media (max-width: 860px) {
+        .vesper-card {
+            flex-direction: column !important;
+            padding: 18px;
+        }
+
+        .vesper-left-pane {
+            padding: 12px 6px;
+        }
+
+        .vesper-right-pane {
+            min-height: 280px;
+            max-height: 340px;
+            width: 100%;
+        }
     }
 </style>
 
@@ -760,7 +887,7 @@
     private string NewPasswordInputType => isNewPasswordRenderedText ? "text" : "password";
     private string ConfirmPasswordInputType => isConfirmPasswordRenderedText ? "text" : "password";
 
-    private void TogglePasswordVisibility()    => isPasswordRenderedText = !isPasswordRenderedText;
+    private void TogglePasswordVisibility() => isPasswordRenderedText = !isPasswordRenderedText;
     private void ToggleNewPasswordVisibility() => isNewPasswordRenderedText = !isNewPasswordRenderedText;
     private void ToggleConfirmPasswordVisibility() => isConfirmPasswordRenderedText = !isConfirmPasswordRenderedText;
 
@@ -880,11 +1007,11 @@
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "islogined", "true");
                 await JS.InvokeVoidAsync("sessionStorage.setItem", "rolename", response.Role);
 
-                string roleName = response.Role.ToLower();
-                if (roleName.Contains("admin") || roleName.Contains("tutor") || roleName.Contains("super"))
-                    NavigationManager.NavigateTo("/admin/dashboard");
+                string roleName = (response.Role ?? "").ToLower().Trim();
+                if (roleName.Contains("admin") || roleName.Contains("super") || roleName.Contains("tutor") || roleName == "staff")
+                    NavigationManager.NavigateTo("/admin/dashboard", forceLoad: true);
                 else
-                    NavigationManager.NavigateTo("/");
+                    NavigationManager.NavigateTo("/", forceLoad: true);
             }
             else
             {
@@ -908,16 +1035,78 @@
         public string? Message { get; set; }
     }
 
+    private static readonly System.Text.RegularExpressions.Regex NonMyanmarCharRegex =
+        new System.Text.RegularExpressions.Regex(@"[^\u1000-\u1049\u104E\u103F\-\/\s]",
+System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    public static string FilterMyanmarOnly(string? input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        return NonMyanmarCharRegex.Replace(input, "");
+    }
+
+    private static bool ContainsMyanmarLetterOrDigit(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        return input.Any(c => (c >= '\u1000' && c <= '\u1049') || c == '\u104E' || c == '\u103F');
+    }
+
+    private void OnPhoneInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        reg_Phone = System.Text.RegularExpressions.Regex.Replace(raw, @"[^0-9]", "");
+        registerError = "";
+    }
+
+    private void OnFormNoInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        reg_FormNo = FilterMyanmarOnly(raw);
+        registerError = "";
+    }
+
+    private void OnExamSeatNoInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        reg_ExamSeatNo = FilterMyanmarOnly(raw);
+        registerError = "";
+    }
+
     private async Task HandleRegister()
     {
         if (isRegistering) return;
         registerError = "";
 
-        if (string.IsNullOrWhiteSpace(reg_FullName))       { registerError = "Full Name ထည့်ပေးပါ။"; return; }
-        if (string.IsNullOrWhiteSpace(reg_Email))           { registerError = "Email ထည့်ပေးပါ။"; return; }
-        if (!reg_Email.Contains("@"))                       { registerError = "မှန်ကန်သော Email ထည့်ပေးပါ။"; return; }
-        if (string.IsNullOrWhiteSpace(reg_FormNo))          { registerError = "Form No ထည့်ပေးပါ။"; return; }
-        if (string.IsNullOrWhiteSpace(reg_ExamSeatNo))      { registerError = "Exam Seat No ထည့်ပေးပါ။"; return; }
+        if (string.IsNullOrWhiteSpace(reg_FullName)) { registerError = "Full Name ထည့်ပေးပါ။"; return; }
+        if (string.IsNullOrWhiteSpace(reg_Email)) { registerError = "Email ထည့်ပေးပါ။"; return; }
+        if (!reg_Email.Contains("@")) { registerError = "မှန်ကန်သော Email ထည့်ပေးပါ။"; return; }
+        if (string.IsNullOrWhiteSpace(reg_Phone)) { registerError = "Phone Number (ဖုန်းနံပါတ်) ထည့်ပေးပါ။"; return; }
+
+        var trimmedPhone = reg_Phone.Trim();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(trimmedPhone, @"^09[2-9]\d{6,8}$"))
+        {
+            registerError = "မှန်ကန်သော မြန်မာနိုင်ငံ မိုဘိုင်းဖုန်းနံပါတ် (၀၉xxxxxxxxx) ကို ထည့်သွင်းပေးပါ (ဂဏန်း ၉ လုံးမှ ၁၁ လုံး)။";
+            return;
+        }
+
+        // Check repeated dummy digits like 09111111111, 09999999999, etc.
+        if (trimmedPhone.Length > 2 && trimmedPhone.Substring(2).Distinct().Count() <= 1)
+        {
+            registerError = "တရားမဝင်သော သို့မဟုတ် ထပ်ခါတလဲလဲ ဂဏန်းများဖြင့် ဖွဲ့စည်းထားသော ဖုန်းနံပါတ် ဖြစ်နေပါသည်။";
+            return;
+        }
+
+        string[] dummySequences = { "09123456789", "09987654321", "09012345678", "0912345678", "0987654321" };
+        if (dummySequences.Contains(trimmedPhone))
+        {
+            registerError = "စမ်းသပ်ဂဏန်းအစဉ်လိုက် ဖုန်းနံပါတ်များကို ထည့်သွင်းခွင့်မပြုပါ။";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(reg_FormNo)) { registerError = "Form No (တက္ကသိုလ်ဝင်ခွင့်နံပါတ်) ထည့်ပေးပါ။"; return; }
+        if (!ContainsMyanmarLetterOrDigit(reg_FormNo)) { registerError = "Form No တွင် မြန်မာအက္ခရာနှင့် မြန်မာဂဏန်းများသာ ထည့်သွင်းပေးပါ (ဥပမာ - ၁၂၃၄ သို့မဟုတ် မအူ-၁၂)။"; return; }
+        if (string.IsNullOrWhiteSpace(reg_ExamSeatNo)) { registerError = "Exam Seat No (ဆယ်တန်းခုံနံပါတ်) ထည့်ပေးပါ။"; return; }
+        if (!ContainsMyanmarLetterOrDigit(reg_ExamSeatNo)) { registerError = "ဆယ်တန်းခုံနံပါတ် တွင် မြန်မာအက္ခရာနှင့် မြန်မာဂဏန်းများသာ ထည့်သွင်းပေးပါ (ဥပမာ - သရ-၁၂၃၊ မအူ-၄၅၆)။"; return; }
 
         try
         {
@@ -996,6 +1185,12 @@
         if (newPassword.Length < 8)
         {
             errorMessage = "Password သည် အနည်းဆုံး ၈ လုံး ရှိရမည်။";
+            return;
+        }
+
+        if (newPassword == password)
+        {
+            errorMessage = "စကားဝှက်အသစ်သည် လက်ရှိ (Email မှ ပေးပို့ထားသော) စကားဝှက်ဟောင်းနှင့် မတူညီရပါ။ / New password cannot be the same as the temporary password.";
             return;
         }
 

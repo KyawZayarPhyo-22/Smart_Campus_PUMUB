@@ -61,7 +61,9 @@ document.addEventListener("DOMContentLoaded", function () {
    Highcharts uses <div> containers — zero canvas/DOM race conditions.
    We destroy any existing instance first to prevent duplicate renders.
    ===================================================================== */
-function initCharts(roleDistributionData, facultyDistributionData) {
+function initCharts(roleDistributionData, facultyDistributionData, lang) {
+    const isMyanmar = (lang === "my" || lang === "mm");
+
     const roleColors = {
         "Admin": "#06b6d4",
         "ADMIN": "#06b6d4",
@@ -140,7 +142,9 @@ function initCharts(roleDistributionData, facultyDistributionData) {
                 borderRadius: 10,
                 shadow: true,
                 style: { color: "#0f172a", fontSize: "12px" },
-                pointFormat: "<b>{point.name}</b>: {point.y} users (<b>{point.percentage:.1f}%</b>)"
+                pointFormat: isMyanmar 
+                    ? "<b>{point.name}</b>: {point.y} ဦး (<b>{point.percentage:.1f}%</b>)"
+                    : "<b>{point.name}</b>: {point.y} users (<b>{point.percentage:.1f}%</b>)"
             },
             plotOptions: {
                 pie: {
@@ -167,7 +171,7 @@ function initCharts(roleDistributionData, facultyDistributionData) {
             },
             series: [
                 {
-                    name: "Roles",
+                    name: isMyanmar ? "အခန်းကဏ္ဍများ" : "Roles",
                     colorByPoint: true,
                     data: rolePieData,
                 },
@@ -196,8 +200,8 @@ function initCharts(roleDistributionData, facultyDistributionData) {
 
         let categories = ["2022-2023", "2023-2024", "2024-2025", "2025-2026", "2026-2027"];
         let seriesData = [
-            { name: "Faculty of Computing (FC)", color: "#38bdf8", data: [0, 0, 0, 0, 1] },
-            { name: "Faculty of Engineering (FE)", color: "#8b5cf6", data: [0, 0, 0, 0, 0] }
+            { name: isMyanmar ? "ကွန်ပျူတာမဟာဌာန (FC)" : "Faculty of Computing (FC)", color: "#38bdf8", data: [0, 0, 0, 0, 1] },
+            { name: isMyanmar ? "အင်ဂျင်နီယာမဟာဌာန (FE)" : "Faculty of Engineering (FE)", color: "#8b5cf6", data: [0, 0, 0, 0, 0] }
         ];
 
         if (facultyDistributionData && (facultyDistributionData.categories || facultyDistributionData.Categories)) {
@@ -215,7 +219,7 @@ function initCharts(roleDistributionData, facultyDistributionData) {
             categories = facultyDistributionData.map(item => item.name || item.Name || "");
             seriesData = [
                 {
-                    name: "Students",
+                    name: isMyanmar ? "ကျောင်းသားများ" : "Students",
                     colorByPoint: true,
                     data: facultyDistributionData.map(item => ({
                         name: item.name || item.Name || "",
@@ -240,7 +244,9 @@ function initCharts(roleDistributionData, facultyDistributionData) {
                 borderRadius: 10,
                 shadow: true,
                 style: { color: "#0f172a", fontSize: "12px" },
-                pointFormat: '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y} students</b><br/>'
+                pointFormat: isMyanmar
+                    ? '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y} ဦး</b><br/>'
+                    : '<span style="color:{series.color}">\u25CF</span> {series.name}: <b>{point.y} students</b><br/>'
             },
             xAxis: {
                 categories: categories,
@@ -250,7 +256,7 @@ function initCharts(roleDistributionData, facultyDistributionData) {
             },
             yAxis: {
                 min: 0,
-                title: { text: "Students", style: { color: "#64748b", fontSize: "11px" } },
+                title: { text: isMyanmar ? "ကျောင်းသားဦးရေ" : "Students", style: { color: "#64748b", fontSize: "11px" } },
                 labels: { style: { color: "#64748b", fontSize: "11px" } },
                 gridLineColor: "rgba(0,0,0,0.05)",
                 gridLineDashStyle: "ShortDash",
@@ -329,3 +335,68 @@ function renderFallbackRolePie(rolePieData) {
 function toggleSidebar() {
     toggleDesktopSidebar();
 }
+
+/* ── Grade Mark Input Enforcer (0 - 100 Range & No Leading Zeros) ────── */
+document.addEventListener("input", function (e) {
+    if (e.target && e.target.classList.contains("mark-input")) {
+        let val = e.target.value;
+        if (val === "" || val === null || val === undefined) return;
+
+        // Keep only digits and decimal point
+        val = val.replace(/[^0-9.]/g, "");
+
+        // Only allow one decimal point
+        const parts = val.split(".");
+        if (parts.length > 2) {
+            val = parts[0] + "." + parts.slice(1).join("");
+        }
+
+        // Prevent leading zeros like "0000" -> "0", "08" -> "8", "005" -> "5" (while keeping "0.5")
+        if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+            val = String(parseFloat(val) || 0);
+        }
+
+        // Clamp number strictly to max 100 and min 0
+        const num = parseFloat(val);
+        if (!isNaN(num)) {
+            if (num > 100) {
+                val = "100";
+            } else if (num < 0) {
+                val = "0";
+            }
+        }
+
+        if (e.target.value !== val) {
+            e.target.value = val;
+        }
+    }
+}, true);
+
+document.addEventListener("keydown", function (e) {
+    if (e.target && e.target.classList.contains("mark-input")) {
+        if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+            e.preventDefault();
+        }
+    }
+}, true);
+
+/* ── Academic Report Printing Helper ────────────────────────────────── */
+window.printAcademicReport = function (targetId) {
+    if (!targetId || targetId === "all") {
+        const allSheets = document.querySelectorAll(".grade-sheet-container");
+        allSheets.forEach(s => s.classList.add("print-section-active"));
+        window.print();
+        allSheets.forEach(s => s.classList.remove("print-section-active"));
+    } else {
+        const el = document.getElementById(targetId);
+        if (el) {
+            el.classList.add("print-section-active");
+            window.print();
+            el.classList.remove("print-section-active");
+        } else {
+            window.print();
+        }
+    }
+};
+
+

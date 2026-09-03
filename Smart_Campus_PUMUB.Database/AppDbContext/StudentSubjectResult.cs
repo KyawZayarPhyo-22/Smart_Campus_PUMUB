@@ -40,6 +40,19 @@ public class StudentSubjectResult
     [Column("Is_Pass")]
     public bool IsPass { get; set; }
 
+    [Column("Reexam_Grade")]
+    [StringLength(5)]
+    public string? ReexamGrade { get; set; }
+
+    [Column("Reexam_Is_Pass")]
+    public bool? ReexamIsPass { get; set; }
+
+    [Column("Is_Disqualified")]
+    public bool IsDisqualified { get; set; } = false;
+
+    [Column("Attempt_Number")]
+    public int AttemptNumber { get; set; } = 1;
+
     [Column("Result_Date", TypeName = "datetime")]
     public DateTime? ResultDate { get; set; }
 

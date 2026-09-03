@@ -4,14 +4,19 @@ using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.AspNetCore.Components.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Department;
 
-public partial class Page_DepartmentList : ComponentBase
+public partial class Page_DepartmentList : ComponentBase, IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<DepartmentModel> DepartmentList { get; set; } = new();
     private List<Smart_Campus_PUMUB.Database.AppDbContext.Faculty> FacultyList { get; set; } = new();
@@ -39,7 +44,6 @@ public partial class Page_DepartmentList : ComponentBase
     {
         SelectedFacultyInput = facultyName ?? "All";
         isFacultyDropdownOpen = false;
-        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
     }
 
     private void CloseAllDropdowns()
@@ -96,6 +100,7 @@ public partial class Page_DepartmentList : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadFaculties();
         await LoadDepartments();
     }
@@ -113,6 +118,16 @@ public partial class Page_DepartmentList : ComponentBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -136,7 +151,7 @@ public partial class Page_DepartmentList : ComponentBase
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<DepartmentModel>>(
                 $"department/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&facultyName={Uri.EscapeDataString(SelectedFaculty)}", 
                 EnumHttpMethod.Get
@@ -161,19 +176,15 @@ public partial class Page_DepartmentList : ComponentBase
     private void OpenDeleteModal(DepartmentModel dept)
     {
         SelectedDepartment = dept;
-
-        // 🔥 RESET HERE
         statusMessage = "";
         IsSuccess = false;
-
         ShowModal = true;
     }
+
     private void CloseDeleteModal()
     {
         SelectedDepartment = null;
         ShowModal = false;
-
-        // 🔥 CLEAR MESSAGE
         statusMessage = "";
         IsSuccess = false;
     }
@@ -183,7 +194,7 @@ public partial class Page_DepartmentList : ComponentBase
         if (SelectedDepartment == null) return;
 
         IsProcessing = true;
-        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -195,30 +206,33 @@ public partial class Page_DepartmentList : ComponentBase
 
             if (response != null && response.IsSuccess)
             {
-                statusMessage = response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
                 IsSuccess = true;
 
-                await Task.Delay(1500);
+                await Task.Delay(1000);
 
                 CloseDeleteModal();
                 await LoadDepartments();
             }
             else
             {
-                statusMessage = response?.Message
-                    ?? "ဤ Department ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
-
+                statusMessage = LangService.IsMyanmar ? "ဤ Department ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this department because it is in use.");
                 IsSuccess = false;
             }
         }
         catch
         {
-            statusMessage = "ဤ Department ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+            statusMessage = LangService.IsMyanmar ? "ဤ Department ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။" : "Cannot delete this department because it is in use.";
             IsSuccess = false;
         }
         finally
         {
             IsProcessing = false;
         }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

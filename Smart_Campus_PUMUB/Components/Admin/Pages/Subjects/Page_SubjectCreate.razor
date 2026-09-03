@@ -87,6 +87,12 @@
                 </InputSelect>
                 <ValidationMessage For="@(() => subject.SubjectType)" class="text-danger" />
             </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Credit Point (ခရက်ဒစ်မှတ်)</label>
+                <InputNumber @bind-Value="subject.Credit" class="form-control" min="0" max="15" placeholder="ဥပမာ - 3" />
+                <ValidationMessage For="@(() => subject.Credit)" class="text-danger" />
+            </div>
         </div>
 
         <div class="row g-3 mt-2">

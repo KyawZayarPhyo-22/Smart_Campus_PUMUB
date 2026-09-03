@@ -119,6 +119,14 @@ public class StudentRegistrationCreateRequestModel
     public string? nrc_township { get; set; }
     public string? nrc_type { get; set; }
     public string? nrc_number { get; set; }
+    public string? student_image { get; set; }
+    public string? nrc_front_image { get; set; }
+    public string? nrc_back_image { get; set; }
+    public string? census_image { get; set; }
+    public string? father_nrc_front_image { get; set; }
+    public string? father_nrc_back_image { get; set; }
+    public string? mother_nrc_front_image { get; set; }
+    public string? mother_nrc_back_image { get; set; }
 }
 
 public class StudentRegistrationResponseModel
@@ -184,6 +192,14 @@ public class PreviousRegistrationModel
     public string? AppStudentName { get; set; }
     public string? AppStudentPhone { get; set; }
     public bool? StipendRequested { get; set; }
+    public string? StudentImage { get; set; }
+    public string? NrcFrontImage { get; set; }
+    public string? NrcBackImage { get; set; }
+    public string? CensusImage { get; set; }
+    public string? FatherNrcFrontImage { get; set; }
+    public string? FatherNrcBackImage { get; set; }
+    public string? MotherNrcFrontImage { get; set; }
+    public string? MotherNrcBackImage { get; set; }
 }
 
 
@@ -195,6 +211,7 @@ public class StudentEnrollmentResultModel
     public string? StudentName { get; set; }
     public string? RollNo { get; set; }
     public string? Major { get; set; }
+    public string? MajorName { get; set; }
     public int SemesterId { get; set; }
     public string? SemesterName { get; set; }
     public int SubjectId { get; set; }
@@ -216,10 +233,22 @@ public class StudentSubjectGradeItemModel
     public Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType SubjectType { get; set; } = Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.None;
     public string SubjectTypeName => SubjectType.ToString();
     public string? PrerequisiteInfo { get; set; }
+    public int CreditUnit { get; set; } = 3;
+    public decimal? MarksObtained { get; set; }
     public string? Grade { get; set; }
+    public decimal GradePoint { get; set; } = 0.0m;
+    public decimal GradePointEarned { get; set; } = 0.0m;
+    public string Status { get; set; } = string.Empty;
     public int? ResultId { get; set; }
     public bool IsPass { get; set; }
+    public string? ReexamGrade { get; set; }
+    public decimal? ReexamMarksObtained { get; set; }
+    public bool? ReexamIsPass { get; set; }
     public bool IsRetake { get; set; } = false;
+    public bool IsCarriedOver { get; set; } = false;
+    public bool IsSubjectDisqualified { get; set; } = false;
+    public bool IsReexam { get; set; } = false;
+    public int AttemptNumber { get; set; } = 1;
 }
 
 public class StudentEnrollmentDetailResponseModel
@@ -231,6 +260,7 @@ public class StudentEnrollmentDetailResponseModel
     public int SemesterId { get; set; }
     public string SemesterName { get; set; } = string.Empty;
     public string MajorName { get; set; } = string.Empty;
+    public List<decimal> PriorSemesterGPAs { get; set; } = new();
     public List<StudentSubjectGradeItemModel> Subjects { get; set; } = new();
 }
 
@@ -246,4 +276,21 @@ public class SaveGradeItemModel
 {
     public int SubjectId { get; set; }
     public string? Grade { get; set; }
+    public decimal? MarksObtained { get; set; }
 }
+
+public class SaveReexamGradesRequestModel
+{
+    public int RegistrationId { get; set; }
+    public int? StudentId { get; set; }
+    public int SemesterId { get; set; }
+    public List<SaveReexamGradeItemModel> ReexamGrades { get; set; } = new();
+}
+
+public class SaveReexamGradeItemModel
+{
+    public int SubjectId { get; set; }
+    public string? ReexamGrade { get; set; }
+    public decimal? ReexamMarksObtained { get; set; }
+}
+

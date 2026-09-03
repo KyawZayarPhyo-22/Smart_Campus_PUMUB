@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
 using Smart_Campus_PUMUB.WebApi.Models;
+using Smart_Campus_PUMUB.WebApi.Services;
 
 namespace Smart_Campus_PUMUB.WebApi.Controllers;
 
@@ -11,10 +12,12 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers;
 public class StudentPersonalInfoController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
+    private readonly IEnrollmentService _enrollmentService;
 
-    public StudentPersonalInfoController(SmartCampusDbContext db)
+    public StudentPersonalInfoController(SmartCampusDbContext db, IEnrollmentService enrollmentService)
     {
         _db = db;
+        _enrollmentService = enrollmentService;
     }
 
     [HttpGet]
@@ -26,6 +29,28 @@ public class StudentPersonalInfoController : ControllerBase
         var users = _db.Users.AsNoTracking().ToDictionary(u => u.UserId, u => u);
         var faculties = _db.Faculties.Where(f => f.IsDelete == false || f.IsDelete == null).AsNoTracking().ToDictionary(f => f.FacultyId, f => f.FacultyName);
         var majors = _db.Majors.Where(m => m.IsDelete == false || m.IsDelete == null).AsNoTracking().ToList();
+        var allStudents = _db.Students.Where(s => s.IsDelete == false || s.IsDelete == null).AsNoTracking().ToList();
+        var studentsByUserId = allStudents.Where(s => s.UserId > 0).GroupBy(s => s.UserId).ToDictionary(g => g.Key, g => g.First());
+        var studentsByRoll = allStudents.Where(s => !string.IsNullOrWhiteSpace(s.CurrentRollNo)).GroupBy(s => s.CurrentRollNo!.Trim().ToLower()).ToDictionary(g => g.Key, g => g.First());
+
+        var disqualifiedRegIds = _db.StudentSubjectResults
+            .Where(r => r.IsDisqualified && r.RegistrationId.HasValue)
+            .Select(r => r.RegistrationId!.Value)
+            .ToHashSet();
+
+        var disqualifiedRegs = _db.StudentRegistrations
+            .Where(r => disqualifiedRegIds.Contains(r.RegistrationId))
+            .ToList();
+
+        var disqualifiedUserIds = disqualifiedRegs
+            .Where(r => r.UserId.HasValue)
+            .Select(r => r.UserId!.Value)
+            .ToHashSet();
+
+        var disqualifiedRollNos = disqualifiedRegs
+            .Where(r => !string.IsNullOrWhiteSpace(r.RollNo))
+            .Select(r => r.RollNo!.Trim().ToLower())
+            .ToHashSet();
 
         if (facultyId.HasValue && facultyId.Value > 0)
         {
@@ -45,7 +70,7 @@ public class StudentPersonalInfoController : ControllerBase
         }
 
         var infos = query.ToList();
-        var response = infos.Select(info => MapToResponse(info, users, faculties, majors)).ToList();
+        var response = infos.Select(info => MapToResponse(info, users, faculties, majors, studentsByUserId, studentsByRoll, disqualifiedUserIds, disqualifiedRollNos)).ToList();
 
         return Ok(response);
     }
@@ -66,6 +91,28 @@ public class StudentPersonalInfoController : ControllerBase
         var users = _db.Users.AsNoTracking().ToDictionary(u => u.UserId, u => u);
         var faculties = _db.Faculties.Where(f => f.IsDelete == false || f.IsDelete == null).AsNoTracking().ToDictionary(f => f.FacultyId, f => f.FacultyName);
         var majors = _db.Majors.Where(m => m.IsDelete == false || m.IsDelete == null).AsNoTracking().ToList();
+        var allStudents = _db.Students.Where(s => s.IsDelete == false || s.IsDelete == null).AsNoTracking().ToList();
+        var studentsByUserId = allStudents.Where(s => s.UserId > 0).GroupBy(s => s.UserId).ToDictionary(g => g.Key, g => g.First());
+        var studentsByRoll = allStudents.Where(s => !string.IsNullOrWhiteSpace(s.CurrentRollNo)).GroupBy(s => s.CurrentRollNo!.Trim().ToLower()).ToDictionary(g => g.Key, g => g.First());
+
+        var disqualifiedRegIds = _db.StudentSubjectResults
+            .Where(r => r.IsDisqualified && r.RegistrationId.HasValue)
+            .Select(r => r.RegistrationId!.Value)
+            .ToHashSet();
+
+        var disqualifiedRegs = _db.StudentRegistrations
+            .Where(r => disqualifiedRegIds.Contains(r.RegistrationId))
+            .ToList();
+
+        var disqualifiedUserIds = disqualifiedRegs
+            .Where(r => r.UserId.HasValue)
+            .Select(r => r.UserId!.Value)
+            .ToHashSet();
+
+        var disqualifiedRollNos = disqualifiedRegs
+            .Where(r => !string.IsNullOrWhiteSpace(r.RollNo))
+            .Select(r => r.RollNo!.Trim().ToLower())
+            .ToHashSet();
 
         if (facultyId.HasValue && facultyId.Value > 0)
         {
@@ -114,7 +161,7 @@ public class StudentPersonalInfoController : ControllerBase
             .Take(pageSize)
             .ToList();
 
-        var items = pagedInfos.Select(info => MapToResponse(info, users, faculties, majors)).ToList();
+        var items = pagedInfos.Select(info => MapToResponse(info, users, faculties, majors, studentsByUserId, studentsByRoll, disqualifiedUserIds, disqualifiedRollNos)).ToList();
 
         return Ok(new PagedResult<StudentPersonalInfoResponse>
         {
@@ -129,7 +176,11 @@ public class StudentPersonalInfoController : ControllerBase
         StudentPersonalInfo info,
         Dictionary<int, User> users,
         Dictionary<int, string> faculties,
-        List<Major> majors)
+        List<Major> majors,
+        Dictionary<int, Student>? studentsByUserId = null,
+        Dictionary<string, Student>? studentsByRollNo = null,
+        HashSet<int>? disqualifiedUserIds = null,
+        HashSet<string>? disqualifiedRollNos = null)
     {
         int? resolvedFacultyId = null;
         if (info.UserId > 0 && users.TryGetValue(info.UserId, out var u) && u.FacultyId.HasValue && u.FacultyId.Value > 0)
@@ -137,11 +188,25 @@ public class StudentPersonalInfoController : ControllerBase
             resolvedFacultyId = u.FacultyId.Value;
         }
 
-        if ((!resolvedFacultyId.HasValue || resolvedFacultyId.Value <= 0) && !string.IsNullOrWhiteSpace(info.major))
+        string? resolvedMajor = !string.IsNullOrWhiteSpace(info.major) && info.major.Trim() != "-" ? info.major.Trim() : null;
+        if (string.IsNullOrWhiteSpace(resolvedMajor) && info.UserId > 0 && studentsByUserId != null && studentsByUserId.TryGetValue(info.UserId, out var stUserForMajor) && !string.IsNullOrWhiteSpace(stUserForMajor.CurrentMajor) && stUserForMajor.CurrentMajor.Trim() != "-")
         {
-            var majorText = info.major.Trim().ToLower();
+            resolvedMajor = stUserForMajor.CurrentMajor.Trim();
+        }
+        else if (string.IsNullOrWhiteSpace(resolvedMajor) && !string.IsNullOrWhiteSpace(info.roll_no) && studentsByRollNo != null && studentsByRollNo.TryGetValue(info.roll_no.Trim().ToLower(), out var stRollForMajor) && !string.IsNullOrWhiteSpace(stRollForMajor.CurrentMajor) && stRollForMajor.CurrentMajor.Trim() != "-")
+        {
+            resolvedMajor = stRollForMajor.CurrentMajor.Trim();
+        }
+        if (string.IsNullOrWhiteSpace(resolvedMajor))
+        {
+            resolvedMajor = info.major ?? "-";
+        }
+
+        if ((!resolvedFacultyId.HasValue || resolvedFacultyId.Value <= 0) && !string.IsNullOrWhiteSpace(resolvedMajor) && resolvedMajor != "-")
+        {
+            var majorText = resolvedMajor.Trim().ToLower();
             var matchedMajor = majors.FirstOrDefault(m =>
-                string.Equals(m.MajorName.Trim(), info.major.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(m.MajorName.Trim(), resolvedMajor, StringComparison.OrdinalIgnoreCase) ||
                 m.MajorName.Trim().ToLower().Contains(majorText) ||
                 majorText.Contains(m.MajorName.Trim().ToLower())
             );
@@ -157,15 +222,35 @@ public class StudentPersonalInfoController : ControllerBase
             facultyName = fname;
         }
 
+        string? studentStatus = null;
+        if (info.UserId > 0 && studentsByUserId != null && studentsByUserId.TryGetValue(info.UserId, out var stUser))
+        {
+            studentStatus = stUser.Status;
+        }
+        else if (!string.IsNullOrWhiteSpace(info.roll_no) && studentsByRollNo != null && studentsByRollNo.TryGetValue(info.roll_no.Trim().ToLower(), out var stRoll))
+        {
+            studentStatus = stRoll.Status;
+        }
+
+        bool isDisqualified = (info.UserId > 0 && disqualifiedUserIds != null && disqualifiedUserIds.Contains(info.UserId)) ||
+                              (!string.IsNullOrWhiteSpace(info.roll_no) && disqualifiedRollNos != null && disqualifiedRollNos.Contains(info.roll_no.Trim().ToLower())) ||
+                              string.Equals(studentStatus, "Disqualified", StringComparison.OrdinalIgnoreCase);
+
+        bool isGrad = !isDisqualified && string.Equals(studentStatus, "Graduated", StringComparison.OrdinalIgnoreCase);
+
         return new StudentPersonalInfoResponse
         {
             Id = info.Id,
             UserId = info.UserId,
             NewStudentAccId = info.NewStudentAccId,
+            Status = isDisqualified ? "Disqualified" : (studentStatus ?? "Active"),
+            IsGraduated = isGrad,
+            IsDisqualified = isDisqualified,
+            GraduationStatus = isDisqualified ? "Disqualified" : (isGrad ? "Graduated" : "Studying"),
             AdmissionSerialNo = info.AdmissionSerialNo,
             academic_year_range = info.academic_year_range,
             academic_year_level = info.academic_year_level,
-            major = info.major,
+            major = resolvedMajor,
             FacultyId = resolvedFacultyId,
             FacultyName = facultyName,
             roll_no = info.roll_no,
@@ -214,19 +299,86 @@ public class StudentPersonalInfoController : ControllerBase
             nrc_township = info.nrc_township,
             nrc_type = info.nrc_type,
             nrc_number = info.nrc_number,
+            nrc_front_image = info.nrc_front_image,
+            nrc_back_image = info.nrc_back_image,
+            census_image = info.census_image,
             CreatedDateTime = info.CreatedDateTime,
             ModifiedDateTime = info.ModifiedDateTime
         };
     }
 
     [HttpGet("by-roll/{rollNo}")]
-    public IActionResult GetByRollNo(string rollNo)
+    public async Task<IActionResult> GetByRollNo(string rollNo)
     {
-        var info = _db.StudentPersonalInfos.FirstOrDefault(x => x.roll_no != null && x.roll_no.ToLower() == rollNo.ToLower());
+        if (string.IsNullOrWhiteSpace(rollNo))
+            return NotFound(new ActionResponseModel { IsSuccess = false, Message = "No personal info found for this Roll No." });
+
+        string cleanRoll = rollNo.Trim().ToLower();
+
+        var info = await _db.StudentPersonalInfos.AsNoTracking().FirstOrDefaultAsync(x => 
+            (x.roll_no != null && x.roll_no.Trim().ToLower() == cleanRoll) ||
+            (x.previous_year_roll_no != null && x.previous_year_roll_no.Trim().ToLower() == cleanRoll));
+
+        if (info == null)
+        {
+            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.RoleNo != null && u.RoleNo.Trim().ToLower() == cleanRoll && (u.IsDelete == false || u.IsDelete == null));
+            if (user != null)
+            {
+                info = await _db.StudentPersonalInfos.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == user.UserId);
+            }
+        }
+
+        if (info == null)
+        {
+            var student = await _db.Students.AsNoTracking().FirstOrDefaultAsync(s => s.CurrentRollNo != null && s.CurrentRollNo.Trim().ToLower() == cleanRoll && (s.IsDelete == false || s.IsDelete == null));
+            if (student != null)
+            {
+                info = await _db.StudentPersonalInfos.AsNoTracking().FirstOrDefaultAsync(x => x.UserId == student.UserId);
+            }
+        }
+
         if (info == null)
             return NotFound(new ActionResponseModel { IsSuccess = false, Message = "No personal info found for this Roll No." });
 
         var (facId, facName) = ResolveFacultyInfo(info.UserId, info.major);
+
+        // Preload Student model and RetakeStatus in the same request to eliminate client-side HTTP waterfall
+        StudentModel? studentData = null;
+        StudentRetakeStatusModel? retakeStatus = null;
+
+        int? targetUserId = info.UserId > 0 ? info.UserId : null;
+        if (targetUserId.HasValue)
+        {
+            var st = await _db.Students.AsNoTracking().Include(s => s.User).FirstOrDefaultAsync(x => x.UserId == targetUserId.Value && (x.IsDelete == false || x.IsDelete == null));
+            if (st != null)
+            {
+                studentData = new StudentModel
+                {
+                    StudentId = st.StudentId,
+                    UserId = st.UserId,
+                    FullName = st.User?.FullName,
+                    CurrentRollNo = st.User?.RoleNo ?? st.CurrentRollNo,
+                    CurrentMajor = st.CurrentMajor,
+                    CurrentClassYear = st.CurrentClassYear,
+                    Status = st.Status ?? "Active",
+                    Sem1_Result = st.Sem1_Result,
+                    Sem2_Result = st.Sem2_Result,
+                    Sem3_Result = st.Sem3_Result,
+                    Sem4_Result = st.Sem4_Result,
+                    Sem5_Result = st.Sem5_Result,
+                    Sem6_Result = st.Sem6_Result,
+                    Sem7_Result = st.Sem7_Result,
+                    Sem8_Result = st.Sem8_Result,
+                    Sem9_Result = st.Sem9_Result
+                };
+            }
+
+            try
+            {
+                retakeStatus = await _enrollmentService.GetStudentRetakeStatusAsync(targetUserId.Value, st?.StudentId, info.roll_no);
+            }
+            catch { }
+        }
 
         var response = new StudentPersonalInfoResponse
         {
@@ -285,6 +437,16 @@ public class StudentPersonalInfoController : ControllerBase
             nrc_township = info.nrc_township,
             nrc_type = info.nrc_type,
             nrc_number = info.nrc_number,
+            nrc_front_image = info.nrc_front_image,
+            nrc_back_image = info.nrc_back_image,
+            census_image = info.census_image,
+            student_image = info.student_image,
+            father_nrc_front_image = info.father_nrc_front_image,
+            father_nrc_back_image = info.father_nrc_back_image,
+            mother_nrc_front_image = info.mother_nrc_front_image,
+            mother_nrc_back_image = info.mother_nrc_back_image,
+            StudentData = studentData,
+            RetakeStatus = retakeStatus,
             CreatedDateTime = info.CreatedDateTime,
             ModifiedDateTime = info.ModifiedDateTime
         };
@@ -296,7 +458,7 @@ public class StudentPersonalInfoController : ControllerBase
         int? facultyId = null;
         if (userId.HasValue && userId.Value > 0)
         {
-            var user = _db.Users.FirstOrDefault(u => u.UserId == userId.Value);
+            var user = _db.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId.Value);
             if (user?.FacultyId != null && user.FacultyId > 0)
                 facultyId = user.FacultyId;
         }
@@ -304,7 +466,7 @@ public class StudentPersonalInfoController : ControllerBase
         if ((!facultyId.HasValue || facultyId.Value <= 0) && !string.IsNullOrWhiteSpace(major))
         {
             var majorText = major.Trim().ToLower();
-            var allMajors = _db.Majors.Where(m => m.IsDelete == false || m.IsDelete == null).ToList();
+            var allMajors = _db.Majors.AsNoTracking().Where(m => m.IsDelete == false || m.IsDelete == null).ToList();
             var matchedMajor = allMajors.FirstOrDefault(m =>
                 string.Equals(m.MajorName.Trim(), major.Trim(), StringComparison.OrdinalIgnoreCase) ||
                 m.MajorName.Trim().ToLower().Contains(majorText) ||
@@ -317,7 +479,7 @@ public class StudentPersonalInfoController : ControllerBase
         string? facultyName = null;
         if (facultyId.HasValue && facultyId.Value > 0)
         {
-            facultyName = _db.Faculties.FirstOrDefault(f => f.FacultyId == facultyId.Value)?.FacultyName;
+            facultyName = _db.Faculties.AsNoTracking().FirstOrDefault(f => f.FacultyId == facultyId.Value)?.FacultyName;
         }
 
         return (facultyId, facultyName);
@@ -389,6 +551,14 @@ public class StudentPersonalInfoController : ControllerBase
             nrc_township = info.nrc_township,
             nrc_type = info.nrc_type,
             nrc_number = info.nrc_number,
+            nrc_front_image = info.nrc_front_image,
+            nrc_back_image = info.nrc_back_image,
+            census_image = info.census_image,
+            student_image = info.student_image,
+            father_nrc_front_image = info.father_nrc_front_image,
+            father_nrc_back_image = info.father_nrc_back_image,
+            mother_nrc_front_image = info.mother_nrc_front_image,
+            mother_nrc_back_image = info.mother_nrc_back_image,
             CreatedDateTime = info.CreatedDateTime,
             ModifiedDateTime = info.ModifiedDateTime
         };
@@ -462,6 +632,14 @@ public class StudentPersonalInfoController : ControllerBase
             nrc_township = info.nrc_township,
             nrc_type = info.nrc_type,
             nrc_number = info.nrc_number,
+            nrc_front_image = info.nrc_front_image,
+            nrc_back_image = info.nrc_back_image,
+            census_image = info.census_image,
+            student_image = info.student_image,
+            father_nrc_front_image = info.father_nrc_front_image,
+            father_nrc_back_image = info.father_nrc_back_image,
+            mother_nrc_front_image = info.mother_nrc_front_image,
+            mother_nrc_back_image = info.mother_nrc_back_image,
             CreatedDateTime = info.CreatedDateTime,
             ModifiedDateTime = info.ModifiedDateTime
         };
@@ -537,6 +715,14 @@ public class StudentPersonalInfoController : ControllerBase
             nrc_township = request.nrc_township,
             nrc_type = request.nrc_type,
             nrc_number = request.nrc_number,
+            nrc_front_image = request.nrc_front_image,
+            nrc_back_image = request.nrc_back_image,
+            census_image = request.census_image,
+            student_image = request.student_image,
+            father_nrc_front_image = request.father_nrc_front_image,
+            father_nrc_back_image = request.father_nrc_back_image,
+            mother_nrc_front_image = request.mother_nrc_front_image,
+            mother_nrc_back_image = request.mother_nrc_back_image,
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         };
 
@@ -613,10 +799,19 @@ public class StudentPersonalInfoController : ControllerBase
             nrc_township = request.nrc_township,
             nrc_type = request.nrc_type,
             nrc_number = request.nrc_number,
+            nrc_front_image = request.nrc_front_image,
+            nrc_back_image = request.nrc_back_image,
+            census_image = request.census_image,
+            student_image = request.student_image,
+            father_nrc_front_image = request.father_nrc_front_image,
+            father_nrc_back_image = request.father_nrc_back_image,
+            mother_nrc_front_image = request.mother_nrc_front_image,
+            mother_nrc_back_image = request.mother_nrc_back_image,
             CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30)
         };
 
         _db.StudentPersonalInfos.Add(newInfo);
+        SyncFacultyAndRegistration(userId, 0, request.FacultyId, request.major, request.student_name_mm, request.academic_year_level, request.roll_no);
         _db.SaveChanges();
 
         return Ok(new ActionResponseModel { IsSuccess = true, Message = "Personal info created successfully." });
@@ -682,11 +877,19 @@ public class StudentPersonalInfoController : ControllerBase
         info.nrc_township = request.nrc_township;
         info.nrc_type = request.nrc_type;
         info.nrc_number = request.nrc_number;
+        if (!string.IsNullOrEmpty(request.nrc_front_image)) info.nrc_front_image = request.nrc_front_image;
+        if (!string.IsNullOrEmpty(request.nrc_back_image)) info.nrc_back_image = request.nrc_back_image;
+        if (!string.IsNullOrEmpty(request.census_image)) info.census_image = request.census_image;
+        if (!string.IsNullOrEmpty(request.student_image)) info.student_image = request.student_image;
+        if (!string.IsNullOrEmpty(request.father_nrc_front_image)) info.father_nrc_front_image = request.father_nrc_front_image;
+        if (!string.IsNullOrEmpty(request.father_nrc_back_image)) info.father_nrc_back_image = request.father_nrc_back_image;
+        if (!string.IsNullOrEmpty(request.mother_nrc_front_image)) info.mother_nrc_front_image = request.mother_nrc_front_image;
+        if (!string.IsNullOrEmpty(request.mother_nrc_back_image)) info.mother_nrc_back_image = request.mother_nrc_back_image;
         info.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
         _db.StudentPersonalInfos.Update(info);
 
-        SyncFacultyAndRegistration(0, newStudentAccId, request.FacultyId, request.major, request.student_name_mm, request.academic_year_level);
+        SyncFacultyAndRegistration(info.UserId > 0 ? info.UserId : null, newStudentAccId, request.FacultyId, request.major, request.student_name_mm, request.academic_year_level, request.roll_no);
 
         _db.SaveChanges();
 
@@ -753,18 +956,26 @@ public class StudentPersonalInfoController : ControllerBase
         info.nrc_township = request.nrc_township;
         info.nrc_type = request.nrc_type;
         info.nrc_number = request.nrc_number;
+        if (!string.IsNullOrEmpty(request.nrc_front_image)) info.nrc_front_image = request.nrc_front_image;
+        if (!string.IsNullOrEmpty(request.nrc_back_image)) info.nrc_back_image = request.nrc_back_image;
+        if (!string.IsNullOrEmpty(request.census_image)) info.census_image = request.census_image;
+        if (!string.IsNullOrEmpty(request.student_image)) info.student_image = request.student_image;
+        if (!string.IsNullOrEmpty(request.father_nrc_front_image)) info.father_nrc_front_image = request.father_nrc_front_image;
+        if (!string.IsNullOrEmpty(request.father_nrc_back_image)) info.father_nrc_back_image = request.father_nrc_back_image;
+        if (!string.IsNullOrEmpty(request.mother_nrc_front_image)) info.mother_nrc_front_image = request.mother_nrc_front_image;
+        if (!string.IsNullOrEmpty(request.mother_nrc_back_image)) info.mother_nrc_back_image = request.mother_nrc_back_image;
         info.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
         _db.StudentPersonalInfos.Update(info);
 
-        SyncFacultyAndRegistration(userId, 0, request.FacultyId, request.major, request.student_name_mm, request.academic_year_level);
+        SyncFacultyAndRegistration(userId, 0, request.FacultyId, request.major, request.student_name_mm, request.academic_year_level, request.roll_no);
 
         _db.SaveChanges();
 
         return Ok(new ActionResponseModel { IsSuccess = true, Message = "Personal info updated successfully." });
     }
 
-    private void SyncFacultyAndRegistration(int? userId, int? newStudentAccId, int? requestFacultyId, string? requestMajor, string? studentNameMm, string? academicYearLevel)
+    private void SyncFacultyAndRegistration(int? userId, int? newStudentAccId, int? requestFacultyId, string? requestMajor, string? studentNameMm, string? academicYearLevel, string? requestRollNo)
     {
         int? facultyIdToSave = requestFacultyId;
         if ((!facultyIdToSave.HasValue || facultyIdToSave.Value <= 0) && !string.IsNullOrWhiteSpace(requestMajor))
@@ -788,27 +999,56 @@ public class StudentPersonalInfoController : ControllerBase
             user = _db.Users.FirstOrDefault(x => x.UserId == userId.Value);
         }
 
-        if (user != null && facultyIdToSave.HasValue && facultyIdToSave.Value > 0)
+        if (user != null)
         {
-            user.FacultyId = facultyIdToSave.Value;
+            if (facultyIdToSave.HasValue && facultyIdToSave.Value > 0)
+            {
+                user.FacultyId = facultyIdToSave.Value;
+            }
+            if (!string.IsNullOrWhiteSpace(studentNameMm))
+            {
+                user.FullName = studentNameMm;
+            }
+            if (!string.IsNullOrWhiteSpace(requestRollNo))
+            {
+                user.RoleNo = requestRollNo;
+            }
             _db.Users.Update(user);
         }
 
-        StudentRegistration? reg = null;
+        // Sync Student table
+        Student? student = null;
         if (userId.HasValue && userId.Value > 0)
         {
-            reg = _db.StudentRegistrations.FirstOrDefault(x => x.UserId == userId.Value && (x.IsDelete == false || x.IsDelete == null));
+            student = _db.Students.FirstOrDefault(s => s.UserId == userId.Value && (s.IsDelete == false || s.IsDelete == null));
+        }
+        if (student != null)
+        {
+            if (!string.IsNullOrWhiteSpace(requestMajor)) student.CurrentMajor = requestMajor;
+            if (!string.IsNullOrWhiteSpace(academicYearLevel)) student.CurrentClassYear = academicYearLevel;
+            if (!string.IsNullOrWhiteSpace(requestRollNo)) student.CurrentRollNo = requestRollNo;
+            else if (!string.IsNullOrWhiteSpace(user?.RoleNo)) student.CurrentRollNo = user.RoleNo;
+            if (facultyIdToSave.HasValue && facultyIdToSave.Value > 0) student.FacultyId = facultyIdToSave.Value;
+            _db.Students.Update(student);
+        }
+
+        var regsQuery = _db.StudentRegistrations.Where(x => (x.IsDelete == false || x.IsDelete == null));
+        if (userId.HasValue && userId.Value > 0)
+        {
+            regsQuery = regsQuery.Where(x => x.UserId == userId.Value);
         }
         else if (newStudentAccId.HasValue && newStudentAccId.Value > 0)
         {
-            reg = _db.StudentRegistrations.FirstOrDefault(x => x.NewStudentAccId == newStudentAccId.Value && (x.IsDelete == false || x.IsDelete == null));
+            regsQuery = regsQuery.Where(x => x.NewStudentAccId == newStudentAccId.Value);
         }
 
-        if (reg != null)
+        var regs = regsQuery.ToList();
+        foreach (var reg in regs)
         {
             if (!string.IsNullOrWhiteSpace(requestMajor)) reg.Major = requestMajor;
             if (!string.IsNullOrWhiteSpace(studentNameMm)) reg.StudentNameMm = studentNameMm;
-            if (!string.IsNullOrWhiteSpace(academicYearLevel)) reg.AcademicYearLevel = academicYearLevel;
+            if (!string.IsNullOrWhiteSpace(requestRollNo)) reg.RollNo = requestRollNo;
+            else if (!string.IsNullOrWhiteSpace(user?.RoleNo)) reg.RollNo = user.RoleNo;
             _db.StudentRegistrations.Update(reg);
         }
     }

@@ -72,6 +72,8 @@
 using Newtonsoft.Json;
 using System.Text;
 using Smart_Campus_PUMUB.Components.Features.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Smart_Campus_PUMUB.Components.Features.Services;
 using Microsoft.JSInterop;
 
 namespace Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
@@ -81,37 +83,52 @@ public class HttpClientService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IJSRuntime _jsRuntime;
+    private readonly AuthenticationStateProvider _authStateProvider;
+    private string? _cachedToken;
 
-    public HttpClientService(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor, IJSRuntime jsRuntime)
+    public HttpClientService(
+        IHttpClientFactory httpClientFactory, 
+        IHttpContextAccessor httpContextAccessor, 
+        IJSRuntime jsRuntime,
+        AuthenticationStateProvider authStateProvider)
     {
         _httpClientFactory = httpClientFactory;
         _httpContextAccessor = httpContextAccessor;
         _jsRuntime = jsRuntime;
+        _authStateProvider = authStateProvider;
     }
 
     private async Task AttachTokenAsync(HttpClient client)
     {
         try
         {
-            string? token = null;
+            string? token = _cachedToken;
 
-            if (_httpContextAccessor.HttpContext != null)
+            if (token == null && _authStateProvider is CustomAuthStateProvider customAuth && !string.IsNullOrEmpty(customAuth.CurrentToken))
+            {
+                token = customAuth.CurrentToken;
+            }
+
+            if (token == null && _httpContextAccessor.HttpContext != null)
             {
                 token = _httpContextAccessor.HttpContext.Request.Cookies["authToken"];
             }
 
-            if (string.IsNullOrEmpty(token) && _jsRuntime != null)
+            if (token == null && _jsRuntime != null)
             {
                 try
                 {
-                    token = await _jsRuntime.InvokeAsync<string>("cookieHelper.get", "authToken");
+                    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(400));
+                    token = await _jsRuntime.InvokeAsync<string>("cookieHelper.get", new object?[] { "authToken" }, cts.Token);
                 }
                 catch { }
             }
 
-            if (!string.IsNullOrEmpty(token))
+            _cachedToken = token ?? "";
+
+            if (!string.IsNullOrEmpty(_cachedToken))
             {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
             }
         }
         catch
@@ -146,14 +163,6 @@ public class HttpClientService
 
         // 🔥 IMPORTANT: always read response body (even 400/500)
         var resJson = await responseMessage.Content.ReadAsStringAsync();
-
-        try
-        {
-            var debugPath = @"C:\Users\Kyaw Zayar Phyo\.gemini\antigravity-ide\brain\7f69e5da-652a-4981-8bc9-d2a12a264682\scratch\api_debug.txt";
-            var logMsg = $"[{DateTime.Now}] URL: {url}, Method: {method}, Status: {responseMessage.StatusCode}\nResponse: {resJson}\n-----------------------------------\n";
-            System.IO.File.AppendAllText(debugPath, logMsg);
-        }
-        catch {}
 
         if (string.IsNullOrWhiteSpace(resJson))
             return default;

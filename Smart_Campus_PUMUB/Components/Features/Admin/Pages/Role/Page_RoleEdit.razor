@@ -29,12 +29,7 @@
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-12 mb-2">
-                                <label class="form-label text-light">Role ID</label>
-                                <input type="text" class="form-control" value="@Id" disabled />
-                            </div>
-                            
-                            <div class="col-12 mb-2">
-                                <label class="form-label text-light">Role Name</label>
+                                <label class="form-label text-light">Role Name <span class="text-danger">*</span></label>
                                 <InputText @bind-Value="roleModel.RoleName" class="form-control" placeholder="Enter Role Name" />
                             </div>
                         </div>

@@ -182,7 +182,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
         [HttpGet("paginate")]
-        [AllowAnonymous]
+        [Permission("Category.View")]
         public IActionResult GetCategoriesPaginated(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,

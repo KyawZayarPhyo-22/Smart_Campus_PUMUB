@@ -7,382 +7,744 @@
 @inject IJSRuntime JSRuntime
 @inject HttpClientService HttpClientService
 @inject StudentRegistrationNotifierService NotifierService
+@inject IConfiguration Configuration
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Student,student")]
 @rendermode InteractiveServer
 
-<PageTitle>My Profile – Smart Campus</PageTitle>
+<PageTitle>ကျောင်းသား ကိုယ်ရေးအချက်အလက် – Academic University Registration Assistant (AURA)</PageTitle>
 
 <style>
-    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Pyidaungsu:wght@400;600;700&display=swap');
 
     .profile-root {
         min-height: 100vh;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-        font-family: 'Inter', sans-serif;
-        padding: 90px 1rem 4rem;
+        background: #ffffff;
+        font-family: 'Inter', 'Pyidaungsu', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        padding: 90px 1.5rem 4rem;
+        max-width: 1160px;
+        margin: 0 auto;
     }
 
     /* ─── Hero Banner ─── */
     .profile-hero {
-        background: linear-gradient(135deg, #5a4fcf 0%, #7c3aed 50%, #4f46e5 100%);
-        border-radius: 24px;
-        padding: 2.5rem 2rem 1rem;
-        margin-bottom: 0;
+        background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+        border-radius: 20px;
+        padding: 2.5rem 2rem 1.5rem;
+        margin-bottom: 1.5rem;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(90, 79, 207, 0.35);
+        box-shadow: 0 12px 36px -6px rgba(37, 99, 235, 0.3), 0 4px 12px -2px rgba(37, 99, 235, 0.15);
     }
 
     .profile-hero::before {
         content: '';
         position: absolute;
         top: -60px; right: -60px;
-        width: 220px; height: 220px;
-        background: rgba(255,255,255,0.06);
+        width: 240px; height: 240px;
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 50%;
+        pointer-events: none;
     }
 
     .profile-hero::after {
         content: '';
         position: absolute;
         bottom: -40px; left: -40px;
-        width: 160px; height: 160px;
-        background: rgba(255,255,255,0.04);
+        width: 180px; height: 180px;
+        background: rgba(255, 255, 255, 0.05);
         border-radius: 50%;
+        pointer-events: none;
     }
 
     /* ─── Avatar ─── */
     .avatar-wrapper {
         position: relative;
-        width: 110px;
-        height: 110px;
-        margin: 0 auto 1rem;
+        width: 114px;
+        height: 114px;
+        margin: 0 auto 1.2rem;
         cursor: pointer;
     }
 
     .avatar-img {
-        width: 110px;
-        height: 110px;
+        width: 114px;
+        height: 114px;
         border-radius: 50%;
         object-fit: cover;
-        border: 4px solid rgba(255,255,255,0.5);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-        transition: transform 0.3s, box-shadow 0.3s;
+        border: 4px solid #ffffff;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .avatar-placeholder {
-        width: 110px;
-        height: 110px;
+        width: 114px;
+        height: 114px;
         border-radius: 50%;
-        background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1));
-        border: 4px solid rgba(255,255,255,0.5);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.15));
+        border: 4px solid #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2.5rem;
+        font-size: 2.6rem;
         font-weight: 700;
-        color: white;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-        transition: transform 0.3s;
+        color: #ffffff;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .avatar-wrapper:hover .avatar-img,
     .avatar-wrapper:hover .avatar-placeholder {
         transform: scale(1.05);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
     }
 
     .avatar-edit-btn {
         position: absolute;
-        bottom: 4px; right: 4px;
-        width: 30px; height: 30px;
-        background: #f59e0b;
+        bottom: 2px;
+        right: 2px;
+        width: 34px;
+        height: 34px;
+        background: #ffffff;
         border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        color: white;
-        font-size: 0.75rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #2563eb;
+        font-size: 0.88rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         cursor: pointer;
-        border: 2px solid white;
-        transition: background 0.2s, transform 0.2s;
+        border: 2px solid #2563eb;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .avatar-edit-btn:hover { background: #d97706; transform: scale(1.1); }
+    .avatar-edit-btn:hover {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #ffffff;
+        transform: scale(1.1);
+    }
 
-    .hero-name { color: white; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.2rem; text-align:center; }
-    .hero-sub  { color: rgba(255,255,255,0.75); font-size: 0.9rem; text-align:center; margin-bottom: 1.2rem; }
+    .hero-name {
+        color: #ffffff;
+        font-size: 1.55rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        text-align: center;
+        letter-spacing: -0.01em;
+    }
+
+    .hero-sub {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.92rem;
+        text-align: center;
+        margin-bottom: 1.25rem;
+        font-weight: 500;
+    }
 
     .hero-chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.6rem;
         justify-content: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.5rem;
     }
 
     .chip {
-        background: rgba(255,255,255,0.15);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255,255,255,0.25);
-        color: white;
-        padding: 4px 14px;
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        padding: 5px 16px;
         border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 500;
+        font-size: 0.82rem;
+        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
 
-    .chip.green { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.4); }
+    .chip.green {
+        background: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.45);
+        color: #ffffff;
+    }
 
-    /* ─── Cards ─── */
+    /* ─── Material Cards Grid ─── */
     .cards-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-top: 1rem;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
     }
 
-    @@media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
+    @@media (max-width: 768px) {
+        .cards-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 
     .info-card {
-        background: rgba(255,255,255,0.04);
-        backdrop-filter: blur(16px);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
         padding: 1.5rem;
-        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
     }
 
     .info-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.09), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+        border-color: #cbd5e1;
     }
 
-    .info-card.full { grid-column: 1 / -1; }
+    .info-card.full {
+        grid-column: 1 / -1;
+    }
 
     .card-header-row {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         margin-bottom: 1.2rem;
-        padding-bottom: 0.8rem;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding-bottom: 0.9rem;
+        border-bottom: 1px solid #f1f5f9;
     }
 
     .card-icon {
-        width: 38px; height: 38px;
+        width: 40px;
+        height: 40px;
         border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: #ffffff;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    .card-icon.purple { background: linear-gradient(135deg, #5a4fcf, #7c3aed); }
+    .card-icon.purple { background: linear-gradient(135deg, #6366f1, #4f46e5); }
     .card-icon.green  { background: linear-gradient(135deg, #10b981, #059669); }
     .card-icon.amber  { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .card-icon.blue   { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 
-    .card-title { font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.9); }
+    .card-title {
+        font-size: 1.02rem;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: -0.01em;
+    }
 
     .info-row {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f8fafc;
         gap: 1rem;
     }
 
-    .info-row:last-child { border-bottom: none; }
+    .info-row:last-child {
+        border-bottom: none;
+    }
 
-    .info-label { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; flex-shrink: 0; }
-    .info-value { font-size: 0.85rem; color: rgba(255,255,255,0.9); font-weight: 500; text-align: right; word-break: break-word; }
+    .info-label {
+        font-size: 0.86rem;
+        color: #64748b;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
 
-    /* ─── Semester Results ─── */
+    .info-value {
+        font-size: 0.92rem;
+        color: #0f172a;
+        font-weight: 600;
+        text-align: right;
+        word-break: break-word;
+    }
+
+    /* ─── Semester Results Grid ─── */
     .sem-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.75rem;
+        gap: 0.85rem;
         margin-top: 0.5rem;
     }
 
-    @@media (max-width: 480px) { .sem-grid { grid-template-columns: repeat(2,1fr); } }
+    @@media (max-width: 600px) {
+        .sem-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
 
     .sem-pill {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 14px;
-        padding: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 10px;
         text-align: center;
-        transition: background 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .sem-pill:hover { background: rgba(255,255,255,0.1); }
+    .sem-pill:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: translateY(-1px);
+    }
 
-    .sem-label { font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
-    .sem-value { font-size: 0.85rem; font-weight: 600; color: #10b981; }
-    .sem-value.pending { color: rgba(255,255,255,0.35); }
+    .sem-label {
+        font-size: 0.76rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
 
-    /* ─── Notifications ─── */
+    .sem-value {
+        font-size: 0.94rem;
+        font-weight: 700;
+        color: #16a34a;
+    }
+
+    .sem-value.pending {
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    /* ─── History & Notification Scrollable Box ─── */
+    .history-scroll-container {
+        max-height: 380px;
+        overflow-y: auto;
+        padding-right: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .history-scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .history-scroll-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 6px;
+    }
+
+    .history-scroll-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 6px;
+    }
+
+    .history-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
     .noti-item {
         display: flex;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 14px;
-        margin-bottom: 8px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.06);
-        transition: background 0.2s;
+        align-items: center;
+        gap: 14px;
+        padding: 14px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .noti-item:hover { background: rgba(255,255,255,0.08); }
+    .noti-item:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        transform: translateX(2px);
+    }
 
     .noti-dot {
-        width: 34px; height: 34px;
+        width: 38px;
+        height: 38px;
         border-radius: 10px;
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+
+    .noti-dot.success { background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); }
+    .noti-dot.pending { background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); }
+    .noti-dot.danger  { background: rgba(239, 68, 68, 0.12);  color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25); }
+
+    .noti-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .noti-sub {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-top: 3px;
+        font-weight: 500;
+    }
+
+    /* ─── Retake Monitor Styles ─── */
+    .retake-card {
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+    }
+
+    .retake-badge-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 14px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+
+    .retake-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 1.2rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .retake-stat-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.2rem;
+        text-align: left;
+    }
+
+    .stat-num {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .stat-lbl {
+        font-size: 0.82rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    .retake-progress-container {
+        margin: 1.2rem 0;
+    }
+
+    .retake-bar-wrapper {
+        height: 12px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .retake-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .retake-bar-ticks {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.76rem;
+        color: #94a3b8;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+
+    .retake-alert-box {
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 1rem;
+    }
+
+    .retake-history-section {
+        margin-top: 1.2rem;
+        padding-top: 1rem;
+        border-top: 1px dashed #e2e8f0;
+    }
+
+    .retake-history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .retake-history-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .retake-count-tag {
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #475569;
+        padding: 3px 10px;
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .retake-grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 10px;
+        max-height: 220px;
+        overflow-y: auto;
+        padding-right: 6px;
+        padding-bottom: 4px;
+    }
+
+    .retake-grid-container::-webkit-scrollbar {
+        width: 5px;
+    }
+    .retake-grid-container::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+    .retake-grid-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .retake-grid-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .retake-item-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 3.5px solid #f59e0b;
+        border-radius: 10px;
+        padding: 9px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        transition: all 0.2s ease;
+    }
+
+    .retake-item-card:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        border-left-color: #d97706;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transform: translateY(-1px);
+    }
+
+    .retake-item-left {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .retake-item-icon {
+        color: #f59e0b;
         font-size: 0.85rem;
         flex-shrink: 0;
     }
 
-    .noti-dot.success { background: rgba(16,185,129,0.2); color: #10b981; }
-    .noti-dot.pending { background: rgba(245,158,11,0.2); color: #f59e0b; }
-    .noti-dot.danger  { background: rgba(239,68,68,0.2); color: #ef4444; }
+    .retake-item-text {
+        font-size: 0.83rem;
+        font-weight: 600;
+        color: #334155;
+        line-height: 1.35;
+        word-break: break-word;
+    }
 
-    .noti-title { font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.9); }
-    .noti-sub   { font-size: 0.75rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
-
-    /* ─── Upload modal overlay ─── */
+    /* ─── Upload Modal (Material Design) ─── */
     .upload-overlay {
-        position: fixed; inset: 0;
-        background: rgba(0,0,0,0.7);
-        backdrop-filter: blur(6px);
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
         z-index: 9000;
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         padding: 1rem;
     }
 
     .upload-modal {
-        background: #1e293b;
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 24px;
-        padding: 2rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 2.2rem 2rem 1.8rem;
         width: 100%;
-        max-width: 420px;
+        max-width: 440px;
         text-align: center;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25);
+        animation: modalIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .upload-modal h5 { color: white; font-weight: 700; margin-bottom: 1rem; }
+    @@keyframes modalIn {
+        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .upload-modal h5 {
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 1.15rem;
+        margin-bottom: 1.2rem;
+    }
 
     .upload-preview {
-        width: 120px; height: 120px;
+        width: 130px;
+        height: 130px;
         border-radius: 50%;
         object-fit: cover;
-        margin: 0 auto 1rem;
+        margin: 0 auto 1.2rem;
         display: block;
-        border: 3px solid #5a4fcf;
+        border: 4px solid #2563eb;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2);
     }
 
     .upload-area {
-        border: 2px dashed rgba(255,255,255,0.2);
-        border-radius: 16px;
-        padding: 1.5rem;
+        border: 2px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 1.6rem 1rem;
         cursor: pointer;
-        margin-bottom: 1rem;
-        transition: border-color 0.2s;
+        margin-bottom: 1.2rem;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .upload-area:hover { border-color: #5a4fcf; }
-    .upload-area p { color: rgba(255,255,255,0.5); font-size: 0.85rem; margin: 0; }
+    .upload-area:hover {
+        border-color: #2563eb;
+        background: rgba(37, 99, 235, 0.04);
+    }
+
+    .upload-area p {
+        color: #64748b;
+        font-size: 0.88rem;
+        margin: 0;
+        font-weight: 500;
+    }
 
     .btn-primary-grad {
-        background: linear-gradient(135deg, #5a4fcf, #7c3aed);
-        color: white;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #ffffff;
         border: none;
+        border-radius: 12px;
+        padding: 11px 24px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 100%;
+        margin-bottom: 0.6rem;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary-grad:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-primary-grad:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .btn-ghost {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
         padding: 10px 24px;
         font-weight: 600;
-        cursor: pointer;
-        transition: opacity 0.2s;
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
-
-    .btn-primary-grad:hover { opacity: 0.88; }
-    .btn-primary-grad:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .btn-ghost {
-        background: transparent;
-        color: rgba(255,255,255,0.6);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 12px;
-        padding: 8px 24px;
-        font-weight: 500;
+        font-size: 0.92rem;
         cursor: pointer;
         width: 100%;
         transition: background 0.2s;
     }
 
-    .btn-ghost:hover { background: rgba(255,255,255,0.06); }
+    .btn-ghost:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
 
     .loading-spin {
         display: inline-block;
-        width: 16px; height: 16px;
-        border: 2px solid rgba(255,255,255,0.3);
-        border-top-color: white;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
         margin-right: 6px;
         vertical-align: middle;
     }
 
-    @@keyframes spin { to { transform: rotate(360deg); } }
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 
     .toast-msg {
         position: fixed;
-        bottom: 24px; left: 50%;
+        bottom: 24px;
+        left: 50%;
         transform: translateX(-50%);
-        background: #10b981;
-        color: white;
-        padding: 10px 24px;
+        background: #0f172a;
+        color: #ffffff;
+        padding: 12px 28px;
         border-radius: 999px;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 600;
         z-index: 9999;
-        box-shadow: 0 8px 24px rgba(16,185,129,0.4);
-        animation: fadeUp 0.4s ease;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        animation: fadeUp 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     @@keyframes fadeUp {
-        from { opacity:0; transform: translateX(-50%) translateY(20px); }
-        to   { opacity:1; transform: translateX(-50%) translateY(0); }
+        from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+        to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 </style>
 
 <div class="profile-root">
     @if (isLoading)
     {
-        <div style="text-align:center; padding:5rem 1rem;">
-            <div class="loading-spin" style="width:40px;height:40px;border-width:4px;"></div>
-            <p style="color:rgba(255,255,255,0.5); margin-top:1rem;">Loading profile...</p>
+        <div style="text-align: center; padding: 6rem 1rem;">
+            <div class="loading-spin" style="width: 44px; height: 44px; border-width: 4px; border-top-color: #2563eb; border-color: rgba(37,99,235,0.2);"></div>
+            <p style="color: #64748b; margin-top: 1.2rem; font-weight: 500;">Profile အချက်အလက်များ ရယူနေပါသည်...</p>
         </div>
     }
     else if (profile == null)
     {
-        <div style="text-align:center; padding:5rem 1rem; color:rgba(255,255,255,0.5);">
-            <i class="fas fa-user-slash" style="font-size:3rem; margin-bottom:1rem; display:block;"></i>
-            <p>Profile data could not be loaded. Please log in and try again.</p>
+        <div style="text-align: center; padding: 6rem 1rem; color: #64748b;">
+            <i class="fas fa-user-slash" style="font-size: 3.5rem; color: #cbd5e1; margin-bottom: 1.2rem; display: block;"></i>
+            <h5 style="color: #1e293b; font-weight: 700;">Profile အချက်အလက် ရှာမတွေ့ပါ</h5>
+            <p style="font-size: 0.92rem;">အကောင့်ပြန်လည် Login ဝင်ရောက်ပြီး ကြိုးစားကြည့်ပါ။</p>
         </div>
     }
     else
     {
-        <!-- Hero -->
+        <!-- Hero Header -->
         <div class="profile-hero">
-            <div class="avatar-wrapper" @onclick="OpenUploadModal">
+            <div class="avatar-wrapper" @onclick="OpenUploadModal" title="Profile ဓာတ်ပုံ ပြောင်းရန် နှိပ်ပါ">
                 @if (!string.IsNullOrEmpty(profile.StudentImage))
                 {
-                    <img class="avatar-img" src="@profile.StudentImage" alt="Profile" />
+                    <img class="avatar-img" src="@GetImageUrl(profile.StudentImage)" alt="Profile Photo" />
                 }
                 else
                 {
@@ -390,11 +752,11 @@
                         @(string.IsNullOrEmpty(profile.FullName) ? "S" : profile.FullName.Substring(0, 1).ToUpper())
                     </div>
                 }
-                <div class="avatar-edit-btn"><i class="fas fa-camera"></i></div>
+                <div class="avatar-edit-btn" title="ဓာတ်ပုံ ပြောင်းရန်"><i class="fas fa-camera"></i></div>
             </div>
 
             <div class="hero-name">@profile.FullName</div>
-            <div class="hero-sub">@@&nbsp;@profile.UserName</div>
+            <div class="hero-sub">@@@profile.UserName</div>
 
             <div class="hero-chips">
                 @if (!string.IsNullOrEmpty(profile.RollNo))
@@ -406,80 +768,107 @@
                     <span class="chip"><i class="fas fa-clock"></i> @profile.CurrentSemester</span>
                 }
                 <span class="chip"><i class="fas fa-book-open"></i> @profile.CurrentMajor</span>
-                <span class="chip green"><i class="fas fa-circle" style="font-size:0.5rem;"></i> @(profile.Status ?? "Active")</span>
+                @if (profile.GraduationStatus?.HasDisqualifiedSubject == true || profile.GraduationStatus?.GraduationStatus == "Disqualified" || profile.Status == "Disqualified")
+                {
+                    <span class="chip" style="background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #f87171; color: #ffffff; font-weight: 700; box-shadow: 0 0 14px rgba(239, 68, 68, 0.45);">
+                        <i class="fas fa-ban"></i> ⛔ Ineligible (ဘွဲ့ရယူခွင့်မရှိပါ)
+                    </span>
+                }
+                else if (profile.GraduationStatus?.IsGraduated == true || profile.Status == "Graduated")
+                {
+                    <span class="chip" style="background: linear-gradient(135deg, #10b981, #059669); border-color: #34d399; color: #ffffff; font-weight: 700; box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);">
+                        <i class="fas fa-graduation-cap"></i> 🎓 Graduated (ဘွဲ့ရရှိပြီး)
+                    </span>
+                }
+                else
+                {
+                    <span class="chip green"><i class="fas fa-check-circle"></i> @(profile.Status ?? "Active")</span>
+                }
             </div>
-            
         </div>
 
         <!-- Cards Grid -->
         <div class="cards-grid">
 
-            <!-- Personal Info -->
+            <!-- Personal Info Card -->
             <div class="info-card">
                 <div class="card-header-row">
-                    <div class="card-icon purple"><i class="fas fa-user" style="color:white;"></i></div>
-                    <span class="card-title">Personal Info</span>
+                    <div class="card-icon purple"><i class="fas fa-user"></i></div>
+                    <span class="card-title">ကိုယ်ရေးအချက်အလက် (Personal Info)</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Full Name</span>
+                    <span class="info-label">အမည် (Full Name)</span>
                     <span class="info-value">@profile.FullName</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Username</span>
+                    <span class="info-label">အသုံးပြုသူအမည် (Username)</span>
                     <span class="info-value">@profile.UserName</span>
                 </div>
                 @if (!string.IsNullOrEmpty(profile.Email))
                 {
                     <div class="info-row">
-                        <span class="info-label">Email</span>
+                        <span class="info-label">အီးမေးလ် (Email)</span>
                         <span class="info-value">@profile.Email</span>
                     </div>
                 }
                 @if (!string.IsNullOrEmpty(profile.Dob))
                 {
                     <div class="info-row">
-                        <span class="info-label">Date of Birth</span>
+                        <span class="info-label">မွေးသက္ကရာဇ် (Date of Birth)</span>
                         <span class="info-value">@profile.Dob</span>
                     </div>
                 }
             </div>
 
-            <!-- Academic Info -->
+            <!-- Academic Info Card -->
             <div class="info-card">
                 <div class="card-header-row">
-                    <div class="card-icon blue"><i class="fas fa-university" style="color:white;"></i></div>
-                    <span class="card-title">Academic Info</span>
+                    <div class="card-icon blue"><i class="fas fa-graduation-cap"></i></div>
+                    <span class="card-title">ပညာရေးဆိုင်ရာ အချက်အလက် (Academic Info)</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Roll No</span>
+                    <span class="info-label">ခုံအမှတ် (Roll No)</span>
                     <span class="info-value">@(profile.RollNo ?? "—")</span>
                 </div>
 
                 @if (!string.IsNullOrEmpty(profile.CurrentSemester))
                 {
                     <div class="info-row">
-                        <span class="info-label">Semester</span>
+                        <span class="info-label">လက်ရှိ Semester</span>
                         <span class="info-value">@profile.CurrentSemester</span>
                     </div>
                 }
                 <div class="info-row">
-                    <span class="info-label">Major</span>
+                    <span class="info-label">အထူးပြုဘာသာ (Major)</span>
                     <span class="info-value">@profile.CurrentMajor</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Status</span>
-                    <span class="info-value" style="color:#10b981;">@(profile.Status ?? "Active")</span>
+                    <span class="info-label">အခြေအနေ (Status)</span>
+                    <span class="info-value" style="color: @(profile.GraduationStatus?.HasDisqualifiedSubject == true || profile.GraduationStatus?.GraduationStatus == "Disqualified" || profile.Status == "Disqualified" ? "#dc2626" : (profile.Status == "Graduated" || profile.GraduationStatus?.IsGraduated == true ? "#059669" : "#16a34a")); font-weight: 700;">
+                        @if (profile.GraduationStatus?.HasDisqualifiedSubject == true || profile.GraduationStatus?.GraduationStatus == "Disqualified" || profile.Status == "Disqualified")
+                        {
+                            <span>⛔ Ineligible (ဘွဲ့ရယူခွင့်မရှိပါ)</span>
+                        }
+                        else if (profile.Status == "Graduated" || profile.GraduationStatus?.IsGraduated == true)
+                        {
+                            <span>🎓 Graduated (ဘွဲ့ရရှိပြီး)</span>
+                        }
+                        else
+                        {
+                            <span>@(profile.Status ?? "Active")</span>
+                        }
+                    </span>
                 </div>
             </div>
 
-            <!-- Semester Results -->
+            <!-- Semester Results Card -->
             <div class="info-card full">
                 <div class="card-header-row">
-                    <div class="card-icon green"><i class="fas fa-chart-bar" style="color:white;"></i></div>
-                    <span class="card-title">Semester Results</span>
+                    <div class="card-icon green"><i class="fas fa-chart-bar"></i></div>
+                    <span class="card-title">Semester အလိုက် ရလဒ်များ (Semester Results)</span>
                 </div>
                 <div class="sem-grid">
-                    @{ var semResults = new[] { profile.Sem1_Result, profile.Sem2_Result, profile.Sem3_Result, profile.Sem4_Result, profile.Sem5_Result, profile.Sem6_Result, profile.Sem7_Result, profile.Sem8_Result, profile.Sem9_Result }; }
+                    @{ var semResults = new[] { profile.Sem1_Result, profile.Sem2_Result, profile.Sem3_Result, profile.Sem4_Result, profile.Sem5_Result, profile.Sem6_Result, profile.Sem7_Result, profile.Sem8_Result }; }
                     @for (int i = 0; i < semResults.Length; i++)
                     {
                         var semNum = i + 1;
@@ -494,82 +883,336 @@
                 </div>
             </div>
 
-            <!-- Notifications / Messages -->
-            <div class="info-card full">
-                <div class="card-header-row">
-                    <div class="card-icon amber"><i class="fas fa-bell" style="color:white;"></i></div>
-                    <span class="card-title">Registration & Payment History</span>
-                </div>
+            <!-- Graduation & Degree Completion Card (155 Total Credits Rule) -->
+            @if (profile.GraduationStatus != null)
+            {
+                var g = profile.GraduationStatus;
+                bool isDisqualified = g.HasDisqualifiedSubject || g.GraduationStatus == "Disqualified";
 
-                @if (allNotifications.Count == 0)
-                {
-                    <div style="text-align:center; padding:2rem; color:rgba(255,255,255,0.3); font-size:0.85rem;">
-                        <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i>
-                        No registration records found.
-                    </div>
-                }
-                else
-                {
-                    @foreach (var noti in allNotifications)
-                    {
-                        var dotClass = noti.Type == "success" ? "success" : noti.Type == "pending" ? "pending" : "danger";
-                        <div class="noti-item">
-                            <div class="noti-dot @dotClass">
-                                <i class="fas @(noti.Type == "success" ? "fa-check" : noti.Type == "pending" ? "fa-clock" : "fa-times")"></i>
+                <div class="info-card full" style="border: 1.5px solid @(isDisqualified ? "#ef4444" : (g.IsGraduated ? "#10b981" : "#e2e8f0")); background: @(isDisqualified ? "linear-gradient(135deg, #ffffff 0%, rgba(239, 68, 68, 0.04) 100%)" : (g.IsGraduated ? "linear-gradient(135deg, #ffffff 0%, rgba(16, 185, 129, 0.04) 100%)" : "#ffffff"));">
+                    <div class="card-header-row" style="justify-content: space-between; align-items: flex-start;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="card-icon" style="background: @(isDisqualified ? "linear-gradient(135deg, #ef4444, #dc2626)" : (g.IsGraduated ? "linear-gradient(135deg, #10b981, #059669)" : "linear-gradient(135deg, #6366f1, #4f46e5)")); color: #ffffff;">
+                                <i class="fas @(isDisqualified ? "fa-ban" : "fa-graduation-cap")"></i>
                             </div>
                             <div>
-                                <div class="noti-title">@noti.Title</div>
-                                <div class="noti-sub">@noti.Sub</div>
+                                <span class="card-title">ဘွဲ့ရရှိမှု အရည်အချင်းစစ်နှင့် Credit မှတ်တမ်း စောင့်ကြည့်မှု</span>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px; font-weight: 500;">
+                                    (Graduation & Degree Completion Policy · Total @g.TargetGraduationCredits Credits Target)
+                                </div>
+                            </div>
+                        </div>
+
+                        <span class="retake-badge-pill" style="background: @(isDisqualified ? "rgba(239, 68, 68, 0.12)" : (g.IsGraduated ? "linear-gradient(135deg, #10b981, #059669)" : "rgba(99, 102, 241, 0.12)")); color: @(isDisqualified ? "#dc2626" : (g.IsGraduated ? "#ffffff" : "#4f46e5")); border: 1px solid @(isDisqualified ? "#fca5a5" : (g.IsGraduated ? "#34d399" : "rgba(99, 102, 241, 0.3)")); box-shadow: @(g.IsGraduated ? "0 2px 8px rgba(16,185,129,0.35)" : (isDisqualified ? "0 2px 8px rgba(239,68,68,0.2)" : "none"));">
+                            <i class="fas @(isDisqualified ? "fa-times-circle" : (g.IsGraduated ? "fa-award" : "fa-book-reader")) me-1"></i>
+                            @(isDisqualified ? "⛔ Ineligible (ဘွဲ့ရယူခွင့်မရှိပါ)" : (g.IsGraduated ? $"🎓 Graduated (ဘွဲ့ရရှိပြီး - {g.TotalEarnedCredits}/{g.TargetGraduationCredits} Credits)" : $"📘 Studying (ပညာသင်ယူဆဲ - {g.TotalEarnedCredits}/{g.TargetGraduationCredits} Credits)"))
+                        </span>
+                    </div>
+
+                    <!-- Metric Grid -->
+                    <div class="retake-stat-grid">
+                        <div class="retake-stat-item" style="@(isDisqualified ? "border-color: #fecaca; background: #fff5f5;" : "")">
+                            <div class="stat-num" style="color: @(isDisqualified ? "#dc2626" : (g.IsGraduated ? "#059669" : "#0f172a"));">@g.TotalEarnedCredits <span style="font-size: 0.95rem; color: #64748b; font-weight: 500;">/ @g.TargetGraduationCredits</span></div>
+                            <div class="stat-lbl"><i class="fas fa-award text-success me-1"></i> ရရှိပြီးသော Credit စုစုပေါင်း</div>
+                        </div>
+                        <div class="retake-stat-item">
+                            <div class="stat-num" style="color: #4f46e5;">@g.Sem1To7Credits <span style="font-size: 0.95rem; color: #64748b; font-weight: 500;">/ @g.TargetSem1To7Credits</span></div>
+                            <div class="stat-lbl"><i class="fas fa-book-open text-primary me-1"></i> Semester 1 ~ 7 Academic Credits</div>
+                        </div>
+                        <div class="retake-stat-item">
+                            <div class="stat-num" style="color: #d97706;">@g.Sem8Credits <span style="font-size: 0.95rem; color: #64748b; font-weight: 500;">/ @g.TargetSem8Credits</span></div>
+                            <div class="stat-lbl"><i class="fas fa-briefcase text-warning me-1"></i> Semester 8 Internship</div>
+                        </div>
+                        <div class="retake-stat-item" style="@(isDisqualified ? "border-color: #fecaca; background: #fff5f5;" : "")">
+                            <div class="stat-num" style="color: @(isDisqualified ? "#dc2626" : (g.PendingFailedSubjects == 0 ? "#10b981" : "#ef4444"));">
+                                @(isDisqualified ? "Disqualified" : (g.PendingFailedSubjects == 0 ? "All Passed" : $"{g.PendingFailedSubjects} Pending"))
+                            </div>
+                            <div class="stat-lbl"><i class="fas fa-exclamation-circle text-danger me-1"></i> ဘာသာရပ် ဖြေဆိုမှု အခြေအနေ</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="retake-progress-container">
+                        <div class="d-flex justify-content-between text-muted small fw-bold mb-1">
+                            <span style="color: #1e293b; font-size: 0.85rem;">Degree Completion Progress (ဘွဲ့ရရှိရန် တိုးတက်မှု)</span>
+                            <span style="color: @(isDisqualified ? "#dc2626" : (g.IsGraduated ? "#059669" : "#4f46e5")); font-size: 0.88rem; font-weight: 700;">
+                                @(isDisqualified ? "⛔ Ineligible (ဘွဲ့ရယူခွင့်မရှိပါ)" : $"{g.ProgressPercentage}% ({g.TotalEarnedCredits} / {g.TargetGraduationCredits} Credits)")
+                            </span>
+                        </div>
+                        <div class="retake-bar-wrapper">
+                            <div class="retake-bar-fill" style="width: @Math.Min(100, Math.Max(2, g.ProgressPercentage))%; background: @(isDisqualified ? "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" : "linear-gradient(90deg, #6366f1 0%, #3b82f6 50%, #10b981 100%)");"></div>
+                        </div>
+                    </div>
+
+                    <!-- Graduation Alert / Congratulation Banner -->
+                    <div class="retake-alert-box" style="background: @(isDisqualified ? "rgba(239, 68, 68, 0.09)" : (g.IsGraduated ? "rgba(16, 185, 129, 0.09)" : "rgba(99, 102, 241, 0.06)")); border-left: 4px solid @(isDisqualified ? "#dc2626" : (g.IsGraduated ? "#10b981" : "#6366f1"));">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <i class="fas @(isDisqualified ? "fa-ban text-danger" : (g.IsGraduated ? "fa-graduation-cap text-success" : "fa-info-circle text-primary"))" style="font-size: 1.35rem;"></i>
+                            <div style="font-size: 0.92rem; font-weight: 600; color: #0f172a;">
+                                @if (isDisqualified)
+                                {
+                                    <div class="text-danger fw-bold mb-1" style="font-size: 0.95rem;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> အသိပေးချက် - ဘွဲ့ရရှိခွင့် မရှိတော့ပါ (Ineligible for Graduation)
+                                    </div>
+                                    <span style="color: #475569; font-weight: 500;">
+                                        @g.GraduationStatusText
+                                    </span>
+                                }
+                                else if (g.IsGraduated)
+                                {
+                                    <span>🎉 ဂုဏ်ယူပါသည်! သင်သည် Semester 1 မှ 8 အထိ ဘာသာရပ်များနှင့် Internship အားလုံး အောင်မြင်ပြီး သတ်မှတ် Credit @g.TargetGraduationCredits Points အား ပြည့်မီသဖြင့် <strong>Graduated (ဘွဲ့ရရှိပြီး)</strong> အဆင့်သို့ ရောက်ရှိပြီး ဖြစ်ပါသည်။</span>
+                                }
+                                else
+                                {
+                                    <span>Semester 1 မှ 7 အထိ @g.TargetSem1To7Credits Credits နှင့် Semester 8 Internship (@g.TargetSem8Credits Credits) စုစုပေါင်း @g.TargetGraduationCredits Credits ပြည့်မီအောင် ဖြေဆိုပြီး မအောင်မြင်သေးသော Retake ဘာသာရပ်များ မကျန်ရှိမှသာ Graduated ဖြစ်မည် ဖြစ်ပါသည်။ (လက်ရှိ: @g.TotalEarnedCredits / @g.TargetGraduationCredits Credits ရရှိပြီး)</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (g.IsGraduated || isDisqualified)
+                    {
+                        <!-- 🎓 Official Academic Performance & Final CGPA / GPA Breakdown Card -->
+                        <div class="mt-4 pt-4 border-top" style="border-top: 1.5px dashed @(isDisqualified ? "#fca5a5" : "#a7f3d0") !important;">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3 pb-1">
+                                <div>
+                                    <div class="fw-bold fs-6 text-dark d-flex align-items-center gap-2">
+                                        <i class="fas fa-chart-line text-primary me-1"></i>Official Academic Standing & Cumulative GPA (CGPA)
+                                    </div>
+                                    <div class="text-muted small mt-0.5">
+                                        တရားဝင် ဘွဲ့ရလဒ် စုစုပေါင်း အမှတ်ပျမ်းမျှ (CGPA) နှင့် Semester အလိုက် ရလဒ်များ
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge px-3.5 py-2 fs-6 fw-bold shadow-sm" style="background: @(isDisqualified ? "#fef2f2" : "#ecfdf5"); color: @(isDisqualified ? "#dc2626" : "#059669"); border: 1.5px solid @(isDisqualified ? "#fca5a5" : "#6ee7b7"); border-radius: 999px;">
+                                        <i class="fas fa-star me-1"></i> Overall CGPA: @g.CumulativeGPA.ToString("F2") / 4.00
+                                    </span>
+                                    <span class="badge px-3.5 py-2 fs-6 fw-bold shadow-sm" style="background: @(isDisqualified ? "#dc2626" : "#4f46e5"); color: #ffffff !important; border-radius: 999px;">
+                                        @g.OverallAcademicStanding
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if (g.SemesterGpaList != null && g.SemesterGpaList.Any())
+                            {
+                                <div class="row g-3">
+                                    @foreach (var sem in g.SemesterGpaList)
+                                    {
+                                        <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                                            <div class="p-3 rounded-3 border bg-white shadow-sm" style="border: 1.5px solid #e2e8f0; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s;">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="fw-bold text-dark" style="font-size: 0.9rem;">@sem.SemesterName</span>
+                                                    <span class="badge px-2.5 py-1 fw-bold" style="background: #f1f5f9; color: #4338ca; border: 1px solid #cbd5e1; font-size: 0.74rem; border-radius: 6px;">@sem.TotalCredits Credits</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-baseline mt-1">
+                                                    <div class="fw-bolder fs-4" style="color: #4f46e5; line-height: 1;">@sem.SemesterGPA.ToString("F2")</div>
+                                                    <span class="badge px-2.5 py-1 fw-bold" style="background: @(sem.SemesterGPA >= 3.5m ? "#10b981" : sem.SemesterGPA >= 2.0m ? "#4f46e5" : "#64748b"); color: #ffffff !important; font-size: 0.72rem; border-radius: 6px;">@sem.Status</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Retake Status Card (Dynamic Retake Limit & Multi-Level Danger Tracking) -->
+            <div class="info-card full retake-card">
+                <div class="card-header-row" style="justify-content: space-between; align-items: flex-start;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="card-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <span class="card-title">Retake အကြိမ်အရေအတွက်နှင့် အခြေအနေ စောင့်ကြည့်မှု</span>
+                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px; font-weight: 500;">
+                                (Retake Policy & Academic Standing Monitor · Semester 1 to 8)
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (profile.RetakeStatus != null)
+                    {
+                        var r = profile.RetakeStatus;
+                        <span class="retake-badge-pill" style="background: @(r.DangerLevel == "Safe" ? "rgba(16, 185, 129, 0.12)" : r.DangerLevel == "Warning" ? "rgba(245, 158, 11, 0.12)" : r.DangerLevel == "HighDanger" ? "rgba(249, 115, 22, 0.12)" : "rgba(239, 68, 68, 0.12)"); color: @r.BadgeColor; border: 1px solid @r.BadgeColor;">
+                            <i class="fas @(r.DangerLevel == "Safe" ? "fa-shield-alt" : r.DangerLevel == "Warning" ? "fa-exclamation-circle" : r.DangerLevel == "HighDanger" ? "fa-fire" : "fa-ban") me-1"></i>
+                            @(r.DangerLevel == "Safe" ? "Level 1: Safe (ပုံမှန်)" : r.DangerLevel == "Warning" ? "Level 2: Warning (သတိပြုရန်)" : r.DangerLevel == "HighDanger" ? "Level 3: High Danger (အန္တရာယ်ရှိ)" : "Level 4: Disqualified (ကျောင်းထုတ်/ပိတ်ပင်)")
+                        </span>
+                    }
+                </div>
+
+                @if (profile.RetakeStatus != null)
+                {
+                    var r = profile.RetakeStatus;
+                    
+                    <!-- Retake Metric Summary Cards -->
+                    <div class="retake-stat-grid">
+                        <div class="retake-stat-item">
+                            <div class="stat-num" style="color: #0f172a;">@r.TotalRetakesTaken <span style="font-size: 0.95rem; color: #64748b; font-weight: 500;">/ @r.MaxRetakeLimit</span></div>
+                            <div class="stat-lbl"><i class="fas fa-redo-alt me-1 text-primary"></i> ရယူပြီးသော Retake အကြိမ်</div>
+                        </div>
+                        <div class="retake-stat-item">
+                            <div class="stat-num" style="color: @(r.RemainingRetakes <= 5 ? "#ef4444" : r.RemainingRetakes <= 10 ? "#f59e0b" : "#10b981");">@r.RemainingRetakes <span style="font-size: 0.95rem; color: #64748b; font-weight: 500;">ကြိမ်</span></div>
+                            <div class="stat-lbl"><i class="fas fa-hourglass-half me-1 text-warning"></i> ကျန်ရှိသော Retake ခွင့်ပြုချက်</div>
+                        </div>
+                        <div class="retake-stat-item">
+                            <div class="stat-num" style="color: @r.BadgeColor;">@r.UsagePercentage%</div>
+                            <div class="stat-lbl"><i class="fas fa-tachometer-alt me-1 text-info"></i> အသုံးပြုပြီးမှု ရာခိုင်နှုန်း</div>
+                        </div>
+                        <div class="retake-stat-item">
+                            <div class="stat-num" style="color: @(r.FailedSubjectsCount > 0 ? "#ef4444" : "#10b981");">@r.FailedSubjectsCount <span style="font-size: 0.95rem; color: #64748b; font-weight: 500;">ဘာသာ</span></div>
+                            <div class="stat-lbl"><i class="fas fa-times-circle me-1 text-danger"></i> လက်ရှိ မအောင်မြင်သေးသော ဘာသာရပ်</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar & Danger Levels Guide -->
+                    <div class="retake-progress-container">
+                        <div class="retake-bar-wrapper">
+                            <div class="retake-bar-fill" style="width: @Math.Min(100, Math.Max(4, r.UsagePercentage))%; background: linear-gradient(90deg, #10b981 0%, #f59e0b 60%, #f97316 80%, #ef4444 100%);"></div>
+                        </div>
+                        <div class="retake-bar-ticks">
+                            <span>0 ကြိမ် (ပုံမှန်)</span>
+                            <span>15 ကြိမ် (Warning)</span>
+                            <span>20 ကြိမ် (High Danger)</span>
+                            <span>@r.MaxRetakeLimit ကြိမ် (Max Limit)</span>
+                        </div>
+                    </div>
+
+                    <!-- Status Message Banner -->
+                    <div class="retake-alert-box" style="background: @(r.DangerLevel == "Safe" ? "rgba(16, 185, 129, 0.08)" : r.DangerLevel == "Warning" ? "rgba(245, 158, 11, 0.08)" : r.DangerLevel == "HighDanger" ? "rgba(249, 115, 22, 0.08)" : "rgba(239, 68, 68, 0.12)"); border-left: 4px solid @r.BadgeColor;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <i class="fas @(r.DangerLevel == "Safe" ? "fa-check-circle" : r.DangerLevel == "Warning" ? "fa-exclamation-triangle" : r.DangerLevel == "HighDanger" ? "fa-fire" : "fa-ban")" style="font-size: 1.25rem; color: @r.BadgeColor;"></i>
+                            <div style="font-size: 0.92rem; font-weight: 600; color: #0f172a;">
+                                @r.DangerStatusText
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (r.RetakeHistoryList.Any())
+                    {
+                        <div class="retake-history-section">
+                            <div class="retake-history-header">
+                                <div class="retake-history-title">
+                                    <i class="fas fa-list-ul text-primary"></i> Retake ရယူခဲ့ဖူးသော ဘာသာရပ်မှတ်တမ်းများ
+                                </div>
+                                <span class="retake-count-tag">
+                                    စုစုပေါင်း @r.RetakeHistoryList.Count ခု @(r.RetakeHistoryList.Count > 4 ? "(Scroll ဆွဲကြည့်နိုင်ပါသည်)" : "")
+                                </span>
+                            </div>
+                            <div class="retake-grid-container">
+                                @foreach (var historyItem in r.RetakeHistoryList)
+                                {
+                                    <div class="retake-item-card">
+                                        <div class="retake-item-left">
+                                            <i class="fas fa-redo-alt retake-item-icon"></i>
+                                            <span class="retake-item-text">@historyItem</span>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         </div>
                     }
                 }
             </div>
 
-        </div><!-- /cards-grid -->
+            <!-- Registration & Payment History Card -->
+            <div class="info-card full">
+                <div class="card-header-row" style="justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="card-icon amber"><i class="fas fa-history"></i></div>
+                        <div>
+                            <span class="card-title">ကျောင်းအပ်နှံမှုနှင့် ငွေပေးချေမှု မှတ်တမ်း</span>
+                            <span style="font-size: 0.8rem; color: #64748b; margin-left: 8px; font-weight: 500;">(Registration & Payment History)</span>
+                        </div>
+                    </div>
+                    @if (allNotifications.Count > 5)
+                    {
+                        <span style="font-size: 0.78rem; color: #64748b; background: #f1f5f9; padding: 4px 10px; border-radius: 999px; font-weight: 600;">
+                            Recent 5+ (Scrollable)
+                        </span>
+                    }
+                </div>
+
+                @if (allNotifications.Count == 0)
+                {
+                    <div style="text-align: center; padding: 2.5rem; color: #94a3b8; font-size: 0.9rem;">
+                        <i class="fas fa-inbox" style="font-size: 2.4rem; color: #cbd5e1; display: block; margin-bottom: 0.6rem;"></i>
+                        မှတ်တမ်းများ မရှိသေးပါ။
+                    </div>
+                }
+                else
+                {
+                    <div class="history-scroll-container">
+                        @foreach (var noti in allNotifications)
+                        {
+                            var dotClass = noti.Type == "success" ? "success" : noti.Type == "pending" ? "pending" : "danger";
+                            <div class="noti-item">
+                                <div class="noti-dot @dotClass">
+                                    <i class="fas @(noti.Type == "success" ? "fa-check" : noti.Type == "pending" ? "fa-clock" : "fa-times")"></i>
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div class="noti-title">@noti.Title</div>
+                                    <div class="noti-sub">@noti.Sub</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+        </div>
     }
 </div>
 
-<!-- Upload Modal -->
+<!-- Upload Profile Photo Modal -->
 @if (showUploadModal)
 {
     <div class="upload-overlay" @onclick="CloseUploadModal">
         <div class="upload-modal" @onclick:stopPropagation="true">
-            <h5><i class="fas fa-camera me-2"></i>Change Profile Photo</h5>
+            <h5><i class="fas fa-camera me-2 text-primary"></i>Profile ဓာတ်ပုံ ပြောင်းလဲခြင်း</h5>
 
             @if (!string.IsNullOrEmpty(previewBase64))
             {
-                <img class="upload-preview" src="@previewBase64" alt="Preview" />
+                <img class="upload-preview" src="@previewBase64" alt="Preview Photo" />
             }
             else if (!string.IsNullOrEmpty(profile?.StudentImage))
             {
-                <img class="upload-preview" src="@profile!.StudentImage" alt="Current" />
+                <img class="upload-preview" src="@GetImageUrl(profile!.StudentImage)" alt="Current Photo" />
             }
             else
             {
-                <div class="upload-preview" style="background:linear-gradient(135deg,#5a4fcf,#7c3aed); display:flex; align-items:center; justify-content:center; color:white; font-size:2.5rem; font-weight:700;">
+                <div class="upload-preview" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 2.8rem; font-weight: 700;">
                     @(string.IsNullOrEmpty(profile?.FullName) ? "S" : profile.FullName.Substring(0, 1).ToUpper())
                 </div>
             }
 
             <label class="upload-area" for="profileFileInput" style="display: block; cursor: pointer;">
-                <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem; color:rgba(255,255,255,0.4); display:block; margin-bottom:8px;"></i>
-                <p>Click to select a photo (JPG, PNG, max 2MB)</p>
+                <i class="fas fa-cloud-upload-alt" style="font-size: 1.8rem; color: #3b82f6; display: block; margin-bottom: 8px;"></i>
+                <p>ဓာတ်ပုံရွေးချယ်ရန် နှိပ်ပါ (JPG, PNG, max 5MB)</p>
             </label>
 
-            <InputFile id="profileFileInput" OnChange="OnFileSelected" accept="image/*" style="opacity: 0; position: absolute; width: 1px; height: 1px; z-index: -1;" />
+            <InputFile id="profileFileInput" OnChange="OnFileSelected" accept="image/*" style="display: none;" />
 
             <button class="btn-primary-grad" @onclick="SaveProfileImage" disabled="@(string.IsNullOrEmpty(previewBase64) || isSaving)">
-                @if (isSaving) { <span class="loading-spin"></span> } Confirm & Save
+                @if (isSaving)
+                {
+                    <span class="loading-spin"></span>
+                }
+                သိမ်းဆည်းမည် (Save Photo)
             </button>
-            <button class="btn-ghost" @onclick="CloseUploadModal">Cancel</button>
+            <button class="btn-ghost" @onclick="CloseUploadModal">မလုပ်တော့ပါ (Cancel)</button>
         </div>
     </div>
 }
 
 @if (showToast)
 {
-    <div class="toast-msg"><i class="fas fa-check me-2"></i>@toastMessage</div>
+    <div class="toast-msg">
+        <i class="fas fa-info-circle text-primary"></i>
+        <span>@toastMessage</span>
+    </div>
 }
 
 @code {
@@ -593,11 +1236,13 @@
             NavigationManager.NavigateTo("/login", true);
             return;
         }
+
         var idClaim = user.FindFirst("UserId")?.Value
                       ?? user.FindFirst("User_Id")?.Value
                       ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                       ?? user.FindFirst("id")?.Value
                       ?? user.FindFirst("uid")?.Value;
+
         int.TryParse(idClaim, out currentUserId);
         await LoadProfile();
     }
@@ -609,6 +1254,7 @@
         {
             var data = await HttpClientService.ExecuteAsync<StudentProfileDto>(
                 $"student/profile/{currentUserId}", EnumHttpMethod.Get);
+
             if (data != null)
             {
                 profile = data;
@@ -630,28 +1276,33 @@
         allNotifications.Clear();
         if (profile?.Registrations == null) return;
 
+        var list = new List<NotifRow>();
         foreach (var reg in profile.Registrations)
         {
             var regStatus = reg.Status ?? "Pending";
             var type = regStatus == "Approved" ? "success" : regStatus == "Rejected" ? "danger" : "pending";
-            allNotifications.Add(new NotifRow
+            list.Add(new NotifRow
             {
-                Title = $"Registration ({reg.AcademicYearRange} · {reg.AcademicYearLevel}): {regStatus}",
-                Sub   = reg.CreatedDatetime.HasValue ? reg.CreatedDatetime.Value.ToString("dd MMM yyyy") : "",
-                Type  = type
+                Title = $"ကျောင်းအပ်နှံမှု ({reg.AcademicYearRange} · {reg.AcademicYearLevel}): {regStatus}",
+                Sub   = reg.CreatedDatetime.HasValue ? reg.CreatedDatetime.Value.ToString("dd MMM yyyy hh:mm tt") : "",
+                Type  = type,
+                Timestamp = reg.CreatedDatetime
             });
 
             foreach (var pay in reg.Payments ?? new())
             {
                 var payType = pay.Status == "Approved" ? "success" : pay.Status == "Rejected" ? "danger" : "pending";
-                allNotifications.Add(new NotifRow
+                list.Add(new NotifRow
                 {
-                    Title = $"Payment #{pay.PaymentId}: {pay.Status ?? "Pending"}  {(pay.AmountPaid.HasValue ? $"(MMK {pay.AmountPaid:N0})" : "")}",
-                    Sub   = pay.CreatedDateTime.HasValue ? pay.CreatedDateTime.Value.ToString("dd MMM yyyy") : "",
-                    Type  = payType
+                    Title = $"ငွေပေးချေမှု #{pay.PaymentId}: {pay.Status ?? "Pending"} {(pay.AmountPaid.HasValue ? $"(MMK {pay.AmountPaid:N0})" : "")}",
+                    Sub   = pay.CreatedDateTime.HasValue ? pay.CreatedDateTime.Value.ToString("dd MMM yyyy hh:mm tt") : "",
+                    Type  = payType,
+                    Timestamp = pay.CreatedDateTime
                 });
             }
         }
+
+        allNotifications = list.OrderByDescending(x => x.Timestamp ?? DateTime.MinValue).ToList();
     }
 
     private void OpenUploadModal()
@@ -666,48 +1317,62 @@
         previewBase64 = null;
     }
 
-    private async Task TriggerFilePicker()
-    {
-        await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('profileFileInput').click()");
-    }
-
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         var file = e.File;
         if (file == null) return;
-        if (file.Size > 2 * 1024 * 1024)
+
+        if (file.Size > 5 * 1024 * 1024)
         {
-            await ShowToast("File is too large (max 2 MB)");
+            await ShowToast("ဓာတ်ပုံဖိုင်ဆိုဒ် ကြီးလွန်းပါသည် (အများဆုံး 5 MB)");
             return;
         }
 
-        var buffer = new byte[file.Size];
-        await file.OpenReadStream(2 * 1024 * 1024).ReadAsync(buffer);
-        var base64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
-        previewBase64 = base64;
+        try
+        {
+            using var stream = file.OpenReadStream(10 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var buffer = ms.ToArray();
+            var base64 = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+            previewBase64 = base64;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading image: {ex.Message}");
+            await ShowToast("ဓာတ်ပုံဖတ်ရှုရာတွင် အမှားဖြစ်ပေါ်ပါသည်");
+        }
     }
 
     private async Task SaveProfileImage()
     {
         if (string.IsNullOrEmpty(previewBase64)) return;
+        if (currentUserId <= 0)
+        {
+            await ShowToast("အသုံးပြုသူ အချက်အလက် မတွေ့ရှိပါ။");
+            return;
+        }
+
         isSaving = true;
         try
         {
             var payload = new { imageBase64 = previewBase64 };
             var result = await HttpClientService.ExecuteAsync<object>(
                 $"student/profile/{currentUserId}/image", EnumHttpMethod.Put, payload);
-            if (profile != null) 
+
+            if (profile != null)
             {
                 profile.StudentImage = previewBase64;
                 await NotifierService.NotifyProfileImageChanged(currentUserId, previewBase64);
             }
             showUploadModal = false;
             previewBase64 = null;
-            await ShowToast("Profile photo updated!");
+            await ShowToast("Profile ဓာတ်ပုံ အောင်မြင်စွာ ပြောင်းလဲပြီးပါပြီ!");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Image save error: {ex.Message}");
+            await ShowToast("ဓာတ်ပုံသိမ်းဆည်းရာတွင် အမှားဖြစ်ပေါ်ပါသည်");
         }
         finally
         {
@@ -723,6 +1388,17 @@
         await Task.Delay(3000);
         showToast = false;
         StateHasChanged();
+    }
+
+    private string GetImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return "";
+        if (path.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return path;
+        if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        var baseUrl = Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5077";
+        return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
     }
 
     // ─── DTOs ───
@@ -750,6 +1426,8 @@
         public string? Sem8_Result { get; set; }
         public string? Sem9_Result { get; set; }
         public List<RegDto>? Registrations { get; set; }
+        public Smart_Campus_PUMUB.WebApi.Models.StudentRetakeStatusModel? RetakeStatus { get; set; }
+        public Smart_Campus_PUMUB.WebApi.Models.StudentGraduationStatusModel? GraduationStatus { get; set; }
     }
 
     public class RegDto
@@ -775,5 +1453,6 @@
         public string Title { get; set; } = "";
         public string Sub   { get; set; } = "";
         public string Type  { get; set; } = "pending";
+        public DateTime? Timestamp { get; set; }
     }
 }

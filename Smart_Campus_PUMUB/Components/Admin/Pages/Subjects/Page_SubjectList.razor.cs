@@ -3,14 +3,19 @@ using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.AspNetCore.Components.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Subject;
 
-public partial class Page_SubjectList
+public partial class Page_SubjectList : IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<SubjectModel> SubjectList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -39,7 +44,6 @@ public partial class Page_SubjectList
     {
         SelectedSemesterInput = semester ?? "All";
         isSemesterDropdownOpen = false;
-        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
     }
 
     private void CloseAllDropdowns()
@@ -52,7 +56,7 @@ public partial class Page_SubjectList
         CloseAllDropdowns();
         IsLoading = true;
         StateHasChanged();
-        await Task.Delay(1000);
+        await Task.Delay(300);
         SearchTerm = SearchInput;
         SelectedSemester = SelectedSemesterInput;
         CurrentPage = 1;
@@ -65,7 +69,7 @@ public partial class Page_SubjectList
         CloseAllDropdowns();
         IsLoading = true;
         StateHasChanged();
-        await Task.Delay(1000);
+        await Task.Delay(300);
         SearchInput = "";
         SearchTerm = "";
         SelectedSemesterInput = "All";
@@ -122,17 +126,31 @@ public partial class Page_SubjectList
     {
         IsLoading = true;
         StateHasChanged();
-        await Task.Delay(1000);
+        await Task.Delay(300);
         CurrentPage = newPage;
         IsLoading = false;
         StateHasChanged();
     }
 
-    protected override async Task OnInitializedAsync() => await LoadSubjects();
+    protected override async Task OnInitializedAsync()
+    {
+        LangService.OnLanguageChanged += StateHasChanged;
+        await LoadSubjects();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -156,7 +174,7 @@ public partial class Page_SubjectList
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<List<SubjectModel>>("subject", EnumHttpMethod.Get);
             await Task.WhenAll(fetchTask, delayTask);
             SubjectList = await fetchTask ?? new();
@@ -194,8 +212,7 @@ public partial class Page_SubjectList
         if (SelectedSubject == null) return;
 
         IsProcessing = true;
-
-        statusMessage = string.Empty;
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -207,7 +224,7 @@ public partial class Page_SubjectList
             if (response?.IsSuccess == true)
             {
                 IsSuccess = true;
-                statusMessage = response.Message ?? "Subject ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
 
                 await LoadSubjects();
                 await Task.Delay(800);
@@ -217,18 +234,23 @@ public partial class Page_SubjectList
             else
             {
                 IsSuccess = false;
-                statusMessage = response?.Message ?? "Subject ကို ဖျက်၍ မရပါ။";
+                statusMessage = LangService.IsMyanmar ? "ဤဘာသာရပ်ကို ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this subject.");
             }
         }
         catch (Exception ex)
         {
             IsSuccess = false;
-            statusMessage = $"Error: {ex.Message}";
+            statusMessage = LangService.IsMyanmar ? "ဤဘာသာရပ်ကို ဖျက်၍ မရပါ။" : $"Error: {ex.Message}";
         }
         finally
         {
             IsProcessing = false;
             StateHasChanged();
         }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

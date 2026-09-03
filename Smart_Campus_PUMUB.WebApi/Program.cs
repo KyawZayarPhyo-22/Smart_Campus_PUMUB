@@ -17,6 +17,11 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestBodySize = 100_000_000;
 });
 
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -58,11 +63,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddDbContext<SmartCampusDbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Mail Service
+// Services
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IFacultyDataScopeService, FacultyDataScopeService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IGradeService, GradeService>();
+builder.Services.AddHttpClient<IKpayGatewayService, KpayGatewayService>();
 
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("Jwt").Bind(jwtSettings);
@@ -142,6 +148,37 @@ using (var scope = app.Services.CreateScope())
                 END
             END
         ");
+        // Step 5: Add Student, NRC, Census, and Parents NRC image columns if missing
+        db.Database.ExecuteSqlRaw(@"
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Student_Registrations]') AND name = 'nrc_front_image')
+            BEGIN
+                ALTER TABLE [dbo].[Student_Registrations] ADD [nrc_front_image] NVARCHAR(MAX) NULL, [nrc_back_image] NVARCHAR(MAX) NULL, [census_image] NVARCHAR(MAX) NULL;
+            END
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Student_Registrations]') AND name = 'father_nrc_front_image')
+            BEGIN
+                ALTER TABLE [dbo].[Student_Registrations] ADD [father_nrc_front_image] NVARCHAR(MAX) NULL, [father_nrc_back_image] NVARCHAR(MAX) NULL, [mother_nrc_front_image] NVARCHAR(MAX) NULL, [mother_nrc_back_image] NVARCHAR(MAX) NULL;
+            END
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[StudentPersonalInfo]') AND name = 'student_image')
+            BEGIN
+                ALTER TABLE [dbo].[StudentPersonalInfo] ADD [student_image] NVARCHAR(MAX) NULL;
+            END
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[StudentPersonalInfo]') AND name = 'nrc_front_image')
+            BEGIN
+                ALTER TABLE [dbo].[StudentPersonalInfo] ADD [nrc_front_image] NVARCHAR(MAX) NULL, [nrc_back_image] NVARCHAR(MAX) NULL, [census_image] NVARCHAR(MAX) NULL;
+            END
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[StudentPersonalInfo]') AND name = 'father_nrc_front_image')
+            BEGIN
+                ALTER TABLE [dbo].[StudentPersonalInfo] ADD [father_nrc_front_image] NVARCHAR(MAX) NULL, [father_nrc_back_image] NVARCHAR(MAX) NULL, [mother_nrc_front_image] NVARCHAR(MAX) NULL, [mother_nrc_back_image] NVARCHAR(MAX) NULL;
+            END
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Student]') AND name = 'Nrc_Front_Image')
+            BEGIN
+                ALTER TABLE [dbo].[Student] ADD [Nrc_Front_Image] NVARCHAR(MAX) NULL, [Nrc_Back_Image] NVARCHAR(MAX) NULL, [Census_Image] NVARCHAR(MAX) NULL;
+            END
+            IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'[dbo].[Student]') AND name = 'Father_Nrc_Front_Image')
+            BEGIN
+                ALTER TABLE [dbo].[Student] ADD [Father_Nrc_Front_Image] NVARCHAR(MAX) NULL, [Father_Nrc_Back_Image] NVARCHAR(MAX) NULL, [Mother_Nrc_Front_Image] NVARCHAR(MAX) NULL, [Mother_Nrc_Back_Image] NVARCHAR(MAX) NULL;
+            END
+        ");
     }
     catch (Exception ex)
     {
@@ -149,6 +186,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+
+app.UseResponseCompression();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

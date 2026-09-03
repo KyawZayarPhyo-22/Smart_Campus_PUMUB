@@ -48,6 +48,7 @@ public class SubjectController : ControllerBase
                                SubjectId   = s.SubjectId,
                                SubjectName = s.SubjectName,
                                SubjectCode = s.SubjectCode,
+                               Credit      = s.Credit,
                                SubjectType = s.SubjectType,
                                SemesterId  = s.SemesterId,
                                SemesterName = s.Semester.SemesterName,
@@ -83,6 +84,7 @@ public class SubjectController : ControllerBase
             SubjectId    = item.SubjectId,
             SubjectName  = item.SubjectName,
             SubjectCode  = item.SubjectCode,
+            Credit       = item.Credit,
             SubjectType  = item.SubjectType,
             SemesterId   = item.SemesterId,
             SemesterName = item.Semester?.SemesterName,
@@ -125,6 +127,7 @@ public class SubjectController : ControllerBase
                            SubjectId    = s.SubjectId,
                            SubjectName  = s.SubjectName,
                            SubjectCode  = s.SubjectCode,
+                           Credit       = s.Credit,
                            SubjectType  = s.SubjectType,
                            SemesterId   = s.SemesterId,
                            SemesterName = s.Semester.SemesterName,
@@ -180,6 +183,7 @@ public class SubjectController : ControllerBase
                 SubjectId    = s.SubjectId,
                 SubjectName  = s.SubjectName,
                 SubjectCode  = s.SubjectCode,
+                Credit       = s.Credit,
                 SubjectType  = s.SubjectType,
                 SemesterId   = s.SemesterId,
                 SemesterName = s.Semester.SemesterName,
@@ -243,6 +247,7 @@ public class SubjectController : ControllerBase
             MajorId     = request.MajorId,
             SubjectName = request.SubjectName!.Trim(),
             SubjectCode = request.SubjectCode!.Trim().ToUpper(),
+            Credit      = request.Credit > 0 ? request.Credit : 3,
             SubjectType = request.SubjectType,
             CreatedDateTime = DateTime.Now,
             CreatedBy   = request.CreatedBy,
@@ -330,6 +335,7 @@ public class SubjectController : ControllerBase
         item.MajorId         = request.MajorId;
         item.SubjectName     = request.SubjectName!.Trim();
         item.SubjectCode     = request.SubjectCode!.Trim().ToUpper();
+        item.Credit          = request.Credit > 0 ? request.Credit : 3;
         item.SubjectType     = request.SubjectType;
         item.ModifiedDateTime = DateTime.Now;
         item.ModifiedBy      = request.ModifiedBy;

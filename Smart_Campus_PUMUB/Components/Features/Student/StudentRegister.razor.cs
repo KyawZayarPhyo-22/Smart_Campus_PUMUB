@@ -17,6 +17,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
         [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
         [Inject] public StudentRegistrationNotifierService NotifierService { get; set; } = null!;
+        [Inject] public IConfiguration Configuration { get; set; } = null!;
 
         private const string PendingConfirmationStatus = "Pending Confirmation";
         private const string LegacyPendingStatus = "Pending";
@@ -29,6 +30,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             stipend_requested = false,
             gender_relation = "Male",
             blood_type = "O",
+            past_exam_major = "မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဇီဝ",
+            past_exam_status = "Pass",
             academic_year_range = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}"
             // admission_year intentionally left null — filled from DB or user input
         };
@@ -45,8 +48,16 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
         // --- Graduation / Semester Progression ---
         public bool IsGraduated { get; set; } = false;
+        public int TotalRequiredSemesters { get; set; } = 8;
         public int AllowedSemesterSequence { get; set; } = 1;
         public string? AllowedSemesterName { get; set; }
+        public StudentRetakeStatusModel? RetakeStatus { get; set; }
+
+        private void OnMatricRollNoInput(ChangeEventArgs e)
+        {
+            var raw = e.Value?.ToString() ?? "";
+            RegModel.matric_roll_no = System.Text.RegularExpressions.Regex.Replace(raw, @"[^\u1000-\u1049\u104E\u103F\-\/\s]", "");
+        }
 
         //public void CloseModal()
         //{
@@ -59,28 +70,54 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public bool IsSubmitting { get; set; } = false;
 
         public DateTime? DobDate { get; set; }
+        public string MaxAllowedDobString => DateTime.Today.AddYears(-16).ToString("yyyy-MM-dd");
         public DateTime? CovidDate { get; set; }
         public DateTime? SignDate { get; set; } = DateTime.Today;
 
         public string? PreviewImageUrl { get; set; }
         public IBrowserFile? SelectedPhotoFile { get; set; }
         public byte[]? SelectedPhotoBytes { get; set; }
+
+        public string? PreviewNrcFrontUrl { get; set; }
+        public IBrowserFile? SelectedNrcFrontFile { get; set; }
+        public byte[]? SelectedNrcFrontBytes { get; set; }
+
+        public string? PreviewNrcBackUrl { get; set; }
+        public IBrowserFile? SelectedNrcBackFile { get; set; }
+        public byte[]? SelectedNrcBackBytes { get; set; }
+
+        public string? PreviewCensusUrl { get; set; }
+        public IBrowserFile? SelectedCensusFile { get; set; }
+        public byte[]? SelectedCensusBytes { get; set; }
+
+        // Parent NRC images
+        public string? PreviewFatherNrcFrontUrl { get; set; }
+        public IBrowserFile? SelectedFatherNrcFrontFile { get; set; }
+        public byte[]? SelectedFatherNrcFrontBytes { get; set; }
+
+        public string? PreviewFatherNrcBackUrl { get; set; }
+        public IBrowserFile? SelectedFatherNrcBackFile { get; set; }
+        public byte[]? SelectedFatherNrcBackBytes { get; set; }
+
+        public string? PreviewMotherNrcFrontUrl { get; set; }
+        public IBrowserFile? SelectedMotherNrcFrontFile { get; set; }
+        public byte[]? SelectedMotherNrcFrontBytes { get; set; }
+
+        public string? PreviewMotherNrcBackUrl { get; set; }
+        public IBrowserFile? SelectedMotherNrcBackFile { get; set; }
+        public byte[]? SelectedMotherNrcBackBytes { get; set; }
+
         public List<SemesterModel> SemesterList { get; set; } = new();
 
         public List<FacultyModel> FacultyList { get; set; } = new();
+        public List<MajorModel> MajorList { get; set; } = new();
         public int? SelectedFacultyId { get; set; }
 
         // --- Subject Grade (Step 3) ---
         public List<SubjectModel> UpcomingSubjects { get; set; } = new();
         public List<SubjectGradeBindingModel> PreviousSubjects { get; set; } = new();
         public List<GradeModel> AllGrades { get; set; } = new();
-
-        // Faculty → Majors mapping
-        private static readonly Dictionary<string, List<string>> FacultyMajorsMap = new(StringComparer.OrdinalIgnoreCase)
-        {
-            { "Computer",        new() { "Computer Science", "Computer Technology", "Information Technology" } },
-            { "Engineering",     new() { "Civil Engineering", "Electronic Engineering", "Electrical Power Engineering", "Mechanical Engineering", "Information Technology Engineering" } },
-        };
+        public string? PreviousSemesterDisplayName { get; set; }
 
         public List<string> FilteredMajors { get; set; } = new();
 
@@ -89,74 +126,172 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             if (int.TryParse(e.Value?.ToString(), out var facId))
             {
                 SelectedFacultyId = facId;
-                var fac = FacultyList.FirstOrDefault(f => f.FacultyId == facId);
-                RegModel.major = null;
-                FilteredMajors = GetMajorsForFaculty(fac?.FacultyName);
             }
             else
             {
                 SelectedFacultyId = null;
-                RegModel.major = null;
-                FilteredMajors = GetAllMajors();
             }
+            UpdateFilteredMajors();
             StateHasChanged();
+        }
+
+        private void UpdateFilteredMajors()
+        {
+            if (SelectedFacultyId.HasValue && SelectedFacultyId.Value > 0)
+            {
+                // 1. Direct match by FacultyId from DB MajorList
+                var majorsForFaculty = MajorList
+                    .Where(m => m.FacultyId == SelectedFacultyId.Value)
+                    .Select(m => m.MajorName?.Trim())
+                    .Where(m => !string.IsNullOrEmpty(m))
+                    .Select(m => m!)
+                    .ToList();
+
+                // 2. Fallback heuristic matching if needed
+                if (!majorsForFaculty.Any())
+                {
+                    var fac = FacultyList.FirstOrDefault(f => f.FacultyId == SelectedFacultyId.Value);
+                    var facName = fac?.FacultyName?.Trim() ?? "";
+
+                    if (facName.Contains("Comput", StringComparison.OrdinalIgnoreCase) ||
+                        facName.Contains("IT", StringComparison.OrdinalIgnoreCase) ||
+                        facName.Contains("Information", StringComparison.OrdinalIgnoreCase))
+                    {
+                        majorsForFaculty = MajorList
+                            .Where(m => m.MajorName != null && (m.MajorName.Contains("Computer", StringComparison.OrdinalIgnoreCase) || m.MajorName.Contains("Information", StringComparison.OrdinalIgnoreCase)))
+                            .Select(m => m.MajorName!.Trim())
+                            .ToList();
+
+                        if (!majorsForFaculty.Any())
+                        {
+                            majorsForFaculty = new() { "Computer Science", "Computer Technology", "Information Technology" };
+                        }
+                    }
+                    else if (facName.Contains("Engineer", StringComparison.OrdinalIgnoreCase) ||
+                             facName.Contains("Civil", StringComparison.OrdinalIgnoreCase) ||
+                             facName.Contains("Electrical", StringComparison.OrdinalIgnoreCase) ||
+                             facName.Contains("Mechanical", StringComparison.OrdinalIgnoreCase))
+                    {
+                        majorsForFaculty = MajorList
+                            .Where(m => m.MajorName != null && m.MajorName.Contains("Engineering", StringComparison.OrdinalIgnoreCase))
+                            .Select(m => m.MajorName!.Trim())
+                            .ToList();
+
+                        if (!majorsForFaculty.Any())
+                        {
+                            majorsForFaculty = new() { "Civil Engineering", "Electrical Engineering", "Mechanical Engineering", "Mechatronic Engineering", "Electronic Engineering", "Electrical Power Engineering" };
+                        }
+                    }
+                }
+
+                FilteredMajors = majorsForFaculty.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+                // Reset major selection if the currently selected major is not in the filtered list
+                if (!string.IsNullOrEmpty(RegModel.major) && !FilteredMajors.Contains(RegModel.major, StringComparer.OrdinalIgnoreCase))
+                {
+                    RegModel.major = null;
+                }
+            }
+            else
+            {
+                FilteredMajors = MajorList.Any()
+                    ? MajorList.Select(m => m.MajorName?.Trim()).Where(m => !string.IsNullOrEmpty(m)).Select(m => m!).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
+                    : GetAllMajors();
+            }
         }
 
         private void AutoSelectFacultyForMajor(string? major)
         {
-            if (string.IsNullOrEmpty(major) || FacultyList == null || !FacultyList.Any())
-                return;
+            if (string.IsNullOrEmpty(major)) return;
 
-            string? foundKey = null;
-            foreach (var kv in FacultyMajorsMap)
+            var matchedMajor = MajorList.FirstOrDefault(m => string.Equals(m.MajorName?.Trim(), major.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (matchedMajor?.FacultyId != null && matchedMajor.FacultyId > 0)
             {
-                if (kv.Value.Any(m => string.Equals(m, major, StringComparison.OrdinalIgnoreCase)))
+                SelectedFacultyId = matchedMajor.FacultyId;
+                UpdateFilteredMajors();
+                return;
+            }
+
+            if (major.Contains("Computer", StringComparison.OrdinalIgnoreCase) || major.Contains("Information", StringComparison.OrdinalIgnoreCase) || major.Equals("CS", StringComparison.OrdinalIgnoreCase) || major.Equals("CT", StringComparison.OrdinalIgnoreCase))
+            {
+                var compFac = FacultyList.FirstOrDefault(f => f.FacultyName != null && (f.FacultyName.Contains("Comput", StringComparison.OrdinalIgnoreCase) || f.FacultyName.Contains("Information", StringComparison.OrdinalIgnoreCase)));
+                if (compFac != null)
                 {
-                    foundKey = kv.Key;
-                    break;
+                    SelectedFacultyId = compFac.FacultyId;
+                    UpdateFilteredMajors();
+                    return;
                 }
             }
-
-            FacultyModel? matchedFac = null;
-            if (!string.IsNullOrEmpty(foundKey))
+            else if (major.Contains("Engineer", StringComparison.OrdinalIgnoreCase))
             {
-                matchedFac = FacultyList.FirstOrDefault(f => !string.IsNullOrEmpty(f.FacultyName) && f.FacultyName.Contains(foundKey, StringComparison.OrdinalIgnoreCase));
+                var engFac = FacultyList.FirstOrDefault(f => f.FacultyName != null && f.FacultyName.Contains("Engineer", StringComparison.OrdinalIgnoreCase));
+                if (engFac != null)
+                {
+                    SelectedFacultyId = engFac.FacultyId;
+                    UpdateFilteredMajors();
+                    return;
+                }
             }
-
-            if (matchedFac == null)
-            {
-                matchedFac = FacultyList.FirstOrDefault(f => !string.IsNullOrEmpty(f.FacultyName) && (
-                    f.FacultyName.Contains(major, StringComparison.OrdinalIgnoreCase) ||
-                    major.Contains(f.FacultyName, StringComparison.OrdinalIgnoreCase)
-                ));
-            }
-
-            if (matchedFac != null)
-            {
-                SelectedFacultyId = matchedFac.FacultyId;
-                FilteredMajors = GetMajorsForFaculty(matchedFac.FacultyName);
-            }
-        }
-
-        private List<string> GetMajorsForFaculty(string? facultyName)
-        {
-            if (string.IsNullOrEmpty(facultyName)) return GetAllMajors();
-            foreach (var kv in FacultyMajorsMap)
-            {
-                if (facultyName.Contains(kv.Key, StringComparison.OrdinalIgnoreCase))
-                    return kv.Value;
-            }
-            return GetAllMajors();
         }
 
         private static List<string> GetAllMajors() => new()
         {
             "Computer Science", "Computer Technology", "Information Technology",
             "Civil Engineering", "Electronic Engineering", "Electrical Power Engineering",
-            "Mechanical Engineering", "Information Technology Engineering"
+            "Mechanical Engineering", "Mechatronic Engineering"
         };
-        public string PastExamSemester { get; set; } = "";
+        public string PastExamSemester { get; set; } = "တက္ကသိုလ်ဝင်စာမေးပွဲ";
         public DateTime? PastExamDate { get; set; }
+
+        public bool IsMatriculationPastExam =>
+            string.IsNullOrEmpty(PastExamSemester) ||
+            PastExamSemester == "တက္ကသိုလ်ဝင်စာမေးပွဲ";
+
+        private void OnPastExamSemesterChanged()
+        {
+            if (IsMatriculationPastExam)
+            {
+                if (string.IsNullOrEmpty(RegModel.past_exam_major) ||
+                    (RegModel.past_exam_major != "မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဇီဝ" &&
+                     RegModel.past_exam_major != "မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဘောဂ" &&
+                     RegModel.past_exam_major != "မြန်မာ/အင်္ဂလိပ်/ပထဝီ/သမိုင်း/ဘောဂ"))
+                {
+                    RegModel.past_exam_major = "မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဇီဝ";
+                }
+                RegModel.past_exam_status = "Pass";
+                if (string.IsNullOrEmpty(RegModel.past_exam_roll_no) && !string.IsNullOrEmpty(RegModel.matric_roll_no))
+                {
+                    RegModel.past_exam_roll_no = RegModel.matric_roll_no;
+                }
+            }
+            else
+            {
+                // University Semester selected (e.g. Semester I, Semester II)
+                // Default past_exam_major to the student's selected/current major (e.g. "CST")
+                if (!string.IsNullOrEmpty(RegModel.major) && 
+                    (string.IsNullOrEmpty(RegModel.past_exam_major) || 
+                     RegModel.past_exam_major.Contains("မြန်မာ") || 
+                     RegModel.past_exam_major.Contains("အင်္ဂလိပ်")))
+                {
+                    RegModel.past_exam_major = RegModel.major;
+                }
+
+                // If repeating/retaking the same semester, default status to "Fail"
+                if (string.Equals(PastExamSemester, RegModel.academic_year_level, StringComparison.OrdinalIgnoreCase))
+                {
+                    RegModel.past_exam_status = "Fail";
+                }
+                else
+                {
+                    RegModel.past_exam_status = "Pass";
+                }
+
+                if (string.IsNullOrEmpty(RegModel.past_exam_roll_no) && !string.IsNullOrEmpty(RegModel.roll_no))
+                {
+                    RegModel.past_exam_roll_no = RegModel.roll_no;
+                }
+            }
+        }
 
         public string NrcType { get; set; } = "(နိုင်)";
         public List<string> CurrentTownshipList { get; set; } = new();
@@ -214,6 +349,32 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 var info = await HttpClientService.ExecuteAsync<StudentPersonalInfoResponse>($"studentpersonalinfo/by-roll/{Uri.EscapeDataString(val)}", EnumHttpMethod.Get);
                 if (info != null)
                 {
+                    // Ensure RegModel.UserId / NewStudentAccId is populated from current auth state if not yet set
+                    if ((!RegModel.UserId.HasValue || RegModel.UserId <= 0) && (!RegModel.NewStudentAccId.HasValue || RegModel.NewStudentAccId <= 0))
+                    {
+                        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                        var user = authState.User;
+                        if (user.Identity?.IsAuthenticated == true)
+                        {
+                            var userIdStr = user.FindFirst("UserId")?.Value
+                                         ?? user.FindFirst("User_Id")?.Value
+                                         ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                         ?? user.FindFirst("id")?.Value
+                                         ?? user.FindFirst("uid")?.Value
+                                         ?? user.FindFirst("sub")?.Value;
+                            if (int.TryParse(userIdStr, out int uId))
+                            {
+                                RegModel.UserId = uId;
+                            }
+
+                            var newAccStr = user.FindFirst("NewStudentAccId")?.Value;
+                            if (int.TryParse(newAccStr, out int nId))
+                            {
+                                RegModel.NewStudentAccId = nId;
+                            }
+                        }
+                    }
+
                     // ====================================================================
                     // SECURITY CHECK: Prevent using another user's Roll No for Auto-Fill
                     // ====================================================================
@@ -284,8 +445,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     if (info.FacultyId.HasValue && info.FacultyId.Value > 0)
                     {
                         SelectedFacultyId = info.FacultyId.Value;
-                        var fac = FacultyList.FirstOrDefault(f => f.FacultyId == info.FacultyId.Value);
-                        FilteredMajors = GetMajorsForFaculty(fac?.FacultyName);
+                        UpdateFilteredMajors();
                     }
                     else if (!string.IsNullOrEmpty(info.major))
                     {
@@ -309,6 +469,52 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     RegModel.nrc_type     = info.nrc_type;
                     RegModel.nrc_number   = info.nrc_number;
                     if (!string.IsNullOrEmpty(info.nrc_type)) NrcType = info.nrc_type;
+
+                    // ── NRC & Census document images auto-fill ──
+                    if (!string.IsNullOrEmpty(info.nrc_front_image))
+                    {
+                        RegModel.nrc_front_image = info.nrc_front_image;
+                        PreviewNrcFrontUrl = GetImageUrl(info.nrc_front_image);
+                    }
+                    if (!string.IsNullOrEmpty(info.nrc_back_image))
+                    {
+                        RegModel.nrc_back_image = info.nrc_back_image;
+                        PreviewNrcBackUrl = GetImageUrl(info.nrc_back_image);
+                    }
+                    if (!string.IsNullOrEmpty(info.census_image))
+                    {
+                        RegModel.census_image = info.census_image;
+                        PreviewCensusUrl = GetImageUrl(info.census_image);
+                    }
+
+                    // ── Passport photo auto-fill ──
+                    if (!string.IsNullOrEmpty(info.student_image))
+                    {
+                        RegModel.student_image = info.student_image;
+                        PreviewImageUrl = GetImageUrl(info.student_image);
+                    }
+
+                    // ── Parent NRC images auto-fill ──
+                    if (!string.IsNullOrEmpty(info.father_nrc_front_image))
+                    {
+                        RegModel.father_nrc_front_image = info.father_nrc_front_image;
+                        PreviewFatherNrcFrontUrl = GetImageUrl(info.father_nrc_front_image);
+                    }
+                    if (!string.IsNullOrEmpty(info.father_nrc_back_image))
+                    {
+                        RegModel.father_nrc_back_image = info.father_nrc_back_image;
+                        PreviewFatherNrcBackUrl = GetImageUrl(info.father_nrc_back_image);
+                    }
+                    if (!string.IsNullOrEmpty(info.mother_nrc_front_image))
+                    {
+                        RegModel.mother_nrc_front_image = info.mother_nrc_front_image;
+                        PreviewMotherNrcFrontUrl = GetImageUrl(info.mother_nrc_front_image);
+                    }
+                    if (!string.IsNullOrEmpty(info.mother_nrc_back_image))
+                    {
+                        RegModel.mother_nrc_back_image = info.mother_nrc_back_image;
+                        PreviewMotherNrcBackUrl = GetImageUrl(info.mother_nrc_back_image);
+                    }
                     if (!string.IsNullOrEmpty(info.nrc_state) && NrcTownshipsByState.TryGetValue(info.nrc_state, out var towns))
                         CurrentTownshipList = towns;
 
@@ -360,46 +566,60 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     AutoFillStatus = "✔ ကျောင်းသားအချက်အလက် အလိုအလျောက် ဖြည့်ပြီးပါပြီ";
 
                     // ── Pass/Fail မှ Semester auto-compute ──
-                    // ⚠ အရေးကြီး: Roll No ဖြင့် ရှာပါက အခြား Student ၏ data ရနိုင်တဲ့အတွက်
-                    // Log In ဝင်ထားသည့် User ၏ UserId ဖြင့်သာ Student data ကို ဆွဲယူရမည်
-                    StudentModel? studentDir = null;
-
-                    // ၁။ Log In ဝင်ထားသူ ၏ UserId ဖြင့် ဦးစွာ ရှာဖွေခြင်း (most reliable)
-                    if (info.UserId.HasValue && info.UserId > 0)
+                    if (info.StudentData != null)
+                    {
+                        LoggedInStudent = info.StudentData;
+                    }
+                    else if (info.UserId.HasValue && info.UserId > 0)
                     {
                         try
                         {
-                            studentDir = await HttpClientService.ExecuteAsync<StudentModel>(
+                            LoggedInStudent = await HttpClientService.ExecuteAsync<StudentModel>(
                                 $"Student/user/{info.UserId}", EnumHttpMethod.Get);
                         }
                         catch { }
                     }
-                    // ၂။ Log In ဝင်ထားသည့် User ID မရှိပါက RegModel ထဲရှိ UserId ဖြင့် ထပ်မံ ရှာဖွေခြင်း
                     else if (RegModel.UserId.HasValue && RegModel.UserId > 0)
                     {
                         try
                         {
-                            studentDir = await HttpClientService.ExecuteAsync<StudentModel>(
+                            LoggedInStudent = await HttpClientService.ExecuteAsync<StudentModel>(
                                 $"Student/user/{RegModel.UserId}", EnumHttpMethod.Get);
                         }
                         catch { }
                     }
 
-                    if (studentDir != null)
+                    // ── Retake Status ──
+                    if (info.RetakeStatus != null)
                     {
-                        LoggedInStudent = studentDir;
+                        RetakeStatus = info.RetakeStatus;
+                    }
+                    else
+                    {
+                        int? targetUid = info.UserId ?? RegModel.UserId;
+                        if (targetUid.HasValue && targetUid.Value > 0)
+                        {
+                            try
+                            {
+                                RetakeStatus = await HttpClientService.ExecuteAsync<StudentRetakeStatusModel>(
+                                    $"Student/retake-status/{targetUid.Value}", EnumHttpMethod.Get);
+                            }
+                            catch { }
+                        }
                     }
 
                     ComputeAllowedSemester();
                 }
                 else
                 {
+                    RetakeStatus = null;
                     AutoFillSuccess = false;
                     AutoFillStatus = "⚠ ဤ Roll No. နှင့် Databank ထဲတွင် Data မတွေ့ပါ";
                 }
             }
             catch
             {
+                RetakeStatus = null;
                 AutoFillSuccess = false;
                 AutoFillStatus = "⚠ ဤ Roll No. နှင့် Databank ထဲတွင် Data မတွေ့ပါ";
             }
@@ -421,23 +641,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         public string? FatherNrcNumber { get; set; }
         public List<string> FatherTownshipList { get; set; } = new();
 
-        private readonly Dictionary<string, List<string>> NrcTownshipsByState = new()
-        {
-            { "1", new List<string> { "ကမတ", "ခဖန", "ဆလမ", "တဆလ", "နမတ", "ဖကန", "မခဘ", "မစန", "မညန", "မမန", "မကတ", "ရကန", "လဗန", "ဝမန", "သတန", "ဟပန" } },
-            { "2", new List<string> { "ဒမဆ", "ဖရဆ", "ဘလခ", "မဆန", "ရတန", "လကန" } },
-            { "3", new List<string> { "ကကရ", "ကဆက", "ကဒန", "ကမမ", "ကရန", "ကလတ", "ခအဇ", "ဘအန", "မဝတ", "ပတန", "ဖအန", "လဘန", "သတင" } },
-            { "4", new List<string> { "ကပလ", "ကဆန", "ကတလ", "ခတလ", "စခင", "တတန", "တဇန", "ထတလ", "ပလဝ", "ဖလန", "မတပ", "မကန", "ရကခ", "ဟခန" } },
-            { "5", new List<string> { "ကလဝ", "ကလတ", "ကနန", "ခဥတ", "ခတန", "စကင", "စလက", "ဒပယ", "တမန", "ထခင", "နယပ", "ပလဘ", "ဖလန", "ဘမန", "မလန", "မကန", "မမန", "ရဘန", "လဟန", "ဝလတ", "ဟမလ" } },
-            { "6", new List<string> { "ကသန", "ခမက", "ထဝယ", "ပလန", "မမန", "ရဖန", "လလန" } },
-            { "7", new List<string> { "ကပက", "ကဝန", "ညလပ", "တငင", "ထရန", "ဒဥက", "ပခန", "ပတန", "ဖမန", "မလန", "ရတရ", "လပတ", "ဝမန", "သဝတ" } },
-            { "8", new List<string> { "ကမန", "ခမန", "ဂဂဝ", "ဆမန", "တတက", "နမဖ", "ပခက", "ပမန", "မကန", "မဘန", "မလန", "ရစက", "လဟန", "သယန" } },
-            { "9", new List<string> { "ကဆန", "ကပတ", "ခအဇ", "စကတ", "တတဥ", "ပဘန", "ပမန", "မကန", "မတလ", "မဟမ", "ရမသ", "လဝန", "ဝတန", "သစန" } },
-            { "10", new List<string> { "ကမရ", "ခဆန", "စမန", "တတန", "ထမန", "ပမန", "မလမ", "မဒန", "ရမန", "လမန", "သထန" } },
-            { "11", new List<string> { "ကတန", "ခအဇ", "စတပ", "တကန", "ပဏတ", "ပတန", "မအန", "မပန", "ရသတ" } },
-            { "12", new List<string> { "ကမရ", "ကမတ", "ခရန", "စခင", "တမဝ", "ဒဂမ", "ဒဂရ", "ဒပန", "ပဘတ", "မဂဒ", "ရကန", "လမတ", "သဃက" } },
-            { "13", new List<string> { "ကထန", "ခလန", "ညရန", "တခလ", "နစန", "ပလန", "မဆန", "မငန", "ရစန", "လခတ" } },
-            { "14", new List<string> { "ကလန", "ခရန", "ညတန", "တကန", "ပသန", "ဖပန", "မအပ", "မမင", "ရကန", "လမန", "ဟသတ" } }
-        };
+        private readonly Dictionary<string, List<string>> NrcTownshipsByState = NrcDataHelper.TownshipsByState;
 
         private StudentModel? LoggedInStudent { get; set; }
 
@@ -501,44 +705,41 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 Console.WriteLine("User is not authenticated");
             }
 
+            var semTask = HttpClientService.ExecuteAsync<List<SemesterModel>>("Semester", EnumHttpMethod.Get);
+            var gradeTask = HttpClientService.ExecuteAsync<GradeListResponseModel>("grade", EnumHttpMethod.Get);
+            var facTask = HttpClientService.ExecuteAsync<List<FacultyModel>>("Faculty", EnumHttpMethod.Get);
+            var majorTask = HttpClientService.ExecuteAsync<List<MajorModel>>("Major", EnumHttpMethod.Get);
+
             try
             {
-                var response = await HttpClientService.ExecuteAsync<List<SemesterModel>>("Semester", EnumHttpMethod.Get);
-                if (response != null && response.Any())
-                {
-                    SemesterList = response;
-                }
+                await Task.WhenAll(semTask, gradeTask, facTask, majorTask);
+
+                var semRes = semTask.Result;
+                if (semRes != null && semRes.Any())
+                    SemesterList = semRes;
                 else
-                {
                     LoadDefaultSemesters();
-                }
-            }
-            catch { LoadDefaultSemesters(); }
 
-            // Load Grades
-            try
-            {
-                var gradeResp = await HttpClientService.ExecuteAsync<GradeListResponseModel>("grade", EnumHttpMethod.Get);
+                var gradeResp = gradeTask.Result;
                 if (gradeResp != null && gradeResp.IsSuccess && gradeResp.Data != null)
-                {
                     AllGrades = gradeResp.Data.ToList();
-                }
-            }
-            catch { }
 
-            // Load faculties
-            try
-            {
-                var faculties = await HttpClientService.ExecuteAsync<List<FacultyModel>>("Faculty", EnumHttpMethod.Get);
-                if (faculties != null && faculties.Any())
-                    FacultyList = faculties;
+                var facRes = facTask.Result;
+                if (facRes != null && facRes.Any())
+                    FacultyList = facRes;
+
+                var majorRes = majorTask.Result;
+                if (majorRes != null && majorRes.Any())
+                    MajorList = majorRes;
             }
-            catch { }
-            FilteredMajors = GetAllMajors();
+            catch
+            {
+                LoadDefaultSemesters();
+            }
+
+            UpdateFilteredMajors();
 
             // --- Compute allowed semester based on student's result history ---
-            // (auto-fill from previous registration is intentionally removed:
-            //  personal data fills only when the student enters their Roll No)
             ComputeAllowedSemester();
         }
 
@@ -563,15 +764,15 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
         {
             if (IsApproved)
             {
-                return "Admin has approved your registration information. You can continue to payment.";
+                return "ကျောင်းဘက်မှ အချက်အလက်များအား အတည်ပြုပြီးပါပြီ။ ငွေပေးချေမှုအဆင့်သို့ ဆက်လက်လုပ်ဆောင်နိုင်ပါသည်။";
             }
 
             if (IsRejected)
             {
-                return "Admin rejected this registration information. Please correct the form and submit a new registration.";
+                return "ကျောင်းဘက်မှ ဤကျောင်းအပ်နှံမှု အချက်အလက်အား ပယ်ချထားပါသည်။ ကျေးဇူးပြု၍ အချက်အလက်များကို ပြန်လည်ပြင်ဆင်ပြီး အသစ်ပြန်လည် တင်သွင်းပေးပါ။";
             }
 
-            return "Your submitted information is under admin review. Payment will be available after approval.";
+            return "တင်သွင်းထားသော အချက်အလက်များကို ကျောင်းဘက်မှ စိစစ်နေဆဲဖြစ်ပါသည်။ အတည်ပြုပြီးမှသာ ငွေပေးချေနိုင်ပါမည်။";
         }
 
         private void ApplyRegistrationStatus(int registrationId, int? userId, string? status, bool canProceedToPayment)
@@ -732,31 +933,63 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 }
             }
 
-            if (highestPassed >= 9 && firstFailedSeq == null)
+            string studentMajor = (LoggedInStudent?.CurrentMajor ?? LoggedInStudent?.FacultyName ?? "").ToLowerInvariant();
+            bool isEngineering = studentMajor.Contains("civil") ||
+                                 studentMajor.Contains("electronic") ||
+                                 studentMajor.Contains("electrical") ||
+                                 studentMajor.Contains("mechanical") ||
+                                 studentMajor.Contains("engineering");
+            TotalRequiredSemesters = isEngineering ? 9 : 8;
+
+            if (highestPassed >= TotalRequiredSemesters && firstFailedSeq == null)
             {
-                IsGraduated = true;
-                AllowedSemesterSequence = 9;
-                AllowedSemesterName = GetSemName(9);
-                RegModel.academic_year_level = AllowedSemesterName;
-                return;
+                bool hasPendingFailed = (RetakeStatus != null && RetakeStatus.FailedSubjectsCount > 0);
+                bool isGradStatus = string.Equals(LoggedInStudent?.Status, "Graduated", StringComparison.OrdinalIgnoreCase);
+
+                if (!hasPendingFailed && isGradStatus)
+                {
+                    IsGraduated = true;
+                    AllowedSemesterSequence = TotalRequiredSemesters;
+                    AllowedSemesterName = GetSemName(TotalRequiredSemesters);
+                    RegModel.academic_year_level = AllowedSemesterName;
+                    return;
+                }
+                else
+                {
+                    // Student completed final semester curriculum but has remaining retakes -> stay on final semester to register retakes
+                    AllowedSemesterSequence = TotalRequiredSemesters;
+                    AllowedSemesterName = GetSemName(TotalRequiredSemesters);
+                    RegModel.academic_year_level = AllowedSemesterName;
+                    return;
+                }
             }
 
-            AllowedSemesterSequence = firstFailedSeq ?? (highestPassed + 1);
+            AllowedSemesterSequence = firstFailedSeq ?? Math.Min(highestPassed + 1, TotalRequiredSemesters);
             AllowedSemesterName     = GetSemName(AllowedSemesterSequence);
             RegModel.academic_year_level = AllowedSemesterName;
 
-            // Auto-fill "ဖြေဆိုခဲ့သောစာမေးပွဲ" with the last PASSED semester from student directory
-            if (highestPassed > 0)
+            // Auto-fill "ဖြေဆိုခဲ့သောစာမေးပွဲ" with the latest attempted semester
+            if (firstFailedSeq.HasValue)
+            {
+                var failedSemName = SemesterList.FirstOrDefault(s => s.Sequence == firstFailedSeq.Value)?.SemesterName;
+                if (!string.IsNullOrEmpty(failedSemName))
+                    PastExamSemester = failedSemName;
+                RegModel.past_exam_status = "Fail";
+                if (!string.IsNullOrEmpty(RegModel.major))
+                    RegModel.past_exam_major = RegModel.major;
+                if (!string.IsNullOrEmpty(RegModel.roll_no))
+                    RegModel.past_exam_roll_no = RegModel.roll_no;
+            }
+            else if (highestPassed > 0)
             {
                 var lastPassedSemName = SemesterList.FirstOrDefault(s => s.Sequence == highestPassed)?.SemesterName;
                 if (!string.IsNullOrEmpty(lastPassedSemName))
                     PastExamSemester = lastPassedSemName;
-
-                // Auto-fill "အောင် / က်" status for that semester
-                if (firstFailedSeq.HasValue && firstFailedSeq.Value <= highestPassed)
-                    RegModel.past_exam_status = "Fail";
-                else
-                    RegModel.past_exam_status = "Pass";
+                RegModel.past_exam_status = "Pass";
+                if (!string.IsNullOrEmpty(RegModel.major))
+                    RegModel.past_exam_major = RegModel.major;
+                if (!string.IsNullOrEmpty(RegModel.roll_no))
+                    RegModel.past_exam_roll_no = RegModel.roll_no;
             }
             else
             {
@@ -771,9 +1004,14 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 // အောင်/ကျ → Pass (တက္ကသိုလ်ဝင်ကြောင်း တကျောင်းဝင်ပြီးသားဆို Pass ပဲ)
                 RegModel.past_exam_status = "Pass";
 
-                // အဓိကဘာသာ — ဖြေဆိုသည့်ဘာသာ ရှိပြီးသားမဟုတ်မှ IT ထည့်
-                if (string.IsNullOrEmpty(RegModel.past_exam_major))
-                    RegModel.past_exam_major = "Information Technology";
+                // အဓိကဘာသာ — ဖြေဆိုသည့်ဘာသာ မရွေးရသေးပါက ပထမတွဲ auto select
+                if (string.IsNullOrEmpty(RegModel.past_exam_major) ||
+                    (RegModel.past_exam_major != "မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဇီဝ" &&
+                     RegModel.past_exam_major != "မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဘောဂ" &&
+                     RegModel.past_exam_major != "မြန်မာ/အင်္ဂလိပ်/ပထဝီ/သမိုင်း/ဘောဂ"))
+                {
+                    RegModel.past_exam_major = "မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဇီဝ";
+                }
 
                 // Enrollment major — blank မှသာ IT set
                 if (string.IsNullOrEmpty(RegModel.major) || RegModel.major == "-")
@@ -1098,14 +1336,191 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
         }
 
+        private async Task OnNrcFrontSelected(InputFileChangeEventArgs e)
+        {
+            SelectedNrcFrontFile = e.File;
+            if (SelectedNrcFrontFile != null)
+            {
+                using var ms = new MemoryStream();
+                await SelectedNrcFrontFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                SelectedNrcFrontBytes = ms.ToArray();
+                PreviewNrcFrontUrl = $"data:{SelectedNrcFrontFile.ContentType};base64,{Convert.ToBase64String(SelectedNrcFrontBytes)}";
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveNrcFront()
+        {
+            SelectedNrcFrontFile = null;
+            SelectedNrcFrontBytes = null;
+            PreviewNrcFrontUrl = null;
+            RegModel.nrc_front_image = null;
+        }
+
+        private async Task OnNrcBackSelected(InputFileChangeEventArgs e)
+        {
+            SelectedNrcBackFile = e.File;
+            if (SelectedNrcBackFile != null)
+            {
+                using var ms = new MemoryStream();
+                await SelectedNrcBackFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                SelectedNrcBackBytes = ms.ToArray();
+                PreviewNrcBackUrl = $"data:{SelectedNrcBackFile.ContentType};base64,{Convert.ToBase64String(SelectedNrcBackBytes)}";
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveNrcBack()
+        {
+            SelectedNrcBackFile = null;
+            SelectedNrcBackBytes = null;
+            PreviewNrcBackUrl = null;
+            RegModel.nrc_back_image = null;
+        }
+
+        private async Task OnCensusSelected(InputFileChangeEventArgs e)
+        {
+            SelectedCensusFile = e.File;
+            if (SelectedCensusFile != null)
+            {
+                using var ms = new MemoryStream();
+                await SelectedCensusFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                SelectedCensusBytes = ms.ToArray();
+                PreviewCensusUrl = $"data:{SelectedCensusFile.ContentType};base64,{Convert.ToBase64String(SelectedCensusBytes)}";
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveCensus()
+        {
+            SelectedCensusFile = null;
+            SelectedCensusBytes = null;
+            PreviewCensusUrl = null;
+            RegModel.census_image = null;
+        }
+
+        // --- Parent NRC Image Handlers ---
+
+        private async Task OnFatherNrcFrontSelected(InputFileChangeEventArgs e)
+        {
+            SelectedFatherNrcFrontFile = e.File;
+            if (SelectedFatherNrcFrontFile != null)
+            {
+                using var ms = new MemoryStream();
+                await SelectedFatherNrcFrontFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                SelectedFatherNrcFrontBytes = ms.ToArray();
+                PreviewFatherNrcFrontUrl = $"data:{SelectedFatherNrcFrontFile.ContentType};base64,{Convert.ToBase64String(SelectedFatherNrcFrontBytes)}";
+                RegModel.father_nrc_front_image = PreviewFatherNrcFrontUrl;
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveFatherNrcFront()
+        {
+            SelectedFatherNrcFrontFile = null;
+            SelectedFatherNrcFrontBytes = null;
+            PreviewFatherNrcFrontUrl = null;
+            RegModel.father_nrc_front_image = null;
+        }
+
+        private async Task OnFatherNrcBackSelected(InputFileChangeEventArgs e)
+        {
+            SelectedFatherNrcBackFile = e.File;
+            if (SelectedFatherNrcBackFile != null)
+            {
+                using var ms = new MemoryStream();
+                await SelectedFatherNrcBackFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                SelectedFatherNrcBackBytes = ms.ToArray();
+                PreviewFatherNrcBackUrl = $"data:{SelectedFatherNrcBackFile.ContentType};base64,{Convert.ToBase64String(SelectedFatherNrcBackBytes)}";
+                RegModel.father_nrc_back_image = PreviewFatherNrcBackUrl;
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveFatherNrcBack()
+        {
+            SelectedFatherNrcBackFile = null;
+            SelectedFatherNrcBackBytes = null;
+            PreviewFatherNrcBackUrl = null;
+            RegModel.father_nrc_back_image = null;
+        }
+
+        private async Task OnMotherNrcFrontSelected(InputFileChangeEventArgs e)
+        {
+            SelectedMotherNrcFrontFile = e.File;
+            if (SelectedMotherNrcFrontFile != null)
+            {
+                using var ms = new MemoryStream();
+                await SelectedMotherNrcFrontFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                SelectedMotherNrcFrontBytes = ms.ToArray();
+                PreviewMotherNrcFrontUrl = $"data:{SelectedMotherNrcFrontFile.ContentType};base64,{Convert.ToBase64String(SelectedMotherNrcFrontBytes)}";
+                RegModel.mother_nrc_front_image = PreviewMotherNrcFrontUrl;
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveMotherNrcFront()
+        {
+            SelectedMotherNrcFrontFile = null;
+            SelectedMotherNrcFrontBytes = null;
+            PreviewMotherNrcFrontUrl = null;
+            RegModel.mother_nrc_front_image = null;
+        }
+
+        private async Task OnMotherNrcBackSelected(InputFileChangeEventArgs e)
+        {
+            SelectedMotherNrcBackFile = e.File;
+            if (SelectedMotherNrcBackFile != null)
+            {
+                using var ms = new MemoryStream();
+                await SelectedMotherNrcBackFile.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+                SelectedMotherNrcBackBytes = ms.ToArray();
+                PreviewMotherNrcBackUrl = $"data:{SelectedMotherNrcBackFile.ContentType};base64,{Convert.ToBase64String(SelectedMotherNrcBackBytes)}";
+                RegModel.mother_nrc_back_image = PreviewMotherNrcBackUrl;
+                StateHasChanged();
+            }
+        }
+
+        private void RemoveMotherNrcBack()
+        {
+            SelectedMotherNrcBackFile = null;
+            SelectedMotherNrcBackBytes = null;
+            PreviewMotherNrcBackUrl = null;
+            RegModel.mother_nrc_back_image = null;
+        }
+
+        public string GetImageUrl(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return "";
+            if (path.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return path;
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return path;
+
+            var baseUrl = Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5077";
+            return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
+        }
+
         private async Task NextStep()
         {
+            if (RetakeStatus?.IsDisqualified == true)
+            {
+                ShowError($"သတ်မှတ်ထားသော အများဆုံး Retake အကြိမ်အရေအတွက် ({RetakeStatus.MaxRetakeLimit} ကြိမ်) ပြည့်သွားပြီဖြစ်ပါသဖြင့် ကျောင်းအပ်နှံခွင့်/စာရင်းသွင်းခွင့် မရှိတော့ပါ။ ကျောင်းတက်ရောက်ခွင့် အရည်အချင်း မပြည့်မီတော့ပါ။");
+                return;
+            }
+
             if (CurrentStep == 1)
             {
                 // 💡 User ID ကို Token မှ ဆွဲမရခဲ့ပါက API Error မတက်ခင် ဤနေရာတွင် တားပေးမည်
                 if ((RegModel.UserId == null || RegModel.UserId <= 0) && (RegModel.NewStudentAccId == null || RegModel.NewStudentAccId <= 0))
                 {
                     ShowError("စနစ်အတွင်း User ID သို့မဟုတ် New Student ID အား ရှာမတွေ့ပါ။ ကျေးဇူးပြု၍ Logout ထွက်ပြီး Login အသစ်ပြန်ဝင်ပေးပါ။");
+                    return;
+                }
+
+                // 📷 Passport Photo Required Validation
+                if (SelectedPhotoBytes == null && string.IsNullOrEmpty(PreviewImageUrl))
+                {
+                    ShowError("ကျေးဇူးပြု၍ ပတ်စပို့စ်အရွယ် ဓာတ်ပုံ ထည့်သွင်းပေးပါ။ (Passport Photo is required)");
                     return;
                 }
 
@@ -1118,6 +1533,20 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 {
                     ShowError("ကျေးဇူးပြု၍ မရှိမဖြစ်လိုအပ်သော အချက်အလက်များ (*) ကို အပြည့်အစုံ ဖြည့်စွက်ပါ။");
                     return;
+                }
+
+                // 🎂 Minimum Age Requirement: At least 16 years old
+                if (DobDate.HasValue)
+                {
+                    var today = DateTime.Today;
+                    var age = today.Year - DobDate.Value.Year;
+                    if (DobDate.Value.Date > today.AddYears(-age)) age--;
+
+                    if (age < 16)
+                    {
+                        ShowError("ကျောင်းအပ်နှံရန် အနည်းဆုံး အသက် (၁၆) နှစ် ပြည့်ရပါမည်။ (Minimum age requirement is 16 years old)");
+                        return;
+                    }
                 }
             }
             else if (CurrentStep == 2)
@@ -1147,7 +1576,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 var currentSem = SemesterList.FirstOrDefault(s => s.SemesterName == RegModel.academic_year_level);
                 if (currentSem != null)
                 {
-                    // 1. Fetch upcoming subjects filtered by student's major + include Retakes from previous semesters
+                    // 1. Fetch upcoming subjects filtered by student's major for current semester
                     var upcomingUrl = $"Enrollment/subjects-by-major?semesterId={currentSem.SemesterId}&major={Uri.EscapeDataString(RegModel.major ?? "")}";
                     if (RegModel.UserId.HasValue && RegModel.UserId.Value > 0)
                         upcomingUrl += $"&userId={RegModel.UserId.Value}";
@@ -1159,11 +1588,85 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                     var upcomingResp = await HttpClientService.ExecuteAsync<List<SubjectModel>>(upcomingUrl, EnumHttpMethod.Get);
                     if (upcomingResp != null)
                     {
-                        UpcomingSubjects = upcomingResp;
+                        foreach (var sub in upcomingResp)
+                        {
+                            sub.IsSelected = sub.IsRetake && !sub.IsSubjectDisqualified;
+                        }
+                        UpcomingSubjects = upcomingResp
+                            .OrderByDescending(s => s.IsRetake)
+                            .ThenByDescending(s => s.IsCarriedOver)
+                            .ThenBy(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective)
+                            .ThenBy(s => s.SemesterId)
+                            .ThenBy(s => s.SubjectCode)
+                            .ToList();
+                    }
+
+                    // Load Target Credits for this faculty and semester
+                    int facId = SelectedFacultyId.HasValue && SelectedFacultyId.Value > 0 
+                        ? SelectedFacultyId.Value 
+                        : (FacultyList.FirstOrDefault(f => !string.IsNullOrEmpty(LoggedInStudent?.FacultyName) && f.FacultyName == LoggedInStudent.FacultyName)?.FacultyId ?? 1);
+                    try
+                    {
+                        var credResp = await HttpClientService.ExecuteAsync<FacultySemesterCreditModel>($"student/settings/semester-credit/{facId}/{currentSem.SemesterId}", EnumHttpMethod.Get);
+                        if (credResp != null)
+                        {
+                            MinSemesterCredits = credResp.MinCredits.HasValue && credResp.MinCredits.Value > 0 ? credResp.MinCredits.Value : 18;
+                            MaxSemesterCredits = credResp.MaxCredits.HasValue && credResp.MaxCredits.Value > 0 ? credResp.MaxCredits.Value : (credResp.RequiredCredits > 0 ? credResp.RequiredCredits : 24);
+                            TargetSemesterCredits = MaxSemesterCredits;
+                        }
+                        else
+                        {
+                            MinSemesterCredits = 18;
+                            MaxSemesterCredits = 24;
+                            TargetSemesterCredits = 24;
+                        }
+                    }
+                    catch
+                    {
+                        MinSemesterCredits = 18;
+                        MaxSemesterCredits = 24;
+                        TargetSemesterCredits = 24;
                     }
                     
-                    // 2. Fetch previous semester subjects & saved grades from Enrollment Result
-                    var previousSem = SemesterList.FirstOrDefault(s => s.Sequence == (currentSem.Sequence - 1));
+                    // 2. Determine previous semester:
+                    // Check if student has failed this current semester (i.e. is repeating current semester)
+                    int currentSeq = currentSem.Sequence ?? 1;
+                    var currentSemResult = currentSeq switch
+                    {
+                        1 => LoggedInStudent?.Sem1_Result,
+                        2 => LoggedInStudent?.Sem2_Result,
+                        3 => LoggedInStudent?.Sem3_Result,
+                        4 => LoggedInStudent?.Sem4_Result,
+                        5 => LoggedInStudent?.Sem5_Result,
+                        6 => LoggedInStudent?.Sem6_Result,
+                        7 => LoggedInStudent?.Sem7_Result,
+                        8 => LoggedInStudent?.Sem8_Result,
+                        9 => LoggedInStudent?.Sem9_Result,
+                        _ => null
+                    };
+
+                    bool isRepeatingCurrentSemester = string.Equals(currentSemResult, "Fail", StringComparison.OrdinalIgnoreCase);
+
+                    SemesterModel? previousSem = null;
+                    if (isRepeatingCurrentSemester)
+                    {
+                        // Student failed current semester -> Previous attended semester is the previous attempt of current semester!
+                        previousSem = currentSem;
+                        PreviousSemesterDisplayName = $"{currentSem.SemesterName} (ယခင်ဖြေဆိုခဲ့သော ရမှတ်များ)";
+                    }
+                    else if (currentSeq > 1)
+                    {
+                        // First time in current semester -> Previous semester is the passed preceding semester
+                        previousSem = SemesterList.FirstOrDefault(s => s.Sequence == (currentSeq - 1));
+                        PreviousSemesterDisplayName = $"{previousSem?.SemesterName} (ယခင်အောင်မြင်ခဲ့သော ရမှတ်များ)";
+                    }
+                    else
+                    {
+                        // First time in Semester 1 -> No previous semester
+                        previousSem = null;
+                        PreviousSemesterDisplayName = null;
+                    }
+
                     if (previousSem != null)
                     {
                         var prevUrl = $"Enrollment/previous-grades?semesterId={previousSem.SemesterId}&major={Uri.EscapeDataString(RegModel.major ?? "")}";
@@ -1183,9 +1686,17 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                                 SubjectName = p.SubjectName,
                                 SubjectCode = p.SubjectCode,
                                 SemesterName = p.SemesterName,
-                                Grade = p.Grade ?? "",
-                                IsRetake = p.IsRetake
+                                Grade = !string.IsNullOrWhiteSpace(p.ReexamGrade) ? p.ReexamGrade.Trim() : (p.Grade ?? ""),
+                                ReexamGrade = p.ReexamGrade,
+                                ReexamIsPass = p.ReexamIsPass,
+                                IsRetake = p.IsRetake,
+                                IsCarriedOver = p.IsCarriedOver,
+                                IsReexam = p.IsReexam || !string.IsNullOrWhiteSpace(p.ReexamGrade)
                             }).ToList();
+                        }
+                        else
+                        {
+                            PreviousSubjects.Clear();
                         }
                     }
                     else
@@ -1196,24 +1707,45 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
             else if (CurrentStep == 3)
             {
-                var electives = UpcomingSubjects.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake).ToList();
-                if (electives.Any())
+                int totalSelected = GetTotalSelectedCredits();
+
+                // 1. Semester Required Credit Points Range Validation (18 ~ 24 Credits)
+                if (totalSelected < MinSemesterCredits)
                 {
-                    int maxAllowed = GetMaxElectiveForCurrentSemester();
-                    int selectedCount = electives.Count(s => s.IsSelected);
+                    int remainingToMin = MinSemesterCredits - totalSelected;
+                    ShowError($"ဤ Semester တွင် အနည်းဆုံး {MinSemesterCredits} Credits ရွေးချယ်ပေးရန် လိုအပ်ပါသည် (လက်ရှိရွေးချယ်ပြီး: {totalSelected} / သတ်မှတ်ချက်: {MinSemesterCredits} မှ {MaxSemesterCredits} Credits)။ ကျေးဇူးပြု၍ နောက်ထပ် {remainingToMin} Credits ရွေးချယ်ပေးပါ။");
+                    return;
+                }
+                else if (totalSelected > MaxSemesterCredits)
+                {
+                    int overCredits = totalSelected - MaxSemesterCredits;
+                    ShowError($"ဤ Semester တွင် အများဆုံး {MaxSemesterCredits} Credits သာ ရွေးချယ်ခွင့်ရှိပါသည် (လက်ရှိရွေးချယ်ပြီး: {totalSelected} Credits)။ သတ်မှတ်ချက်ထက် {overCredits} Credits ပိုမိုနေပါသဖြင့် {MaxSemesterCredits} Credits ထက် မကျော်လွန်အောင် ပြန်လည်ရွေးချယ်ပေးပါ။");
+                    return;
+                }
 
-                    if (selectedCount != maxAllowed)
-                    {
-                        ShowError($"ကျေးဇူးပြု၍ Elective ဘာသာရပ် {maxAllowed} ခု ရွေးချယ်ပေးပါ (လက်ရှိ {selectedCount} ခု ရွေးချယ်ထားပါသည်)။");
-                        return;
-                    }
+                // 2. Check if any selected subject has unsatisfied prerequisite
+                var selectedSubjects = UpcomingSubjects.Where(s => s.IsSelected).ToList();
+                var invalidSelected = selectedSubjects.Where(s => !s.IsRetake && !s.IsPrerequisiteSatisfied).ToList();
+                if (invalidSelected.Any())
+                {
+                    var invalidNames = string.Join(", ", invalidSelected.Select(s => s.SubjectName));
+                    ShowError($"ရွေးချယ်ထားသော ဘာသာရပ် ({invalidNames}) ၏ Pre-Requisite မအောင်မြင်သေးသဖြင့် ရွေးချယ်၍ မရပါ။");
+                    return;
+                }
 
-                    // Check if any selected elective has unsatisfied prerequisite
-                    var invalidSelected = electives.Where(s => s.IsSelected && !s.IsPrerequisiteSatisfied).ToList();
-                    if (invalidSelected.Any())
+                // 3. Validate Electives per semester does not exceed max allowed
+                var electiveGroups = UpcomingSubjects
+                    .Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake)
+                    .GroupBy(s => s.SemesterId);
+
+                foreach (var grp in electiveGroups)
+                {
+                    int maxAllowed = GetMaxElectiveForSemester(grp.Key);
+                    int selectedInGrp = grp.Count(s => s.IsSelected);
+                    if (selectedInGrp > maxAllowed)
                     {
-                        var invalidNames = string.Join(", ", invalidSelected.Select(s => s.SubjectName));
-                        ShowError($"ရွေးချယ်ထားသော ဘာသာရပ် ({invalidNames}) ၏ Pre-Requisite မအောင်မြင်သေးသဖြင့် ရွေးချယ်၍ မရပါ။");
+                        string semName = grp.FirstOrDefault()?.SemesterName ?? $"Semester {grp.Key}";
+                        ShowError($"{semName} အတွက် Elective ဘာသာရပ်ကို အများဆုံး {maxAllowed} ခုသာ ရွေးချယ်ခွင့်ရှိပါသည် (လက်ရှိရွေးချယ်ထားမှု: {selectedInGrp} ဘာသာ)။ ကျေးဇူးပြု၍ {maxAllowed} ဘာသာအထိ လျှော့ချပေးပါ။");
                         return;
                     }
                 }
@@ -1403,6 +1935,87 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedPhotoFile.ContentType);
                 content.Add(fileContent, "StudentImageFile", SelectedPhotoFile.Name);
             }
+            else if (!string.IsNullOrEmpty(RegModel.student_image))
+            {
+                content.Add(new StringContent(RegModel.student_image), "student_image");
+            }
+
+            if (SelectedNrcFrontBytes != null && SelectedNrcFrontFile != null)
+            {
+                var fileContent = new ByteArrayContent(SelectedNrcFrontBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedNrcFrontFile.ContentType);
+                content.Add(fileContent, "NrcFrontImageFile", SelectedNrcFrontFile.Name);
+            }
+            else if (!string.IsNullOrEmpty(RegModel.nrc_front_image))
+            {
+                content.Add(new StringContent(RegModel.nrc_front_image), "nrc_front_image");
+            }
+
+            if (SelectedNrcBackBytes != null && SelectedNrcBackFile != null)
+            {
+                var fileContent = new ByteArrayContent(SelectedNrcBackBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedNrcBackFile.ContentType);
+                content.Add(fileContent, "NrcBackImageFile", SelectedNrcBackFile.Name);
+            }
+            else if (!string.IsNullOrEmpty(RegModel.nrc_back_image))
+            {
+                content.Add(new StringContent(RegModel.nrc_back_image), "nrc_back_image");
+            }
+
+            if (SelectedCensusBytes != null && SelectedCensusFile != null)
+            {
+                var fileContent = new ByteArrayContent(SelectedCensusBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedCensusFile.ContentType);
+                content.Add(fileContent, "CensusImageFile", SelectedCensusFile.Name);
+            }
+            else if (!string.IsNullOrEmpty(RegModel.census_image))
+            {
+                content.Add(new StringContent(RegModel.census_image), "census_image");
+            }
+
+            if (SelectedFatherNrcFrontBytes != null && SelectedFatherNrcFrontFile != null)
+            {
+                var fileContent = new ByteArrayContent(SelectedFatherNrcFrontBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedFatherNrcFrontFile.ContentType);
+                content.Add(fileContent, "FatherNrcFrontImageFile", SelectedFatherNrcFrontFile.Name);
+            }
+            else if (!string.IsNullOrEmpty(RegModel.father_nrc_front_image))
+            {
+                content.Add(new StringContent(RegModel.father_nrc_front_image), "father_nrc_front_image");
+            }
+
+            if (SelectedFatherNrcBackBytes != null && SelectedFatherNrcBackFile != null)
+            {
+                var fileContent = new ByteArrayContent(SelectedFatherNrcBackBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedFatherNrcBackFile.ContentType);
+                content.Add(fileContent, "FatherNrcBackImageFile", SelectedFatherNrcBackFile.Name);
+            }
+            else if (!string.IsNullOrEmpty(RegModel.father_nrc_back_image))
+            {
+                content.Add(new StringContent(RegModel.father_nrc_back_image), "father_nrc_back_image");
+            }
+
+            if (SelectedMotherNrcFrontBytes != null && SelectedMotherNrcFrontFile != null)
+            {
+                var fileContent = new ByteArrayContent(SelectedMotherNrcFrontBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedMotherNrcFrontFile.ContentType);
+                content.Add(fileContent, "MotherNrcFrontImageFile", SelectedMotherNrcFrontFile.Name);
+            }
+            else if (!string.IsNullOrEmpty(RegModel.mother_nrc_front_image))
+            {
+                content.Add(new StringContent(RegModel.mother_nrc_front_image), "mother_nrc_front_image");
+            }
+
+            if (SelectedMotherNrcBackBytes != null && SelectedMotherNrcBackFile != null)
+            {
+                var fileContent = new ByteArrayContent(SelectedMotherNrcBackBytes);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(SelectedMotherNrcBackFile.ContentType);
+                content.Add(fileContent, "MotherNrcBackImageFile", SelectedMotherNrcBackFile.Name);
+            }
+            else if (!string.IsNullOrEmpty(RegModel.mother_nrc_back_image))
+            {
+                content.Add(new StringContent(RegModel.mother_nrc_back_image), "mother_nrc_back_image");
+            }
 
             try
             {
@@ -1411,7 +2024,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 if (response?.IsSuccess == true)
                 {
                     IsSuccessModal = true;
-                    ModalMessage = "Registration submitted successfully. Your information is now pending admin confirmation.";
+                    ModalMessage = "ကျောင်းအပ်နှံခြင်း အချက်အလက်များ အောင်မြင်စွာ တင်သွင်းပြီးပါပြီ။ ကျောင်းဘက်မှ အတည်ပြုစိစစ်ခြင်းကို စောင့်ဆိုင်းပေးပါ။";
                     ShowModal = true;
                     
                     // Store registration data in state service for payment page
@@ -1470,7 +2083,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
             catch (Exception ex)
             {
-                ShowError($"System Error: {ex.Message}");
+                ShowError($"စနစ်ပိုင်းဆိုင်ရာ ချို့ယွင်းချက် ဖြစ်ပေါ်နေပါသည်: {ex.Message}");
             }
             finally
             {
@@ -1478,22 +2091,60 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
             }
         }
 
-        public int GetMaxElectiveForCurrentSemester()
+        public int GetMaxElectiveForSemester(int? semesterId)
         {
-            var currentSem = SemesterList.FirstOrDefault(s => s.SemesterName == RegModel.academic_year_level);
-            if (currentSem == null) return 1;
+            if (!semesterId.HasValue) return 1;
+            var sem = SemesterList.FirstOrDefault(s => s.SemesterId == semesterId.Value);
+            if (sem == null) return 1;
 
             var majorName = (RegModel.major ?? "").Trim();
             bool isCS = majorName.Contains("Computer Science", StringComparison.OrdinalIgnoreCase) || majorName.Equals("CS", StringComparison.OrdinalIgnoreCase);
             bool isCT = majorName.Contains("Computer Technology", StringComparison.OrdinalIgnoreCase) || majorName.Equals("CT", StringComparison.OrdinalIgnoreCase);
 
-            int max = isCS ? (currentSem.MaxElectiveCS ?? 0) : (isCT ? (currentSem.MaxElectiveCT ?? 0) : (currentSem.MaxElective ?? 0));
-            var electivesCount = UpcomingSubjects.Count(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake);
-            if (max == 0 && electivesCount > 0)
+            int max = isCS ? (sem.MaxElectiveCS ?? 0) : (isCT ? (sem.MaxElectiveCT ?? 0) : (sem.MaxElective ?? 0));
+            return max > 0 ? max : 1;
+        }
+
+        public int GetTotalRequiredElectives()
+        {
+            var electives = UpcomingSubjects.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake).ToList();
+            var distinctSemIds = electives.Select(e => e.SemesterId).Distinct().ToList();
+            int total = 0;
+            foreach (var semId in distinctSemIds)
             {
-                max = 1;
+                int eligibleInSem = electives.Count(e => e.SemesterId == semId && e.IsPrerequisiteSatisfied);
+                int maxInSem = GetMaxElectiveForSemester(semId);
+                total += Math.Min(maxInSem, eligibleInSem);
             }
-            return max;
+            return total;
+        }
+
+        public int GetMaxElectiveForCurrentSemester()
+        {
+            var currentSem = SemesterList.FirstOrDefault(s => s.SemesterName == RegModel.academic_year_level);
+            return GetMaxElectiveForSemester(currentSem?.SemesterId);
+        }
+
+        public void OnElectiveRowClicked(SubjectModel ele)
+        {
+            if (!ele.IsPrerequisiteSatisfied)
+            {
+                ShowError($"'{ele.SubjectName}' သည် Pre-Requisite မအောင်မြင်သေးသဖြင့် ရွေးချယ်ခွင့် မရှိပါ။\n{ele.PrerequisiteStatusMessage}");
+                return;
+            }
+
+            int maxAllowed = GetMaxElectiveForSemester(ele.SemesterId);
+            var electivesInSem = UpcomingSubjects.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake && s.SemesterId == ele.SemesterId).ToList();
+            int currentSelectedCount = electivesInSem.Count(s => s.IsSelected);
+
+            if (!ele.IsSelected && currentSelectedCount >= maxAllowed && maxAllowed > 1)
+            {
+                string semName = ele.SemesterName ?? "ဤ Semester";
+                ShowError($"{semName} အတွက် Elective ဘာသာရပ်ကို အများဆုံး {maxAllowed} ခုသာ ရွေးချယ်နိုင်ပါသည် (လက်ရှိရွေးချယ်ပြီး: {currentSelectedCount} ခု)။\nအသစ်ထပ်မံရွေးချယ်လိုပါက ရွေးချယ်ထားပြီးသော ဘာသာရပ်တစ်ခုကို အမှန်ခြစ် ဖြုတ်ပေးပါ။");
+                return;
+            }
+
+            ToggleElectiveSelection(ele);
         }
 
         public void ToggleElectiveSelection(SubjectModel sub)
@@ -1504,38 +2155,164 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
                 return;
             }
 
-            int maxAllowed = GetMaxElectiveForCurrentSemester();
-            var electives = UpcomingSubjects.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake).ToList();
+            int maxAllowed = GetMaxElectiveForSemester(sub.SemesterId);
+            var electivesInSem = UpcomingSubjects.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake && s.SemesterId == sub.SemesterId).ToList();
 
-            if (maxAllowed <= 1)
+            if (sub.IsSelected)
             {
-                // Radio-like single selection
-                foreach (var s in electives)
-                {
-                    if (s.SubjectId == sub.SubjectId)
-                    {
-                        s.IsSelected = !s.IsSelected;
-                    }
-                    else
-                    {
-                        s.IsSelected = false;
-                    }
-                }
+                // Unselecting is always allowed
+                sub.IsSelected = false;
             }
             else
             {
-                // Multi-selection up to maxAllowed
-                if (!sub.IsSelected)
+                // Trying to select this elective
+                int currentSelectedCount = electivesInSem.Count(s => s.IsSelected);
+                if (currentSelectedCount >= maxAllowed)
                 {
-                    int currentSelected = electives.Count(s => s.IsSelected);
-                    if (currentSelected >= maxAllowed)
+                    if (maxAllowed == 1)
                     {
-                        ShowError($"Elective ဘာသာရပ်ကို အများဆုံး {maxAllowed} ခုသာ ရွေးချယ်နိုင်ပါသည်။");
+                        // If max is 1, switch selection to this new one
+                        foreach (var s in electivesInSem)
+                        {
+                            s.IsSelected = false;
+                        }
+                        sub.IsSelected = true;
+                    }
+                    else
+                    {
+                        var semName = sub.SemesterName ?? "ဤ Semester";
+                        ShowError($"{semName} အတွက် Elective ဘာသာရပ်ကို အများဆုံး {maxAllowed} ခုသာ ရွေးချယ်နိုင်ပါသည် (လက်ရှိရွေးချယ်ပြီး: {currentSelectedCount} ခု)။\nအသစ်ထပ်မံရွေးချယ်လိုပါက ရွေးချယ်ပြီးသား ဘာသာရပ်တစ်ခုကို အမှန်ခြစ် ဖြုတ်ပေးပါ။");
+                        StateHasChanged();
                         return;
                     }
-                    sub.IsSelected = true;
                 }
                 else
+                {
+                    sub.IsSelected = true;
+                }
+            }
+            StateHasChanged();
+        }
+
+        // ==========================================
+        // Live Credit Points Helpers & Subject Selection
+        // ==========================================
+        public int MinSemesterCredits { get; set; } = 18;
+        public int MaxSemesterCredits { get; set; } = 24;
+        public int TargetSemesterCredits { get; set; } = 24;
+
+        public bool IsCreditRequirementSatisfied()
+        {
+            int total = GetTotalSelectedCredits();
+            return total >= MinSemesterCredits && total <= MaxSemesterCredits;
+        }
+
+        public int GetRemainingToMinCredits()
+        {
+            int total = GetTotalSelectedCredits();
+            return Math.Max(0, MinSemesterCredits - total);
+        }
+
+        public int GetSelectedCoreCredits()
+        {
+            var coreSubs = UpcomingSubjects?.Where(s => 
+                s.SubjectType != Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && 
+                !s.IsRetake && 
+                !s.IsSubjectDisqualified && 
+                s.IsSelected && 
+                s.IsPrerequisiteSatisfied
+            ).ToList() ?? new();
+
+            return coreSubs.Sum(s => s.Credit > 0 ? s.Credit : 3);
+        }
+
+        public int GetSelectedRetakeCredits()
+        {
+            var retakeSubs = UpcomingSubjects?.Where(s => 
+                s.IsRetake && 
+                !s.IsSubjectDisqualified && 
+                s.IsSelected
+            ).ToList() ?? new();
+
+            return retakeSubs.Sum(s => s.Credit > 0 ? s.Credit : 3);
+        }
+
+        public int GetSelectedElectiveCredits()
+        {
+            var electives = UpcomingSubjects?.Where(s => 
+                s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && 
+                !s.IsRetake && 
+                !s.IsSubjectDisqualified && 
+                s.IsSelected &&
+                s.IsPrerequisiteSatisfied
+            ).ToList() ?? new();
+
+            return electives.Sum(s => s.Credit > 0 ? s.Credit : 3);
+        }
+
+        public int GetTotalSelectedCredits()
+        {
+            return GetSelectedCoreCredits() + GetSelectedRetakeCredits() + GetSelectedElectiveCredits();
+        }
+
+        public int GetRemainingCredits()
+        {
+            int total = GetTotalSelectedCredits();
+            return Math.Max(0, MaxSemesterCredits - total);
+        }
+
+        public double GetCreditProgressPercentage()
+        {
+            if (MaxSemesterCredits <= 0) return 100.0;
+            return Math.Min(100.0, (double)GetTotalSelectedCredits() / MaxSemesterCredits * 100.0);
+        }
+
+        public void ToggleSubjectSelection(SubjectModel sub)
+        {
+            if (sub.IsSubjectDisqualified)
+            {
+                ShowError($"'{sub.SubjectName}' သည် ၂ ကြိမ်မြောက် Re-exam ကျရှုံးခဲ့သဖြင့် အပြီးတိုင် Retake ယူခွင့် ပိတ်သိမ်းခံထားရသော ဘာသာရပ်ဖြစ်ပါသည်။ ရွေးချယ်ခွင့် မရှိပါ။");
+                return;
+            }
+
+            if (sub.IsRetake)
+            {
+                ShowError($"'{sub.SubjectName}' သည် Retake (ပြန်လည်သင်ယူရန် မဖြစ်မနေလိုအပ်သော) ဘာသာရပ်ဖြစ်သဖြင့် အမှန်ခြစ် ဖြုတ်၍ မရပါ။");
+                return;
+            }
+
+            if (!sub.IsPrerequisiteSatisfied)
+            {
+                ShowError($"'{sub.SubjectName}' သည် Pre-Requisite မအောင်မြင်သေးသဖြင့် ရွေးချယ်ခွင့် မရှိပါ။\n{sub.PrerequisiteStatusMessage}");
+                return;
+            }
+
+            if (sub.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective)
+            {
+                ToggleElectiveSelection(sub);
+                return;
+            }
+
+            sub.IsSelected = !sub.IsSelected;
+            StateHasChanged();
+        }
+
+        public void SelectAllEligibleCoreSubjects()
+        {
+            if (UpcomingSubjects == null) return;
+            foreach (var sub in UpcomingSubjects.Where(s => s.SubjectType != Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake && !s.IsSubjectDisqualified && s.IsPrerequisiteSatisfied))
+            {
+                sub.IsSelected = true;
+            }
+            StateHasChanged();
+        }
+
+        public void DeselectAllSubjects()
+        {
+            if (UpcomingSubjects == null) return;
+            foreach (var sub in UpcomingSubjects)
+            {
+                if (!sub.IsRetake)
                 {
                     sub.IsSelected = false;
                 }

@@ -59,6 +59,7 @@ public partial class Page_SubjectEdit
                 MajorId     = data.MajorId,
                 SubjectName = data.SubjectName,
                 SubjectCode = data.SubjectCode,
+                Credit      = data.Credit,
                 SubjectType = data.SubjectType
             };
         }

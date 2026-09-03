@@ -15,38 +15,72 @@ public partial class Page_RuleEdit : ComponentBase
     private RuleUpdateRequestModel ruleModel = new();
     private bool isProcessing = false;
     private bool isLoaded = false;
+    private string ErrorMessage = "";
 
-    // override စကားလုံးကို သေချာအောင် စစ်ပါ
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         await LoadData();
     }
 
     private async Task LoadData()
     {
-        var data = await HttpClientService.ExecuteAsync<RuleModel>($"rules/{Id}", EnumHttpMethod.Get);
-        if (data != null)
+        isLoaded = false;
+        ErrorMessage = "";
+        try
         {
-            ruleModel = new RuleUpdateRequestModel
+            var data = await HttpClientService.ExecuteAsync<RuleModel>($"rules/{Id}", EnumHttpMethod.Get);
+            if (data != null)
             {
-                Title = data.Title,
-                Description = data.Description,
-                Penalty = data.Penalty
-            };
-            isLoaded = true;
-            StateHasChanged(); // UI ကို ပြန် refresh လုပ်ပေးရန်
+                ruleModel = new RuleUpdateRequestModel
+                {
+                    Title = data.Title,
+                    Description = data.Description,
+                    Penalty = data.Penalty
+                };
+                isLoaded = true;
+            }
+            else
+            {
+                ErrorMessage = "ပြင်ဆင်ရန် စည်းကမ်းချက် အချက်အလက်များ ရှာမတွေ့ပါ။";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            StateHasChanged();
         }
     }
 
     private async Task UpdateRule()
     {
+        if (isProcessing) return;
         isProcessing = true;
-        var response = await HttpClientService.ExecuteAsync<ActionResponseModel>($"rules/{Id}", EnumHttpMethod.Put, ruleModel);
-        
-        if (response != null && response.IsSuccess)
+        ErrorMessage = "";
+
+        try
         {
-            Nav.NavigateTo("/admin/rules");
+            var response = await HttpClientService.ExecuteAsync<ActionResponseModel>($"rules/{Id}", EnumHttpMethod.Put, ruleModel);
+            
+            if (response != null && response.IsSuccess)
+            {
+                Nav.NavigateTo("/admin/rules");
+            }
+            else
+            {
+                ErrorMessage = response?.Message ?? "ပြင်ဆင်မှု မအောင်မြင်ပါ။";
+            }
         }
-        isProcessing = false;
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
     }
 }

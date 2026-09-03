@@ -14,6 +14,19 @@ public partial class Grade
     [StringLength(50)]
     public string Name { get; set; } = null!;
 
+    [Column("Grade_Point", TypeName = "decimal(4, 2)")]
+    public decimal GradePoint { get; set; } = 0.0m;
+
+    [Column("Status")]
+    [StringLength(50)]
+    public string? Status { get; set; }
+
+    [Column("Min_Mark", TypeName = "decimal(5, 2)")]
+    public decimal? MinMark { get; set; }
+
+    [Column("Max_Mark", TypeName = "decimal(5, 2)")]
+    public decimal? MaxMark { get; set; }
+
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }
 

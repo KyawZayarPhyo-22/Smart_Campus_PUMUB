@@ -7,65 +7,72 @@
 
 <AuthorizeView Policy="Student.Create" Context="authContext">
     <Authorized>
-        <div class="page-header">
-            <div class="d-flex align-items-center gap-2">
-        <NavLink href="/admin/student" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></NavLink>
-        <h3>Add New Student</h3>
-    </div>
-</div>
-
-<div class="row justify-content-center">
-    <div class="col-12 col-md-10 col-lg-8">
-        <EditForm Model="createModel" OnValidSubmit="SaveStudent" FormName="CreateStudentForm">
-            <DataAnnotationsValidator />
-            <div class="tech-card p-4">
-                <div class="row g-3">
-                    <div class="col-12">
-                        <label class="form-label">User Account <span class="text-danger">*</span></label>
-                        <InputSelect @bind-Value="createModel.UserId" class="form-select">
-                            <option value="0">-- Select User --</option>
-                            @foreach (var user in UserList) { <option value="@user.UserId">@user.UserName</option> }
-                        </InputSelect>
-                    </div>
-                    <div class="col-12 col-sm-6">
-                        <label class="form-label">Roll Number</label>
-                        <InputText @bind-Value="createModel.CurrentRollNo" class="form-control" placeholder="e.g., MUB-1098" />
-                    </div>
-                    <div class="col-12 col-sm-6">
-                        <label class="form-label">Year <span class="text-danger">*</span></label>
-                        <InputSelect @bind-Value="createModel.CurrentClassYear" class="form-select">
-                            <option value="">-- Select Year --</option>
-                            <option value="First Year">First Year</option>
-                            <option value="Second Year">Second Year</option>
-                            <option value="Third Year">Third Year</option>
-                        </InputSelect>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Major <span class="text-danger">*</span></label>
-                        <InputText @bind-Value="createModel.CurrentMajor" class="form-control" placeholder="Major Name" />
-                    </div>
-                </div>
-                
-                @if (!string.IsNullOrEmpty(statusMessage)) { <div class="alert alert-info mt-3">@statusMessage</div> }
-
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                    <NavLink href="/admin/student" class="btn btn-secondary">Cancel</NavLink>
-                    <button type="submit" class="btn btn-info" disabled="@isProcessing">
-                        @(isProcessing ? "Saving..." : "Create Student")
-                    </button>
-                </div>
+        <div class="d-flex align-items-start gap-3 mb-4 mt-2">
+            <NavLink href="/admin/student" class="btn btn-outline-secondary rounded-3 p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+                <i class="bi bi-arrow-left fs-5"></i>
+            </NavLink>
+            <div>
+                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">
+                    @(LangService.IsMyanmar ? "ကျောင်းသားအသစ် ထည့်သွင်းခြင်း" : "Add New Student")
+                </h4>
+                <small class="text-secondary">
+                    @(LangService.IsMyanmar ? "ကျောင်းသားအကောင့်နှင့် အချက်အလက်များ ဖန်တီးခြင်း" : "Create new student profile and account binding")
+                </small>
             </div>
-        </EditForm>
-    </div>
-</div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8">
+                <EditForm Model="createModel" OnValidSubmit="SaveStudent" FormName="CreateStudentForm">
+                    <DataAnnotationsValidator />
+                    <div class="tech-card p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">@(LangService.IsMyanmar ? "အသုံးပြုသူ အကောင့်" : "User Account") <span class="text-danger">*</span></label>
+                                <InputSelect @bind-Value="createModel.UserId" class="form-select">
+                                    <option value="0">@(LangService.IsMyanmar ? "-- အကောင့် ရွေးချယ်ပါ --" : "-- Select User --")</option>
+                                    @foreach (var user in UserList) { <option value="@user.UserId">@user.UserName</option> }
+                                </InputSelect>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label">@(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll Number")</label>
+                                <InputText @bind-Value="createModel.CurrentRollNo" class="form-control" placeholder="e.g., MUB-1098" />
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="form-label">@(LangService.IsMyanmar ? "သင်တန်းနှစ်" : "Year") <span class="text-danger">*</span></label>
+                                <InputSelect @bind-Value="createModel.CurrentClassYear" class="form-select">
+                                    <option value="">@(LangService.IsMyanmar ? "-- သင်တန်းနှစ် ရွေးချယ်ပါ --" : "-- Select Year --")</option>
+                                    <option value="First Year">First Year</option>
+                                    <option value="Second Year">Second Year</option>
+                                    <option value="Third Year">Third Year</option>
+                                </InputSelect>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">@(LangService.IsMyanmar ? "မေဂျာ" : "Major") <span class="text-danger">*</span></label>
+                                <InputText @bind-Value="createModel.CurrentMajor" class="form-control" placeholder="Major Name" />
+                            </div>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(statusMessage)) { <div class="alert alert-info mt-3">@statusMessage</div> }
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <NavLink href="/admin/student" class="btn btn-secondary">@(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")</NavLink>
+                            <button type="submit" class="btn btn-info" disabled="@isProcessing">
+                                @(isProcessing ? (LangService.IsMyanmar ? "သိမ်းဆည်းနေပါသည်..." : "Saving...") : (LangService.IsMyanmar ? "ကျောင်းသား ထည့်သွင်းမည်" : "Create Student"))
+                            </button>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
     </Authorized>
     <NotAuthorized>
         <div class="text-center mt-5 p-5 tech-card">
             <i class="bi bi-shield-slash text-danger fs-1"></i>
-            <h2 class="text-danger fw-bold mt-3">Access Denied</h2>
-            <p class="text-muted">သင့်တွင် ဤစာမျက်နှာကို ဝင်ရောက်ကြည့်ရှုရန် ခွင့်ပြုချက် (Student.Create Policy) မရှိပါ။</p>
+            <h2 class="text-danger fw-bold mt-3">@(LangService.IsMyanmar ? "ဝင်ရောက်ခွင့် မရှိပါ" : "Access Denied")</h2>
+            <p class="text-muted">@(LangService.IsMyanmar ? "သင့်တွင် ဤစာမျက်နှာကို ဝင်ရောက်ကြည့်ရှုရန် ခွင့်ပြုချက် (Student.Create Policy) မရှိပါ။" : "You do not have permission (Student.Create Policy) to access this page.")</p>
             <NavLink href="/admin/student" class="btn btn-primary mt-2">
-                <i class="bi bi-arrow-left"></i> Back to Directory
+                <i class="bi bi-arrow-left"></i> @(LangService.IsMyanmar ? "ကျောင်းသားမှတ်တမ်းသို့ ပြန်သွားမည်" : "Back to Directory")
             </NavLink>
         </div>
     </NotAuthorized>

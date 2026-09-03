@@ -3,14 +3,19 @@ using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.AspNetCore.Components.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.User;
 
-public partial class Page_UserList
+public partial class Page_UserList : IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<UserModel> UserList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -96,6 +101,8 @@ public partial class Page_UserList
     // Delete Modal Controls
     private bool ShowModal { get; set; } = false;
     private UserModel? SelectedUser { get; set; }
+    private string statusMessage = "";
+    private bool IsSuccess = false;
 
     // Status Modal Controls
     private bool ShowStatusModal { get; set; } = false;
@@ -146,6 +153,7 @@ public partial class Page_UserList
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadRoles();
         await LoadFaculties();
         await LoadUsers();
@@ -154,6 +162,16 @@ public partial class Page_UserList
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -171,18 +189,20 @@ public partial class Page_UserList
         }
     }
 
-    // 🚀 GET Method ဖြင့် API မှ User စာရင်းအားလုံး ဆွဲယူခြင်း
     private async Task LoadUsers()
     {
         IsLoading = true;
         ErrorMessage = "";
         try
         {
-            await Task.Delay(1000);
-            var response = await HttpClientService.ExecuteAsync<PagedResult<UserModel>>(
+            var delayTask = Task.Delay(500);
+            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<UserModel>>(
                 $"user/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&roleName={Uri.EscapeDataString(SelectedRole)}&facultyName={Uri.EscapeDataString(SelectedFaculty)}",
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
 
             if (response != null)
             {
@@ -193,11 +213,12 @@ public partial class Page_UserList
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားအယွင်းရှိပါသည်။ Error: {ex.Message}";
+            ErrorMessage = LangService.IsMyanmar ? $"ဒေတာဆွဲယူရာတွင် အမှားအယွင်းရှိပါသည်။ Error: {ex.Message}" : $"Failed to load data. Error: {ex.Message}";
         }
         finally
         {
             IsLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -205,20 +226,26 @@ public partial class Page_UserList
     {
         SelectedUser = user;
         ShowModal = true;
+        statusMessage = "";
+        IsSuccess = false;
     }
 
     private void CloseDeleteModal()
     {
         SelectedUser = null;
         ShowModal = false;
+        statusMessage = "";
+        IsSuccess = false;
     }
 
-    // 🚀 DELETE Method ဖြင့် User ID အား ဖျက်ချခြင်း
     private async Task DeleteUser()
     {
         if (SelectedUser == null) return;
 
         IsProcessing = true;
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
+        IsSuccess = false;
+
         try
         {
             var response = await HttpClientService.ExecuteAsync<UserDeleteResponseModel>(
@@ -228,18 +255,23 @@ public partial class Page_UserList
 
             if (response != null && response.IsSuccess)
             {
-                //await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "User အား ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
+                IsSuccess = true;
+
+                await LoadUsers();
+                await Task.Delay(800);
                 CloseDeleteModal();
-                await LoadUsers(); // 🔄 စာရင်းအသစ် ပြန်တင်ခြင်း
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
+                statusMessage = LangService.IsMyanmar ? "ဤ အသုံးပြုသူ ကို ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this user.");
+                IsSuccess = false;
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            statusMessage = $"Error: {ex.Message}";
+            IsSuccess = false;
         }
         finally
         {
@@ -293,5 +325,10 @@ public partial class Page_UserList
         public bool IsSuccess { get; set; }
         public string? Message { get; set; }
         public string? Status { get; set; }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

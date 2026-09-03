@@ -8,38 +8,47 @@
 <AuthorizeView Policy="Rules.Create" Context="authContext">
     <Authorized>
         <div class="container-fluid py-4">
-    <div class="tech-card p-4">
-        <h4 class="text-white mb-4">Add New Rule</h4>
-        
-        <EditForm Model="ruleModel" OnValidSubmit="SaveRule" FormName="CreateRuleForm">
-            <DataAnnotationsValidator />
-            
-            <div class="mb-3">
-                <label class="form-label text-light">Rule Title</label>
-                <InputText @bind-Value="ruleModel.Title" class="form-control" />
-                <ValidationMessage For="@(() => ruleModel.Title)" class="text-danger" />
-            </div>
+            <div class="tech-card p-4">
+                <h4 class="text-white mb-4">Add New Rule</h4>
+                
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        @ErrorMessage
+                    </div>
+                }
 
-            <div class="mb-3">
-                <label class="form-label text-light">Penalty</label>
-                <InputText @bind-Value="ruleModel.Penalty" class="form-control" />
-                <ValidationMessage For="@(() => ruleModel.Penalty)" class="text-danger" />
-            </div>
+                <EditForm Model="ruleModel" OnValidSubmit="SaveRule" FormName="CreateRuleForm">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-light">Rule Title <span class="text-danger">*</span></label>
+                        <InputText @bind-Value="ruleModel.Title" class="form-control" placeholder="ဥပမာ - စာသင်ချိန် ကျောင်းခေါ်ချိန် ၇၅% ပြည့်မီရေး စည်းမျဉ်း" />
+                        <ValidationMessage For="@(() => ruleModel.Title)" class="text-danger" />
+                    </div>
 
-            <div class="mb-3">
-                <label class="form-label text-light">Description</label>
-                <InputTextArea @bind-Value="ruleModel.Description" class="form-control" rows="4" />
-            </div>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Penalty (ပြစ်ဒဏ် / အရေးယူဆောင်ရွက်မှု) <span class="text-danger">*</span></label>
+                        <InputText @bind-Value="ruleModel.Penalty" class="form-control" placeholder="ဥပမာ - စာမေးပွဲဖြေဆိုခွင့် တားမြစ်ခံရမည် သို့မဟုတ် 10000" />
+                        <ValidationMessage For="@(() => ruleModel.Penalty)" class="text-danger" />
+                    </div>
 
-            <div class="mt-4">
-                <NavLink href="/admin/rules" class="btn btn-secondary me-2">Cancel</NavLink>
-                <button type="submit" class="btn btn-primary" disabled="@isProcessing">
-                    @(isProcessing ? "Saving..." : "Save Rule")
-                </button>
+                    <div class="mb-3">
+                        <label class="form-label text-light">Description (အသေးစိတ် ဖော်ပြချက်)</label>
+                        <InputTextArea @bind-Value="ruleModel.Description" class="form-control" rows="4" placeholder="စည်းကမ်းဆိုင်ရာ အသေးစိတ် အချက်အလက်များ ထည့်သွင်းပါ..." />
+                    </div>
+
+                    <div class="mt-4">
+                        <NavLink href="/admin/rules" class="btn btn-secondary me-2">Cancel</NavLink>
+                        <button type="submit" class="btn btn-primary" disabled="@isProcessing">
+                            <i class="bi bi-check2-circle me-1.5"></i>
+                            @(isProcessing ? "Saving..." : "Save Rule")
+                        </button>
+                    </div>
+                </EditForm>
             </div>
-        </EditForm>
-    </div>
-</div>
+        </div>
     </Authorized>
     <NotAuthorized>
         <div class="text-center mt-5 p-5 tech-card">

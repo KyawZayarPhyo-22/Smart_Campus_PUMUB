@@ -123,6 +123,29 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             });
         }
 
+        // GET /api/permission/student-apply-now-status
+        [HttpGet("student-apply-now-status")]
+        [AllowAnonymous]
+        public IActionResult GetStudentApplyNowStatus()
+        {
+            var studentRole = _db.Roles.FirstOrDefault(r => r.RoleName == "Student" || r.RoleId == 3);
+            int studentRoleId = studentRole?.RoleId ?? 3;
+
+            bool hasPermission = _db.RolePermissions
+                .Include(rp => rp.Permission)
+                .Any(rp => rp.RoleId == studentRoleId && 
+                           (rp.Permission.PermissionName == "Student.ApplyNow" || 
+                            rp.Permission.PermissionName == "Student.ApplyJoin" ||
+                            rp.Permission.PermissionName == "StudentRegistrations.Create"));
+
+            return Ok(new ApplyNowStatusResponseModel
+            {
+                IsSuccess = true,
+                IsEnabled = hasPermission,
+                Message = hasPermission ? "Apply Now button is visible." : "Apply Now button is hidden."
+            });
+        }
+
         // GET /api/permission/paginate
         [HttpGet("paginate")]
         [AllowAnonymous]

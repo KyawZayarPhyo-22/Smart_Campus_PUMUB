@@ -25,11 +25,15 @@ public class StudentRegistrationsController : ControllerBase
 
     private readonly SmartCampusDbContext _db;
     private readonly IFacultyDataScopeService _scopeService;
+    private readonly IEnrollmentService _enrollmentService;
+    private readonly IEmailService _emailService;
 
-    public StudentRegistrationsController(SmartCampusDbContext db, IFacultyDataScopeService scopeService)
+    public StudentRegistrationsController(SmartCampusDbContext db, IFacultyDataScopeService scopeService, IEnrollmentService enrollmentService, IEmailService emailService)
     {
         _db = db;
         _scopeService = scopeService;
+        _enrollmentService = enrollmentService;
+        _emailService = emailService;
     }
 
     private static string NormalizeRegistrationStatus(string? status)
@@ -142,6 +146,13 @@ public class StudentRegistrationsController : ControllerBase
             item.IsDelete,
             item.StudentImage,
             item.SignatureImage,
+            item.NrcFrontImage,
+            item.NrcBackImage,
+            item.CensusImage,
+            item.FatherNrcFrontImage,
+            item.FatherNrcBackImage,
+            item.MotherNrcFrontImage,
+            item.MotherNrcBackImage,
             item.RegistrationPayments
         };
     }
@@ -391,6 +402,33 @@ public class StudentRegistrationsController : ControllerBase
         {
             return NotFound(new StudentRegistrationResponseModel { IsSuccess = false, Message = "ကျောင်းအပ်ဖောင် ရှာမတွေ့ပါ။" });
         }
+
+        // Fallback missing images from StudentPersonalInfo or Students table if available
+        var pInfo = _db.StudentPersonalInfos
+            .AsNoTracking()
+            .FirstOrDefault(p => (item.UserId != null && p.UserId == item.UserId) || (!string.IsNullOrEmpty(item.RollNo) && p.roll_no == item.RollNo));
+
+        if (pInfo != null)
+        {
+            if (string.IsNullOrEmpty(item.StudentImage)) item.StudentImage = pInfo.student_image;
+            if (string.IsNullOrEmpty(item.NrcFrontImage)) item.NrcFrontImage = pInfo.nrc_front_image;
+            if (string.IsNullOrEmpty(item.NrcBackImage)) item.NrcBackImage = pInfo.nrc_back_image;
+            if (string.IsNullOrEmpty(item.CensusImage)) item.CensusImage = pInfo.census_image;
+            if (string.IsNullOrEmpty(item.FatherNrcFrontImage)) item.FatherNrcFrontImage = pInfo.father_nrc_front_image;
+            if (string.IsNullOrEmpty(item.FatherNrcBackImage)) item.FatherNrcBackImage = pInfo.father_nrc_back_image;
+            if (string.IsNullOrEmpty(item.MotherNrcFrontImage)) item.MotherNrcFrontImage = pInfo.mother_nrc_front_image;
+            if (string.IsNullOrEmpty(item.MotherNrcBackImage)) item.MotherNrcBackImage = pInfo.mother_nrc_back_image;
+        }
+
+        if (string.IsNullOrEmpty(item.StudentImage) && item.UserId.HasValue)
+        {
+            var studentObj = _db.Students.AsNoTracking().FirstOrDefault(s => s.UserId == item.UserId);
+            if (studentObj != null && !string.IsNullOrEmpty(studentObj.StudentImage))
+            {
+                item.StudentImage = studentObj.StudentImage;
+            }
+        }
+
         return Ok(ToRegistrationResponse(item));
     }
 
@@ -432,6 +470,17 @@ public class StudentRegistrationsController : ControllerBase
                 {
                     IsSuccess = false,
                     Message = "ကျောင်းသားအကောင့်များသာ ကျောင်းအပ်ဖောင် တင်သွင်းခွင့်ရှိသည်။"
+                });
+            }
+
+            // ၃။ Retake စည်းမျဉ်း စစ်ဆေးခြင်း (Max Retake Limit Check)
+            var retakeStatus = _enrollmentService.GetStudentRetakeStatusAsync(request.UserId.Value, null, request.roll_no).GetAwaiter().GetResult();
+            if (retakeStatus.IsDisqualified)
+            {
+                return BadRequest(new StudentRegistrationResponseModel
+                {
+                    IsSuccess = false,
+                    Message = $"သတ်မှတ်ထားသော အများဆုံး Retake အကြိမ်အရေအတွက် ({retakeStatus.MaxRetakeLimit} ကြိမ်) ပြည့်သွားပြီဖြစ်ပါသဖြင့် ကျောင်းအပ်နှံခြင်း/ဘာသာရပ်စာရင်းသွင်းခြင်း ပြုလုပ်ခွင့် မရှိတော့ပါ။ ကျောင်းတက်ရောက်ခွင့် အရည်အချင်း မပြည့်မီတော့ပါ။"
                 });
             }
         }
@@ -675,8 +724,15 @@ public class StudentRegistrationsController : ControllerBase
         }
 
         // --- (င) 📷 Images Upload handling ---
-        string studentImagePath = "";
+        string studentImagePath = request.StudentImageFile != null ? "" : (request.student_image ?? "");
         string signatureImagePath = "";
+        string nrcFrontImagePath = request.nrc_front_image ?? "";
+        string nrcBackImagePath = request.nrc_back_image ?? "";
+        string censusImagePath = request.census_image ?? "";
+        string fatherNrcFrontImagePath = request.father_nrc_front_image ?? "";
+        string fatherNrcBackImagePath = request.father_nrc_back_image ?? "";
+        string motherNrcFrontImagePath = request.mother_nrc_front_image ?? "";
+        string motherNrcBackImagePath = request.mother_nrc_back_image ?? "";
         string uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "students");
 
         if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
@@ -703,40 +759,166 @@ public class StudentRegistrationsController : ControllerBase
             signatureImagePath = $"/uploads/students/{fileName}";
         }
 
+        if (request.NrcFrontImageFile != null && request.NrcFrontImageFile.Length > 0)
+        {
+            string ext = Path.GetExtension(request.NrcFrontImageFile.FileName).ToLower();
+            string fileName = $"nrc_f_{Guid.NewGuid().ToString().Substring(0, 8)}{ext}";
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
+            {
+                request.NrcFrontImageFile.CopyTo(stream);
+            }
+            nrcFrontImagePath = $"/uploads/students/{fileName}";
+        }
+
+        if (request.NrcBackImageFile != null && request.NrcBackImageFile.Length > 0)
+        {
+            string ext = Path.GetExtension(request.NrcBackImageFile.FileName).ToLower();
+            string fileName = $"nrc_b_{Guid.NewGuid().ToString().Substring(0, 8)}{ext}";
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
+            {
+                request.NrcBackImageFile.CopyTo(stream);
+            }
+            nrcBackImagePath = $"/uploads/students/{fileName}";
+        }
+
+        if (request.CensusImageFile != null && request.CensusImageFile.Length > 0)
+        {
+            string ext = Path.GetExtension(request.CensusImageFile.FileName).ToLower();
+            string fileName = $"census_{Guid.NewGuid().ToString().Substring(0, 8)}{ext}";
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
+            {
+                request.CensusImageFile.CopyTo(stream);
+            }
+            censusImagePath = $"/uploads/students/{fileName}";
+        }
+
+        if (request.FatherNrcFrontImageFile != null && request.FatherNrcFrontImageFile.Length > 0)
+        {
+            string ext = Path.GetExtension(request.FatherNrcFrontImageFile.FileName).ToLower();
+            string fileName = $"fnrc_f_{Guid.NewGuid().ToString().Substring(0, 8)}{ext}";
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
+            {
+                request.FatherNrcFrontImageFile.CopyTo(stream);
+            }
+            fatherNrcFrontImagePath = $"/uploads/students/{fileName}";
+        }
+
+        if (request.FatherNrcBackImageFile != null && request.FatherNrcBackImageFile.Length > 0)
+        {
+            string ext = Path.GetExtension(request.FatherNrcBackImageFile.FileName).ToLower();
+            string fileName = $"fnrc_b_{Guid.NewGuid().ToString().Substring(0, 8)}{ext}";
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
+            {
+                request.FatherNrcBackImageFile.CopyTo(stream);
+            }
+            fatherNrcBackImagePath = $"/uploads/students/{fileName}";
+        }
+
+        if (request.MotherNrcFrontImageFile != null && request.MotherNrcFrontImageFile.Length > 0)
+        {
+            string ext = Path.GetExtension(request.MotherNrcFrontImageFile.FileName).ToLower();
+            string fileName = $"mnrc_f_{Guid.NewGuid().ToString().Substring(0, 8)}{ext}";
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
+            {
+                request.MotherNrcFrontImageFile.CopyTo(stream);
+            }
+            motherNrcFrontImagePath = $"/uploads/students/{fileName}";
+        }
+
+        if (request.MotherNrcBackImageFile != null && request.MotherNrcBackImageFile.Length > 0)
+        {
+            string ext = Path.GetExtension(request.MotherNrcBackImageFile.FileName).ToLower();
+            string fileName = $"mnrc_b_{Guid.NewGuid().ToString().Substring(0, 8)}{ext}";
+            using (var stream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.Create))
+            {
+                request.MotherNrcBackImageFile.CopyTo(stream);
+            }
+            motherNrcBackImagePath = $"/uploads/students/{fileName}";
+        }
+
+        // Fallback missing images from StudentPersonalInfo if not uploaded
+        if (request.UserId.HasValue || !string.IsNullOrEmpty(request.roll_no))
+        {
+            var pInfo = _db.StudentPersonalInfos
+                .AsNoTracking()
+                .FirstOrDefault(p => (request.UserId.HasValue && p.UserId == request.UserId.Value) || (!string.IsNullOrEmpty(request.roll_no) && p.roll_no == request.roll_no));
+
+            if (pInfo != null)
+            {
+                if (string.IsNullOrEmpty(studentImagePath)) studentImagePath = pInfo.student_image ?? "";
+                if (string.IsNullOrEmpty(nrcFrontImagePath)) nrcFrontImagePath = pInfo.nrc_front_image ?? "";
+                if (string.IsNullOrEmpty(nrcBackImagePath)) nrcBackImagePath = pInfo.nrc_back_image ?? "";
+                if (string.IsNullOrEmpty(censusImagePath)) censusImagePath = pInfo.census_image ?? "";
+                if (string.IsNullOrEmpty(fatherNrcFrontImagePath)) fatherNrcFrontImagePath = pInfo.father_nrc_front_image ?? "";
+                if (string.IsNullOrEmpty(fatherNrcBackImagePath)) fatherNrcBackImagePath = pInfo.father_nrc_back_image ?? "";
+                if (string.IsNullOrEmpty(motherNrcFrontImagePath)) motherNrcFrontImagePath = pInfo.mother_nrc_front_image ?? "";
+                if (string.IsNullOrEmpty(motherNrcBackImagePath)) motherNrcBackImagePath = pInfo.mother_nrc_back_image ?? "";
+            }
+
+            if (string.IsNullOrEmpty(studentImagePath) && request.UserId.HasValue)
+            {
+                var studentObj = _db.Students.AsNoTracking().FirstOrDefault(s => s.UserId == request.UserId.Value);
+                if (studentObj != null && !string.IsNullOrEmpty(studentObj.StudentImage))
+                {
+                    studentImagePath = studentObj.StudentImage;
+                }
+            }
+        }
+
         // --- (စ) DB ထဲသို့ ဒေတာထည့်သွင်းခြင်း ---
+        int? validUserId = null;
+        if (request.UserId.HasValue && request.UserId.Value > 0)
+        {
+            var userExists = _db.Users.Any(u => u.UserId == request.UserId.Value);
+            if (userExists)
+            {
+                validUserId = request.UserId.Value;
+            }
+        }
+
+        int? validNewStudentAccId = null;
+        if (request.NewStudentAccId.HasValue && request.NewStudentAccId.Value > 0)
+        {
+            var accExists = _db.NewStudentAccs.Any(a => a.NewStudentAccId == request.NewStudentAccId.Value);
+            if (accExists)
+            {
+                validNewStudentAccId = request.NewStudentAccId.Value;
+            }
+        }
+
         var newReg = new StudentRegistration
         {
-            UserId = request.UserId,
-            NewStudentAccId = request.NewStudentAccId,
+            UserId = validUserId,
+            NewStudentAccId = validNewStudentAccId,
             AdmissionSerialNo = request.AdmissionSerialNo,
-            AcademicYearRange = request.academic_year_range,
-            AcademicYearLevel = request.academic_year_level,
-            Major = request.major,
+            AcademicYearRange = request.academic_year_range ?? "",
+            AcademicYearLevel = request.academic_year_level ?? "",
+            Major = request.major ?? "",
             RollNo = request.roll_no,
             UniversityRegNo = request.university_reg_no,
             AdmissionYear = request.admission_year,
             ApplicationDate = DateTime.UtcNow.AddHours(6).AddMinutes(30),
-            StudentNameMm = request.student_name_mm,
-            StudentNameEn = request.student_name_en,
-            MotherName = request.mother_name,
-            FatherName = request.father_name,
-            GenderRelation = request.gender_relation,
-            Ethnicity = request.ethnicity,
-            Religion = request.religion,
-            Pob = request.pob,
-            BirthPlaceRegion = request.birth_place_region,
-            StudentNrcNo = fullNrcNo, // 💡 Null ဖြစ်လျှင် Null အတိုင်း ဝင်သွားမည်
-            NationalityStatus = request.nationality_status,
-            Dob = DateOnly.FromDateTime(request.dob),
+            StudentNameMm = request.student_name_mm ?? "",
+            StudentNameEn = request.student_name_en ?? "",
+            MotherName = request.mother_name ?? "",
+            FatherName = request.father_name ?? "",
+            GenderRelation = request.gender_relation ?? "",
+            Ethnicity = request.ethnicity ?? "",
+            Religion = request.religion ?? "",
+            Pob = request.pob ?? "",
+            BirthPlaceRegion = request.birth_place_region ?? "",
+            StudentNrcNo = fullNrcNo ?? "",
+            NationalityStatus = request.nationality_status ?? "",
+            Dob = request.dob != default ? DateOnly.FromDateTime(request.dob) : DateOnly.FromDateTime(DateTime.Today.AddYears(-18)),
             Email = request.email,
-            BloodType = string.IsNullOrEmpty(request.blood_type) ? null : request.blood_type.ToUpper(), // 💡 Fix: Null error မတက်အောင် ကာကွယ်ထားသည်
+            BloodType = string.IsNullOrEmpty(request.blood_type) ? "" : request.blood_type.ToUpper(),
             CovidVaccineStatus = request.covid_vaccine_status,
             CurrentAddress = request.current_address,
-            PermanentAddressMm = request.permanent_address_mm,
-            PermanentAddressEn = request.permanent_address_en,
-            MatricRollNo = request.matric_roll_no,
+            PermanentAddressMm = request.permanent_address_mm ?? "",
+            PermanentAddressEn = request.permanent_address_en ?? "",
+            MatricRollNo = request.matric_roll_no ?? "",
             MatricPassedYear = request.matric_passed_year,
-            ExamCenter = request.exam_center,
+            ExamCenter = request.exam_center ?? "",
             FatherOccupation = request.father_occupation,
             MotherOccupation = request.mother_occupation,
             PastExamMajor = request.past_exam_major,
@@ -758,59 +940,115 @@ public class StudentRegistrationsController : ControllerBase
             Status = PendingConfirmationStatus,
             StudentImage = studentImagePath,
             SignatureImage = signatureImagePath,
+            NrcFrontImage = nrcFrontImagePath,
+            NrcBackImage = nrcBackImagePath,
+            CensusImage = censusImagePath,
+            FatherNrcFrontImage = fatherNrcFrontImagePath,
+            FatherNrcBackImage = fatherNrcBackImagePath,
+            MotherNrcFrontImage = motherNrcFrontImagePath,
+            MotherNrcBackImage = motherNrcBackImagePath,
             CreatedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
             CreatedBy = string.IsNullOrEmpty(request.created_by) ? "System" : request.created_by,
             IsDelete = false
         };
 
-        _db.StudentRegistrations.Add(newReg);
-        int result = _db.SaveChanges();
-
-        if (result > 0 && !string.IsNullOrWhiteSpace(request.selected_subject_ids))
+        try
         {
-            int? realStudentId = null;
-            if (newReg.UserId.HasValue)
-            {
-                var studentRec = _db.Students.FirstOrDefault(s => s.UserId == newReg.UserId.Value);
-                realStudentId = studentRec?.StudentId;
-            }
+            _db.StudentRegistrations.Add(newReg);
+            int result = _db.SaveChanges();
 
-            var subIdStrings = request.selected_subject_ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            foreach (var subIdStr in subIdStrings)
+            if (result > 0 && !string.IsNullOrWhiteSpace(request.selected_subject_ids))
             {
-                if (int.TryParse(subIdStr, out int subId) && subId > 0)
+                int? realStudentId = null;
+                if (newReg.UserId.HasValue && newReg.UserId.Value > 0)
                 {
-                    var subjectObj = _db.Subjects.FirstOrDefault(s => s.SubjectId == subId);
-                    var newResult = new StudentSubjectResult
+                    var studentRec = _db.Students.FirstOrDefault(s => s.UserId == newReg.UserId.Value);
+                    if (studentRec != null && studentRec.StudentId > 0)
                     {
-                        RegistrationId = newReg.RegistrationId,
-                        StudentId = realStudentId,
-                        SubjectId = subId,
-                        SemesterId = subjectObj?.SemesterId,
-                        Grade = null,
-                        IsPass = false,
-                        CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
-                        CreatedBy = string.IsNullOrEmpty(request.created_by) ? "System" : request.created_by
-                    };
-                    _db.StudentSubjectResults.Add(newResult);
+                        realStudentId = studentRec.StudentId;
+                    }
+                }
+
+                var subIdStrings = request.selected_subject_ids.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                foreach (var subIdStr in subIdStrings)
+                {
+                    if (int.TryParse(subIdStr, out int subId) && subId > 0)
+                    {
+                        var subjectObj = _db.Subjects.FirstOrDefault(s => s.SubjectId == subId && (s.IsDelete == false || s.IsDelete == null));
+                        if (subjectObj != null)
+                        {
+                            var newResult = new StudentSubjectResult
+                            {
+                                RegistrationId = newReg.RegistrationId,
+                                StudentId = realStudentId,
+                                SubjectId = subId,
+                                SemesterId = subjectObj.SemesterId > 0 ? subjectObj.SemesterId : (int?)null,
+                                Grade = null,
+                                IsPass = false,
+                                IsDisqualified = false,
+                                AttemptNumber = 1,
+                                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                                CreatedBy = string.IsNullOrEmpty(request.created_by) ? "System" : request.created_by
+                            };
+                            _db.StudentSubjectResults.Add(newResult);
+                        }
+                    }
+                }
+                _db.SaveChanges();
+
+                // Sync StudentPersonalInfo and Student table
+                if (!string.IsNullOrWhiteSpace(newReg.Major) && newReg.Major != "-")
+                {
+                    StudentPersonalInfo? pInfo = null;
+                    if (newReg.UserId.HasValue && newReg.UserId.Value > 0)
+                        pInfo = _db.StudentPersonalInfos.FirstOrDefault(p => p.UserId == newReg.UserId.Value);
+                    else if (newReg.NewStudentAccId.HasValue && newReg.NewStudentAccId.Value > 0)
+                        pInfo = _db.StudentPersonalInfos.FirstOrDefault(p => p.NewStudentAccId == newReg.NewStudentAccId.Value);
+
+                    if (pInfo != null)
+                    {
+                        pInfo.major = newReg.Major;
+                        if (!string.IsNullOrWhiteSpace(newReg.RollNo)) pInfo.roll_no = newReg.RollNo;
+                        _db.StudentPersonalInfos.Update(pInfo);
+                    }
+
+                    if (newReg.UserId.HasValue && newReg.UserId.Value > 0)
+                    {
+                        var studentObj = _db.Students.FirstOrDefault(s => s.UserId == newReg.UserId.Value && (s.IsDelete == false || s.IsDelete == null));
+                        if (studentObj != null)
+                        {
+                            studentObj.CurrentMajor = newReg.Major;
+                            if (!string.IsNullOrWhiteSpace(newReg.RollNo)) studentObj.CurrentRollNo = newReg.RollNo;
+                            if (!string.IsNullOrWhiteSpace(newReg.AcademicYearLevel)) studentObj.CurrentClassYear = newReg.AcademicYearLevel;
+                            _db.Students.Update(studentObj);
+                        }
+                    }
+                    _db.SaveChanges();
                 }
             }
-            _db.SaveChanges();
-        }
 
-        return StatusCode(201, new StudentRegistrationResponseModel
-        {
-            IsSuccess = result > 0,
-            Message = result > 0 ? "ကျောင်းအပ်ဖောင် တင်သွင်းခြင်း အောင်မြင်ပါသည်။" : "တင်သွင်းမှု မအောင်မြင်ပါ။",
-            Data = new
+            return StatusCode(201, new StudentRegistrationResponseModel
             {
-                id = newReg.RegistrationId,
-                registrationId = newReg.RegistrationId,
-                userId = newReg.UserId,
-                status = newReg.Status,
-                canProceedToPayment = false
-            }
-        });
+                IsSuccess = result > 0,
+                Message = result > 0 ? "ကျောင်းအပ်ဖောင် တင်သွင်းခြင်း အောင်မြင်ပါသည်။" : "တင်သွင်းမှု မအောင်မြင်ပါ။",
+                Data = new
+                {
+                    id = newReg.RegistrationId,
+                    registrationId = newReg.RegistrationId,
+                    userId = newReg.UserId,
+                    status = newReg.Status,
+                    canProceedToPayment = false
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new StudentRegistrationResponseModel
+            {
+                IsSuccess = false,
+                Message = $"ကျောင်းအပ်ဖောင် သိမ်းဆည်းရာတွင် အမှားဖြစ်ပေါ်ပါသည်: {ex.InnerException?.Message ?? ex.Message}"
+            });
+        }
     }
 
     // ၄။ PUT: ဖောင်အချက်အလက် ပြင်ရန် (Update)
@@ -835,6 +1073,34 @@ public class StudentRegistrationsController : ControllerBase
         item.Email = request.email;
         item.ModifiedBy = request.modified_by;
         item.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+
+        if (!string.IsNullOrWhiteSpace(request.major) && request.major != "-")
+        {
+            StudentPersonalInfo? pInfo = null;
+            if (item.UserId.HasValue && item.UserId.Value > 0)
+                pInfo = _db.StudentPersonalInfos.FirstOrDefault(p => p.UserId == item.UserId.Value);
+            else if (item.NewStudentAccId.HasValue && item.NewStudentAccId.Value > 0)
+                pInfo = _db.StudentPersonalInfos.FirstOrDefault(p => p.NewStudentAccId == item.NewStudentAccId.Value);
+
+            if (pInfo != null)
+            {
+                pInfo.major = request.major;
+                if (!string.IsNullOrWhiteSpace(request.roll_no)) pInfo.roll_no = request.roll_no;
+                _db.StudentPersonalInfos.Update(pInfo);
+            }
+
+            if (item.UserId.HasValue && item.UserId.Value > 0)
+            {
+                var studentObj = _db.Students.FirstOrDefault(s => s.UserId == item.UserId.Value && (s.IsDelete == false || s.IsDelete == null));
+                if (studentObj != null)
+                {
+                    studentObj.CurrentMajor = request.major;
+                    if (!string.IsNullOrWhiteSpace(request.roll_no)) studentObj.CurrentRollNo = request.roll_no;
+                    if (!string.IsNullOrWhiteSpace(request.academic_year_level)) studentObj.CurrentClassYear = request.academic_year_level;
+                    _db.Students.Update(studentObj);
+                }
+            }
+        }
 
         int result = _db.SaveChanges();
         return Ok(new StudentRegistrationResponseModel { IsSuccess = result > 0, Message = "ဖောင်အချက်အလက် ပြင်ဆင်ပြီးပါပြီ။" });
@@ -983,7 +1249,7 @@ public class StudentRegistrationsController : ControllerBase
 
     // ၇။ PATCH: ဖောင်ကို Approved / Rejected လုပ်ရန်
     [HttpPatch("{id}/status")]
-    public IActionResult PatchStatus(int id, [FromBody] StudentRegistrationStatusPatchModel request)
+    public async Task<IActionResult> PatchStatus(int id, [FromBody] StudentRegistrationStatusPatchModel request)
     {
         var item = _db.StudentRegistrations
             .FirstOrDefault(x => x.RegistrationId == id && (x.IsDelete == false || x.IsDelete == null));
@@ -1000,15 +1266,131 @@ public class StudentRegistrationsController : ControllerBase
             return BadRequest(new StudentRegistrationResponseModel { IsSuccess = false, Message = "Status ပြောင်းလဲမှုပုံစံ မှားယွင်းနေပါသည်။" });
         }
 
+        string? generatedUsername = null;
+        string? plainPassword = null;
+
+        if (string.Equals(requestedStatus, ApprovedStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            // If student doesn't have an account in User table yet, auto-create one with Student role (RoleId = 3)
+            if (!item.UserId.HasValue || item.UserId.Value <= 0)
+            {
+                var existingUser = !string.IsNullOrWhiteSpace(item.Email)
+                    ? await _db.Users.FirstOrDefaultAsync(u => u.Email == item.Email && u.IsDelete == false)
+                    : null;
+
+                if (existingUser != null)
+                {
+                    item.UserId = existingUser.UserId;
+                }
+                else
+                {
+                    // Auto-generate username from FullName (all lowercase, spaces replaced by underscore)
+                    string namePart = !string.IsNullOrWhiteSpace(item.StudentNameEn) ? item.StudentNameEn : (item.StudentNameMm ?? "student");
+                    string baseUsername = GenerateUsername(namePart);
+
+                    string finalUsername = baseUsername;
+                    int suffix = 1;
+                    while (await _db.Users.AnyAsync(u => u.UserName == finalUsername && u.IsDelete == false))
+                    {
+                        finalUsername = $"{baseUsername}_{suffix}";
+                        suffix++;
+                    }
+
+                    // Auto-generate secure password
+                    const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+                    var rng = new Random();
+                    plainPassword = "SC@" + new string(Enumerable.Range(0, 8).Select(_ => chars[rng.Next(chars.Length)]).ToArray());
+                    string hashedPassword = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+
+                    var newUser = new User
+                    {
+                        RoleId = 3, // Student role (shows in User Management)
+                        FullName = !string.IsNullOrWhiteSpace(item.StudentNameMm) ? item.StudentNameMm : (item.StudentNameEn ?? "Student"),
+                        UserName = finalUsername,
+                        RoleNo = item.RollNo,
+                        Email = item.Email,
+                        Password = hashedPassword,
+                        MustChangePassword = true,
+                        Status = "Active",
+                        IsDelete = false,
+                        CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                        CreatedBy = request.modified_by ?? "Admin"
+                    };
+
+                    _db.Users.Add(newUser);
+                    await _db.SaveChangesAsync();
+
+                    item.UserId = newUser.UserId;
+                    generatedUsername = finalUsername;
+
+                    // Also create or link Student record in Student table
+                    var existingStudent = await _db.Students.FirstOrDefaultAsync(s => s.UserId == newUser.UserId);
+                    if (existingStudent == null)
+                    {
+                        var student = new Student
+                        {
+                            UserId = newUser.UserId,
+                            CurrentRollNo = !string.IsNullOrWhiteSpace(newUser.RoleNo) ? newUser.RoleNo : item.RollNo,
+                            CurrentClassYear = item.AcademicYearLevel ?? "First Year",
+                            CurrentMajor = item.Major ?? "N/A",
+                            StudentImage = item.StudentImage,
+                            NrcFrontImage = item.NrcFrontImage,
+                            NrcBackImage = item.NrcBackImage,
+                            CensusImage = item.CensusImage,
+                            FatherNrcFrontImage = item.FatherNrcFrontImage,
+                            FatherNrcBackImage = item.FatherNrcBackImage,
+                            MotherNrcFrontImage = item.MotherNrcFrontImage,
+                            MotherNrcBackImage = item.MotherNrcBackImage,
+                            Status = "Active",
+                            IsDelete = false,
+                            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                            CreatedBy = request.modified_by ?? "Admin"
+                        };
+                        _db.Students.Add(student);
+                        await _db.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(item.StudentImage)) existingStudent.StudentImage = item.StudentImage;
+                        if (!string.IsNullOrEmpty(item.NrcFrontImage)) existingStudent.NrcFrontImage = item.NrcFrontImage;
+                        if (!string.IsNullOrEmpty(item.NrcBackImage)) existingStudent.NrcBackImage = item.NrcBackImage;
+                        if (!string.IsNullOrEmpty(item.CensusImage)) existingStudent.CensusImage = item.CensusImage;
+                        if (!string.IsNullOrEmpty(item.FatherNrcFrontImage)) existingStudent.FatherNrcFrontImage = item.FatherNrcFrontImage;
+                        if (!string.IsNullOrEmpty(item.FatherNrcBackImage)) existingStudent.FatherNrcBackImage = item.FatherNrcBackImage;
+                        if (!string.IsNullOrEmpty(item.MotherNrcFrontImage)) existingStudent.MotherNrcFrontImage = item.MotherNrcFrontImage;
+                        if (!string.IsNullOrEmpty(item.MotherNrcBackImage)) existingStudent.MotherNrcBackImage = item.MotherNrcBackImage;
+                        await _db.SaveChangesAsync();
+                    }
+
+                    // Send approval and credentials email
+                    if (!string.IsNullOrWhiteSpace(item.Email) && !string.IsNullOrWhiteSpace(plainPassword))
+                    {
+                        try
+                        {
+                            string subject = "Polytechnic University Maubin - Registration Approved & Login Details";
+                            string htmlBody = BuildRegistrationApprovalEmail(newUser.FullName, finalUsername, plainPassword);
+                            _ = _emailService.SendEmailAsync(item.Email, newUser.FullName, subject, htmlBody);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[Email Error] Failed to send registration credentials email: {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
+
         item.Status = requestedStatus;
         item.ModifiedBy = request.modified_by;
         item.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
 
-        int result = _db.SaveChanges();
+        int result = await _db.SaveChangesAsync();
         return Ok(new StudentRegistrationResponseModel
         {
             IsSuccess = result > 0,
-            Message = $"ကျောင်းအပ်ဖောင်ကို {requestedStatus} ပြုလုပ်ခြင်း အောင်မြင်ပါသည်။",
+            Message = generatedUsername != null
+                ? $"ကျောင်းအပ်ဖောင်ကို Approved ပြုလုပ်ပြီးပါပြီ။ User Management တွင် Student အကောင့် ဖန်တီး၍ Username '{generatedUsername}' နှင့် Password ကို Email ဖြင့် ပေးပို့ပြီးပါပြီ။"
+                : $"ကျောင်းအပ်ဖောင်ကို {requestedStatus} ပြုလုပ်ခြင်း အောင်မြင်ပါသည်။",
             Data = new
             {
                 registrationId = item.RegistrationId,
@@ -1017,6 +1399,72 @@ public class StudentRegistrationsController : ControllerBase
                 canProceedToPayment = CanProceedToPayment(item.Status)
             }
         });
+    }
+
+    private static string BuildRegistrationApprovalEmail(string name, string username, string password)
+    {
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <style>
+    body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4ff; margin: 0; padding: 20px; }}
+    .card {{ background: #fff; border-radius: 16px; max-width: 520px; margin: auto; padding: 36px; box-shadow: 0 4px 24px rgba(37,99,235,0.1); }}
+    .header {{ text-align: center; margin-bottom: 24px; }}
+    .badge {{ display:inline-block; background: #10b981; color: white; border-radius: 50px; padding: 6px 18px; font-size: 0.85rem; font-weight:700; letter-spacing:0.05em; }}
+    h2 {{ color: #1e3a8a; font-size: 1.4rem; margin: 12px 0 4px; }}
+    p {{ color: #475569; line-height: 1.7; }}
+    .cred-box {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0; }}
+    .cred-row {{ display: flex; justify-content: space-between; margin-bottom: 10px; }}
+    .cred-label {{ color: #94a3b8; font-size: 0.85rem; font-weight: 600; }}
+    .cred-val {{ color: #0f172a; font-weight: 700; font-family: monospace; font-size: 1rem; }}
+    .footer {{ text-align: center; margin-top: 24px; color: #94a3b8; font-size: 0.8rem; }}
+    .warn {{ background: #fef3c7; border-radius: 8px; padding: 12px 16px; color: #92400e; font-size: 0.85rem; margin-top: 16px; }}
+  </style>
+</head>
+<body>
+  <div class='card'>
+    <div class='header'>
+      <span class='badge'>✓ ADMISSION APPROVED</span>
+      <h2>Smart Campus Registration Approved</h2>
+      <p>Polytechnic University Maubin (PUMUB)</p>
+    </div>
+    <p>Dear <strong>{name}</strong>,</p>
+    <p>သင်၏ ကျောင်းအပ်နှံမှု လျှောက်ထားချက်ကို အောင်မြင်စွာ အတည်ပြုပြီးပါပြီ။ သင်၏ Student Portal သို့ ဝင်ရောက်ရန် အောက်ပါ အကောင့်အချက်အလက်များကို အသုံးပြုနိုင်ပါသည်-</p>
+    <div class='cred-box'>
+      <div class='cred-row'>
+        <span class='cred-label'>Username</span>
+        <span class='cred-val'>{username}</span>
+      </div>
+      <div class='cred-row'>
+        <span class='cred-label'>Password</span>
+        <span class='cred-val'>{password}</span>
+      </div>
+    </div>
+    <div class='warn'>
+      ⚠️ ကျေးဇူးပြု၍ ပထမဆုံးဝင်ချိန်တွင် Password ကို ချက်ချင်း ပြောင်းလဲပေးပါ။ ဤ ယာယီ Password ကို အခြားသူများအား မျှဝေခြင်း မပြုပါနှင့်။
+    </div>
+    <div class='footer'>
+      © {DateTime.Now.Year} Smart Campus PUMUB &nbsp;·&nbsp; Polytechnic University Maubin
+    </div>
+  </div>
+</body>
+</html>";
+    }
+
+    private static string GenerateUsername(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            return "student";
+
+        // Full Name အပြည့်အစုံကို အသေးစာလုံးပြောင်းပြီး space နေရာတွင် '_' ထည့်သွင်းခြင်း
+        string lower = fullName.Trim().ToLowerInvariant();
+        string replaced = System.Text.RegularExpressions.Regex.Replace(lower, @"\s+", "_");
+        string cleaned = new string(replaced.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"_+", "_").Trim('_');
+
+        return string.IsNullOrWhiteSpace(cleaned) ? "student" : cleaned;
     }
 }
 

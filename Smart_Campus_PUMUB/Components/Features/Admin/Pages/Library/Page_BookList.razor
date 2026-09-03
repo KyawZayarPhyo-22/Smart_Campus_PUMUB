@@ -4,6 +4,8 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "စာကြည့်တိုက်" : "Book Directory")</PageTitle>
+
 <style>
     .custom-table { background: rgba(20, 24, 33, 0.6); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.05); }
     .custom-table thead { background: rgba(13, 110, 253, 0.1); border-bottom: 2px solid rgba(13, 110, 253, 0.2); }
@@ -31,7 +33,7 @@
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        max-height: 228px; /* Approximately 6 items */
+        max-height: 228px;
         overflow-y: auto;
         z-index: 1050;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
@@ -72,13 +74,13 @@
 
     .dropdown-item-custom:hover {
         background-color: #f3f4f6;
-        color: #5A4FCF;
+        color: #0d6efd;
         font-weight: 600;
     }
 
     .dropdown-item-custom.selected {
-        background-color: rgba(90, 79, 207, 0.08);
-        color: #5A4FCF;
+        background-color: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
         font-weight: 700;
     }
 </style>
@@ -88,200 +90,218 @@
     <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
 }
 
-<div class="tab-pane fade show active" id="v-pills-books">
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+@if (!canViewBook && isAuthLoaded)
+{
+    <div class="card p-4 m-3 border-0 shadow-sm" style="background: rgba(220, 53, 69, 0.08); border-left: 4px solid #dc3545 !important; border-radius: 8px;">
         <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-                <i class="bi bi-book-half fs-5" style="color: #5A4FCF;"></i>
+            <i class="bi bi-shield-lock-fill text-danger fs-2 me-3"></i>
+            <div>
+                <h5 class="text-danger fw-bold mb-1">Access Denied (ဝင်ရောက်ခွင့်မရှိပါ)</h5>
+                <p class="text-muted mb-0">သင့်တွင် စာကြည့်တိုက်စာအုပ်များ ကြည့်ရှုစီမံခန့်ခွဲခွင့် (<code>Book.View</code> Permission) မရှိပါ။ Super Admin ထံ ဆက်သွယ်ပါ။</p>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="tab-pane fade show active" id="v-pills-books">
+        <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+            <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+                <i class="bi bi-book-half fs-5" style="color: #0d6efd;"></i>
             </div>
             <div>
-                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Book Directory</h4>
-                <small class="text-secondary">စာကြည့်တိုက်ရှိ စာအုပ်များနှင့် အီလက်ထရောနစ် စာပေအရင်းအမြစ်များ စီမံခန့်ခွဲခြင်း</small>
+                <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                    @(LangService.IsMyanmar ? "စာကြည့်တိုက်" : "Book Directory")
+                </h4>
+                <small class="text-secondary d-block">
+                    @(LangService.IsMyanmar ? "စာအုပ်များနှင့် အီလက်ထရောနစ် စာပေများ စီမံခန့်ခွဲခြင်း" : "Manage library books and digital resources")
+                </small>
             </div>
         </div>
-    </div>
 
-    <!-- 🔹 Filter Section -->
-    <div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
-        <div class="row g-3 align-items-center">
-            <!-- Search Input -->
-            <div class="col">
-                <div class="position-relative">
-                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Book Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+        <!-- 🔹 Filter Section -->
+        <div class="material-card p-3 mb-4" style="position: relative; z-index: 1045;">
+            <div class="row g-3 align-items-center">
+                <!-- Search Input -->
+                <div class="col">
+                    <div class="position-relative">
+                        <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                        <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "စာအုပ်အမည်ဖြင့် ရှာရန်..." : "Search by Book Name...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    </div>
                 </div>
-            </div>
 
-            <!-- Category Dropdown (approx 6 items height with scroll) -->
-            <div class="col-md-3">
-                <div class="custom-dropdown-container">
-                    <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
-                            @onclick="ToggleCategoryDropdown">
-                        <span class="text-truncate">@GetSelectedCategoryName()</span>
-                        <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
-                    </button>
+                <!-- Category Dropdown -->
+                <div class="col-md-3">
+                    <div class="custom-dropdown-container">
+                        <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
+                                @onclick="ToggleCategoryDropdown">
+                            <span class="text-truncate">@GetSelectedCategoryName()</span>
+                            <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
+                        </button>
 
-                    @if (isCategoryDropdownOpen)
-                    {
-                        <div class="custom-dropdown-menu shadow">
-                            <div class="dropdown-item-custom @(SelectedCategoryIdInput == 0 ? "selected" : "")" 
-                                 @onclick='() => SelectCategory(0)'>
-                                <span>All Categories</span>
-                                @if (SelectedCategoryIdInput == 0) { <i class="bi bi-check2 text-primary"></i> }
-                            </div>
-                            @foreach (var cat in CategoryList)
-                            {
-                                <div class="dropdown-item-custom @(SelectedCategoryIdInput == cat.CategoryId ? "selected" : "")" 
-                                     @onclick='() => SelectCategory(cat.CategoryId)'>
-                                    <span>@cat.CategoryName</span>
-                                    @if (SelectedCategoryIdInput == cat.CategoryId) { <i class="bi bi-check2 text-primary"></i> }
+                        @if (isCategoryDropdownOpen)
+                        {
+                            <div class="custom-dropdown-menu shadow">
+                                <div class="dropdown-item-custom @(SelectedCategoryIdInput == 0 ? "selected" : "")" 
+                                     @onclick='() => SelectCategory(0)'>
+                                    <span>@(LangService.IsMyanmar ? "အမျိုးအစား အားလုံး" : "All Categories")</span>
+                                    @if (SelectedCategoryIdInput == 0) { <i class="bi bi-check2 text-primary"></i> }
                                 </div>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
-
-            <!-- Search and Reset Buttons -->
-            <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
-                    <i class="bi bi-search"></i>
-                </button>
-                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
-                    <i class="bi bi-arrow-clockwise"></i>
-                </button>
-            </div>
-
-            <!-- Add Button -->
-            <AuthorizeView Policy="Book.Create">
-                <div class="col-auto">
-                    <NavLink href="/admin/book/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Book">
-                        <i class="bi bi-plus-lg"></i>
-                    </NavLink>
-                </div>
-            </AuthorizeView>
-        </div>
-    </div>
-
-    <div class="tech-card p-4">
-
-        @if (IsLoading) {
-            <div class="text-center my-5">
-                <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-dark mt-3 small fw-bold">စာအုပ်စာရင်းများကို ဆွဲယူနေပါသည်...</div>
-            </div>
-        }
-        else if (FilteredBooks == null || !FilteredBooks.Any())
-        {
-            <div class="text-center my-5 text-dark">
-                <i class="bi bi-folder-x display-4 text-secondary"></i>
-                <p class="mt-3 mb-0 small fw-bold text-dark">ပြသရန် စာအုပ်မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
-            </div>
-        }
-        else {
-            <div class="table-responsive custom-table">
-                <table class="table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th style="width: 10%;">NO.</th>
-                            <th style="width: 15%;">Cover</th>
-                            <th style="width: 40%;">Book Name</th>
-                            @if (canManageBook)
-                            {
-                                <th style="width: 35%; text-align: center;">Actions</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @{
-                            int count = (CurrentPage - 1) * PageSize + 1;
+                                @foreach (var cat in CategoryList)
+                                {
+                                    <div class="dropdown-item-custom @(SelectedCategoryIdInput == cat.CategoryId ? "selected" : "")" 
+                                         @onclick='() => SelectCategory(cat.CategoryId)'>
+                                        <span>@cat.CategoryName</span>
+                                        @if (SelectedCategoryIdInput == cat.CategoryId) { <i class="bi bi-check2 text-primary"></i> }
+                                    </div>
+                                }
+                            </div>
                         }
-                        @foreach (var book in FilteredBooks) {
-                            <tr class="table-row-hover">
-                                <td class="fw-bold text-dark">@count.ToString("D2")</td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(book.Image))
-                                    {
-                                        <img src="@($"https://localhost:7297{book.Image}")" class="rounded" style="width: 40px; height: 50px; object-fit: cover;" />
-                                    }
-                                    else
-                                    {
-                                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 50px;">
-                                            <i class="bi bi-book text-light"></i>
-                                        </div>
-                                    }
-                                </td>
-                                <td class="fw-bold text-dark">
-                                    @if (!string.IsNullOrEmpty(book.FilePath))
-                                    {
-                                        <a href="@($"https://localhost:7297/api/book/download/{book.BookId}")" download class="text-primary text-decoration-none fw-bold">
-                                            <i class="bi bi-file-earmark-pdf text-danger me-1"></i>@book.BookName
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-dark fw-bold">@book.BookName</span>
-                                    }
-                                </td>
+                    </div>
+                </div>
+
+                <!-- Search and Reset Buttons -->
+                <div class="col-md-2 d-flex gap-2">
+                    <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+
+                <!-- Add Button -->
+                <AuthorizeView Policy="Book.Create">
+                    <div class="col-auto">
+                        <NavLink href="/admin/book/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Book")">
+                            <i class="bi bi-plus-lg"></i>
+                        </NavLink>
+                    </div>
+                </AuthorizeView>
+            </div>
+        </div>
+
+        <div class="tech-card p-4">
+
+            @if (IsLoading) {
+                <div class="text-center my-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading books...")</div>
+                </div>
+            }
+            else if (FilteredBooks == null || !FilteredBooks.Any())
+            {
+                <div class="text-center my-5 text-dark">
+                    <i class="bi bi-folder-x display-4 text-secondary"></i>
+                    <p class="mt-3 mb-0 small fw-bold text-dark">@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No books found.")</p>
+                </div>
+            }
+            else {
+                <div class="table-responsive custom-table">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 10%;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                                <th style="width: 15%;">@(LangService.IsMyanmar ? "မျက်နှာဖုံး" : "Cover")</th>
+                                <th style="width: 40%;">@(LangService.IsMyanmar ? "စာအုပ် အမည်" : "Book Name")</th>
                                 @if (canManageBook)
                                 {
-                                    <td>
-                                        <div class="d-flex justify-content-center align-items-center gap-2">
-                                            <AuthorizeView Policy="Book.Edit">
-                                                <NavLink href="@($"/admin/book/edit/{book.BookId}")" class="btn btn-action-edit">
-                                                    <i class="bi bi-pencil me-1"></i> Edit
-                                                </NavLink>
-                                            </AuthorizeView>
-                                            <AuthorizeView Policy="Book.Delete">
-                                                <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(book)">
-                                                    <i class="bi bi-trash me-1"></i> Delete
-                                                </button>
-                                            </AuthorizeView>
-                                        </div>
-                                    </td>
+                                    <th style="width: 35%; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                                 }
                             </tr>
-                            count++;
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
-        }
-    </div>
-</div>
-
-@* Delete Modal *@
-@if (ShowModal)
-{
-    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content tech-card">
-
-                <div class="modal-header border-0">
-                    <h5 class="text-danger">Confirm Delete</h5>
+                        </thead>
+                        <tbody>
+                            @{
+                                int count = (CurrentPage - 1) * PageSize + 1;
+                            }
+                            @foreach (var book in FilteredBooks) {
+                                <tr class="table-row-hover">
+                                    <td class="fw-bold text-dark">@count.ToString("D2")</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(book.Image))
+                                        {
+                                            <img src="@($"http://localhost:5077{book.Image}")" class="rounded" style="width: 40px; height: 50px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 50px;">
+                                                <i class="bi bi-book text-light"></i>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td class="fw-bold text-dark">
+                                        @if (!string.IsNullOrEmpty(book.FilePath))
+                                        {
+                                            <a href="@($"http://localhost:5077/api/book/download/{book.BookId}")" download class="text-primary text-decoration-none fw-bold">
+                                                <i class="bi bi-file-earmark-pdf text-danger me-1"></i>@book.BookName
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-dark fw-bold">@book.BookName</span>
+                                        }
+                                    </td>
+                                    @if (canManageBook)
+                                    {
+                                        <td>
+                                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                                <AuthorizeView Policy="Book.Edit">
+                                                    <NavLink href="@($"/admin/book/edit/{book.BookId}")" class="btn btn-action-edit">
+                                                        <i class="bi bi-pencil me-1"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
+                                                    </NavLink>
+                                                </AuthorizeView>
+                                                <AuthorizeView Policy="Book.Delete">
+                                                    <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(book)">
+                                                        <i class="bi bi-trash me-1"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
+                                                    </button>
+                                                </AuthorizeView>
+                                            </div>
+                                        </td>
+                                    }
+                                </tr>
+                                count++;
+                            }
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="modal-body text-center">
-                    Are you sure to delete <strong>@SelectedBook?.BookName</strong>?
-                </div>
-
-                <div class="modal-footer border-0">
-                    <button class="btn btn-secondary"
-                            @onclick="CloseDeleteModal"
-                            disabled="@IsProcessing">
-                        Cancel
-                    </button>
-
-                    <button class="btn btn-danger"
-                            @onclick="DeleteBook"
-                            disabled="@IsProcessing">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
-                    </button>
-                </div>
-
-            </div>
+                <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
+            }
         </div>
     </div>
+
+    @* Delete Modal *@
+    @if (ShowModal)
+    {
+        <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content tech-card">
+
+                    <div class="modal-header border-0">
+                        <h5 class="text-danger">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
+                    </div>
+
+                    <div class="modal-body text-center">
+                        @(LangService.IsMyanmar ? $"ဤ စာအုပ် \"{SelectedBook?.BookName}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure to delete {SelectedBook?.BookName}?")
+                    </div>
+
+                    <div class="modal-footer border-0">
+                        <button class="btn btn-secondary"
+                                @onclick="CloseDeleteModal"
+                                disabled="@IsProcessing">
+                            @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
+                        </button>
+
+                        <button class="btn btn-danger"
+                                @onclick="DeleteBook"
+                                disabled="@IsProcessing">
+                            @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
 }

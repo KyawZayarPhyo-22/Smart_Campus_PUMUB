@@ -11,11 +11,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Faculty;
 
-public partial class Page_FacultyList
+public partial class Page_FacultyList : IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<FacultyModel> FacultyList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -73,12 +74,23 @@ public partial class Page_FacultyList
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadFaculties();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -103,7 +115,7 @@ public partial class Page_FacultyList
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<FacultyModel>>(
                 $"faculty/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
@@ -119,7 +131,7 @@ public partial class Page_FacultyList
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
+            ErrorMessage = LangService.IsMyanmar ? $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}" : $"Failed to load data. Error: {ex.Message}";
         }
         finally 
         { 
@@ -128,36 +140,12 @@ public partial class Page_FacultyList
         }
     }
 
-
-
-    //private async Task DeleteFaculty()
-    //{
-    //    if (SelectedFaculty == null) return;
-    //    IsProcessing = true;
-    //    try
-    //    {
-    //        var response = await HttpClientService.ExecuteAsync<FacultyDeleteResponseModel>($"faculty/{SelectedFaculty.FacultyId}", EnumHttpMethod.Delete);
-    //        if (response != null && response.IsSuccess)
-    //        {
-    //            await JSRuntime.InvokeVoidAsync("alert", response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။");
-    //            CloseDeleteModal();
-    //            await LoadFaculties();
-    //        }
-    //        else
-    //        {
-    //            await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။");
-    //        }
-    //    }
-    //    catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}"); }
-    //    finally { IsProcessing = false; }
-    //}
-
     private async Task DeleteFaculty()
     {
         if (SelectedFaculty == null) return;
 
         IsProcessing = true;
-        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -169,22 +157,22 @@ public partial class Page_FacultyList
 
             if (response != null && response.IsSuccess)
             {
-                statusMessage = "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : "Deleted successfully.";
                 IsSuccess = true;
 
-                await Task.Delay(1500); // User မြင်အောင် ခဏစောင့်ပေးခြင်း
+                await Task.Delay(1000);
                 CloseDeleteModal();
                 await LoadFaculties();
             }
             else
             {
-                statusMessage = "ဤ Faculty ကို အခြားနေရာတွင် အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+                statusMessage = LangService.IsMyanmar ? "ဤ Faculty ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။" : "Cannot delete this faculty because it is in use.";
                 IsSuccess = false;
             }
         }
         catch (Exception)
         {
-            statusMessage = "ဤ Faculty ကို အခြားနေရာတွင် အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+            statusMessage = LangService.IsMyanmar ? "ဤ Faculty ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။" : "Cannot delete this faculty because it is in use.";
             IsSuccess = false;
         }
         finally
@@ -208,6 +196,8 @@ public partial class Page_FacultyList
         IsSuccess = false;
     }
 
-
-
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
+    }
 }

@@ -15,21 +15,40 @@ public partial class Page_RuleCreate
     private bool isProcessing = false;
     private string ErrorMessage = "";
 
+    protected override void OnInitialized()
+    {
+        ResetForm();
+    }
+
+    protected override void OnParametersSet()
+    {
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        ruleModel = new RuleCreateRequestModel();
+        isProcessing = false;
+        ErrorMessage = "";
+    }
+
     private async Task SaveRule()
     {
+        if (isProcessing) return;
         isProcessing = true;
+        ErrorMessage = "";
+
         try
         {
             var response = await HttpClientService.ExecuteAsync<ActionResponseModel>("rules", EnumHttpMethod.Post, ruleModel);
 
             if (response != null && response.IsSuccess)
             {
-                // Navigational သာ လုပ်ပါ
+                ResetForm();
                 Nav.NavigateTo("/admin/rules");
             }
             else
             {
-                // Error Message ကို UI မှာပဲ ပြပါ (JS alert မသုံးပါနဲ့)
                 ErrorMessage = response?.Message ?? "သိမ်းဆည်းရာတွင် အမှားဖြစ်ပွားပါသည်။";
             }
         }
@@ -40,6 +59,7 @@ public partial class Page_RuleCreate
         finally
         {
             isProcessing = false;
+            StateHasChanged();
         }
     }
 }

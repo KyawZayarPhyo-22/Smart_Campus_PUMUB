@@ -21,12 +21,10 @@ public partial class StudentRegistration
 
     [Column("admission_serial_no")]
     [StringLength(50)]
-    [Unicode(false)]
     public string? AdmissionSerialNo { get; set; }
 
     [Column("academic_year_range")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(50)]
     public string AcademicYearRange { get; set; } = null!;
 
     [Column("academic_year_level")]
@@ -38,13 +36,11 @@ public partial class StudentRegistration
     public string Major { get; set; } = null!;
 
     [Column("roll_no")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(50)]
     public string? RollNo { get; set; }
 
     [Column("university_reg_no")]
     [StringLength(50)]
-    [Unicode(false)]
     public string? UniversityRegNo { get; set; }
 
     [Column("admission_year")]
@@ -58,8 +54,7 @@ public partial class StudentRegistration
     public string StudentNameMm { get; set; } = null!;
 
     [Column("student_name_en")]
-    [StringLength(100)]
-    [Unicode(false)]
+    [StringLength(255)]
     public string StudentNameEn { get; set; } = null!;
 
     [Column("mother_name")]
@@ -103,12 +98,10 @@ public partial class StudentRegistration
 
     [Column("email")]
     [StringLength(100)]
-    [Unicode(false)]
     public string? Email { get; set; }
 
     [Column("blood_type")]
-    [StringLength(5)]
-    [Unicode(false)]
+    [StringLength(10)]
     public string BloodType { get; set; } = null!;
 
     [Column("covid_vaccine_status")]
@@ -122,7 +115,6 @@ public partial class StudentRegistration
     public string PermanentAddressMm { get; set; } = null!;
 
     [Column("permanent_address_en")]
-    [Unicode(false)]
     public string PermanentAddressEn { get; set; } = null!;
 
     [Column("matric_roll_no")]
@@ -149,8 +141,7 @@ public partial class StudentRegistration
     public string? PastExamMajor { get; set; }
 
     [Column("past_exam_roll_no")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(50)]
     public string? PastExamRollNo { get; set; }
     [Column("past_exam_year")]
     public int? PastExamYear { get; set; }
@@ -160,8 +151,7 @@ public partial class StudentRegistration
     public string? PastExamStatus { get; set; }
 
     [Column("previous_year_roll_no")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(50)]
     public string? PreviousYearRollNo { get; set; }
 
     [Column("guardian_name")]
@@ -188,8 +178,7 @@ public partial class StudentRegistration
     public string? AppGuardianNrc { get; set; }
 
     [Column("app_guardian_phone")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(50)]
     public string? AppGuardianPhone { get; set; }
 
     [Column("app_guardian_address")]
@@ -200,8 +189,7 @@ public partial class StudentRegistration
     public string? AppStudentName { get; set; }
 
     [Column("app_student_phone")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(50)]
     public string? AppStudentPhone { get; set; }
 
     [Column("stipend_requested")]
@@ -231,6 +219,27 @@ public partial class StudentRegistration
 
     [Column("signature_image", TypeName = "nvarchar(MAX)")]
     public string? SignatureImage { get; set; }
+
+    [Column("nrc_front_image", TypeName = "nvarchar(MAX)")]
+    public string? NrcFrontImage { get; set; }
+
+    [Column("nrc_back_image", TypeName = "nvarchar(MAX)")]
+    public string? NrcBackImage { get; set; }
+
+    [Column("census_image", TypeName = "nvarchar(MAX)")]
+    public string? CensusImage { get; set; }
+
+    [Column("father_nrc_front_image", TypeName = "nvarchar(MAX)")]
+    public string? FatherNrcFrontImage { get; set; }
+
+    [Column("father_nrc_back_image", TypeName = "nvarchar(MAX)")]
+    public string? FatherNrcBackImage { get; set; }
+
+    [Column("mother_nrc_front_image", TypeName = "nvarchar(MAX)")]
+    public string? MotherNrcFrontImage { get; set; }
+
+    [Column("mother_nrc_back_image", TypeName = "nvarchar(MAX)")]
+    public string? MotherNrcBackImage { get; set; }
 
     [InverseProperty("Registration")]
     public virtual ICollection<RegistrationPayment> RegistrationPayments { get; set; } = new List<RegistrationPayment>();

@@ -1,134 +1,3 @@
-// using Microsoft.AspNetCore.Components;
-// using Microsoft.JSInterop;
-// using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
-// using Smart_Campus_PUMUB.WebApi.Models;
-
-// namespace Smart_Campus_PUMUB.Components.Admin.Pages.Tutor;
-
-// public partial class Page_TutorList
-// {
-//     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
-//     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
-
-//     private List<TutorModel> TutorList = new();
-//     private string _searchTerm = "";
-//     private bool IsLoading = true;
-//     private bool IsProcessing = false;
-    
-//     // Delete Modal
-//     private bool ShowModal = false;
-//     private TutorModel? SelectedTutor;
-
-//     // Search Logic with Property Setter
-//     public string SearchTerm 
-//     { 
-//         get => _searchTerm; 
-//         set { _searchTerm = value; StateHasChanged(); } 
-//     }
-
-//     private string SearchInput = "";
-//     private string SelectedRoleInput = "All";
-//     private string SelectedRole = "All";
-
-//     private void ApplyFilter()
-//     {
-//         SearchTerm = SearchInput;
-//         SelectedRole = SelectedRoleInput;
-//         CurrentPage = 1;
-//         StateHasChanged();
-//     }
-
-//     private void ResetFilter()
-//     {
-//         SearchInput = "";
-//         SearchTerm = "";
-//         SelectedRoleInput = "All";
-//         SelectedRole = "All";
-//         CurrentPage = 1;
-//         StateHasChanged();
-//     }
-
-//     private void HandleKeyUp(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
-//     {
-//         if (e.Key == "Enter")
-//         {
-//             ApplyFilter();
-//         }
-//     }
-
-//     protected override async Task OnInitializedAsync() => await LoadTutors();
-
-//     private async Task LoadTutors()
-//     {
-//         IsLoading = true;
-//         TutorList = await HttpClientService.ExecuteAsync<List<TutorModel>>("tutor", EnumHttpMethod.Get) ?? new();
-//         IsLoading = false;
-//     }
-
-//     // Pagination Variables
-//     private int CurrentPage { get; set; } = 1;
-//     private int PageSize { get; set; } = 10;
-//     private int TotalPages { get; set; } = 1;
-
-//     private IEnumerable<TutorModel> GetFilteredTutors()
-//     {
-//         var list = TutorList.AsEnumerable();
-//         if (!string.IsNullOrWhiteSpace(SearchTerm))
-//         {
-//             list = list.Where(t => t.TutorName != null && t.TutorName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
-//         }
-//         if (SelectedRole != "All")
-//         {
-//             list = list.Where(t => t.RoleName == SelectedRole);
-//         }
-//         return list;
-//     }
-
-//     private IEnumerable<TutorModel> FilteredTutors
-//     {
-//         get
-//         {
-//             var allFiltered = GetFilteredTutors();
-//             int count = allFiltered.Count();
-//             int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-//             TotalPages = calcPages < 1 ? 1 : calcPages;
-//             if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-//             return allFiltered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-//         }
-//     }
-
-//     private void OnPageChanged(int newPage)
-//     {
-//         CurrentPage = newPage;
-//         StateHasChanged();
-//     }
-
-//     private void OpenDeleteModal(TutorModel tutor)
-//     {
-//         SelectedTutor = tutor;
-//         ShowModal = true;
-//     }
-
-//     private async Task DeleteTutor()
-//     {
-//         if (SelectedTutor == null) return;
-//         IsProcessing = true;
-
-//         var response = await HttpClientService.ExecuteAsync<TutorDeleteResponseModel>(
-//             $"tutor/{SelectedTutor.TutorId}", EnumHttpMethod.Delete);
-
-//         if (response?.IsSuccess == true)
-//         {
-//             await LoadTutors();
-//             ShowModal = false;
-//         }
-//         else
-//         {
-//             await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "Delete failed.");
-//         }
-//         IsProcessing = false;
-//     }
-// }
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
@@ -142,11 +11,12 @@ using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Tutor;
 
-public partial class Page_TutorList
+public partial class Page_TutorList : IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<TutorModel> TutorList = new();
     private string _searchTerm = "";
@@ -187,7 +57,7 @@ public partial class Page_TutorList
 
     protected override async Task OnInitializedAsync()
     {
-        // Only load data here - auth state is NOT yet readable during SSR
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadFaculties();
         await LoadPositions();
         await LoadTutors();
@@ -197,7 +67,16 @@ public partial class Page_TutorList
     {
         if (!firstRender) return;
 
-        // Re-read auth AFTER the SignalR circuit connects (ProtectedSessionStorage is now readable)
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
+
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
@@ -208,10 +87,8 @@ public partial class Page_TutorList
                                   .Select(c => c.Value)
                                   .ToList();
                                   
-            // Permission ကို စစ်ဆေးပြီး Action Buttons များကို ထိန်းချုပ်ရန်
             canManageTutor = userPermissions.Contains("Tutor.Edit") || userPermissions.Contains("Tutor.Delete");
 
-            // Faculty-based scoping: read FacultyId claim for FC/FE Admins
             var roleName = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
             var roleIdStr = user.FindFirst("RoleId")?.Value;
             bool isSuperAdmin = string.Equals(roleName, "Super Admin", StringComparison.OrdinalIgnoreCase) || roleIdStr == "4";
@@ -229,13 +106,11 @@ public partial class Page_TutorList
                         SelectedFacultyInput = myFaculty.FacultyName;
                         SelectedFaculty = myFaculty.FacultyName;
                     }
-                    // Reload with faculty filter applied
                     CurrentPage = 1;
                     await LoadTutors();
                 }
             }
 
-            // Trigger re-render so the table header and action buttons update
             StateHasChanged();
         }
     }
@@ -278,7 +153,7 @@ public partial class Page_TutorList
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             string facultyParam = SelectedFaculty != "All" ? $"&facultyName={Uri.EscapeDataString(SelectedFaculty)}" : "";
             string positionParam = SelectedPosition != "All" ? $"&positionName={Uri.EscapeDataString(SelectedPosition)}" : "";
             string scopeParam = (_userFacultyId.HasValue && _userFacultyId.Value > 0) ? $"&facultyId={_userFacultyId.Value}" : "";
@@ -414,8 +289,14 @@ public partial class Page_TutorList
         }
         else
         {
-            await JSRuntime.InvokeVoidAsync("alert", response?.Message ?? "Delete failed.");
+            var msg = LangService.IsMyanmar ? "ဖျက်သိမ်း၍ မရပါ။" : (response?.Message ?? "Delete failed.");
+            await JSRuntime.InvokeVoidAsync("alert", msg);
         }
         IsProcessing = false;
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

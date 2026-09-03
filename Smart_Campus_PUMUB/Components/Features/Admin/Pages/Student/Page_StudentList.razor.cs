@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.Components.Features.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,8 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
     [Inject] public Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService NotifierService { get; set; } = null!;
+    [Inject] public AdminLanguageService LangService { get; set; } = null!;
+    [Inject] public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; set; } = null!;
 
     private List<StudentRegistrationDataModel> StudentList { get; set; } = new();
 
@@ -132,9 +135,15 @@ public partial class Page_StudentList : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += HandleLanguageChanged;
         NotifierService.OnRegistrationSubmitted += HandleRegistrationSubmitted;
         await LoadSemesters();
         await LoadStudents();
+    }
+
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadSemesters()
@@ -157,6 +166,17 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     {
         if (firstRender)
         {
+            try
+            {
+                var savedLang = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang) && savedLang != LangService.CurrentLanguage)
+                {
+                    LangService.SetLanguage(savedLang);
+                    StateHasChanged();
+                }
+            }
+            catch { }
+
             await JSRuntime.InvokeVoidAsync("initDatePicker", "fromDateInput");
             await JSRuntime.InvokeVoidAsync("initDatePicker", "toDateInput");
         }
@@ -164,12 +184,16 @@ public partial class Page_StudentList : ComponentBase, IDisposable
 
     private async Task HandleRegistrationSubmitted()
     {
-        await LoadStudents();
-        await InvokeAsync(StateHasChanged);
+        await InvokeAsync(async () =>
+        {
+            await LoadStudents();
+            StateHasChanged();
+        });
     }
 
     public void Dispose()
     {
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
         NotifierService.OnRegistrationSubmitted -= HandleRegistrationSubmitted;
     }
 
@@ -177,18 +201,14 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private async Task LoadStudents()
     {
         IsLoading = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
         try
         {
-            var delayTask = Task.Delay(1000);
             string fromDateStr = FromDate.HasValue ? $"&fromDate={FromDate.Value:yyyy-MM-dd}" : "";
             string toDateStr = ToDate.HasValue ? $"&toDate={ToDate.Value:yyyy-MM-dd}" : "";
 
             var url = $"StudentRegistrations/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&level={Uri.EscapeDataString(SelectedLevel)}{fromDateStr}{toDateStr}";
-            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<StudentRegistrationDataModel>>(url, EnumHttpMethod.Get);
-
-            await Task.WhenAll(fetchTask, delayTask);
-            var response = await fetchTask;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<StudentRegistrationDataModel>>(url, EnumHttpMethod.Get);
 
             if (response != null)
             {
@@ -211,7 +231,7 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         finally
         {
             IsLoading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -364,17 +384,41 @@ public partial class Page_StudentList : ComponentBase, IDisposable
 
     private string FormatStatus(string? status)
     {
-        if (string.Equals(status, "Pending Confirmation", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(status)) return "-";
+
+        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase) || string.Equals(status, "Confirmed", StringComparison.OrdinalIgnoreCase))
         {
-            return "Pending";
+            return LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved";
         }
-        return status ?? "";
+        if (string.Equals(status, "Pending Confirmation", StringComparison.OrdinalIgnoreCase) || string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase))
+        {
+            return LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending";
+        }
+        if (string.Equals(status, "Rejected", StringComparison.OrdinalIgnoreCase))
+        {
+            return LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected";
+        }
+
+        return status;
     }
 
     private bool CanReviewRegistration(string? status)
     {
         return string.Equals(status, "Pending Confirmation", StringComparison.OrdinalIgnoreCase)
             || string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase);
+    }
+
+    // 🔹 Action Result / Success Modal State
+    private bool ShowResultModal = false;
+    private bool IsResultSuccess = true;
+    private string ResultModalTitle = "";
+    private string ResultModalMessage = "";
+    private string ResultStudentName = "";
+    private string ResultRollNo = "";
+
+    private void CloseResultModal()
+    {
+        ShowResultModal = false;
     }
 
     private bool CanReviewPayment(string? status)
@@ -390,14 +434,14 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         if (IsPaymentViewMode)
         {
             ConfirmMessage = action == "Approved"
-                ? "Are you sure you want to approve this payment?"
-                : "Are you sure you want to reject this payment?";
+                ? (LangService.IsMyanmar ? "ဤငွေသွင်းပြေစာကို အတည်ပြုရန် သေချာပါသလား။" : "Are you sure you want to approve this payment?")
+                : (LangService.IsMyanmar ? "ဤငွေသွင်းပြေစာကို ပယ်ချရန် သေချာပါသလား။" : "Are you sure you want to reject this payment?");
         }
         else
         {
             ConfirmMessage = action == "Approved"
-                ? "Are you sure you want to approve this registration?"
-                : "Are you sure you want to reject this registration?";
+                ? (LangService.IsMyanmar ? "ဤကျောင်းအပ်နှံမှုကို အတည်ပြုရန် သေချာပါသလား။" : "Are you sure you want to approve this registration?")
+                : (LangService.IsMyanmar ? "ဤကျောင်းအပ်နှံမှုကို ပယ်ချရန် သေချာပါသလား။" : "Are you sure you want to reject this registration?");
         }
         ShowConfirmModal = true;
     }
@@ -427,6 +471,9 @@ public partial class Page_StudentList : ComponentBase, IDisposable
         var payment = SelectedDetail.RegistrationPayments?.FirstOrDefault();
         if (payment == null) return;
 
+        var studentName = SelectedDetail.StudentNameMm ?? SelectedDetail.StudentNameEn ?? "Student";
+        var rollNo = SelectedDetail.RollNo ?? "-";
+
         try
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -445,10 +492,37 @@ public partial class Page_StudentList : ComponentBase, IDisposable
             }
 
             await NotifierService.NotifyPaymentStatusChanged(payment.PaymentId, SelectedDetail.UserId, newStatus);
+
+            // Trigger Success Message Box
+            IsResultSuccess = (newStatus == "Approved");
+            ResultStudentName = studentName;
+            ResultRollNo = rollNo;
+
+            if (newStatus == "Approved")
+            {
+                ResultModalTitle = LangService.IsMyanmar ? "ငွေသွင်းပြေစာ အတည်ပြုမှု အောင်မြင်ပါသည်" : "Payment Approved Successfully";
+                ResultModalMessage = LangService.IsMyanmar
+                    ? $"ကျောင်းသား {studentName} ({rollNo}) ၏ ငွေသွင်းပြေစာကို အောင်မြင်စွာ အတည်ပြု (Approve) ပြီးပါပြီ။"
+                    : $"The payment slip for student {studentName} ({rollNo}) has been approved successfully.";
+            }
+            else
+            {
+                ResultModalTitle = LangService.IsMyanmar ? "ငွေသွင်းပြေစာ ပယ်ချပြီးပါပြီ" : "Payment Rejected";
+                ResultModalMessage = LangService.IsMyanmar
+                    ? $"ကျောင်းသား {studentName} ({rollNo}) ၏ ငွေသွင်းပြေစာကို ပယ်ချ (Reject) ပြီးပါပြီ။"
+                    : $"The payment slip for student {studentName} ({rollNo}) has been rejected.";
+            }
+            ShowResultModal = true;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error updating payment status: {ex.Message}");
+            IsResultSuccess = false;
+            ResultStudentName = studentName;
+            ResultRollNo = rollNo;
+            ResultModalTitle = LangService.IsMyanmar ? "အမှားအယွင်း ဖြစ်ပေါ်ပါသည်" : "Operation Failed";
+            ResultModalMessage = LangService.IsMyanmar ? $"လုပ်ဆောင်မှု မအောင်မြင်ပါ- {ex.Message}" : $"Operation failed: {ex.Message}";
+            ShowResultModal = true;
         }
         finally
         {
@@ -460,6 +534,9 @@ public partial class Page_StudentList : ComponentBase, IDisposable
     private async Task UpdateRegistrationStatus(string newStatus)
     {
         if (SelectedDetail == null) return;
+
+        var studentName = SelectedDetail.StudentNameMm ?? SelectedDetail.StudentNameEn ?? "Student";
+        var rollNo = SelectedDetail.RollNo ?? "-";
 
         try
         {
@@ -475,16 +552,111 @@ public partial class Page_StudentList : ComponentBase, IDisposable
             }
 
             await NotifierService.NotifyRegistrationStatusChanged(SelectedDetail.RegistrationId, SelectedDetail.UserId, newStatus);
+
+            // Trigger Success Message Box
+            IsResultSuccess = (newStatus == "Approved");
+            ResultStudentName = studentName;
+            ResultRollNo = rollNo;
+
+            if (newStatus == "Approved")
+            {
+                ResultModalTitle = LangService.IsMyanmar ? "ကျောင်းအပ်နှံမှု အတည်ပြုခြင်း အောင်မြင်ပါသည်" : "Registration Approved Successfully";
+                ResultModalMessage = LangService.IsMyanmar
+                    ? $"ကျောင်းသား {studentName} ({rollNo}) ၏ ကျောင်းအပ်နှံမှုကို အောင်မြင်စွာ အတည်ပြု (Approve) ပြီးပါပြီ။"
+                    : $"Registration for student {studentName} ({rollNo}) has been approved successfully.";
+            }
+            else
+            {
+                ResultModalTitle = LangService.IsMyanmar ? "ကျောင်းအပ်နှံမှု ပယ်ချပြီးပါပြီ" : "Registration Rejected";
+                ResultModalMessage = LangService.IsMyanmar
+                    ? $"ကျောင်းသား {studentName} ({rollNo}) ၏ ကျောင်းအပ်နှံမှုကို ပယ်ချ (Reject) ပြီးပါပြီ။"
+                    : $"Registration for student {studentName} ({rollNo}) has been rejected.";
+            }
+            ShowResultModal = true;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error updating status: {ex.Message}");
+            IsResultSuccess = false;
+            ResultStudentName = studentName;
+            ResultRollNo = rollNo;
+            ResultModalTitle = LangService.IsMyanmar ? "အမှားအယွင်း ဖြစ်ပေါ်ပါသည်" : "Operation Failed";
+            ResultModalMessage = LangService.IsMyanmar ? $"လုပ်ဆောင်မှု မအောင်မြင်ပါ- {ex.Message}" : $"Operation failed: {ex.Message}";
+            ShowResultModal = true;
         }
         finally
         {
             CloseViewModal();
             StateHasChanged();
         }
+    }
+
+    private bool showKpaySlipModal = false;
+    private RegistrationPaymentModel? currentSlipPayment;
+    private StudentRegistrationDataModel? currentSlipStudent;
+
+    private bool IsKpayMmqrPayment(RegistrationPaymentModel? pay)
+    {
+        if (pay == null) return false;
+
+        // If it's a physical uploaded image file (ends with .jpg, .png, etc.), it's a manual slip!
+        if (!string.IsNullOrEmpty(pay.ReceiptImage))
+        {
+            var img = pay.ReceiptImage.ToLowerInvariant();
+            if (img.EndsWith(".jpg") || img.EndsWith(".jpeg") || img.EndsWith(".png") || img.EndsWith(".webp"))
+            {
+                return false;
+            }
+        }
+
+        return (pay.PaymentMethod?.Contains("KBZPay", StringComparison.OrdinalIgnoreCase) == true) ||
+               (pay.PaymentMethod?.Contains("MMQR", StringComparison.OrdinalIgnoreCase) == true) ||
+               (!string.IsNullOrEmpty(pay.ReceiptImage) && pay.ReceiptImage.StartsWith("REG", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string GetStudentImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return "";
+        if (path.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return path;
+        if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        var baseUrl = Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5077";
+        return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
+    }
+
+    private string GetReceiptImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return "";
+        if (path.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return path;
+        if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        var baseUrl = Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5077";
+        return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
+    }
+
+    private void OpenKpaySlipModal(RegistrationPaymentModel pay, StudentRegistrationDataModel student)
+    {
+        currentSlipPayment = pay;
+        currentSlipStudent = student;
+        showKpaySlipModal = true;
+    }
+
+    private void CloseKpaySlipModal()
+    {
+        showKpaySlipModal = false;
+        currentSlipPayment = null;
+        currentSlipStudent = null;
+    }
+
+    private async Task PrintKpaySlip()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("window.print");
+        }
+        catch { }
     }
 }
 
@@ -522,6 +694,13 @@ public class StudentRegistrationFullModel : StudentRegistrationDataModel
     public string? PermanentAddressMm { get; set; }
     public string? StudentImage { get; set; }
     public string? SignatureImage { get; set; }
+    public string? NrcFrontImage { get; set; }
+    public string? NrcBackImage { get; set; }
+    public string? CensusImage { get; set; }
+    public string? FatherNrcFrontImage { get; set; }
+    public string? FatherNrcBackImage { get; set; }
+    public string? MotherNrcFrontImage { get; set; }
+    public string? MotherNrcBackImage { get; set; }
     public string? AppGuardianName { get; set; }
     public string? AppGuardianNrc { get; set; }
     public string? AppGuardianPhone { get; set; }

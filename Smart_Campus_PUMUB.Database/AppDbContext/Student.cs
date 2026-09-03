@@ -25,8 +25,7 @@ public partial class Student
     public string CurrentMajor { get; set; } = null!;
 
     [Column("Current_Roll_No")]
-    [StringLength(20)]
-    [Unicode(false)]
+    [StringLength(50)]
     public string? CurrentRollNo { get; set; }
 
     [StringLength(20)]
@@ -91,6 +90,30 @@ public partial class Student
 
     [Column("Faculty_Id")]
     public int? FacultyId { get; set; }
+
+    [Column("Student_Image")]
+    public string? StudentImage { get; set; }
+
+    [Column("Nrc_Front_Image")]
+    public string? NrcFrontImage { get; set; }
+
+    [Column("Nrc_Back_Image")]
+    public string? NrcBackImage { get; set; }
+
+    [Column("Census_Image")]
+    public string? CensusImage { get; set; }
+
+    [Column("Father_Nrc_Front_Image")]
+    public string? FatherNrcFrontImage { get; set; }
+
+    [Column("Father_Nrc_Back_Image")]
+    public string? FatherNrcBackImage { get; set; }
+
+    [Column("Mother_Nrc_Front_Image")]
+    public string? MotherNrcFrontImage { get; set; }
+
+    [Column("Mother_Nrc_Back_Image")]
+    public string? MotherNrcBackImage { get; set; }
 
     [ForeignKey("FacultyId")]
     public virtual Faculty? Faculty { get; set; }

@@ -3,14 +3,19 @@ using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.AspNetCore.Components.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Book;
 
-public partial class Page_BookList : ComponentBase
+public partial class Page_BookList : ComponentBase, IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     public List<BookModel> BookList { get; set; } = new();
     public string SearchTerm { get; set; } = "";
@@ -40,7 +45,6 @@ public partial class Page_BookList : ComponentBase
     {
         SelectedCategoryIdInput = categoryId;
         isCategoryDropdownOpen = false;
-        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
     }
 
     private void CloseAllDropdowns()
@@ -50,9 +54,9 @@ public partial class Page_BookList : ComponentBase
 
     private string GetSelectedCategoryName()
     {
-        if (SelectedCategoryIdInput == 0) return "All Categories";
+        if (SelectedCategoryIdInput == 0) return LangService.IsMyanmar ? "အမျိုးအစား အားလုံး" : "All Categories";
         var cat = CategoryList.FirstOrDefault(c => c.CategoryId == SelectedCategoryIdInput);
-        return cat?.CategoryName ?? "All Categories";
+        return cat?.CategoryName ?? (LangService.IsMyanmar ? "အမျိုးအစား အားလုံး" : "All Categories");
     }
 
     private async Task ApplyFilter()
@@ -96,30 +100,60 @@ public partial class Page_BookList : ComponentBase
         await LoadBooks();
     }
 
+    private bool canViewBook = true;
+    private bool isAuthLoaded = false;
+
     protected override async Task OnInitializedAsync()
     {
-        // OnInitializedAsync တွင် JS ကို လုံးဝမခေါ်ပါနှင့်
-        await LoadBooks();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender) return;
+        LangService.OnLanguageChanged += StateHasChanged;
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
         if (user.Identity?.IsAuthenticated == true)
         {
+            var roleName = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            var roleId = user.FindFirst("RoleId")?.Value ?? "";
+            bool isSuperAdmin = string.Equals(roleName, "Super Admin", StringComparison.OrdinalIgnoreCase) || roleId == "4";
+
             userPermissions = user.Claims
                                   .Where(c => c.Type == "Permission")
                                   .Select(c => c.Value)
                                   .ToList();
                                   
-            canManageBook = userPermissions.Contains("Book.Edit") || userPermissions.Contains("Book.Delete");
-
-            StateHasChanged();
+            canViewBook = isSuperAdmin || userPermissions.Contains("Book.View");
+            canManageBook = isSuperAdmin || userPermissions.Contains("Book.Create") || userPermissions.Contains("Book.Edit") || userPermissions.Contains("Book.Delete");
         }
+        else
+        {
+            canViewBook = false;
+        }
+
+        isAuthLoaded = true;
+
+        if (canViewBook)
+        {
+            await LoadBooks();
+        }
+        else
+        {
+            IsLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
     }
 
     private async Task LoadBooks()
@@ -128,7 +162,7 @@ public partial class Page_BookList : ComponentBase
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<BookModel>>(
                 $"book/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&categoryId={SelectedCategoryId}", 
                 EnumHttpMethod.Get
@@ -163,7 +197,6 @@ public partial class Page_BookList : ComponentBase
     {
         SelectedBook = book;
         ShowModal = true;
-
         statusMessage = string.Empty;
         IsSuccess = false;
     }
@@ -172,7 +205,6 @@ public partial class Page_BookList : ComponentBase
     {
         SelectedBook = null;
         ShowModal = false;
-
         statusMessage = string.Empty;
         IsSuccess = false;
     }
@@ -182,8 +214,7 @@ public partial class Page_BookList : ComponentBase
         if (SelectedBook == null) return;
 
         IsProcessing = true;
-
-        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -195,7 +226,7 @@ public partial class Page_BookList : ComponentBase
             if (response?.IsSuccess == true)
             {
                 IsSuccess = true;
-                statusMessage = response.Message ?? "စာအုပ်ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
 
                 await LoadBooks();
 
@@ -205,7 +236,7 @@ public partial class Page_BookList : ComponentBase
             else
             {
                 IsSuccess = false;
-                statusMessage = response?.Message ?? "စာအုပ်ကို ဖျက်၍ မရပါ။";
+                statusMessage = LangService.IsMyanmar ? "ဤ စာအုပ် ကို ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this book.");
             }
         }
         catch (Exception ex)
@@ -217,5 +248,10 @@ public partial class Page_BookList : ComponentBase
         {
             IsProcessing = false;
         }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

@@ -1,0 +1,36 @@
+name: aura
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql_server
+    platform: linux/amd64
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Linn@81220015228 # Must meet complexity requirements
+    volumes:
+      - sql_data:/var/opt/mssql
+    restart: unless-stopped
+    volumes:
+      sql_data:
+
+  oracle-db:
+    image: gvenzl/oracle-free:latest
+    container_name: oracle_database
+    platform: linux/amd64
+    environment:
+      - ORACLE_PASSWORD=Linn@8122001
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      # SQL ဖိုင်များကို အစီအစဉ်အတိုင်း Auto Run စေရန်
+      - ./sql/AppDbContext_Oracle.sql:/container-entrypoint-initdb.d/01_AppDbContext_Oracle.sql
+      - ./sql/LogDbContext_Oracle.sql:/container-entrypoint-initdb.d/02_LogDbContext_Oracle.sql
+      - ./sql/PGDbContext_Oracle.sql:/container-entrypoint-initdb.d/03_PGDbContext_Oracle.sql
+    restart: unless-stopped
+
+volumes:
+  oracle_data:

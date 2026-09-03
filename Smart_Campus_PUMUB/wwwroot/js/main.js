@@ -22,8 +22,12 @@ function toggleTheme() {
 window.addEventListener('scroll', () => {
     const nav = document.getElementById('navbar');
     const bt = document.getElementById('backTop');
-    if (window.scrollY > 80) { nav.classList.add('scrolled'); } else { nav.classList.remove('scrolled'); }
-    if (window.scrollY > 400) { bt.classList.add('visible'); } else { bt.classList.remove('visible'); }
+    if (nav) {
+        if (window.scrollY > 20) { nav.classList.add('scrolled'); } else { nav.classList.remove('scrolled'); }
+    }
+    if (bt) {
+        if (window.scrollY > 400) { bt.classList.add('visible'); } else { bt.classList.remove('visible'); }
+    }
 });
 
 // MOBILE MENU
@@ -220,14 +224,5 @@ function updateCountdowns() {
 updateCountdowns();
 setInterval(updateCountdowns, 1000);
 
-// SMOOTH ACTIVE NAV LINKS
-const sections = document.querySelectorAll('section[id]');
-window.addEventListener('scroll', () => {
-    let current = '';
-    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
-    document.querySelectorAll('.nav-links a').forEach(a => {
-        a.classList.remove('active');
-        if (a.getAttribute('href') === '#' + current) a.classList.add('active');
-    });
-});
+// SMOOTH ACTIVE NAV LINKS - Handled natively by Blazor NavLink component
 

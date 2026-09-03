@@ -1,76 +1,6 @@
-@* @* @page "/activities"
-@using Smart_Campus_PUMUB.Components.Pages
-@inherits ActivityBase
-
-<section id="events" style="background:var(--bg2); margin-top: 50px;">
-    <div class="container">
-        <div class="section-header">
-            <div>
-                <div class="section-tag"><i class="fas fa-calendar-alt"></i>Excited Events</div>
-                <h2 class="section-title">Events & <span>Activities</span></h2>
-
-            </div>
-        </div>
-
-        <!-- Filter & Search (Button နှိပ်မှသာ အလုပ်လုပ်မည်) -->
-        <div style="display: flex; gap: 15px; margin-bottom: 40px; align-items: center; flex-wrap: wrap;">
-            <input type="date" class="form-control" style="width: 250px;" @bind="FromDate" />
-            <input type="date" class="form-control" style="width: 250px;" @bind="ToDate" />
-
-            <input type="text" class="form-control" placeholder="Search Title" @bind="searchQuery"
-                   style="max-width: 300px;" />
-
-            <!-- Button နှိပ်မှသာ ApplyFilters ကိုခေါ်မည် -->
-            <button class="btn" style="background:#5A4FCF; color:white;" @onclick="ApplyFilters">Search &
-                Filter</button>
-                <button class="btn btn-secondary" style="background:#5A4FCF;" @onclick="ResetFilters">
-                    Reset
-                </button>
-            </div>
-
-            <!-- Grid -->
-            <div class="faculties-grid">
-                @foreach (var item in filteredActivities)
-                {
-                    <div class="faculty-card" style="overflow: hidden;">
-                        <div class="faculty-img"><img style="object-fit: cover;" src="@($"https://localhost:7297{item.Image}")"
-                                                          alt="@item.ActivityTitle">
-                        </div>
-                        <div class="faculty-body">
-                            <h3>@item.ActivityTitle</h3>
-                            <p class="truncate-text">@(item.Description?.Length > 100 ? item.Description.Substring(0, 100) +
-                                                                                                                                  "..." : item.Description)</p>
-                                <div class="event-meta">
-                                    <span><i class="fas fa-calendar-day"></i> @(item.CreatedAt.Year > 1 ?
-                                                                                                                                                                                            item.CreatedAt.ToString("yyyy-MM-dd") : "Not set")</span>
-                                    </div>
-                                    <button class="btn-sm" style="background:#5A4FCF; color:white; border:none; margin-top:10px;"
-                                            @onclick="() => OpenPopup(item)">Learn More</button>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </section>
-
-            <!-- Modal Popup -->
-            @if (isPopupOpen && selectedActivity != null)
-            {
-                <div class="modal show d-block" style="background: rgba(0,0,0,0.6);">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content p-4">
-                            <h3 class="mb-3">@selectedActivity.ActivityTitle</h3>
-                            <div style="max-height: 400px; overflow-y: auto;">
-                                <p>@selectedActivity.Description</p>
-                            </div>
-                            <button class="btn mt-3" style="background:#5A4FCF; color:white;" @onclick="ClosePopup">Close</button>
-                        </div>
-                    </div>
-                </div>
-            } *@
 @page "/activities"
 @using Smart_Campus_PUMUB.Components.Pages
-@using Smart_Campus_PUMUB.Components.Shared @* 🌟 Shared Component ရှိရာ Namespace *@
+@using Smart_Campus_PUMUB.Components.Shared
 @inherits ActivityBase
 
 <section id="events" style="background:var(--bg2); margin-top: 50px;">
@@ -83,16 +13,16 @@
         </div>
 
         <div style="display: flex; gap: 15px; margin-bottom: 40px; align-items: center; flex-wrap: wrap;">
-            <input type="date" class="form-control" style="width: 250px;" @bind="FromDate" />
-            <input type="date" class="form-control" style="width: 250px;" @bind="ToDate" />
+            <input type="date" class="form-control" style="width: 200px;" @bind="FromDate" title="From Date" />
+            <input type="date" class="form-control" style="width: 200px;" @bind="ToDate" title="To Date" />
 
-            <input type="text" class="form-control" placeholder="Search Title" @bind="searchQuery" style="max-width: 300px;" />
+            <input type="text" class="form-control" placeholder="Search Title or Location..." @bind="searchQuery" style="max-width: 300px;" />
 
             <button class="btn" style="background:#5A4FCF; color:white;" @onclick="ApplyFilters">
-                Search & Filter
+                <i class="fas fa-search me-1"></i> Search & Filter
             </button>
-            <button class="btn btn-secondary" style="background:#5A4FCF;" @onclick="ResetFilters">
-                Reset
+            <button class="btn btn-secondary" style="background:#6c757d;" @onclick="ResetFilters">
+                <i class="fas fa-undo me-1"></i> Reset
             </button>
         </div>
 
@@ -116,36 +46,48 @@
             {
                 @foreach (var item in pagedActivities)
                 {
-                    <div class="faculty-card" style="overflow: hidden;">
-                        <div class="faculty-img">
-                            @if (!string.IsNullOrEmpty(item.Image) && !item.Image.Equals("string", StringComparison.OrdinalIgnoreCase))
+                    var eventDate = item.ActivityDate ?? (item.CreatedAt.Year > 1 ? item.CreatedAt : (DateTime?)null);
+                    <div class="faculty-card shadow-sm" style="overflow: hidden; display: flex; flex-direction: column; border-radius: 20px; border: 1px solid #e2e8f0; background: #ffffff; transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                        <div class="faculty-img position-relative" style="height: 230px; overflow: hidden; background: #f8fafc;">
+                            <img style="object-fit: cover; width: 100%; height: 100%; transition: transform 0.3s ease;" 
+                                 src="@GetFullImageUrl(item.PrimaryImage)" 
+                                 alt="@item.ActivityTitle" 
+                                 onerror="this.src='https://via.placeholder.com/400x280'">
+                            
+                            @if (!string.IsNullOrEmpty(item.Location))
                             {
-                                <img style="object-fit: cover; width: 100%; height: 200px;" 
-                                     src="@($"https://localhost:7297{item.Image}")" 
-                                     alt="@item.ActivityTitle" 
-                                     onerror="this.src='https://via.placeholder.com/400x280'">
+                                <span class="position-absolute text-white fw-bold rounded-pill shadow" 
+                                      style="top: 14px; left: 14px; padding: 6px 14px; background: rgba(90, 79, 207, 0.9); backdrop-filter: blur(8px); font-size: 0.78rem; letter-spacing: 0.3px;">
+                                    <i class="fas fa-map-marker-alt me-1.5"></i> @item.Location
+                                </span>
                             }
-                            else
+
+                            @if (item.ImageList.Count > 1)
                             {
-                                <img style="object-fit: cover; width: 100%; height: 200px;" 
-                                     src="https://via.placeholder.com/400x280" 
-                                     alt="Placeholder">
+                                <span class="position-absolute text-white fw-bold rounded-pill shadow" 
+                                      style="bottom: 14px; right: 14px; padding: 6px 14px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); font-size: 0.78rem;">
+                                    <i class="fas fa-images me-1.5"></i> @item.ImageList.Count Photos
+                                </span>
                             }
                         </div>
-                        <div class="faculty-body">
-                            <h3>@item.ActivityTitle</h3>
-                            <p class="truncate-text">
+
+                        <div class="faculty-body d-flex flex-column flex-grow-1" style="padding: 24px;">
+                            <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 10px; color: #0f172a; line-height: 1.4;">@item.ActivityTitle</h3>
+                            <p class="truncate-text flex-grow-1" style="color: #64748b; font-size: 0.92rem; line-height: 1.6; margin-bottom: 20px; min-height: 44px;">
                                 @(item.Description?.Length > 100 ? item.Description.Substring(0, 100) + "..." : item.Description)
                             </p>
-                            <div class="event-meta">
-                                <span>
-                                    <i class="fas fa-calendar-day"></i>
-                                    @(item.CreatedAt.Year > 1 ? item.CreatedAt.ToString("yyyy-MM-dd") : "Not set")
+                            
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-3 fw-bold" style="background: rgba(90, 79, 207, 0.08); color: #5A4FCF; font-size: 0.85rem;">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    @(eventDate.HasValue ? eventDate.Value.ToString("dd MMM yyyy") : "Not set")
                                 </span>
                             </div>
-                            <button class="btn-sm" style="background:#5A4FCF; color:white; border:none; margin-top:10px;" 
+
+                            <button class="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2" 
+                                    style="background: linear-gradient(135deg, #5A4FCF 0%, #4338ca 100%); color: white; border-radius: 12px; padding: 12px 20px; font-size: 0.95rem; border: none; box-shadow: 0 4px 14px rgba(90, 79, 207, 0.35); transition: all 0.2s ease;" 
                                     @onclick="() => OpenPopup(item)">
-                                Learn More
+                                <i class="fas fa-eye"></i> View Details & Photos
                             </button>
                         </div>
                     </div>
@@ -153,8 +95,9 @@
             }
             else
             {
-                <div class="text-center w-100 mt-5">
-                    <p class="text-muted">No events or activities found matching your criteria.</p>
+                <div class="text-center w-100 mt-5 py-5">
+                    <i class="fas fa-calendar-times fs-1 text-muted mb-3 d-block"></i>
+                    <p class="text-muted fw-semibold">No events or activities found matching your criteria.</p>
                 </div>
             }
         </div>
@@ -166,24 +109,286 @@
     </div>
 </section>
 
+@* --- Modern Multi-Photo Activity Modal Popup --- *@
 @if (isPopupOpen && selectedActivity != null)
 {
-    <div class="modal show d-block" style="background: rgba(0,0,0,0.6); z-index: 1050;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-4">
-                <h3 class="mb-3">@selectedActivity.ActivityTitle</h3>
-                <div style="max-height: 400px; overflow-y: auto;">
-                    <p>@selectedActivity.Description</p>
+    var modalDate = selectedActivity.ActivityDate ?? (selectedActivity.CreatedAt.Year > 1 ? selectedActivity.CreatedAt : (DateTime?)null);
+    var images = selectedActivity.ImageList;
+
+    <div class="modal show d-block" style="background: rgba(15, 23, 42, 0.75); z-index: 1050; backdrop-filter: blur(6px);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-24" style="border-radius: 20px; overflow: hidden; background: #ffffff;">
+                
+                <!-- Modal Header -->
+                <div class="modal-header border-0 pb-2 pt-4 px-4 d-flex align-items-start justify-content-between">
+                    <div class="d-flex flex-column gap-2 flex-grow-1">
+                        <!-- Badges Row with proper icon spacing -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            @if (modalDate.HasValue)
+                            {
+                                <span class="badge px-3 py-1.5 rounded-pill d-inline-flex align-items-center" 
+                                      style="background: rgba(90, 79, 207, 0.1); color: #5A4FCF; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(90, 79, 207, 0.2);">
+                                    <i class="fas fa-calendar-alt me-2" style="margin-right: 7px;"></i>
+                                    <span>@modalDate.Value.ToString("dd MMMM yyyy")</span>
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(selectedActivity.Location))
+                            {
+                                <span class="badge px-3 py-1.5 rounded-pill d-inline-flex align-items-center" 
+                                      style="background: rgba(14, 165, 233, 0.1); color: #0284c7; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(14, 165, 233, 0.2);">
+                                    <i class="fas fa-map-marker-alt me-2" style="margin-right: 7px;"></i>
+                                    <span>@selectedActivity.Location</span>
+                                </span>
+                            }
+                            @if (images.Count > 0)
+                            {
+                                <span class="badge px-3 py-1.5 rounded-pill d-inline-flex align-items-center bg-dark text-white" 
+                                      style="font-size: 0.82rem; font-weight: 600;">
+                                    <i class="fas fa-images me-2" style="margin-right: 7px;"></i>
+                                    <span>@images.Count Photos</span>
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Title with Balanced Icon Alignment & Proximity -->
+                        <div class="d-flex align-items-center mt-2">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 me-2.5" 
+                                 style="width: 34px; height: 34px; background: rgba(90, 79, 207, 0.12); color: #5A4FCF; border: 1px solid rgba(90, 79, 207, 0.25); margin-right: 10px;">
+                                <i class="fas fa-trophy fs-6"></i>
+                            </div>
+                            <h3 class="fw-bold mb-0 text-dark" style="font-size: 1.45rem; line-height: 1.25; letter-spacing: -0.2px;">
+                                @selectedActivity.ActivityTitle
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Close Button -->
+                    <button type="button" class="btn btn-sm btn-light rounded-circle shadow-sm ms-3 flex-shrink-0" 
+                            style="width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; transition: all 0.2s ease;" 
+                            @onclick="ClosePopup" title="Close">
+                        <i class="fas fa-times fs-6 text-secondary"></i>
+                    </button>
                 </div>
-                <button class="btn mt-3" style="background:#5A4FCF; color:white;" @onclick="ClosePopup">
-                    Close
-                </button>
+
+                <!-- Modal Body with Photo Collage Gallery & Description -->
+                <div class="modal-body px-4 py-2">
+                    @if (images.Any())
+                    {
+                        <!-- 🌟 Clean & Elegant Collage Photo Gallery Layout -->
+                        <div class="activity-collage-container mb-4" style="height: 380px; border-radius: 16px; background: transparent; position: relative;">
+                            @if (images.Count == 1)
+                            {
+                                <!-- 1 Image: Full Size -->
+                                <div class="w-100 h-100 position-relative collage-tile rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(0)">
+                                    <img src="@GetFullImageUrl(images[0])" alt="Photo 1" class="collage-img" />
+                                    <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-3 text-white"></i></div>
+                                </div>
+                            }
+                            else if (images.Count == 2)
+                            {
+                                <!-- 2 Images: 50% / 50% Split -->
+                                <div class="d-flex w-100 h-100 gap-2">
+                                    <div class="w-50 h-100 position-relative collage-tile rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(0)">
+                                        <img src="@GetFullImageUrl(images[0])" alt="Photo 1" class="collage-img" />
+                                        <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-4 text-white"></i></div>
+                                    </div>
+                                    <div class="w-50 h-100 position-relative collage-tile rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(1)">
+                                        <img src="@GetFullImageUrl(images[1])" alt="Photo 2" class="collage-img" />
+                                        <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-4 text-white"></i></div>
+                                    </div>
+                                </div>
+                            }
+                            else if (images.Count == 3)
+                            {
+                                <!-- 3 Images: 1 Left (62%), 2 Right Stacked (38%) -->
+                                <div class="d-flex w-100 h-100 gap-2">
+                                    <div class="h-100 position-relative collage-tile rounded-3 shadow-sm" style="width: 62%; cursor: pointer;" @onclick="() => OpenLightbox(0)">
+                                        <img src="@GetFullImageUrl(images[0])" alt="Photo 1" class="collage-img" />
+                                        <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-3 text-white"></i></div>
+                                    </div>
+                                    <div class="d-flex flex-column h-100 gap-2" style="width: 38%;">
+                                        <div class="position-relative collage-tile flex-fill rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(1)">
+                                            <img src="@GetFullImageUrl(images[1])" alt="Photo 2" class="collage-img" />
+                                            <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-4 text-white"></i></div>
+                                        </div>
+                                        <div class="position-relative collage-tile flex-fill rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(2)">
+                                            <img src="@GetFullImageUrl(images[2])" alt="Photo 3" class="collage-img" />
+                                            <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-4 text-white"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- 🌟 4 or More Images: 1 Left (62%), 3 Stacked on Right (38%) with +N overlay on bottom-right tile -->
+                                <div class="d-flex w-100 h-100 gap-2">
+                                    <!-- Left Main Large Photo -->
+                                    <div class="h-100 position-relative collage-tile rounded-3 shadow-sm" style="width: 62%; cursor: pointer;" @onclick="() => OpenLightbox(0)">
+                                        <img src="@GetFullImageUrl(images[0])" alt="Photo 1" class="collage-img" />
+                                        <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-3 text-white"></i></div>
+                                    </div>
+
+                                    <!-- Right Column: 3 Stacked Photos -->
+                                    <div class="d-flex flex-column h-100 gap-2" style="width: 38%;">
+                                        <!-- Tile 1 (Top) -->
+                                        <div class="position-relative collage-tile flex-fill rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(1)">
+                                            <img src="@GetFullImageUrl(images[1])" alt="Photo 2" class="collage-img" />
+                                            <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-5 text-white"></i></div>
+                                        </div>
+
+                                        <!-- Tile 2 (Middle) -->
+                                        <div class="position-relative collage-tile flex-fill rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(2)">
+                                            <img src="@GetFullImageUrl(images[2])" alt="Photo 3" class="collage-img" />
+                                            <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-5 text-white"></i></div>
+                                        </div>
+
+                                        <!-- Tile 3 (Bottom with +N overlay if more photos exist) -->
+                                        <div class="position-relative collage-tile flex-fill rounded-3 shadow-sm" style="cursor: pointer;" @onclick="() => OpenLightbox(3)">
+                                            <img src="@GetFullImageUrl(images[3])" alt="Photo 4" class="collage-img" />
+                                            
+                                            @if (images.Count > 4)
+                                            {
+                                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white" 
+                                                     style="background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(4px); border-radius: inherit;">
+                                                    <i class="fas fa-plus fs-4 mb-1"></i>
+                                                    <span class="fw-bolder fs-5" style="letter-spacing: 0.5px;">+@(images.Count - 4)</span>
+                                                    <small style="font-size: 0.68rem; opacity: 0.9;">More Photos</small>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="tile-hover-overlay"><i class="fas fa-search-plus fs-5 text-white"></i></div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Description Section -->
+                    <div class="p-3.5 rounded-3 mb-2" style="background: #f8fafc; border: 1px solid #e2e8f0; max-height: 200px; overflow-y: auto; padding: 18px;">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-align-left text-primary fs-6"></i>
+                            <h6 class="fw-bold text-dark mb-0">Description</h6>
+                        </div>
+                        <p class="mb-0 text-secondary" style="font-size: 0.95rem; line-height: 1.65; white-space: pre-line;">
+                            @(!string.IsNullOrWhiteSpace(selectedActivity.Description) ? selectedActivity.Description : "No description provided.")
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-0 pt-2 pb-4 px-4">
+                    <button class="btn px-4 py-2 fw-bold" style="background:#5A4FCF; color:white; border-radius: 10px; border:none;" @onclick="ClosePopup">
+                        Close
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
 }
 
+@* --- Fullscreen Interactive Lightbox Viewer --- *@
+@if (isLightboxOpen && selectedActivity != null && selectedActivity.ImageList.Any())
+{
+    var lbImages = selectedActivity.ImageList;
+    <div class="modal show d-block" style="background: rgba(10, 15, 30, 0.94); z-index: 2000; backdrop-filter: blur(10px);">
+        <div class="d-flex flex-column w-100 h-100 p-3 position-relative justify-content-between">
+            
+            <!-- Top Lightbox Bar -->
+            <div class="d-flex align-items-center justify-content-between px-3 py-2 text-white" style="z-index: 2010;">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge px-3 py-1.5 rounded-pill bg-light text-dark fw-bold" style="font-size: 0.85rem;">
+                        @(lightboxIndex + 1) / @lbImages.Count
+                    </span>
+                    <span class="fw-semibold text-white-50 d-none d-sm-inline">@selectedActivity.ActivityTitle</span>
+                </div>
+                <button type="button" class="btn btn-light rounded-circle shadow p-0 d-flex align-items-center justify-content-center" 
+                        style="width: 42px; height: 42px;" @onclick="CloseLightbox" title="Close Viewer">
+                    <i class="fas fa-times fs-5 text-dark"></i>
+                </button>
+            </div>
+
+            <!-- Center High-Res Image Display with Prev/Next -->
+            <div class="d-flex align-items-center justify-content-center flex-grow-1 position-relative px-2 my-2 overflow-hidden">
+                <img src="@GetFullImageUrl(lbImages[lightboxIndex])" 
+                     alt="Full view" 
+                     class="shadow-lg rounded-3" 
+                     style="max-width: 90vw; max-height: 75vh; object-fit: contain; border: 1px solid rgba(255,255,255,0.1);" />
+
+                @if (lbImages.Count > 1)
+                {
+                    <button type="button" class="btn btn-light rounded-circle position-absolute top-50 start-0 translate-middle-y ms-3 shadow-lg p-0 d-flex align-items-center justify-content-center" 
+                            style="width: 48px; height: 48px; opacity: 0.9;" @onclick="PrevLightbox" title="Previous">
+                        <i class="fas fa-chevron-left fs-5 text-dark"></i>
+                    </button>
+                    <button type="button" class="btn btn-light rounded-circle position-absolute top-50 end-0 translate-middle-y me-3 shadow-lg p-0 d-flex align-items-center justify-content-center" 
+                            style="width: 48px; height: 48px; opacity: 0.9;" @onclick="NextLightbox" title="Next">
+                        <i class="fas fa-chevron-right fs-5 text-dark"></i>
+                    </button>
+                }
+            </div>
+
+            <!-- Bottom Thumbnails Strip -->
+            @if (lbImages.Count > 1)
+            {
+                <div class="d-flex justify-content-center gap-2 overflow-auto py-2 px-3" style="scrollbar-width: thin; z-index: 2010;">
+                    @for (int i = 0; i < lbImages.Count; i++)
+                    {
+                        var thumbIdx = i;
+                        var thumbUrl = lbImages[i];
+                        <div class="flex-shrink-0 rounded-2 overflow-hidden shadow-sm" 
+                             style="width: 60px; height: 45px; cursor: pointer; border: 2px solid @(lightboxIndex == thumbIdx ? "#5A4FCF" : "rgba(255,255,255,0.2)"); opacity: @(lightboxIndex == thumbIdx ? "1" : "0.5"); transition: all 0.2s ease;"
+                             @onclick="() => lightboxIndex = thumbIdx">
+                            <img src="@GetFullImageUrl(thumbUrl)" alt="Thumb" style="width: 100%; height: 100%; object-fit: cover;" />
+                        </div>
+                    }
+                </div>
+            }
+
+        </div>
+    </div>
+}
+
 <style>
+    .collage-tile {
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+    }
+    .collage-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+    .collage-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.4s ease;
+    }
+    .collage-tile:hover .collage-img {
+        transform: scale(1.03);
+    }
+    .tile-hover-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        border-radius: inherit;
+    }
+    .collage-tile:hover .tile-hover-overlay {
+        opacity: 1;
+    }
+
     @@keyframes act-shimmer {
         0%   { background-position: -600px 0; }
         100% { background-position:  600px 0; }
@@ -191,12 +396,12 @@
     .act-skel-card { pointer-events: none; overflow: hidden; }
     .act-skel-img {
         width: 100%;
-        height: 200px;
+        height: 220px;
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
         background-size: 600px 100%;
         animation: act-shimmer 1.4s infinite linear;
     }
-    .act-skel-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .act-skel-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
     .act-skel-line {
         height: 13px;
         border-radius: 6px;
@@ -206,5 +411,5 @@
         animation: act-shimmer 1.4s infinite linear;
     }
     .act-skel-title { height: 18px; width: 70%; }
-    .act-skel-btn   { height: 32px; width: 100px; border-radius: 20px; margin-top: 4px; }
+    .act-skel-btn   { height: 36px; width: 100%; border-radius: 8px; margin-top: 8px; }
 </style>

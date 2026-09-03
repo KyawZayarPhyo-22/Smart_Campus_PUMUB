@@ -1,30 +1,50 @@
 @page "/rules"
 @using Smart_Campus_PUMUB.Components.Pages
-@using Smart_Campus_PUMUB.Components.Shared @* 🌟 Shared Component ပါဝင်သော Namespace *@
+@using Smart_Campus_PUMUB.Components.Shared
 @inherits RulesBase
 
-<section id="rules" style="background:var(--bg2); margin-top: 50px;">
+<section id="rules" class="rules-section py-5" style="background: var(--bg2, #f8fafc); min-height: 85vh; margin-top: 40px;">
     <div class="container">
-        <div class="section-header">
+        <!-- Section Header -->
+        <div class="section-header mb-4">
             <div>
-                <div class="section-tag"><i class="fas fa-calendar-alt"></i>Rules</div>
+                <div class="section-tag"><i class="fas fa-gavel me-1"></i> Rules & Policies</div>
                 <h2 class="section-title">Rules & <span>Regulations</span></h2>
+                <p class="text-muted mt-1" style="font-size: 0.95rem;">
+                    တက္ကသိုလ်၏ သင်ကြားရေးဆိုင်ရာ စည်းမျဉ်းစည်းကမ်းများနှင့် လိုက်နာရမည့် မူဝါဒများ
+                </p>
             </div>
         </div>
 
-        <div style="display: flex; gap: 15px; margin-bottom: 40px; align-items: center; flex-wrap: wrap;">
-            <input type="date" class="form-control " style="width: 250px;" @bind="FromDate" />
-            <input type="date" class="form-control " style="width: 250px;" @bind="ToDate" />
-
-            <input type="text" style="max-width: 300px;" class="form-control" placeholder="Search Title"
-                   @bind="searchQuery" />
-
-            <button class="btn " style="background:#5A4FCF; color:white; " @onclick="ApplyFilters">
-                Search & Filter
-            </button>
-            <button class="btn" style="background:#5A4FCF; color:white; " @onclick="ResetFilters">Reset</button>
+        <!-- Filter Bar -->
+        <div class="rules-filter-bar mb-4 p-3 rounded-4 shadow-sm bg-white border">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <label class="form-label text-muted small fw-semibold mb-1.5"><i class="far fa-calendar-alt me-1"></i> From Date</label>
+                    <input type="date" class="form-control rounded-3 filter-input-control" @bind="FromDate" />
+                </div>
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                    <label class="form-label text-muted small fw-semibold mb-1.5"><i class="far fa-calendar-alt me-1"></i> To Date</label>
+                    <input type="date" class="form-control rounded-3 filter-input-control" @bind="ToDate" />
+                </div>
+                <div class="col-lg-4 col-md-8 col-sm-12">
+                    <label class="form-label text-muted small fw-semibold mb-1.5"><i class="fas fa-search me-1"></i> Search Title or Content</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control rounded-3 filter-input-control" placeholder="ရှာဖွေရန် စာသားရိုက်ထည့်ပါ..." @bind="searchQuery" @bind:event="oninput" />
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-12 d-flex gap-2">
+                    <button class="btn btn-rules-search flex-grow-1" @onclick="ApplyFilters">
+                        <i class="fas fa-search me-1.5"></i> Search
+                    </button>
+                    <button class="btn btn-rules-reset" @onclick="ResetFilters" title="Reset Filters">
+                        <i class="fas fa-redo-alt"></i>
+                    </button>
+                </div>
+            </div>
         </div>
 
+        <!-- Rules Grid -->
         <div class="rules-grid">
             @if (isLoading)
             {
@@ -42,96 +62,393 @@
             }
             else if (pagedRules != null && pagedRules.Any())
             {
-                @* 🌟 Loop ပတ်ရာတွင် Rule နံပါတ်စဉ် စနစ်တကျရှိစေရန် index ပါတွဲယူပါသည် *@
                 @foreach (var (rule, index) in pagedRules.Select((value, i) => (value, i)))
                 {
-                    // 💡 လက်ရှိ Page အလိုက် နံပါတ်စဉ် တွက်ချက်ခြင်း (ဥပမာ- Page 2 ဆိုလျှင် Rule 7 မှ စမည်)
                     int ruleDisplayNumber = ((CurrentPage - 1) * PageSize) + index + 1;
 
                     <div class="rule-card">
-                        <div class="rule-header">
+                        <!-- Header Row -->
+                        <div class="rule-card-header">
                             <span class="rule-badge">Rule @ruleDisplayNumber</span>
-                            <h3 class="rule-title">@rule.Title</h3>
-                        </div>
-                        <div class="rule-body" style="flex-grow: 1;">
-                            <p class="rule-description">
-                                @(rule.Description?.Length > 100 ? rule.Description.Substring(0, 100) + "..." :
-                        rule.Description)
-                            </p>
-                            <div class="mt-3" style="color: #b45309; font-size: 0.9rem;">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <strong>Penalty:</strong> <span>
-                                    @if (decimal.TryParse(rule.Penalty, out var penaltyVal))
-                                    {
-                                        @($"{penaltyVal.ToString("N0")} MMK")
-                                    }
-                                    else
-                                    {
-                                        @($"{rule.Penalty} MMK")
-                                    }
-                                </span>
-                            </div>
-                            <button class="btn mt-3" style="background:#5A4FCF; color:white; border-radius: 20px;"
-                                    @onclick="() => OpenPopup(rule)">Read More</button>
-                        </div>
-                        <div class="rule-footer">
-                            <span class="rule-meta">
-                                <i class="fas fa-calendar-alt"></i> Updated: @rule.CreatedDateTime.ToString("dd-MM-yyyy")
+                            <span class="rule-date">
+                                <i class="far fa-calendar-alt me-1"></i> @rule.CreatedDateTime.ToString("dd-MM-yyyy")
                             </span>
+                        </div>
+
+                        <!-- Title -->
+                        <h3 class="rule-title" title="@rule.Title">
+                            @rule.Title
+                        </h3>
+
+                        <!-- Body Description -->
+                        <div class="rule-card-body">
+                            <p class="rule-description">
+                                @(rule.Description?.Length > 110 ? rule.Description.Substring(0, 110) + "..." : rule.Description)
+                            </p>
+                        </div>
+
+                        <!-- Footer / Penalty & Button -->
+                        <div class="rule-card-footer mt-auto">
+                            <div class="rule-penalty-tag mb-3">
+                                <div class="d-flex align-items-start gap-2.5">
+                                    <i class="fas fa-exclamation-triangle text-warning mt-1 flex-shrink-0" style="font-size: 0.95rem;"></i>
+                                    <div class="penalty-text-wrap ps-1">
+                                        <strong class="text-dark me-2">Penalty:</strong>
+                                        <span class="penalty-val">
+                                            @if (decimal.TryParse(rule.Penalty, out var penaltyVal))
+                                            {
+                                                @($"{penaltyVal.ToString("N0")} MMK")
+                                            }
+                                            else
+                                            {
+                                                @rule.Penalty
+                                            }
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="btn-rule-readmore" @onclick="() => OpenPopup(rule)">
+                                <span>Read More</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
                         </div>
                     </div>
                 }
             }
             else
             {
-                <div class="text-center w-100 mt-5">
-                    <p class="text-muted">No rules found matching your criteria.</p>
+                <div class="text-center w-100 py-5 my-4 bg-white rounded-4 border shadow-sm">
+                    <div class="mb-3">
+                        <i class="fas fa-file-excel text-secondary opacity-50 display-4"></i>
+                    </div>
+                    <h5 class="text-dark fw-bold mb-1">စည်းကမ်းချက် အချက်အလက်များ မရှိပါ</h5>
+                    <p class="text-muted small mb-0">ရှာဖွေမှုနှင့် ကိုက်ညီသော စည်းမျဉ်းစည်းကမ်းများ မတွေ့ရှိပါ။</p>
                 </div>
             }
         </div>
 
-        <div class="mt-4">
+        <!-- Pagination -->
+        <div class="mt-4 pt-2">
             <PaginationComponent CurrentPage="CurrentPage" TotalPages="TotalPages" OnPageChanged="OnPageChanged" />
         </div>
     </div>
 </section>
 
+<!-- 🌟 Redesigned Read More Modal -->
 @if (isPopupOpen && selectedRule != null)
 {
-    <div class="modal show d-block" style="background: rgba(0,0,0,0.6);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-4" style="border-radius: 15px;">
-                <h3 class="mb-3">@selectedRule.Title</h3>
-                <div style="max-height: 400px; overflow-y: auto;">
-                    <p style="line-height: 1.6;">@selectedRule.Description</p>
-                    <div class="mt-4"
-                         style="color: #b45309; font-size: 0.9rem;">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Penalty:</strong> <span>
-                            @if (decimal.TryParse(selectedRule.Penalty, out var penaltyVal))
-                            {
-                                @($"{penaltyVal.ToString("N0")} MMK")
-                            }
-                            else
-                            {
-                                @($"{selectedRule.Penalty} MMK")
-                            }
-                        </span>
+    <div class="modal show d-block modal-backdrop-custom" tabindex="-1" @onclick="ClosePopup">
+        <div class="modal-dialog modal-dialog-centered modal-lg" @onclick:stopPropagation="true">
+            <div class="modal-content border-0 shadow-lg rule-modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header border-0 rule-modal-header text-white">
+                    <div class="w-100 pe-4">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge rounded-pill rule-modal-badge">
+                                <i class="fas fa-gavel me-1"></i> Academic Regulation
+                            </span>
+                            <span class="small text-white-50">
+                                <i class="far fa-calendar-alt me-1"></i> @selectedRule.CreatedDateTime.ToString("dd-MM-yyyy")
+                            </span>
+                        </div>
+                        <h4 class="modal-title fw-bold text-white mb-0" style="line-height: 1.5; font-size: 1.28rem;">
+                            @selectedRule.Title
+                        </h4>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @onclick="ClosePopup"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body p-4 bg-white">
+                    <!-- Description Section -->
+                    <div class="mb-4">
+                        <label class="text-uppercase text-muted fw-bold small d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-align-left text-primary"></i> စည်းကမ်းချက် အသေးစိတ် ဖော်ပြချက် (Description)
+                        </label>
+                        <div class="rule-modal-desc-box">
+                            @selectedRule.Description
+                        </div>
+                    </div>
+
+                    <!-- Penalty Policy Section -->
+                    <div class="mb-2">
+                        <label class="text-uppercase text-muted fw-bold small d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-shield-alt text-danger"></i> ပြစ်ဒဏ် / အရေးယူဆောင်ရွက်မှု (Penalty Policy)
+                        </label>
+                        <div class="rule-modal-penalty-box">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="penalty-icon-circle flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-danger fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-danger mb-1" style="font-size: 0.92rem; letter-spacing: 0.2px;">
+                                        သတ်မှတ်ပြစ်ဒဏ် အကျိုးဆက်-
+                                    </div>
+                                    <div class="penalty-modal-text">
+                                        @if (decimal.TryParse(selectedRule.Penalty, out var penaltyVal))
+                                        {
+                                            @($"{penaltyVal.ToString("N0")} MMK")
+                                        }
+                                        else
+                                        {
+                                            @selectedRule.Penalty
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <button class="btn mt-4 w-100" style="background:#5A4FCF; color:white; border-radius: 20px;"
-                        @onclick="ClosePopup">Close</button>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-0 bg-light px-4 py-3 d-flex justify-content-end">
+                    <button type="button" class="btn btn-secondary px-4 py-2 rounded-pill fw-semibold" @onclick="ClosePopup">
+                        ပိတ်မည် (Close)
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 }
 
 <style>
+    /* ── Rules Grid ── */
     .rules-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 24px;
-        margin-top: 30px;
+    }
+
+    .rule-card {
+        background-color: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+        padding: 22px;
+        border: 1px solid #e2e8f0;
+        border-top: 4px solid #5A4FCF;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .rule-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(90, 79, 207, 0.12);
+        border-top-color: #e11d48;
+    }
+
+    .rule-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .rule-badge {
+        background-color: rgba(90, 79, 207, 0.1);
+        color: #5A4FCF;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+        border: 1px solid rgba(90, 79, 207, 0.2);
+    }
+
+    .rule-card:hover .rule-badge {
+        background-color: #ffe4e6;
+        color: #e11d48;
+        border-color: #fecdd3;
+    }
+
+    .rule-date {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .rule-title {
+        font-size: 1.06rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.5;
+        margin: 0 0 12px 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 3.18rem;
+    }
+
+    .rule-card-body {
+        margin-bottom: 14px;
+    }
+
+    .rule-description {
+        color: #475569;
+        font-size: 0.88rem;
+        line-height: 1.65;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 4.35rem;
+    }
+
+    .rule-penalty-tag {
+        background-color: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-left: 3.5px solid #f59e0b;
+        padding: 9px 12px;
+        border-radius: 10px;
+        font-size: 0.84rem;
+        line-height: 1.45;
+        color: #92400e;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.9rem;
+    }
+
+    .btn-rule-readmore {
+        width: 100%;
+        background: linear-gradient(135deg, #5A4FCF 0%, #4338ca 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        padding: 9px 16px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-rule-readmore:hover {
+        background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(90, 79, 207, 0.35);
+        transform: translateY(-1px);
+    }
+
+    /* ── Filter Controls ── */
+    .filter-input-control {
+        height: 42px !important;
+        font-size: 0.92rem;
+        border: 1px solid #cbd5e1;
+    }
+
+    .filter-input-control:focus {
+        border-color: #5A4FCF;
+        box-shadow: 0 0 0 3px rgba(90, 79, 207, 0.15);
+    }
+
+    .btn-rules-search {
+        background: #5A4FCF;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 10px;
+        padding: 0 16px;
+        border: none;
+        height: 42px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-rules-search:hover {
+        background: #4338ca;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-rules-reset {
+        background: #e2e8f0;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-radius: 10px;
+        padding: 0 16px;
+        border: none;
+        height: 42px !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+
+    .btn-rules-reset:hover {
+        background: #cbd5e1;
+        color: #1e293b;
+    }
+
+    /* ── Modal Custom ── */
+    .modal-backdrop-custom {
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(6px);
+        z-index: 1055;
+    }
+
+    .rule-modal-content {
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .rule-modal-header {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
+        padding: 22px 26px;
+    }
+
+    .rule-modal-badge {
+        background: rgba(244, 63, 94, 0.2);
+        color: #fda4af;
+        border: 1px solid rgba(244, 63, 94, 0.35);
+        font-size: 0.8rem;
+        padding: 4px 10px;
+    }
+
+    .rule-modal-desc-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 18px;
+        font-size: 0.95rem;
+        line-height: 1.8;
+        color: #334155;
+        white-space: pre-wrap;
+    }
+
+    .rule-modal-penalty-box {
+        background: #fff1f2;
+        border: 1.5px solid #fecdd3;
+        border-radius: 12px;
+        padding: 16px 18px;
+    }
+
+    .penalty-icon-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 4px;
+    }
+
+    .penalty-modal-text {
+        font-size: 0.94rem;
+        color: #9f1239;
+        line-height: 1.6;
+        font-weight: 600;
     }
 
     /* ── Skeleton loader ── */
@@ -155,67 +472,6 @@
     .skel-body   { width: 100%;  height: 13px; }
     .skel-penalty{ width: 55%;   height: 36px; border-radius: 8px; }
     .skel-btn    { width: 110px; height: 36px; border-radius: 20px; margin-top: 8px; }
-
-    .rule-card {
-        background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        padding: 24px;
-        border-left: 5px solid #e11d48;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        transition: transform 0.2s;
-    }
-
-    .rule-card:hover {
-        transform: translateY(-2px);
-    }
-
-    .rule-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-    }
-
-    .rule-badge {
-        background-color: #ffe4e6;
-        color: #e11d48;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    .rule-title {
-        margin: 0;
-        font-size: 1.25rem;
-        color: #1f2937;
-    }
-
-    .rule-description {
-        color: #4b5563;
-        line-height: 1.6;
-    }
-
-    .rule-penalty {
-        background-color: #fffbeb;
-        color: #b45309;
-        padding: 12px 16px;
-        border-radius: 8px;
-        border: 1px solid #fde68a;
-        font-size: 0.9rem;
-    }
-
-    .rule-footer {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid #f3f4f6;
-        color: #9ca3af;
-        font-size: 0.8rem;
-    }
-
     .modal {
         display: block;
         background: rgba(0, 0, 0, 0.6);

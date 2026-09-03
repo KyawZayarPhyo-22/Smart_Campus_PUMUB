@@ -129,7 +129,7 @@ public class RulesRegulationsController : ControllerBase
     }
 
     [HttpGet("paginate")]
-    [AllowAnonymous]
+    [Permission("Rules.View")]
     public IActionResult GetRulesPaginated(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,

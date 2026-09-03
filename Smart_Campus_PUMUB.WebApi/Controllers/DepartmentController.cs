@@ -24,21 +24,16 @@ public class DepartmentController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult GetDepartments()
+    public IActionResult GetDepartments([FromQuery] int? facultyId = null)
     {
         var query = _db.Departments
-                    .Include(x => x.Tutors)
+                    .AsNoTracking()
                     .Include(x => x.Faculty)
                     .Where(x => x.IsDelete == false || x.IsDelete == null);
 
-        // Hierarchical RBAC Data Scoping:
-        if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+        if (facultyId.HasValue && facultyId.Value > 0)
         {
-            var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
-            if (scopedFacultyId.HasValue)
-            {
-                query = query.Where(x => x.FacultyId == scopedFacultyId.Value);
-            }
+            query = query.Where(x => x.FacultyId == facultyId.Value);
         }
 
         var lst = query.OrderByDescending(x => x.DepartmentId)
@@ -47,7 +42,7 @@ public class DepartmentController : ControllerBase
                          DepartmentId = x.DepartmentId,
                          DepartmentName = x.DepartmentName,
                          FacultyId = x.FacultyId,
-                         FacultyName = x.Faculty.FacultyName
+                         FacultyName = x.Faculty != null ? x.Faculty.FacultyName : "N/A"
                      })
                      .ToList();
         return Ok(lst);
@@ -222,7 +217,7 @@ public class DepartmentController : ControllerBase
     }
 
     [HttpGet("paginate")]
-    [AllowAnonymous]
+    [Permission("Department.View")]
     public IActionResult GetDepartmentsPaginated(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,

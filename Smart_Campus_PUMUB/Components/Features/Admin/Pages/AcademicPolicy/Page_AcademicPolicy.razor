@@ -1,0 +1,251 @@
+@page "/admin/academic-policies"
+@layout AdminLayout
+@namespace Smart_Campus_PUMUB.Components.Admin.Pages.AcademicPolicy
+@using Smart_Campus_PUMUB.WebApi.Models
+@rendermode InteractiveServer
+
+<PageTitle>@(LangService.IsMyanmar ? "ပညာရေး မူဝါဒများ" : "Academic Policy Directory")</PageTitle>
+
+<div class="tab-pane fade show active" id="v-pills-academic-policies">
+    <!-- Header Section -->
+    <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+            <i class="bi bi-shield-check fs-5" style="color: #0d6efd;"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "ပညာရေး မူဝါဒများ" : "Academic Policy Directory")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "Retake ကန့်သတ်ချက်နှင့် Credit Points မူဝါဒများ စီမံခန့်ခွဲခြင်း" : "Manage academic retake limits and credit point policies")
+            </small>
+        </div>
+    </div>
+
+    <!-- ⚙ Dynamic Retake Limit Policy Setting Card -->
+    <div class="card border-0 mb-4 shadow-sm" style="background: #ffffff; border-radius: 16px; border: 1.5px solid #e2e8f0; overflow: hidden;">
+        <div style="height: 4px; background: linear-gradient(90deg, #0d6efd 0%, #3b82f6 100%);"></div>
+        <div class="card-body p-4">
+            <div class="row align-items-center g-3">
+                <!-- Left: Icon & Description -->
+                <div class="col-lg-7 col-md-12">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="shadow-sm d-flex align-items-center justify-content-center flex-shrink-0" 
+                             style="width: 52px; height: 52px; border-radius: 14px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+                            <i class="bi bi-shield-check" style="color: #0d6efd; font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                                <h5 class="fw-bold text-dark mb-0" style="font-size: 1.15rem; letter-spacing: -0.2px;">
+                                    @(LangService.IsMyanmar ? "Retake ခွင့်ပြုမှု မူဝါဒ" : "Academic Retake Limit Policy")
+                                </h5>
+                                <span class="badge d-inline-flex align-items-center shadow-none" 
+                                      style="background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0; font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;">
+                                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981; margin-right: 6px;"></span>
+                                    @(LangService.IsMyanmar ? $"လက်ရှိ: {maxRetakeLimit} ကြိမ်" : $"Current: {maxRetakeLimit} times")
+                                </span>
+                            </div>
+                            <p class="text-secondary mb-0" style="font-size: 0.88rem; line-height: 1.5; font-weight: 500;">
+                                @(LangService.IsMyanmar ? "ကျောင်းသားတစ်ဦး အများဆုံး ယူခွင့်ရှိသော Retake အကြိမ်အရေအတွက် သတ်မှတ်ခြင်း။ (ပြည့်ပါက ကျောင်းအပ်နှံခွင့် ပိတ်ပါမည်)" : "Configure maximum retake limit allowed across semesters.")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Stepper & Action Controls -->
+                <div class="col-lg-5 col-md-12">
+                    <div class="d-flex align-items-center gap-3 justify-content-lg-end">
+                        <div class="d-flex flex-column align-items-start">
+                            <span class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px; margin-bottom: 4px;">@(LangService.IsMyanmar ? "အများဆုံး အကြိမ်" : "Max Limit (Times)")</span>
+                            <div class="position-relative" style="width: 120px;">
+                                <input type="number" 
+                                       class="form-control text-center fw-bold fs-5 shadow-none" 
+                                       style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; height: 46px; color: #0f172a;" 
+                                       min="1" max="100" @bind="newRetakeLimitInput" />
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column align-items-start" style="padding-top: 20px;">
+                            <button class="btn btn-primary px-4 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm" 
+                                    style="background: #0d6efd; border-color: #0d6efd; border-radius: 10px; height: 46px; white-space: nowrap; font-size: 0.92rem;"
+                                    @onclick="SaveRetakeLimitSetting" disabled="@isSavingRetakeLimit">
+                                @if (isSavingRetakeLimit)
+                                {
+                                    <span class="spinner-border spinner-border-sm"></span>
+                                    <span>@(LangService.IsMyanmar ? "သိမ်းနေသည်..." : "Saving...")</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check2-circle fs-6"></i>
+                                    <span>@(LangService.IsMyanmar ? "သတ်မှတ်မည်" : "Save Limit")</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(retakeSettingMessage))
+                    {
+                        <div class="mt-2 text-lg-end" style="font-size: 0.84rem; color: @(retakeSettingMessage.StartsWith("✓") ? "#059669" : "#dc2626"); font-weight: 600;">
+                            @retakeSettingMessage
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🎯 Dynamic Faculty Semester Credit Points Setting Card -->
+    <div class="card border-0 mb-4 shadow-sm" style="background: #ffffff; border-radius: 16px; border: 1.5px solid #e2e8f0; overflow: hidden;">
+        <div style="height: 4px; background: linear-gradient(90deg, #10b981 0%, #06b6d4 50%, #3b82f6 100%);"></div>
+        <div class="card-body p-4">
+            <div class="row align-items-center g-3 mb-3">
+                <!-- Left: Icon & Description -->
+                <div class="col-lg-7 col-md-12">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="shadow-sm d-flex align-items-center justify-content-center flex-shrink-0" 
+                             style="width: 52px; height: 52px; border-radius: 14px; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.25);">
+                            <i class="bi bi-award" style="color: #059669; font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                                <h5 class="fw-bold text-dark mb-0" style="font-size: 1.15rem; letter-spacing: -0.2px;">
+                                    @(LangService.IsMyanmar ? "Credit Points သတ်မှတ်ချက် မူဝါဒ" : "Semester Credit Points Range Policy")
+                                </h5>
+                                <span class="badge d-inline-flex align-items-center shadow-none" 
+                                      style="background: #ecfdf5; color: #047857; border: 1.5px solid #a7f3d0; font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;">
+                                    <i class="bi bi-gear-fill me-1.5 small"></i>@(LangService.IsMyanmar ? "မဟာဌာနအလိုက် သတ်မှတ်ချက်" : "Faculty-Based Range")
+                                </span>
+                            </div>
+                            <p class="text-secondary mb-0" style="font-size: 0.88rem; line-height: 1.5; font-weight: 500;">
+                                @(LangService.IsMyanmar ? "Semester တစ်ခုချင်းစီတွင် ကျောင်းသားများ တက်ရောက်ရန် လိုအပ်သော အနည်းဆုံးနှင့် အများဆုံး Credit ပမာဏကို သတ်မှတ်ခြင်း။" : "Set minimum and maximum credit thresholds per faculty and semester.")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Faculty Selector Dropdown -->
+                <div class="col-lg-5 col-md-12">
+                    <div class="d-flex flex-column align-items-lg-end">
+                        <span class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px; margin-bottom: 4px;">@(LangService.IsMyanmar ? "မဟာဌာန ရွေးချယ်ရန်" : "Select Faculty to Configure")</span>
+                        <div class="d-flex align-items-center gap-2 w-100 justify-content-lg-end">
+                            <select class="form-select shadow-none fw-bold" 
+                                    style="max-width: 340px; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; height: 44px; color: #0f172a;" 
+                                    value="@selectedCreditFacultyId" 
+                                    @onchange="OnCreditFacultyChanged">
+                                @foreach (var fac in creditFacultyList)
+                                {
+                                    <option value="@fac.FacultyId">@fac.FacultyName</option>
+                                }
+                            </select>
+                            <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
+                                    style="width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid #cbd5e1;" 
+                                    @onclick="LoadFacultySemesterCredits" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Refresh Settings")">
+                                <i class="bi bi-arrow-clockwise fs-6"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (isLoadingSemesterCredits)
+            {
+                <div class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                    <span class="ms-2 text-muted small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading credit settings...")</span>
+                </div>
+            }
+            else if (facultySemesterCredits != null && facultySemesterCredits.Any())
+            {
+                <div class="row g-3 mt-1">
+                    @foreach (var item in facultySemesterCredits)
+                    {
+                        <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                            <div class="p-3 rounded-3 position-relative" 
+                                 style="background: #f8fafc; border: 1.5px solid #e2e8f0; transition: all 0.2s ease;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="badge px-2.5 py-1 fw-bold" 
+                                          style="background: #e0f2fe; color: #0369a1; border-radius: 6px; font-size: 0.8rem;">
+                                        Sem @(item.Sequence ?? item.SemesterId)
+                                    </span>
+                                    <span class="text-dark fw-bold small" style="font-size: 0.85rem;">
+                                        @item.SemesterName
+                                    </span>
+                                    <span class="badge px-2.5 py-1 fw-bold" 
+                                          style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 6px; font-size: 0.78rem;">
+                                        @(item.MinCredits ?? 18) ~ @(item.MaxCredits ?? 24) Pts
+                                    </span>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2 mt-3">
+                                    <!-- Min Credits Input Box -->
+                                    <div class="flex-fill">
+                                        <label class="form-label text-muted small fw-bold mb-1" style="font-size: 0.72rem; text-transform: uppercase;">
+                                            @(LangService.IsMyanmar ? "အနည်းဆုံး" : "Min Credits")
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" 
+                                                   class="form-control text-center fw-bold shadow-none" 
+                                                   style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px 0 0 8px; height: 38px; color: #0f172a;" 
+                                                   min="1" max="@(item.MaxCredits ?? 24)" 
+                                                   @bind="item.MinCredits" />
+                                            <span class="input-group-text bg-white text-muted fw-bold small" style="border: 1.5px solid #cbd5e1; border-left: 0; border-radius: 0 8px 8px 0; font-size: 0.75rem;">
+                                                Pts
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Max Credits Input Box -->
+                                    <div class="flex-fill">
+                                        <label class="form-label text-muted small fw-bold mb-1" style="font-size: 0.72rem; text-transform: uppercase;">
+                                            @(LangService.IsMyanmar ? "အများဆုံး" : "Max Credits")
+                                        </label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" 
+                                                   class="form-control text-center fw-bold shadow-none" 
+                                                   style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px 0 0 8px; height: 38px; color: #0f172a;" 
+                                                   min="@(item.MinCredits ?? 18)" max="60" 
+                                                   @bind="item.MaxCredits" />
+                                            <span class="input-group-text bg-white text-muted fw-bold small" style="border: 1.5px solid #cbd5e1; border-left: 0; border-radius: 0 8px 8px 0; font-size: 0.75rem;">
+                                                Pts
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Single Save Button -->
+                                    <div class="d-flex flex-column align-items-end" style="padding-top: 22px;">
+                                        <button class="btn btn-success d-flex align-items-center justify-content-center shadow-sm" 
+                                                style="width: 44px; height: 38px; border-radius: 8px; background: #059669; border-color: #059669;" 
+                                                @onclick="() => SaveSingleSemesterCredit(item)" 
+                                                disabled="@savingCreditItemIds.Contains(item.SemesterId)" 
+                                                title="@(LangService.IsMyanmar ? "သိမ်းမည်" : "Save Changes")">
+                                            @if (savingCreditItemIds.Contains(item.SemesterId))
+                                            {
+                                                <span class="spinner-border spinner-border-sm"></span>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-check-lg fs-5 text-white"></i>
+                                            }
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(semesterCreditAlertMessage))
+            {
+                <div class="mt-3 p-3 rounded-3" 
+                     style="background: @(semesterCreditAlertMessage.StartsWith("✓") ? "rgba(16, 185, 129, 0.1)" : "rgba(220, 53, 69, 0.1)"); border: 1px solid @(semesterCreditAlertMessage.StartsWith("✓") ? "#10b981" : "#ef4444");">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi @(semesterCreditAlertMessage.StartsWith("✓") ? "bi-check-circle-fill text-success" : "bi-exclamation-triangle-fill text-danger")"></i>
+                        <span class="fw-bold" style="font-size: 0.88rem; color: @(semesterCreditAlertMessage.StartsWith("✓") ? "#047857" : "#b91c1c");">
+                            @semesterCreditAlertMessage
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

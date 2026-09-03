@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.Components.Features.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
@@ -7,12 +9,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 
+using Microsoft.JSInterop;
+
 namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
 {
-    public partial class Page_StudentDirectory : ComponentBase
+    public partial class Page_StudentDirectory : ComponentBase, IDisposable
     {
         [Inject] public HttpClientService HttpClientService { get; set; } = null!;
         [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+        [Inject] public AdminLanguageService LangService { get; set; } = default!;
+        [Inject] public IJSRuntime JS { get; set; } = default!;
 
         private List<StudentModel> StudentList { get; set; } = new();
         private List<FacultyModel> FacultyList { get; set; } = new();
@@ -43,6 +49,8 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
         // Modal State
         private bool ShowDetailModal { get; set; } = false;
         private StudentModel? SelectedStudent { get; set; } = null;
+        private StudentRetakeStatusModel? selectedStudentRetakeStatus = null;
+        private bool isLoadingRetakeModal = false;
 
         // Pagination
         private int CurrentPage { get; set; } = 1;
@@ -51,7 +59,18 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
 
         protected override async Task OnInitializedAsync()
         {
+            LangService.OnLanguageChanged += HandleLanguageChanged;
             await LoadStudents();
+        }
+
+        private void HandleLanguageChanged()
+        {
+            InvokeAsync(StateHasChanged);
+        }
+
+        public void Dispose()
+        {
+            LangService.OnLanguageChanged -= HandleLanguageChanged;
         }
 
         private bool isFacultyAdminLocked = false;
@@ -60,6 +79,17 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (!firstRender) return;
+
+            try
+            {
+                var savedLang = await JS.InvokeAsync<string?>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang) && savedLang != LangService.CurrentLanguage)
+                {
+                    LangService.SetLanguage(savedLang);
+                    StateHasChanged();
+                }
+            }
+            catch { }
 
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
@@ -362,16 +392,34 @@ namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
             }
         }
 
-        private void OpenViewModal(StudentModel student)
+        private async Task OpenViewModal(StudentModel student)
         {
             SelectedStudent = student;
             ShowDetailModal = true;
+            selectedStudentRetakeStatus = null;
+            isLoadingRetakeModal = true;
+            StateHasChanged();
+
+            try
+            {
+                selectedStudentRetakeStatus = await HttpClientService.ExecuteAsync<StudentRetakeStatusModel>($"student/retake-status/{student.UserId}", EnumHttpMethod.Get);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading student retake status: {ex.Message}");
+            }
+            finally
+            {
+                isLoadingRetakeModal = false;
+                StateHasChanged();
+            }
         }
 
         private void CloseViewModal()
         {
             ShowDetailModal = false;
             SelectedStudent = null;
+            selectedStudentRetakeStatus = null;
         }
 
         private string GetSemesterDisplayName(int semNum)

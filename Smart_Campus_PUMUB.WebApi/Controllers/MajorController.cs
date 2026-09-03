@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Campus_PUMUB.Database.AppDbContext;
+using Smart_Campus_PUMUB.WebApi.Filters;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Smart_Campus_PUMUB.WebApi.Services;
 
@@ -192,7 +193,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
         [HttpGet("paginate")]
-        [AllowAnonymous]
+        [Permission("Major.View")]
         public IActionResult GetMajorsPaginated(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
