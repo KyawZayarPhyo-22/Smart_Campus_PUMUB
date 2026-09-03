@@ -18,11 +18,13 @@ public class StudentController : ControllerBase
 {
     private readonly SmartCampusDbContext _db;
     private readonly IFacultyDataScopeService _scopeService;
+    private readonly IEnrollmentService _enrollmentService;
 
-    public StudentController(SmartCampusDbContext db, IFacultyDataScopeService scopeService)
+    public StudentController(SmartCampusDbContext db, IFacultyDataScopeService scopeService, IEnrollmentService enrollmentService)
     {
         _db = db;
         _scopeService = scopeService;
+        _enrollmentService = enrollmentService;
     }
 
     // GET: api/student (Get active students)
@@ -121,27 +123,38 @@ public class StudentController : ControllerBase
             latestRegs.TryGetValue(s.UserId, out var reg);
             latestInfos.TryGetValue(s.UserId, out var info);
 
-            var majorName = !string.IsNullOrWhiteSpace(s.CurrentMajor) && s.CurrentMajor != "N/A"
-                ? s.CurrentMajor.Trim()
+            var majorName = !string.IsNullOrWhiteSpace(info?.major) && info.major != "N/A"
+                ? info.major.Trim()
                 : (!string.IsNullOrWhiteSpace(reg?.Major) && reg.Major != "N/A"
                     ? reg.Major.Trim()
-                    : (!string.IsNullOrWhiteSpace(info?.major) && info.major != "N/A" ? info.major.Trim() : ""));
+                    : (!string.IsNullOrWhiteSpace(s.CurrentMajor) && s.CurrentMajor != "N/A" ? s.CurrentMajor.Trim() : ""));
 
-            var classYear = !string.IsNullOrWhiteSpace(s.CurrentClassYear) && s.CurrentClassYear != "N/A"
-                ? s.CurrentClassYear.Trim()
+            var classYear = !string.IsNullOrWhiteSpace(info?.academic_year_level) && info.academic_year_level != "N/A"
+                ? info.academic_year_level.Trim()
                 : (!string.IsNullOrWhiteSpace(reg?.AcademicYearLevel) && reg.AcademicYearLevel != "N/A"
                     ? reg.AcademicYearLevel.Trim()
-                    : (!string.IsNullOrWhiteSpace(info?.academic_year_level) && info.academic_year_level != "N/A" ? info.academic_year_level.Trim() : ""));
+                    : (!string.IsNullOrWhiteSpace(s.CurrentClassYear) && s.CurrentClassYear != "N/A" ? s.CurrentClassYear.Trim() : ""));
 
-            // Sync back to student entity if it was empty so DB stays up-to-date
-            if ((string.IsNullOrWhiteSpace(s.CurrentMajor) || s.CurrentMajor == "N/A") && !string.IsNullOrWhiteSpace(majorName))
+            var rollNo = !string.IsNullOrWhiteSpace(s.User?.RoleNo)
+                ? s.User.RoleNo.Trim()
+                : (!string.IsNullOrWhiteSpace(info?.roll_no)
+                    ? info.roll_no.Trim()
+                    : (!string.IsNullOrWhiteSpace(s.CurrentRollNo) ? s.CurrentRollNo.Trim() : ""));
+
+            // Sync back to student entity so DB stays up-to-date
+            if (s.CurrentMajor != majorName && !string.IsNullOrWhiteSpace(majorName))
             {
                 s.CurrentMajor = majorName;
                 updatedAny = true;
             }
-            if ((string.IsNullOrWhiteSpace(s.CurrentClassYear) || s.CurrentClassYear == "N/A") && !string.IsNullOrWhiteSpace(classYear))
+            if (s.CurrentClassYear != classYear && !string.IsNullOrWhiteSpace(classYear))
             {
                 s.CurrentClassYear = classYear;
+                updatedAny = true;
+            }
+            if (s.CurrentRollNo != rollNo && !string.IsNullOrWhiteSpace(rollNo))
+            {
+                s.CurrentRollNo = rollNo;
                 updatedAny = true;
             }
 
@@ -155,6 +168,12 @@ public class StudentController : ControllerBase
                 )
             );
 
+            if (matchedMajor != null && s.FacultyId != matchedMajor.FacultyId)
+            {
+                s.FacultyId = matchedMajor.FacultyId;
+                updatedAny = true;
+            }
+
             return new StudentModel
             {
                 StudentId = s.StudentId,
@@ -163,7 +182,7 @@ public class StudentController : ControllerBase
                 CurrentClassYear = classYear,
                 CurrentMajor = majorName,
                 FacultyName = s.User?.Faculty?.FacultyName ?? matchedMajor?.Faculty?.FacultyName,
-                CurrentRollNo = s.User.RoleNo,
+                CurrentRollNo = rollNo,
                 Status = s.Status ?? "Active",
                 Sem1_Result = s.Sem1_Result,
                 Sem2_Result = s.Sem2_Result,
@@ -187,7 +206,7 @@ public class StudentController : ControllerBase
 
     // GET: api/student/{id} (Get student details)
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin,admin")]
+    [Permission("Student.View")]
     public IActionResult GetStudent(int id)
     {
         var item = _db.Students
@@ -200,15 +219,43 @@ public class StudentController : ControllerBase
             return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားကို ရှာမတွေ့ပါ။" });
         }
 
+        var latestInfo = _db.StudentPersonalInfos
+            .Where(p => p.UserId == item.UserId)
+            .OrderByDescending(p => p.Id)
+            .FirstOrDefault();
+
+        var latestReg = _db.StudentRegistrations
+            .Where(r => r.UserId == item.UserId && (r.IsDelete == false || r.IsDelete == null))
+            .OrderByDescending(r => r.RegistrationId)
+            .FirstOrDefault();
+
+        var majorName = !string.IsNullOrWhiteSpace(latestInfo?.major) && latestInfo.major != "N/A"
+            ? latestInfo.major.Trim()
+            : (!string.IsNullOrWhiteSpace(latestReg?.Major) && latestReg.Major != "N/A"
+                ? latestReg.Major.Trim()
+                : (!string.IsNullOrWhiteSpace(item.CurrentMajor) && item.CurrentMajor != "N/A" ? item.CurrentMajor.Trim() : ""));
+
+        var classYear = !string.IsNullOrWhiteSpace(latestInfo?.academic_year_level) && latestInfo.academic_year_level != "N/A"
+            ? latestInfo.academic_year_level.Trim()
+            : (!string.IsNullOrWhiteSpace(latestReg?.AcademicYearLevel) && latestReg.AcademicYearLevel != "N/A"
+                ? latestReg.AcademicYearLevel.Trim()
+                : (!string.IsNullOrWhiteSpace(item.CurrentClassYear) && item.CurrentClassYear != "N/A" ? item.CurrentClassYear.Trim() : ""));
+
+        var rollNo = !string.IsNullOrWhiteSpace(item.User?.RoleNo)
+            ? item.User.RoleNo.Trim()
+            : (!string.IsNullOrWhiteSpace(latestInfo?.roll_no)
+                ? latestInfo.roll_no.Trim()
+                : item.CurrentRollNo);
+
         var data = new StudentModel
         {
             StudentId = item.StudentId,
             UserId = item.UserId,
             FullName = item.User?.FullName,
-            CurrentClassYear = item.CurrentClassYear,
-            CurrentMajor = item.CurrentMajor,
+            CurrentClassYear = classYear,
+            CurrentMajor = majorName,
             FacultyName = item.User?.Faculty?.FacultyName,
-            CurrentRollNo = item.User != null ? item.User.RoleNo : item.CurrentRollNo,
+            CurrentRollNo = rollNo,
             Status = item.Status ?? "Active",
             Sem1_Result = item.Sem1_Result,
             Sem2_Result = item.Sem2_Result,
@@ -243,6 +290,7 @@ public class StudentController : ControllerBase
                 UserId = userId,
                 CurrentClassYear = "First Year",
                 CurrentMajor = "N/A",
+                CurrentRollNo = userCheck.RoleNo ?? string.Empty,
                 Status = "Active",
                 CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
                 IsDelete = false
@@ -258,14 +306,42 @@ public class StudentController : ControllerBase
             return NotFound(new StudentResponseModel { IsSuccess = false, Message = "ကျောင်းသားမှတ်တမ်းကို ရှာမတွေ့ပါ။" });
         }
 
+        var latestInfo = _db.StudentPersonalInfos
+            .Where(p => p.UserId == userId)
+            .OrderByDescending(p => p.Id)
+            .FirstOrDefault();
+
+        var latestReg = _db.StudentRegistrations
+            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
+            .OrderByDescending(r => r.RegistrationId)
+            .FirstOrDefault();
+
+        var majorName = !string.IsNullOrWhiteSpace(latestInfo?.major) && latestInfo.major != "N/A"
+            ? latestInfo.major.Trim()
+            : (!string.IsNullOrWhiteSpace(latestReg?.Major) && latestReg.Major != "N/A"
+                ? latestReg.Major.Trim()
+                : (!string.IsNullOrWhiteSpace(item.CurrentMajor) && item.CurrentMajor != "N/A" ? item.CurrentMajor.Trim() : ""));
+
+        var classYear = !string.IsNullOrWhiteSpace(latestInfo?.academic_year_level) && latestInfo.academic_year_level != "N/A"
+            ? latestInfo.academic_year_level.Trim()
+            : (!string.IsNullOrWhiteSpace(latestReg?.AcademicYearLevel) && latestReg.AcademicYearLevel != "N/A"
+                ? latestReg.AcademicYearLevel.Trim()
+                : (!string.IsNullOrWhiteSpace(item.CurrentClassYear) && item.CurrentClassYear != "N/A" ? item.CurrentClassYear.Trim() : ""));
+
+        var rollNo = !string.IsNullOrWhiteSpace(item.User?.RoleNo)
+            ? item.User.RoleNo.Trim()
+            : (!string.IsNullOrWhiteSpace(latestInfo?.roll_no)
+                ? latestInfo.roll_no.Trim()
+                : item.CurrentRollNo);
+
         var data = new StudentModel
         {
             StudentId = item.StudentId,
             UserId = item.UserId,
             FullName = item.User?.FullName,
-            CurrentClassYear = item.CurrentClassYear,
-            CurrentMajor = item.CurrentMajor,
-            CurrentRollNo = item.User != null ? item.User.RoleNo : item.CurrentRollNo,
+            CurrentClassYear = classYear,
+            CurrentMajor = majorName,
+            CurrentRollNo = rollNo,
             Status = item.Status ?? "Active",
             Sem1_Result = item.Sem1_Result,
             Sem2_Result = item.Sem2_Result,
@@ -690,12 +766,374 @@ public class StudentController : ControllerBase
 
     // GET: api/student/profile/{userId} - Get student profile
     [HttpGet("profile/{userId}")]
-    public IActionResult GetStudentProfile(int userId)
+    public async Task<IActionResult> GetStudentProfile(int userId)
     {
-        var student = _db.Students
+        var student = await _db.Students
+            .AsNoTracking()
             .Include(s => s.User)
-            .FirstOrDefault(s => s.UserId == userId && (s.IsDelete == false || s.IsDelete == null));
+            .FirstOrDefaultAsync(s => s.UserId == userId && (s.IsDelete == false || s.IsDelete == null));
 
+        if (student == null)
+        {
+            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user != null)
+            {
+                var newStudent = new Student
+                {
+                    UserId = user.UserId,
+                    CurrentClassYear = "First Year",
+                    CurrentMajor = "N/A",
+                    Status = "Active",
+                    CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                    IsDelete = false
+                };
+                _db.Students.Add(newStudent);
+                await _db.SaveChangesAsync();
+                student = newStudent;
+                student.User = user;
+            }
+            else
+            {
+                return NotFound(new { IsSuccess = false, Message = "ကျောင်းသားကို ရှာမတွေ့ပါ။" });
+            }
+        }
+
+        // Single optimized query for registrations and payments
+        var registrations = await _db.StudentRegistrations
+            .AsNoTracking()
+            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
+            .OrderByDescending(r => r.RegistrationId)
+            .Select(r => new
+            {
+                r.RegistrationId,
+                r.Status,
+                r.AcademicYearRange,
+                r.AcademicYearLevel,
+                r.Major,
+                r.Dob,
+                r.Email,
+                r.StudentImage,
+                r.NrcFrontImage,
+                r.NrcBackImage,
+                r.CensusImage,
+                r.CreatedDatetime,
+                Payments = r.RegistrationPayments
+                    .Where(p => p.IsDelete == false || p.IsDelete == null)
+                    .Select(p => new { p.PaymentId, p.Status, p.CreatedDateTime, p.AmountPaid })
+                    .ToList()
+            })
+            .ToListAsync();
+
+        var reg = registrations.FirstOrDefault();
+
+        var notifications = registrations.Select(r => new
+        {
+            r.RegistrationId,
+            r.Status,
+            r.AcademicYearRange,
+            r.AcademicYearLevel,
+            r.CreatedDatetime,
+            r.Payments
+        }).ToList();
+
+        var studentImage = student.StudentImage;
+        if (string.IsNullOrEmpty(studentImage))
+        {
+            studentImage = reg?.StudentImage;
+            if (string.IsNullOrEmpty(studentImage))
+            {
+                studentImage = await _db.StudentPersonalInfos
+                    .AsNoTracking()
+                    .Where(p => p.UserId == userId)
+                    .OrderByDescending(p => p.Id)
+                    .Select(p => p.student_image)
+                    .FirstOrDefaultAsync();
+            }
+        }
+
+        StudentRetakeStatusModel? retakeStatus = null;
+        StudentGraduationStatusModel? graduationStatus = null;
+        try
+        {
+            var rollNo = student.User?.RoleNo ?? student.CurrentRollNo;
+            retakeStatus = await _enrollmentService.GetStudentRetakeStatusAsync(userId, student.StudentId, rollNo);
+            graduationStatus = await _enrollmentService.GetStudentGraduationStatusAsync(userId, student.StudentId, rollNo);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting retake / graduation status: {ex.Message}");
+        }
+
+        string currentStatus = graduationStatus?.IsGraduated == true ? "Graduated" : (student.Status ?? "Active");
+
+        return Ok(new
+        {
+            StudentId     = student.StudentId,
+            UserId        = student.UserId,
+            FullName      = student.User?.FullName,
+            UserName      = student.User?.UserName,
+            RollNo        = student.User?.RoleNo ?? student.CurrentRollNo,
+            CurrentClassYear = string.IsNullOrWhiteSpace(student.CurrentClassYear) || student.CurrentClassYear == "N/A" ? reg?.AcademicYearLevel ?? "N/A" : student.CurrentClassYear,
+            CurrentSemester = reg?.AcademicYearLevel,
+            CurrentMajor  = string.IsNullOrWhiteSpace(student.CurrentMajor) || student.CurrentMajor == "N/A" ? reg?.Major ?? "N/A" : student.CurrentMajor,
+            Status        = currentStatus,
+            Dob           = reg?.Dob,
+            Email         = reg?.Email,
+            Phone         = (string?)null,
+            StudentImage  = studentImage,
+            NrcFrontImage = student.NrcFrontImage ?? reg?.NrcFrontImage,
+            NrcBackImage  = student.NrcBackImage ?? reg?.NrcBackImage,
+            CensusImage   = student.CensusImage ?? reg?.CensusImage,
+            Sem1_Result   = student.Sem1_Result,
+            Sem2_Result   = student.Sem2_Result,
+            Sem3_Result   = student.Sem3_Result,
+            Sem4_Result   = student.Sem4_Result,
+            Sem5_Result   = student.Sem5_Result,
+            Sem6_Result   = student.Sem6_Result,
+            Sem7_Result   = student.Sem7_Result,
+            Sem8_Result   = student.Sem8_Result,
+            Sem9_Result   = student.Sem9_Result,
+            Registrations = notifications,
+            RetakeStatus  = retakeStatus,
+            GraduationStatus = graduationStatus
+        });
+    }
+
+    // GET: api/student/graduation-status/{userId}
+    [HttpGet("graduation-status/{userId}")]
+    public async Task<IActionResult> GetStudentGraduationStatus(int userId, [FromQuery] int? newStudentAccId = null, [FromQuery] string? rollNo = null)
+    {
+        var student = await _db.Students
+            .AsNoTracking()
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.UserId == userId && (s.IsDelete == false || s.IsDelete == null));
+
+        var gradStatus = await _enrollmentService.GetStudentGraduationStatusAsync(userId, student?.StudentId, rollNo ?? student?.User?.RoleNo ?? student?.CurrentRollNo, newStudentAccId);
+        return Ok(gradStatus);
+    }
+
+    // GET: api/student/profile/{userId}/image - Lightweight profile image
+    [HttpGet("profile/{userId}/image")]
+    public async Task<IActionResult> GetStudentProfileImage(int userId)
+    {
+        var img = await _db.Students
+            .AsNoTracking()
+            .Where(s => s.UserId == userId && (s.IsDelete == false || s.IsDelete == null))
+            .Select(s => s.StudentImage)
+            .FirstOrDefaultAsync();
+
+        return Ok(new { StudentImage = img ?? string.Empty });
+    }
+
+    // GET: api/student/retake-status/{userId}
+    [HttpGet("retake-status/{userId}")]
+    public async Task<IActionResult> GetStudentRetakeStatus(int userId)
+    {
+        var student = await _db.Students
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.UserId == userId && (s.IsDelete == false || s.IsDelete == null));
+
+        var retakeStatus = await _enrollmentService.GetStudentRetakeStatusAsync(userId, student?.StudentId, student?.User?.RoleNo ?? student?.CurrentRollNo);
+        return Ok(retakeStatus);
+    }
+
+    // GET: api/student/subject-selections/{userId}
+    [HttpGet("subject-selections/{userId}")]
+    public async Task<IActionResult> GetStudentSubjectSelections(int userId, [FromQuery] int? newStudentAccId = null)
+    {
+        var result = await _enrollmentService.GetStudentSubjectSelectionsAsync(userId, newStudentAccId);
+        return Ok(result);
+    }
+
+    // GET: api/student/settings/max-retake-limit
+    [HttpGet("settings/max-retake-limit")]
+    public async Task<IActionResult> GetMaxRetakeLimit()
+    {
+        int limit = await _enrollmentService.GetMaxRetakeLimitAsync();
+        return Ok(new { MaxRetakeLimit = limit });
+    }
+
+    // PUT: api/student/settings/max-retake-limit
+    [HttpPut("settings/max-retake-limit")]
+    public async Task<IActionResult> UpdateMaxRetakeLimit([FromBody] SystemSettingModel model)
+    {
+        int newLimit = 0;
+        if (model != null && !string.IsNullOrEmpty(model.SettingValue) && int.TryParse(model.SettingValue, out int parsedLimit))
+        {
+            newLimit = parsedLimit;
+        }
+
+        if (newLimit <= 0)
+        {
+            return BadRequest(new { IsSuccess = false, Message = "တရားဝင်သော Retake အကြိမ်အရေအတွက် ထည့်သွင်းပေးပါ။" });
+        }
+
+        string username = User?.Identity?.Name ?? "Admin";
+        bool success = await _enrollmentService.UpdateMaxRetakeLimitAsync(newLimit, username);
+        if (success)
+        {
+            return Ok(new { IsSuccess = true, Message = $"အများဆုံး Retake အကြိမ်အရေအတွက် ({newLimit} ကြိမ်) အား အောင်မြင်စွာ ပြောင်းလဲသတ်မှတ်ပြီးပါပြီ။", MaxRetakeLimit = newLimit });
+        }
+
+        return StatusCode(500, new { IsSuccess = false, Message = "Setting အား ပြောင်းလဲသတ်မှတ်ရာတွင် အမှားဖြစ်ပေါ်နေပါသည်။" });
+    }
+
+    // GET: api/student/settings/semester-credits
+    [HttpGet("settings/semester-credits")]
+    public async Task<IActionResult> GetFacultySemesterCredits([FromQuery] int? facultyId = null)
+    {
+        var faculties = await _db.Faculties
+            .AsNoTracking()
+            .Where(f => f.IsDelete == false || f.IsDelete == null)
+            .OrderBy(f => f.FacultyId)
+            .ToListAsync();
+
+        var semesters = await _db.Semesters
+            .AsNoTracking()
+            .Where(s => s.IsDelete == false || s.IsDelete == null)
+            .OrderBy(s => s.Sequence ?? s.SemesterId)
+            .ToListAsync();
+
+        var creditsQuery = _db.FacultySemesterCredits
+            .AsNoTracking()
+            .Where(c => c.IsDelete == false || c.IsDelete == null);
+
+        if (facultyId.HasValue && facultyId.Value > 0)
+        {
+            creditsQuery = creditsQuery.Where(c => c.FacultyId == facultyId.Value);
+        }
+
+        var credits = await creditsQuery.ToListAsync();
+
+        var resultList = new List<FacultySemesterCreditModel>();
+
+        var filteredFaculties = facultyId.HasValue && facultyId.Value > 0 
+            ? faculties.Where(f => f.FacultyId == facultyId.Value).ToList() 
+            : faculties;
+
+        foreach (var fac in filteredFaculties)
+        {
+            foreach (var sem in semesters)
+            {
+                var existing = credits.FirstOrDefault(c => c.FacultyId == fac.FacultyId && c.SemesterId == sem.SemesterId);
+                int reqCred = existing?.RequiredCredits ?? 24;
+                int minCred = existing?.MinCredits ?? (existing?.RequiredCredits != null && existing.RequiredCredits > 0 ? Math.Min(18, existing.RequiredCredits) : 18);
+                int maxCred = existing?.MaxCredits ?? (existing?.RequiredCredits != null && existing.RequiredCredits > 0 ? existing.RequiredCredits : 24);
+
+                resultList.Add(new FacultySemesterCreditModel
+                {
+                    Id = existing?.Id ?? 0,
+                    FacultyId = fac.FacultyId,
+                    FacultyName = fac.FacultyName,
+                    SemesterId = sem.SemesterId,
+                    SemesterName = sem.SemesterName,
+                    Sequence = sem.Sequence,
+                    RequiredCredits = reqCred,
+                    MinCredits = minCred,
+                    MaxCredits = maxCred
+                });
+            }
+        }
+
+        return Ok(resultList);
+    }
+
+    // PUT: api/student/settings/semester-credits
+    [HttpPut("settings/semester-credits")]
+    public async Task<IActionResult> UpdateFacultySemesterCredit([FromBody] FacultySemesterCreditUpdateRequest request)
+    {
+        if (request == null || request.FacultyId <= 0 || request.SemesterId <= 0)
+        {
+            return BadRequest(new { IsSuccess = false, Message = "မှန်ကန်သော Faculty နှင့် Semester ရွေးချယ်ပေးပါ။" });
+        }
+
+        int minCred = request.MinCredits ?? 18;
+        int maxCred = request.MaxCredits ?? (request.RequiredCredits > 0 ? request.RequiredCredits : 24);
+        int reqCred = request.RequiredCredits > 0 ? request.RequiredCredits : maxCred;
+
+        if (minCred <= 0 || maxCred <= 0)
+        {
+            return BadRequest(new { IsSuccess = false, Message = "Credit Points တန်ဖိုးများသည် အနည်းဆုံး ၁ မှတ်နှင့်အထက် ဖြစ်ရပါမည်။" });
+        }
+        if (minCred > maxCred)
+        {
+            return BadRequest(new { IsSuccess = false, Message = "အနည်းဆုံး Credit (Min Credits) သည် အများဆုံး Credit (Max Credits) ထက် မကြီးရပါ။" });
+        }
+
+        string username = User?.Identity?.Name ?? "Admin";
+
+        var existing = await _db.FacultySemesterCredits
+            .FirstOrDefaultAsync(c => c.FacultyId == request.FacultyId && c.SemesterId == request.SemesterId);
+
+        if (existing != null)
+        {
+            existing.RequiredCredits = reqCred;
+            existing.MinCredits = minCred;
+            existing.MaxCredits = maxCred;
+            existing.ModifiedDateTime = DateTime.Now;
+            existing.ModifiedBy = username;
+            existing.IsDelete = false;
+        }
+        else
+        {
+            _db.FacultySemesterCredits.Add(new FacultySemesterCredit
+            {
+                FacultyId = request.FacultyId,
+                SemesterId = request.SemesterId,
+                RequiredCredits = reqCred,
+                MinCredits = minCred,
+                MaxCredits = maxCred,
+                CreatedDateTime = DateTime.Now,
+                CreatedBy = username,
+                IsDelete = false
+            });
+        }
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new 
+        { 
+            IsSuccess = true, 
+            Message = "Faculty Semester Credit သတ်မှတ်ချက် အောင်မြင်စွာ ပြောင်းလဲသိမ်းဆည်းပြီးပါပြီ။",
+            RequiredCredits = reqCred,
+            MinCredits = minCred,
+            MaxCredits = maxCred
+        });
+    }
+
+    // GET: api/student/settings/semester-credit/{facultyId}/{semesterId}
+    [HttpGet("settings/semester-credit/{facultyId}/{semesterId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetSingleFacultySemesterCredit(int facultyId, int semesterId)
+    {
+        var existing = await _db.FacultySemesterCredits
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.FacultyId == facultyId && c.SemesterId == semesterId && (c.IsDelete == false || c.IsDelete == null));
+
+        int targetCredits = existing?.RequiredCredits ?? 24;
+        int minCredits = existing?.MinCredits ?? (existing?.RequiredCredits != null && existing.RequiredCredits > 0 ? Math.Min(18, existing.RequiredCredits) : 18);
+        int maxCredits = existing?.MaxCredits ?? (existing?.RequiredCredits != null && existing.RequiredCredits > 0 ? existing.RequiredCredits : 24);
+
+        return Ok(new 
+        { 
+            FacultyId = facultyId, 
+            SemesterId = semesterId, 
+            RequiredCredits = targetCredits,
+            MinCredits = minCredits,
+            MaxCredits = maxCredits
+        });
+    }
+
+    // PUT: api/student/profile/{userId}/image - Update profile image
+    [HttpPut("profile/{userId}/image")]
+    public IActionResult UpdateStudentProfileImage(int userId, [FromBody] StudentProfileImageRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.ImageBase64))
+        {
+            return BadRequest(new { IsSuccess = false, Message = "ဓာတ်ပုံရွေးချယ်ထားခြင်း မရှိပါ။" });
+        }
+
+        var student = _db.Students.FirstOrDefault(s => s.UserId == userId && (s.IsDelete == false || s.IsDelete == null));
         if (student == null)
         {
             var user = _db.Users.FirstOrDefault(u => u.UserId == userId);
@@ -711,86 +1149,25 @@ public class StudentController : ControllerBase
                     IsDelete = false
                 };
                 _db.Students.Add(student);
-                _db.SaveChanges();
-                student.User = user;
-            }
-            else
-            {
-                return NotFound(new { IsSuccess = false, Message = "ကျောင်းသားကို ရှာမတွေ့ပါ။" });
             }
         }
 
-        var reg = _db.StudentRegistrations
-            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
-            .OrderByDescending(r => r.RegistrationId)
-            .FirstOrDefault();
-
-        var notifications = _db.StudentRegistrations
-            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
-            .Select(r => new
-            {
-                r.RegistrationId,
-                r.Status,
-                r.AcademicYearRange,
-                r.AcademicYearLevel,
-                r.CreatedDatetime,
-                Payments = r.RegistrationPayments
-                    .Where(p => p.IsDelete == false || p.IsDelete == null)
-                    .Select(p => new { p.PaymentId, p.Status, p.CreatedDateTime, p.AmountPaid })
-                    .ToList()
-            })
-            .ToList();
-
-        var studentImage = _db.StudentRegistrations
-            .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null) && !string.IsNullOrEmpty(r.StudentImage))
-            .OrderByDescending(r => r.RegistrationId)
-            .Select(r => r.StudentImage)
-            .FirstOrDefault();
-
-        return Ok(new
+        if (student != null)
         {
-            StudentId     = student.StudentId,
-            UserId        = student.UserId,
-            FullName      = student.User?.FullName,
-            UserName      = student.User?.UserName,
-            RollNo        = student.User?.RoleNo ?? student.CurrentRollNo,
-            CurrentClassYear = string.IsNullOrWhiteSpace(student.CurrentClassYear) || student.CurrentClassYear == "N/A" ? reg?.AcademicYearLevel ?? "N/A" : student.CurrentClassYear,
-            CurrentSemester = reg?.AcademicYearLevel,
-            CurrentMajor  = string.IsNullOrWhiteSpace(student.CurrentMajor) || student.CurrentMajor == "N/A" ? reg?.Major ?? "N/A" : student.CurrentMajor,
-            Status        = student.Status,
-            Dob           = reg?.Dob,
-            Email         = reg?.Email,
-            Phone         = (string?)null,
-            StudentImage  = studentImage,
-            Sem1_Result   = student.Sem1_Result,
-            Sem2_Result   = student.Sem2_Result,
-            Sem3_Result   = student.Sem3_Result,
-            Sem4_Result   = student.Sem4_Result,
-            Sem5_Result   = student.Sem5_Result,
-            Sem6_Result   = student.Sem6_Result,
-            Sem7_Result   = student.Sem7_Result,
-            Sem8_Result   = student.Sem8_Result,
-            Sem9_Result   = student.Sem9_Result,
-            Registrations = notifications
-        });
-    }
+            student.StudentImage = request.ImageBase64;
+            student.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+        }
 
-    // PUT: api/student/profile/{userId}/image - Update profile image
-    [HttpPut("profile/{userId}/image")]
-    public IActionResult UpdateStudentProfileImage(int userId, [FromBody] StudentProfileImageRequest request)
-    {
         var regs = _db.StudentRegistrations
             .Where(r => r.UserId == userId && (r.IsDelete == false || r.IsDelete == null))
             .ToList();
-
-        if (!regs.Any())
-            return NotFound(new { IsSuccess = false, Message = "ကျောင်းအပ်နှံမှု မှတ်တမ်းကို ရှာမတွေ့ပါ။" });
 
         foreach (var r in regs)
         {
             r.StudentImage = request.ImageBase64;
             r.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
         }
+
         _db.SaveChanges();
 
         return Ok(new { IsSuccess = true, Message = "Profile ဓာတ်ပုံ ပြောင်းလဲခြင်း အောင်မြင်ပါသည်။" });

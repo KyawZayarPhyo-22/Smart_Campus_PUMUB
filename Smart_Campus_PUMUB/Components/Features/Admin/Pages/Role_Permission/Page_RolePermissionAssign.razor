@@ -3,129 +3,1001 @@
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Role
 @using Smart_Campus_PUMUB.Components.Admin.Services
 @using Smart_Campus_PUMUB.Database.AppDbContext
+@using Smart_Campus_PUMUB.Components.Features.Services
 @inject PermissionService PermissionService
+@inject AdminLanguageService LangService
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "လုပ်ပိုင်ခွင့်များ သတ်မှတ်ခြင်း" : "Role Permissions")</PageTitle>
+
 <style>
-    .perm-card {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+    /* ─── White Material Design Theme ─── */
+    .role-header-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .header-icon-badge {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background: rgba(90, 79, 207, 0.08);
+        border: 1.5px solid rgba(90, 79, 207, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .btn-global-grant {
+        background-color: #ecfdf5;
+        color: #059669 !important;
+        border: 1.5px solid #10b981;
+        font-weight: 700;
+        font-size: 0.84rem;
+        padding: 7px 18px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.1);
+    }
+    .btn-global-grant:hover {
+        background-color: #10b981 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn-global-revoke {
+        background-color: #fef2f2;
+        color: #dc2626 !important;
+        border: 1.5px solid #ef4444;
+        font-weight: 700;
+        font-size: 0.84rem;
+        padding: 7px 18px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.1);
+    }
+    .btn-global-revoke:hover {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        transform: translateY(-1px);
+    }
+
+    /* ─── Category Filter Buttons (Material Surface) ─── */
+    .category-nav-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+    }
+
+    .category-nav-btn {
+        background-color: #ffffff;
+        color: #334155;
+        border: 1.5px solid #e2e8f0;
         border-radius: 10px;
+        padding: 9px 16px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .category-nav-btn:hover {
+        background-color: #f8fafc;
+        color: #5A4FCF;
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .category-nav-btn.active {
+        background: linear-gradient(135deg, #5A4FCF 0%, #483eb0 100%) !important;
+        color: #ffffff !important;
+        border-color: #5A4FCF !important;
+        box-shadow: 0 4px 14px rgba(90, 79, 207, 0.35);
+        transform: translateY(-1px);
+    }
+
+    .category-badge-count {
+        background-color: #f1f5f9;
+        color: #475569;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .category-nav-btn.active .category-badge-count {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ─── Category Section Card (White Material Card) ─── */
+    .material-section-card {
+        background-color: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .material-section-card:hover {
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.08);
+    }
+
+    .material-header-bar {
+        padding: 14px 20px;
+        background-color: #f8fafc;
+        border-bottom: 1px solid #edf2f7;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .category-icon-box {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 1.15rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        flex-shrink: 0;
+    }
+
+    /* ─── Category Header Quick Buttons ─── */
+    .btn-cat-select {
+        background-color: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .btn-cat-select:hover {
+        background-color: #10b981;
+        color: #ffffff;
+    }
+
+    .btn-cat-clear {
+        background-color: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .btn-cat-clear:hover {
+        background-color: #ef4444;
+        color: #ffffff;
+    }
+
+    /* ─── Material Toggle Item Card ─── */
+    .material-perm-card {
+        background-color: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 13px 15px;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        height: 100%;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .material-perm-card:hover {
+        border-color: #5A4FCF;
+        box-shadow: 0 6px 18px rgba(90, 79, 207, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .material-perm-card.checked {
+        background-color: #ffffff;
+        border-color: #5A4FCF !important;
+        box-shadow: 0 4px 14px rgba(90, 79, 207, 0.16);
+    }
+
+    /* ─── Material Switch ─── */
+    .material-switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    .material-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .material-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #e2e8f0;
+        transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 34px;
+        border: 1px solid #cbd5e1;
+    }
+
+    .material-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 2px;
+        bottom: 2px;
+        background-color: #ffffff;
+        transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .material-switch input:checked + .material-slider {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+    }
+
+    .material-switch input:checked + .material-slider:before {
+        transform: translateX(20px);
+    }
+
+    .action-badge {
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ─── Sticky Bottom Bar (White Material) ─── */
+    .material-sticky-bottom {
+        position: sticky;
+        bottom: 20px;
+        z-index: 100;
+        background-color: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 13px 24px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-material-cancel {
+        background-color: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        color: #475569;
+        font-weight: 600;
+        padding: 8px 24px;
+        border-radius: 8px;
         transition: all 0.2s ease;
     }
-    .perm-card:hover {
-        background: rgba(13, 110, 253, 0.05);
-        border-color: rgba(13, 110, 253, 0.3);
+    .btn-material-cancel:hover {
+        background-color: #e2e8f0;
+        color: #1e293b;
     }
-    .form-check-input:checked {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
+
+    .btn-material-save {
+        background-color: #5A4FCF;
+        border: 1px solid #5A4FCF;
+        color: #ffffff;
+        font-weight: 700;
+        padding: 8px 28px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(90, 79, 207, 0.3);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-material-save:hover {
+        background-color: #483eb0;
+        box-shadow: 0 6px 16px rgba(90, 79, 207, 0.4);
+        transform: translateY(-1px);
     }
 </style>
 
-<div class="mb-4">
-    <h3 class="fw-bold mb-1" style="color: #ffffff;">Assign Permissions</h3>
-    <p class="text-muted small mb-0">Select the permissions you want to grant for this role.</p>
+<!-- 🔹 Page Header -->
+<div class="role-header-box">
+    <div class="d-flex align-items-center">
+        <div class="header-icon-badge me-3">
+            <i class="bi bi-shield-lock fs-5" style="color: #5A4FCF;"></i>
+        </div>
+        <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h4 class="fw-bolder mb-0" style="letter-spacing: 0.5px; color: #1e293b;">
+                    @(LangService.IsMyanmar ? "လုပ်ပိုင်ခွင့်များ သတ်မှတ်ခြင်း" : "Role Permissions")
+                </h4>
+                @if (CurrentRole != null)
+                {
+                    <span class="badge px-3 py-1 rounded-pill fw-bold shadow-sm" style="background: #5A4FCF; color: #ffffff !important; font-size: 0.84rem;">
+                        <i class="bi bi-person-badge me-1"></i> @CurrentRole.RoleName
+                    </span>
+                }
+            </div>
+            <small class="text-secondary">
+                @(LangService.IsMyanmar ? "Role အလိုက် စနစ်တွင်း လုပ်ပိုင်ခွင့် ခွင့်ပြုချက်များ စီမံခန့်ခွဲခြင်း" : "Manage system permissions and access rights for this role")
+            </small>
+        </div>
+    </div>
+
+    <!-- Global Action Buttons -->
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn-global-grant" @onclick="SelectAll" title="@(LangService.IsMyanmar ? "အားလုံး ခွင့်ပြုမည်" : "Grant All Permissions")">
+            <i class="bi bi-check-all fs-6"></i> @(LangService.IsMyanmar ? "အားလုံး ခွင့်ပြုမည်" : "Grant All")
+        </button>
+        <button class="btn-global-revoke" @onclick="DeselectAll" title="@(LangService.IsMyanmar ? "အားလုံး ပယ်ဖျက်မည်" : "Revoke All Permissions")">
+            <i class="bi bi-x-circle fs-6"></i> @(LangService.IsMyanmar ? "အားလုံး ပယ်ဖျက်မည်" : "Revoke All")
+        </button>
+    </div>
 </div>
 
-<div class="tech-card p-4">
-    @if (AllPermissions == null)
+<!-- 🔹 Material Category Navigation Bar -->
+<div class="category-nav-container mb-4">
+    <button type="button" class="category-nav-btn @(SelectedCategoryKey == "all" ? "active" : "")"
+            @onclick='() => SetCategory("all")'>
+        <i class="bi bi-grid-fill"></i>
+        <span>@(LangService.IsMyanmar ? "ကဏ္ဍ အားလုံး" : "All Categories")</span>
+        <span class="category-badge-count">@(AllPermissions?.Count ?? 0)</span>
+    </button>
+
+    @foreach (var cat in Categories)
     {
-        <div class="text-center my-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <div class="text-muted mt-3 small">Loading permissions...</div>
-        </div>
+        var countInCat = GetPermissionsForCategory(cat.Key).Count;
+        if (countInCat > 0)
+        {
+            <button type="button" class="category-nav-btn @(SelectedCategoryKey == cat.Key ? "active" : "")"
+                    @onclick="() => SetCategory(cat.Key)">
+                <i class="bi @cat.Icon" style="color: @(SelectedCategoryKey == cat.Key ? "#ffffff" : cat.Color);"></i>
+                <span>@(LangService.IsMyanmar ? cat.MyanmarName : cat.Name)</span>
+                <span class="category-badge-count">@countInCat</span>
+            </button>
+        }
     }
-    else if (!AllPermissions.Any())
+</div>
+
+<!-- 🔹 Main Permission Category Sections (White Material Cards) -->
+@if (IsLoading || AllPermissions == null)
+{
+    <div class="material-section-card p-5 text-center my-4">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+        <div class="text-dark mt-3 fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading permissions...")</div>
+    </div>
+}
+else if (!FilteredCategoryGroups.Any())
+{
+    <div class="material-section-card p-5 text-center my-4">
+        <i class="bi bi-info-circle display-4 text-muted"></i>
+        <p class="text-secondary mt-3 mb-0">@(LangService.IsMyanmar ? "မည်သည့် Permission မျှ မရှိသေးပါ။" : "No permissions found.")</p>
+    </div>
+}
+else
+{
+    @foreach (var catGroup in FilteredCategoryGroups)
     {
-        <div class="text-center text-muted my-4">
-            <p>No permissions available in the system. Please create permissions first.</p>
-        </div>
-    }
-    else
-    {
-        <div class="row g-3">
-            @foreach (var p in AllPermissions)
-            {
-                var permId = p.PermissionId;
-                <div class="col-md-4 col-lg-3">
-                    <div class="perm-card p-3 h-100">
-                        <div class="form-check form-switch d-flex align-items-center">
-                            <input class="form-check-input fs-5 mt-0 me-3" type="checkbox" 
-                                   id="perm_@permId"
-                                   checked="@SelectedIds.Contains(permId)"
-                                   @onchange="@(e => TogglePermission(permId, e))" />
-                            <label class="form-check-label text-white" for="perm_@permId" style="cursor: pointer;">
-                                @p.PermissionName
-                            </label>
+        var grantedCount = catGroup.Permissions.Count(p => SelectedIds.Contains(p.PermissionId));
+        var totalInGroup = catGroup.Permissions.Count;
+
+        <div class="material-section-card" id="cat-@catGroup.Category.Key">
+            <!-- Category Header -->
+            <div class="material-header-bar">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="category-icon-box" style="background: @catGroup.Category.Color;">
+                        <i class="bi @catGroup.Category.Icon"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.02rem;">
+                                @(LangService.IsMyanmar ? catGroup.Category.MyanmarName : catGroup.Category.Name)
+                            </h5>
+                            <span class="badge rounded-pill fw-bold" 
+                                  style="background: @(grantedCount > 0 ? "#ecfdf5" : "#f1f5f9"); color: @(grantedCount > 0 ? "#059669" : "#64748b"); border: 1px solid @(grantedCount > 0 ? "#a7f3d0" : "#e2e8f0"); font-size: 0.74rem;">
+                                @(LangService.IsMyanmar ? $"{grantedCount} / {totalInGroup} ခု ခွင့်ပြုထား" : $"{grantedCount} / {totalInGroup} Granted")
+                            </span>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
 
-        <hr class="my-4" style="border-color: rgba(255,255,255,0.1);" />
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn-cat-select" @onclick="() => ToggleCategory(catGroup.Category.Key, true)">
+                        <i class="bi bi-check2-all me-1"></i> @(LangService.IsMyanmar ? "အားလုံး ရွေးမည်" : "Select All")
+                    </button>
+                    <button type="button" class="btn-cat-clear" @onclick="() => ToggleCategory(catGroup.Category.Key, false)">
+                        <i class="bi bi-x-circle me-1"></i> @(LangService.IsMyanmar ? "အားလုံး ရှင်းမည်" : "Clear All")
+                    </button>
+                </div>
+            </div>
 
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary px-4" @onclick="SavePermissions" disabled="@IsProcessing">
-                @if (IsProcessing)
-                {
-                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    <span>Saving...</span>
-                }
-                else
-                {
-                    <i class="bi bi-save me-2"></i> <span>Save Changes</span>
-                }
-            </button>
-            <button class="btn btn-secondary px-4" @onclick='() => Nav.NavigateTo("/admin/roles")' disabled="@IsProcessing">
-                Cancel
-            </button>
+            <!-- Permission Items Grid -->
+            <div class="p-3 p-md-4">
+                <div class="row g-3">
+                    @foreach (var perm in catGroup.Permissions)
+                    {
+                        var isChecked = SelectedIds.Contains(perm.PermissionId);
+                        var badgeInfo = GetActionBadge(perm.PermissionName);
+
+                        <div class="col-sm-6 col-lg-4 col-xl-3">
+                            <div class="material-perm-card @(isChecked ? "checked" : "")"
+                                 @onclick="() => ToggleSinglePermission(perm.PermissionId)">
+                                
+                                <div class="d-flex flex-column gap-1 overflow-hidden" style="flex: 1; min-width: 0;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="action-badge" 
+                                              style="background: @badgeInfo.Bg; color: @badgeInfo.Color; border: 1px solid @badgeInfo.Border;">
+                                            <i class="bi @badgeInfo.Icon"></i> @badgeInfo.Action
+                                        </span>
+                                    </div>
+                                    <span class="text-dark fw-bold" style="font-size: 0.88rem; line-height: 1.35; word-break: break-word;" title="@perm.PermissionName">
+                                        @GetPermissionDisplayName(perm.PermissionName)
+                                    </span>
+                                </div>
+
+                                <!-- Material Switch Toggle -->
+                                <label class="material-switch m-0" @onclick:stopPropagation="true">
+                                    <input type="checkbox" 
+                                           checked="@isChecked" 
+                                           @onchange="() => ToggleSinglePermission(perm.PermissionId)" />
+                                    <span class="material-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     }
+}
+
+<!-- 🔹 Sticky Bottom Actions Bar (White Material) -->
+<div class="material-sticky-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small fw-semibold">
+            @(LangService.IsMyanmar ? "ခွင့်ပြုထားသော လုပ်ပိုင်ခွင့် စုစုပေါင်း:" : "Total Permissions Granted:")
+        </span>
+        <span class="badge px-3 py-1.5 rounded-pill fw-bold" style="background: #f1f5f9; color: #5A4FCF; border: 1.5px solid #e2e8f0; font-size: 0.88rem;">
+            @SelectedIds.Count / @(AllPermissions?.Count ?? 0)
+        </span>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <button class="btn-material-cancel" @onclick='() => Nav.NavigateTo("/admin/roles")' disabled="@IsProcessing">
+            @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
+        </button>
+        <button class="btn-material-save" @onclick="SavePermissions" disabled="@IsProcessing">
+            @if (IsProcessing)
+            {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span>@(LangService.IsMyanmar ? "သိမ်းဆည်းနေပါသည်..." : "Saving...")</span>
+            }
+            else
+            {
+                <i class="bi bi-save2-fill"></i>
+                <span>@(LangService.IsMyanmar ? "သိမ်းဆည်းမည်" : "Save Permissions")</span>
+            }
+        </button>
+    </div>
 </div>
 
 @code {
     [Parameter] public int RoleId { get; set; }
-    
-    // DB ထဲက Permission Model ကို သုံးထားသည်
+
+    private Role? CurrentRole = null;
     private List<Permission>? AllPermissions = null;
     private List<int> SelectedIds = new();
+    private bool IsLoading = true;
     private bool IsProcessing = false;
+    private string SelectedCategoryKey = "all";
+
+    public class PermissionCategory
+    {
+        public string Key { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string MyanmarName { get; set; } = "";
+        public string Icon { get; set; } = "bi-grid-fill";
+        public string Color { get; set; } = "#5A4FCF";
+    }
+
+    public class CategoryGroup
+    {
+        public PermissionCategory Category { get; set; } = new();
+        public List<Permission> Permissions { get; set; } = new();
+    }
+
+    private static readonly List<PermissionCategory> Categories = new()
+    {
+        new PermissionCategory { Key = "student", Name = "Students & Registration", MyanmarName = "ကျောင်းသားရေးရာ", Icon = "bi-mortarboard-fill", Color = "#10b981" },
+        new PermissionCategory { Key = "library", Name = "Library & Catalog", MyanmarName = "စာကြည့်တိုက်", Icon = "bi-book-half", Color = "#3b82f6" },
+        new PermissionCategory { Key = "academics", Name = "Academics & Curriculum", MyanmarName = "ပညာရေးနှင့် သင်ရိုး", Icon = "bi-bank2", Color = "#8b5cf6" },
+        new PermissionCategory { Key = "finance", Name = "Finance & Fees", MyanmarName = "ငွေစာရင်းနှင့် ဝန်ဆောင်ခ", Icon = "bi-cash-coin", Color = "#f59e0b" },
+        new PermissionCategory { Key = "activity", Name = "Activities & Events", MyanmarName = "ကျောင်းတွင်း လှုပ်ရှားမှုများ", Icon = "bi-calendar-event-fill", Color = "#ec4899" },
+        new PermissionCategory { Key = "rules", Name = "Rules & Regulations", MyanmarName = "စည်းမျဉ်းစည်းကမ်းများ", Icon = "bi-shield-shaded", Color = "#06b6d4" },
+        new PermissionCategory { Key = "tutor", Name = "Faculty & Tutors", MyanmarName = "ဆရာ/ဆရာမများ", Icon = "bi-person-video3", Color = "#14b8a6" },
+        new PermissionCategory { Key = "admin", Name = "System & Administration", MyanmarName = "စနစ်စီမံခန့်ခွဲမှု", Icon = "bi-gear-fill", Color = "#64748b" },
+    };
 
     protected override async Task OnInitializedAsync()
     {
-        // Permission အားလုံးကို ဆွဲယူမည်
-        AllPermissions = await PermissionService.GetPermissionsAsync();
-        
-        // လက်ရှိ Role တွင် Assign လုပ်ထားပြီးသား ID များကို ဆွဲယူမည်
-        SelectedIds = await PermissionService.GetPermissionsByRoleIdAsync(RoleId);
+        IsLoading = true;
+        try
+        {
+            CurrentRole = await PermissionService.GetRoleByIdAsync(RoleId);
+            AllPermissions = await PermissionService.GetPermissionsAsync();
+            SelectedIds = await PermissionService.GetPermissionsByRoleIdAsync(RoleId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading role permissions: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
-    private void TogglePermission(int id, ChangeEventArgs e)
+    private string GetCategoryKey(string permName)
     {
-        bool isChecked = bool.TryParse(e.Value?.ToString(), out bool result) && result;
-        if (isChecked)
+        var name = permName.ToLower();
+        if (name.StartsWith("student") || name.StartsWith("newstudent") || name.StartsWith("registeracc") || name.Contains("apply"))
+            return "student";
+        if (name.StartsWith("book") || name.StartsWith("category"))
+            return "library";
+        if (name.StartsWith("subject") || name.StartsWith("semester") || name.StartsWith("faculty") || name.StartsWith("department") || name.StartsWith("major"))
+            return "academics";
+        if (name.StartsWith("payment") || name.Contains("fee") || name.Contains("approve.payment"))
+            return "finance";
+        if (name.StartsWith("activity"))
+            return "activity";
+        if (name.StartsWith("rules"))
+            return "rules";
+        if (name.StartsWith("tutor"))
+            return "tutor";
+        return "admin";
+    }
+
+    private (string Action, string Color, string Bg, string Border, string Icon) GetActionBadge(string permName)
+    {
+        var name = permName.ToLower();
+        if (name.Contains("create") || name.Contains("apply"))
         {
-            if (!SelectedIds.Contains(id)) SelectedIds.Add(id);
+            string label = LangService.IsMyanmar ? "ထည့်သွင်း" : "CREATE";
+            return (label, "#059669", "#ecfdf5", "#a7f3d0", "bi-plus-circle-fill");
+        }
+        if (name.Contains("edit"))
+        {
+            string label = LangService.IsMyanmar ? "ပြင်ဆင်" : "EDIT";
+            return (label, "#d97706", "#fffbeb", "#fde68a", "bi-pencil-fill");
+        }
+        if (name.Contains("delete"))
+        {
+            string label = LangService.IsMyanmar ? "ဖျက်ပစ်" : "DELETE";
+            return (label, "#dc2626", "#fef2f2", "#fecaca", "bi-trash-fill");
+        }
+        if (name.Contains("approve"))
+        {
+            string label = LangService.IsMyanmar ? "အတည်ပြု" : "APPROVE";
+            return (label, "#7c3aed", "#f5f3ff", "#ddd6fe", "bi-check2-circle");
+        }
+        if (name.Contains("manage"))
+        {
+            string label = LangService.IsMyanmar ? "စီမံခန့်ခွဲ" : "MANAGE";
+            return (label, "#0284c7", "#f0f9ff", "#bae6fd", "bi-sliders");
+        }
+        if (name.Contains("send"))
+        {
+            string label = LangService.IsMyanmar ? "ပေးပို့" : "SEND";
+            return (label, "#db2777", "#fdf2f8", "#fbcfe8", "bi-send-fill");
+        }
+        string viewLabel = LangService.IsMyanmar ? "ကြည့်ရှု" : "VIEW";
+        return (viewLabel, "#2563eb", "#eff6ff", "#bfdbfe", "bi-eye-fill");
+    }
+
+    private string GetPermissionDisplayName(string permName)
+    {
+        if (string.IsNullOrWhiteSpace(permName)) return "";
+
+        if (LangService.IsMyanmar)
+        {
+            return permName switch
+            {
+                "NewStudentAcc.Create" => "ကျောင်းသားသစ် အကောင့်ဖွင့်",
+                "NewStudentAcc.Delete" => "ကျောင်းသားသစ် အကောင့်ဖျက်",
+                "NewStudentAcc.Edit" => "ကျောင်းသားသစ် အကောင့်ပြင်",
+                "NewStudentAcc.View" => "ကျောင်းသားသစ် အကောင့်ကြည့်",
+
+                "RegisterAcc.Create" => "အကောင့်လျှောက်လွှာ ထည့်",
+                "RegisterAcc.Delete" => "အကောင့်လျှောက်လွှာ ဖျက်",
+                "RegisterAcc.Edit" => "အကောင့်လျှောက်လွှာ ပြင်",
+                "RegisterAcc.View" => "အကောင့်လျှောက်လွှာ ကြည့်",
+
+                "Student.ApplyNow" => "ကျောင်းအပ် လျှောက်ထား",
+                "Student.Create" => "ကျောင်းသား ထည့်သွင်း",
+                "Student.Edit" => "ကျောင်းသား ပြင်ဆင်",
+                "Student.Delete" => "ကျောင်းသား ဖျက်ပစ်",
+                "Student.View" => "ကျောင်းသားစာရင်း ကြည့်",
+
+                "StudentDatabank.View" => "ကျောင်းသားမှတ်တမ်း ကြည့်",
+                "StudentRegistrations.Create" => "ကျောင်းအပ်နှံမှု ထည့်",
+                "StudentRegistrations.Delete" => "ကျောင်းအပ်နှံမှု ဖျက်",
+                "StudentRegistrations.Edit" => "ကျောင်းအပ်နှံမှု ပြင်",
+                "StudentRegistrations.View" => "ကျောင်းအပ်နှံမှု ကြည့်",
+
+                "Book.Create" => "စာအုပ်အသစ် ထည့်",
+                "Book.Edit" => "စာအုပ် ပြင်ဆင်",
+                "Book.Delete" => "စာအုပ် ဖျက်ပစ်",
+                "Book.View" => "စာအုပ်စာရင်း ကြည့်",
+
+                "Category.Create" => "စာအုပ်ကဏ္ဍ ထည့်",
+                "Category.Edit" => "စာအုပ်ကဏ္ဍ ပြင်",
+                "Category.Delete" => "စာအုပ်ကဏ္ဍ ဖျက်",
+                "Category.View" => "စာအုပ်ကဏ္ဍ ကြည့်",
+
+                "Department.Create" => "ဌာနအသစ် ထည့်",
+                "Department.Edit" => "ဌာန ပြင်ဆင်",
+                "Department.Delete" => "ဌာန ဖျက်ပစ်",
+                "Department.View" => "ဌာနစာရင်း ကြည့်",
+
+                "Faculty.Create" => "မဟာဌာန ထည့်",
+                "Faculty.Edit" => "မဟာဌာန ပြင်",
+                "Faculty.Delete" => "မဟာဌာန ဖျက်",
+                "Faculty.View" => "မဟာဌာန ကြည့်",
+
+                "Major.Create" => "မေဂျာအသစ် ထည့်",
+                "Major.Edit" => "မေဂျာ ပြင်ဆင်",
+                "Major.Delete" => "မေဂျာ ဖျက်ပစ်",
+                "Major.View" => "မေဂျာစာရင်း ကြည့်",
+
+                "Semester.Create" => "Semester ထည့်",
+                "Semester.Edit" => "Semester ပြင်",
+                "Semester.Delete" => "Semester ဖျက်",
+                "Semester.View" => "Semester ကြည့်",
+
+                "Subject.Create" => "ဘာသာရပ် ထည့်",
+                "Subject.Edit" => "ဘာသာရပ် ပြင်",
+                "Subject.Delete" => "ဘာသာရပ် ဖျက်",
+                "Subject.View" => "ဘာသာရပ် ကြည့်",
+
+                "Payment.Create" or "PaymentFee.Create" => "အခကြေးငွေ ထည့်",
+                "Payment.Edit" or "PaymentFee.Edit" => "အခကြေးငွေ ပြင်",
+                "Payment.Delete" or "PaymentFee.Delete" => "အခကြေးငွေ ဖျက်",
+                "Payment.View" or "PaymentFee.View" => "အခကြေးငွေ ကြည့်",
+
+                "RegistrationPayment.View" => "ငွေပေးချေမှု ကြည့်",
+                "RegistrationPayment.Approve" => "ငွေပေးချေမှု အတည်ပြု",
+                "RegistrationPayment.Reject" => "ငွေပေးချေမှု ပယ်ချ",
+
+                "Activity.Create" => "လှုပ်ရှားမှု ထည့်",
+                "Activity.Edit" => "လှုပ်ရှားမှု ပြင်",
+                "Activity.Delete" => "လှုပ်ရှားမှု ဖျက်",
+                "Activity.View" => "လှုပ်ရှားမှု ကြည့်",
+
+                "Rules.Create" => "စည်းမျဉ်း ထည့်",
+                "Rules.Edit" => "စည်းမျဉ်း ပြင်",
+                "Rules.Delete" => "စည်းမျဉ်း ဖျက်",
+                "Rules.View" => "စည်းမျဉ်း ကြည့်",
+
+                "Tutor.Create" => "ဆရာ/ဆရာမ ထည့်",
+                "Tutor.Edit" => "ဆရာ/ဆရာမ ပြင်",
+                "Tutor.Delete" => "ဆရာ/ဆရာမ ဖျက်",
+                "Tutor.View" => "ဆရာ/ဆရာမ ကြည့်",
+
+                "User.Create" => "အသုံးပြုသူ ထည့်",
+                "User.Edit" => "အသုံးပြုသူ ပြင်",
+                "User.Delete" => "အသုံးပြုသူ ဖျက်",
+                "User.View" => "အသုံးပြုသူ ကြည့်",
+
+                "Role.Create" => "Role အသစ် ထည့်",
+                "Role.Edit" => "Role ပြင်ဆင်",
+                "Role.Delete" => "Role ဖျက်ပစ်",
+                "Role.View" => "Role စာရင်း ကြည့်",
+
+                "Permission.Create" => "လုပ်ပိုင်ခွင့် ထည့်",
+                "Permission.Edit" => "လုပ်ပိုင်ခွင့် ပြင်",
+                "Permission.Delete" => "လုပ်ပိုင်ခွင့် ဖျက်",
+                "Permission.View" => "လုပ်ပိုင်ခွင့် ကြည့်",
+                "Permission.Manage" => "လုပ်ပိုင်ခွင့် စီမံ",
+
+                "Chart.View" => "Dashboard ကြည့်ရှု",
+                _ => ParseFallbackMyanmar(permName)
+            };
         }
         else
         {
-            SelectedIds.Remove(id);
+            return permName switch
+            {
+                "NewStudentAcc.Create" => "Create New Student Acc",
+                "NewStudentAcc.Delete" => "Delete New Student Acc",
+                "NewStudentAcc.Edit" => "Edit New Student Acc",
+                "NewStudentAcc.View" => "View New Student Acc",
+
+                "RegisterAcc.Create" => "Create Account Request",
+                "RegisterAcc.Delete" => "Delete Account Request",
+                "RegisterAcc.Edit" => "Edit Account Request",
+                "RegisterAcc.View" => "View Account Requests",
+
+                "Student.ApplyNow" => "Apply For Registration",
+                "Student.Create" => "Create Student",
+                "Student.Edit" => "Edit Student Profile",
+                "Student.Delete" => "Delete Student",
+                "Student.View" => "View Student Directory",
+
+                "StudentDatabank.View" => "View Student Databank",
+                "StudentRegistrations.Create" => "Create Registration",
+                "StudentRegistrations.Delete" => "Delete Registration",
+                "StudentRegistrations.Edit" => "Edit Registration",
+                "StudentRegistrations.View" => "View Registrations",
+
+                "Book.Create" => "Create Book",
+                "Book.Edit" => "Edit Book",
+                "Book.Delete" => "Delete Book",
+                "Book.View" => "View Book List",
+
+                "Category.Create" => "Create Book Category",
+                "Category.Edit" => "Edit Book Category",
+                "Category.Delete" => "Delete Book Category",
+                "Category.View" => "View Book Category",
+
+                "Department.Create" => "Create Department",
+                "Department.Edit" => "Edit Department",
+                "Department.Delete" => "Delete Department",
+                "Department.View" => "View Departments",
+
+                "Faculty.Create" => "Create Faculty",
+                "Faculty.Edit" => "Edit Faculty",
+                "Faculty.Delete" => "Delete Faculty",
+                "Faculty.View" => "View Faculties",
+
+                "Major.Create" => "Create Major",
+                "Major.Edit" => "Edit Major",
+                "Major.Delete" => "Delete Major",
+                "Major.View" => "View Majors",
+
+                "Semester.Create" => "Create Semester",
+                "Semester.Edit" => "Edit Semester",
+                "Semester.Delete" => "Delete Semester",
+                "Semester.View" => "View Semesters",
+
+                "Subject.Create" => "Create Subject",
+                "Subject.Edit" => "Edit Subject",
+                "Subject.Delete" => "Delete Subject",
+                "Subject.View" => "View Subjects",
+
+                "Payment.Create" or "PaymentFee.Create" => "Create Payment Fee",
+                "Payment.Edit" or "PaymentFee.Edit" => "Edit Payment Fee",
+                "Payment.Delete" or "PaymentFee.Delete" => "Delete Payment Fee",
+                "Payment.View" or "PaymentFee.View" => "View Payment Fees",
+
+                "RegistrationPayment.View" => "View Payments",
+                "RegistrationPayment.Approve" => "Approve Payments",
+                "RegistrationPayment.Reject" => "Reject Payments",
+
+                "Activity.Create" => "Create Activity",
+                "Activity.Edit" => "Edit Activity",
+                "Activity.Delete" => "Delete Activity",
+                "Activity.View" => "View Activities",
+
+                "Rules.Create" => "Create Rule",
+                "Rules.Edit" => "Edit Rule",
+                "Rules.Delete" => "Delete Rule",
+                "Rules.View" => "View Rules",
+
+                "Tutor.Create" => "Create Tutor",
+                "Tutor.Edit" => "Edit Tutor",
+                "Tutor.Delete" => "Delete Tutor",
+                "Tutor.View" => "View Tutors",
+
+                "User.Create" => "Create User",
+                "User.Edit" => "Edit User",
+                "User.Delete" => "Delete User",
+                "User.View" => "View Users",
+
+                "Role.Create" => "Create Role",
+                "Role.Edit" => "Edit Role",
+                "Role.Delete" => "Delete Role",
+                "Role.View" => "View Roles",
+
+                "Permission.Create" => "Create Permission",
+                "Permission.Edit" => "Edit Permission",
+                "Permission.Delete" => "Delete Permission",
+                "Permission.View" => "View Permissions",
+                "Permission.Manage" => "Manage Permissions",
+
+                "Chart.View" => "View Dashboard",
+                _ => ParseFallbackEnglish(permName)
+            };
         }
+    }
+
+    private string ParseFallbackMyanmar(string permName)
+    {
+        var parts = permName.Split('.');
+        if (parts.Length == 2)
+        {
+            var entity = parts[0];
+            var action = parts[1].ToLower();
+            string actionMm = action switch
+            {
+                "create" => "ထည့်သွင်း",
+                "edit" => "ပြင်ဆင်",
+                "delete" => "ဖျက်ပစ်",
+                "view" => "ကြည့်ရှု",
+                "manage" => "စီမံခန့်ခွဲ",
+                "approve" => "အတည်ပြု",
+                _ => parts[1]
+            };
+            return $"{entity} {actionMm}";
+        }
+        return permName;
+    }
+
+    private string ParseFallbackEnglish(string permName)
+    {
+        var parts = permName.Split('.');
+        if (parts.Length == 2)
+        {
+            return $"{parts[1]} {parts[0]}";
+        }
+        return permName;
+    }
+
+    private List<Permission> GetPermissionsForCategory(string categoryKey)
+    {
+        if (AllPermissions == null) return new();
+        return AllPermissions.Where(p => GetCategoryKey(p.PermissionName) == categoryKey).ToList();
+    }
+
+    private List<CategoryGroup> FilteredCategoryGroups
+    {
+        get
+        {
+            if (AllPermissions == null) return new();
+
+            var groups = new List<CategoryGroup>();
+
+            var categoriesToProcess = SelectedCategoryKey == "all"
+                ? Categories
+                : Categories.Where(c => c.Key == SelectedCategoryKey).ToList();
+
+            foreach (var cat in categoriesToProcess)
+            {
+                var perms = AllPermissions
+                    .Where(p => GetCategoryKey(p.PermissionName) == cat.Key)
+                    .OrderBy(p => p.PermissionName)
+                    .ToList();
+
+                if (perms.Any())
+                {
+                    groups.Add(new CategoryGroup
+                    {
+                        Category = cat,
+                        Permissions = perms
+                    });
+                }
+            }
+
+            return groups;
+        }
+    }
+
+    private void SetCategory(string key)
+    {
+        SelectedCategoryKey = key;
+    }
+
+    private void ToggleSinglePermission(int id)
+    {
+        if (SelectedIds.Contains(id))
+            SelectedIds.Remove(id);
+        else
+            SelectedIds.Add(id);
+    }
+
+    private void ToggleCategory(string categoryKey, bool selectAll)
+    {
+        var categoryPerms = GetPermissionsForCategory(categoryKey);
+        foreach (var p in categoryPerms)
+        {
+            if (selectAll && !SelectedIds.Contains(p.PermissionId))
+                SelectedIds.Add(p.PermissionId);
+            else if (!selectAll && SelectedIds.Contains(p.PermissionId))
+                SelectedIds.Remove(p.PermissionId);
+        }
+    }
+
+    private void SelectAll()
+    {
+        if (AllPermissions == null) return;
+        SelectedIds = AllPermissions.Select(p => p.PermissionId).ToList();
+    }
+
+    private void DeselectAll()
+    {
+        SelectedIds.Clear();
     }
 
     private async Task SavePermissions()
     {
         IsProcessing = true;
-        
-        // Service မှတဆင့် RolePermissions ဇယားထဲသို့ သွားရောက် Update လုပ်မည်
-        await PermissionService.UpdateRolePermissionsAsync(RoleId, SelectedIds);
-        
-        IsProcessing = false;
-        
-        // အောင်မြင်ပါက Role List သို့ ပြန်သွားမည်
-        Nav.NavigateTo("/admin/roles");
+        try
+        {
+            await PermissionService.UpdateRolePermissionsAsync(RoleId, SelectedIds);
+
+            try
+            {
+                await JS.InvokeVoidAsync("Swal.fire", new
+                {
+                    icon = "success",
+                    title = LangService.IsMyanmar ? "အောင်မြင်ပါသည်" : "Success",
+                    text = LangService.IsMyanmar 
+                        ? $"{CurrentRole?.RoleName ?? "Role"} အတွက် Permissions များကို အောင်မြင်စွာ သိမ်းဆည်းလိုက်ပါပြီ။" 
+                        : $"Permissions for {CurrentRole?.RoleName ?? "Role"} have been saved successfully.",
+                    timer = 2000,
+                    showConfirmButton = false
+                });
+            }
+            catch { }
+
+            await Task.Delay(1000);
+            Nav.NavigateTo("/admin/roles");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving permissions: {ex.Message}");
+        }
+        finally
+        {
+            IsProcessing = false;
+        }
     }
 }

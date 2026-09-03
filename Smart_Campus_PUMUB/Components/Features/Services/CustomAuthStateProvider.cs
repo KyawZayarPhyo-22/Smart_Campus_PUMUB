@@ -116,6 +116,8 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
         _validationTimer?.Dispose();
     }
 
+    public string? CurrentToken { get; private set; }
+
     public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         try
@@ -124,12 +126,18 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
 
             if (!string.IsNullOrEmpty(token))
             {
+                CurrentToken = token;
                 var claims = ParseClaimsFromJwt(token);
                 var identity = new ClaimsIdentity(claims, "Cookies");
                 _currentUser = new ClaimsPrincipal(identity);
             }
+            else if (_currentUser != null && _currentUser.Identity?.IsAuthenticated == true)
+            {
+                // Retain active authenticated user state within current Blazor circuit
+            }
             else
             {
+                CurrentToken = null;
                 _currentUser = _anonymous;
             }
 
@@ -137,13 +145,13 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
         }
         catch
         {
-            _currentUser = _anonymous;
-            return Task.FromResult(new AuthenticationState(_currentUser));
+            return Task.FromResult(new AuthenticationState(_currentUser ?? _anonymous));
         }
     }
 
     public void NotifyUserAuthentication(string token)
     {
+        CurrentToken = token;
         var claims = ParseClaimsFromJwt(token);
         var identity = new ClaimsIdentity(claims, "Cookies");
         var authenticatedUser = new ClaimsPrincipal(identity);
@@ -153,6 +161,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
 
     public void NotifyUserLogout()
     {
+        CurrentToken = null;
         _currentUser = _anonymous;
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));
     }
@@ -229,6 +238,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider, IDisposable
 
     private byte[] ParseBase64WithoutPadding(string base64)
     {
+        base64 = base64.Replace('-', '+').Replace('_', '/');
         switch (base64.Length % 4)
         {
             case 2: base64 += "=="; break;

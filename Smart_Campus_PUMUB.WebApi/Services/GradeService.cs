@@ -21,7 +21,11 @@ public class GradeService : IGradeService
             .Select(x => new GradeModel
             {
                 GradeId = x.GradeId,
-                Name = x.Name
+                Name = x.Name,
+                GradePoint = x.GradePoint,
+                Status = x.Status,
+                MinMark = x.MinMark,
+                MaxMark = x.MaxMark
             })
             .ToListAsync();
 
@@ -36,7 +40,11 @@ public class GradeService : IGradeService
             .Select(x => new GradeModel
             {
                 GradeId = x.GradeId,
-                Name = x.Name
+                Name = x.Name,
+                GradePoint = x.GradePoint,
+                Status = x.Status,
+                MinMark = x.MinMark,
+                MaxMark = x.MaxMark
             })
             .FirstOrDefaultAsync();
 
@@ -50,6 +58,10 @@ public class GradeService : IGradeService
             var grade = new Grade
             {
                 Name = reqModel.Name,
+                GradePoint = reqModel.GradePoint,
+                Status = reqModel.Status,
+                MinMark = reqModel.MinMark,
+                MaxMark = reqModel.MaxMark,
                 CreatedDateTime = DateTime.Now,
                 IsDelete = false
             };
@@ -88,6 +100,10 @@ public class GradeService : IGradeService
             }
 
             item.Name = reqModel.Name;
+            item.GradePoint = reqModel.GradePoint;
+            item.Status = reqModel.Status;
+            item.MinMark = reqModel.MinMark;
+            item.MaxMark = reqModel.MaxMark;
             item.ModifiedDateTime = DateTime.Now;
 
             _db.Entry(item).State = EntityState.Modified;

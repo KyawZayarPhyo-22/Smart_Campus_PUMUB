@@ -320,6 +320,251 @@
             opacity: 1;
         }
     }
+    /* Payment Method Tabs */
+    .payment-tab-group {
+        display: flex;
+        gap: 10px;
+        background: #f1f5f9;
+        padding: 6px;
+        border-radius: 14px;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 12px 14px;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        background: transparent;
+        color: #64748b;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .tab-btn.active {
+        background: white;
+        color: #0f172a;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .tab-btn.active.kpay {
+        color: #003B95;
+        border-bottom: 2px solid #003B95;
+    }
+
+    .kpay-cta-card {
+        background: linear-gradient(145deg, #003B95, #002266);
+        color: white;
+        padding: 24px 20px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 59, 149, 0.25);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .btn-kpay-pay {
+        width: 100%;
+        height: 52px;
+        background: linear-gradient(135deg, #0052cc, #003B95);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-kpay-pay:hover {
+        background: linear-gradient(135deg, #0066ff, #0044cc);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 82, 204, 0.35);
+    }
+
+    .btn-kpay-pay:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .qr-modal-content {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 24px;
+        text-align: center;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        max-width: 440px;
+        width: 92%;
+        animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+    }
+
+    .qr-code-frame {
+        background: #f8fafc;
+        border: 2px dashed #003B95;
+        border-radius: 16px;
+        padding: 16px;
+        display: inline-block;
+        margin: 15px 0;
+    }
+
+    .qr-timer-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .btn-mock-pay {
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+    }
+
+    /* KBZPay Smart Receipt Slip CSS */
+    .kpay-slip-modal-content {
+        background: #ffffff;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 59, 149, 0.35);
+        max-width: 440px;
+        width: 92%;
+        animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .kpay-slip-top {
+        background: linear-gradient(135deg, #003B95 0%, #002266 100%);
+        color: white;
+        padding: 24px 20px 20px;
+        text-align: center;
+        position: relative;
+    }
+
+    .kpay-slip-body {
+        padding: 22px 20px;
+        background: #ffffff;
+    }
+
+    .slip-detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px dashed #e2e8f0;
+        font-size: 0.88rem;
+    }
+
+    .slip-detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .slip-label {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .slip-value {
+        color: #0f172a;
+        font-weight: 700;
+        text-align: right;
+        max-width: 60%;
+        word-break: break-all;
+    }
+
+    .slip-badge-success {
+        background: #ecfdf5;
+        color: #059669;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 20px;
+        border: 1px solid #10b981;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .slip-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+    }
+
+    .btn-slip-print {
+        flex: 1;
+        background: #f1f5f9;
+        color: #0f172a;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .btn-slip-print:hover {
+        background: #e2e8f0;
+    }
+
+    .btn-slip-home {
+        flex: 1.3;
+        background: linear-gradient(135deg, #003B95 0%, #0052cc 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        box-shadow: 0 4px 12px rgba(0, 59, 149, 0.25);
+    }
+
+    .btn-slip-home:hover {
+        background: linear-gradient(135deg, #002e75 0%, #0044b3 100%);
+        transform: translateY(-1px);
+    }
 </style>
 
 <div class="payment-viewport" style="margin-top: 80px;">
@@ -448,51 +693,92 @@
                 </div>
 
                 <div class="form-section">
-                    <h3 class="section-title">ငွေသွင်းရန် အချက်အလက်များ</h3>
+                    <h3 class="section-title">ငွေပေးချေမှု နည်းလမ်း ရွေးချယ်ပါ</h3>
 
-                    <div class="bank-info-box">
-                        <h4><i class="fas fa-university me-2"></i> ကျောင်းတော်ကြီး၏ ဘဏ်အကောင့်များ</h4>
-                        <p>KBZ Pay / Wave Pay : <strong>09-777888999</strong></p>
-                        <p>KBZ Bank Account : <strong>123-456-789012345</strong></p>
-                        <span class="pay-alert"><i class="fas fa-info-circle me-1"></i> ငွေလွှဲပြောင်းပြီးပါက အောက်တွင် ဘဏ်စလစ်ပုံ တင်ပေးရပါမည်။</span>
+                    <!-- Payment Mode Tabs -->
+                    <div class="payment-tab-group">
+                        <button type="button" class="tab-btn @(SelectedPaymentTab == "KBZPAY_QR" ? "active kpay" : "")" @onclick='() => SelectedPaymentTab = "KBZPAY_QR"'>
+                            <i class="fas fa-qrcode"></i> KBZPay MMQR (Online)
+                        </button>
+                        <button type="button" class="tab-btn @(SelectedPaymentTab == "MANUAL_SLIP" ? "active" : "")" @onclick='() => SelectedPaymentTab = "MANUAL_SLIP"'>
+                            <i class="fas fa-file-invoice"></i> Slip Upload (ဘဏ်စလစ်)
+                        </button>
                     </div>
 
-                    <div class="pay-form-group">
-                        <label>ပေးချေရမည့် ငွေပမာဏ (Kyats)</label>
-                        <input type="text" class="pay-input" value="@PaymentModel.AmountPaid.ToString("N0")" disabled />
-                    </div>
-
-                    <div class="pay-form-group">
-                        <label>ငွေပေးချေသည့် စနစ် (Payment Method)</label>
-                        <select class="pay-input" @bind="PaymentModel.PaymentMethod" disabled="@(PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)">
-                            <option value="KBZPay">KBZ Pay</option>
-                            <option value="WavePay">Wave Pay</option>
-                            <option value="KBZ Bank">KBZ Bank Transfer</option>
-                        </select>
-                    </div>
-
-                    <div class="pay-form-group">
-                        <label>ဘဏ်ပြေစာ/စလစ်ပုံ (Receipt Image) <span style="color:red;">*</span></label>
-                        <InputFile accept="image/*" class="pay-input" style="padding-top: 10px;" OnChange="OnReceiptSelected" disabled="@(PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)" />
-
-                        @if (!string.IsNullOrEmpty(PreviewReceiptUrl))
-                        {
-                            <div style="margin-top:10px; border:1px solid #e2e8f0; padding:5px; border-radius:8px; text-align:center;">
-                                <img src="@PreviewReceiptUrl" style="max-height:120px; object-fit:contain;" />
+                    @if (SelectedPaymentTab == "KBZPAY_QR")
+                    {
+                        <!-- KBZPay MMQR Mode -->
+                        <div class="kpay-cta-card">
+                            <div style="font-size: 2.2rem; color: #ffd700;">
+                                <i class="fas fa-bolt"></i>
                             </div>
-                        }
-                    </div>
+                            <h4 style="margin: 0; font-size: 1.15rem; font-weight: 800;">KBZPay Instant QR Payment</h4>
+                            <p style="margin: 0; font-size: 0.85rem; opacity: 0.9; line-height: 1.5;">
+                                QR Code အား KBZPay App ဖြင့် Scan ဖတ်၍ ချက်ချင်း ပေးချေနိုင်ပါသည်။ ငွေလွှဲပြီးပါက စနစ်မှ အလိုအလျောက် အတည်ပြုပေးပါမည်။
+                            </p>
+                            <div style="background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 0.95rem;">
+                                စုစုပေါင်း: @PaymentModel.AmountPaid.ToString("N0") Ks
+                            </div>
+                        </div>
 
-                    <button class="btn-primary" @onclick="SubmitPaymentData" disabled="@(IsSavingPayment || PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)">
-                        @if (IsSavingPayment)
-                        {
-                            <span>တင်သွင်းနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
-                        }
-                        else
-                        {
-                            <span><i class="fas fa-check-circle me-1"></i> ငွေသွင်းစလစ် အတည်ပြုမည်</span>
-                        }
-                    </button>
+                        <button class="btn-kpay-pay" @onclick="InitiateKpayPayment" disabled="@(IsGeneratingQr || PaymentModel.RegistrationId <= 0 || !CanProceedToPayment || PaymentModel.AmountPaid <= 0)">
+                            @if (IsGeneratingQr)
+                            {
+                                <span>QR Code ထုတ်ယူနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                            }
+                            else
+                            {
+                                <span><i class="fas fa-qrcode me-2"></i> Pay with KBZPay MMQR</span>
+                            }
+                        </button>
+                    }
+                    else
+                    {
+                        <!-- Manual Slip Upload Mode -->
+                        <div class="bank-info-box">
+                            <h4><i class="fas fa-university me-2"></i> ကျောင်းတော်ကြီး၏ ဘဏ်အကောင့်များ</h4>
+                            <p>KBZ Pay / Wave Pay : <strong>09-777888999</strong></p>
+                            <p>KBZ Bank Account : <strong>123-456-789012345</strong></p>
+                            <span class="pay-alert"><i class="fas fa-info-circle me-1"></i> ငွေလွှဲပြောင်းပြီးပါက အောက်တွင် ဘဏ်စလစ်ပုံ တင်ပေးရပါမည်။</span>
+                        </div>
+
+                        <div class="pay-form-group">
+                            <label>ပေးချေရမည့် ငွေပမာဏ (Kyats)</label>
+                            <input type="text" class="pay-input" value="@PaymentModel.AmountPaid.ToString("N0")" disabled />
+                        </div>
+
+                        <div class="pay-form-group">
+                            <label>ငွေပေးချေသည့် စနစ် (Payment Method)</label>
+                            <select class="pay-input" @bind="PaymentModel.PaymentMethod" disabled="@(PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)">
+                                <option value="KBZPay">KBZ Pay</option>
+                                <option value="WavePay">Wave Pay</option>
+                                <option value="KBZ Bank">KBZ Bank Transfer</option>
+                            </select>
+                        </div>
+
+                        <div class="pay-form-group">
+                            <label>ဘဏ်ပြေစာ/စလစ်ပုံ (Receipt Image) <span style="color:red;">*</span></label>
+                            <InputFile accept="image/*" class="pay-input" style="padding-top: 10px;" OnChange="OnReceiptSelected" disabled="@(PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)" />
+
+                            @if (!string.IsNullOrEmpty(PreviewReceiptUrl))
+                            {
+                                <div style="margin-top:10px; border:1px solid #e2e8f0; padding:5px; border-radius:8px; text-align:center;">
+                                    <img src="@PreviewReceiptUrl" style="max-height:120px; object-fit:contain;" />
+                                </div>
+                            }
+                        </div>
+
+                        <button class="btn-primary" @onclick="SubmitPaymentData" disabled="@(IsSavingPayment || PaymentModel.RegistrationId <= 0 || !CanProceedToPayment)">
+                            @if (IsSavingPayment)
+                            {
+                                <span>တင်သွင်းနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                            }
+                            else
+                            {
+                                <span><i class="fas fa-check-circle me-1"></i> ငွေသွင်းစလစ် အတည်ပြုမည်</span>
+                            }
+                        </button>
+                    }
                 </div>
             </div>
         </div>
@@ -501,6 +787,205 @@
 
 </div>
 
+<!-- QR Code Payment Modal -->
+@if (ShowQrModal && KpayQrData != null)
+{
+    <div class="modal-overlay">
+        <div class="qr-modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 32px; height: 32px; background: #003B95; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9rem;">
+                        KP
+                    </div>
+                    <strong style="color: #003B95; font-size: 1.1rem;">KBZPay MMQR</strong>
+                </div>
+                <button type="button" @onclick="CloseQrModal" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            @if (QrRemainingSeconds <= 0 && !IsPaymentConfirmed)
+            {
+                <div class="qr-timer-badge" style="background: #fee2e2; color: #991b1b;">
+                    <i class="fas fa-exclamation-circle"></i> သက်တမ်းကုန်သွားပါပြီ (Expired)
+                </div>
+            }
+            else
+            {
+                <div class="qr-timer-badge">
+                    <i class="fas fa-stopwatch"></i> သက်တမ်းကုန်ရန်: @($"{QrRemainingSeconds / 60:D2}:{QrRemainingSeconds % 60:D2}")
+                </div>
+            }
+
+            <div class="qr-code-frame" style="@(QrRemainingSeconds <= 0 && !IsPaymentConfirmed ? "opacity: 0.35; filter: grayscale(1);" : "")">
+                @if (!string.IsNullOrEmpty(KpayQrData.QrCode))
+                {
+                    <img src="@($"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={Uri.EscapeDataString(KpayQrData.QrCode)}")" 
+                         alt="KBZPay MMQR Code" 
+                         style="width: 200px; height: 200px; object-fit: contain; display: block; margin: 0 auto;" />
+                }
+                else
+                {
+                    <div style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; color: #64748b;">
+                        <i class="fas fa-qrcode fa-4x"></i>
+                    </div>
+                }
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <div style="font-size: 1.35rem; font-weight: 800; color: #003B95;">
+                    @PaymentModel.AmountPaid.ToString("N0") <span style="font-size: 0.9rem;">MMK</span>
+                </div>
+                <small style="color: #64748b;">Order ID: @KpayQrData.OrderId</small>
+            </div>
+
+            @if (IsPaymentConfirmed)
+            {
+                <div style="background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 12px; border-radius: 12px; margin-bottom: 15px; font-weight: 700;">
+                    <i class="fas fa-check-circle me-1"></i> ငွေပေးချေမှု အောင်မြင်ပါသည်!
+                </div>
+            }
+            else if (QrRemainingSeconds <= 0)
+            {
+                <div style="background: #fef2f2; border: 1px solid #f87171; color: #991b1b; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-times-circle"></i>
+                    <span>QR Code သက်တမ်းကုန်သွားပါပြီ။ အသစ်ထုတ်ယူပေးပါ။</span>
+                </div>
+            }
+            else
+            {
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-spinner fa-spin" style="color: #003B95;"></i>
+                    <span>ငွေပေးချေမှုကို စောင့်ဆိုင်းနေပါသည်...</span>
+                </div>
+            }
+
+            <!-- Simulation helper for testing -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                @if (QrRemainingSeconds <= 0 && !IsPaymentConfirmed)
+                {
+                    <button type="button" class="btn-kpay-pay" style="height: 42px; font-size: 0.95rem;" @onclick="InitiateKpayPayment">
+                        <i class="fas fa-redo me-1"></i> QR အသစ်ပြန်ထုတ်မည် (Regenerate)
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn-mock-pay" @onclick="MockPayNow" disabled="@(IsPaymentConfirmed || QrRemainingSeconds <= 0)">
+                        <i class="fas fa-magic"></i> Mock Pay (ငွေလွှဲအောင်မြင်ကြောင်း စမ်းမည်)
+                    </button>
+                }
+
+                @if (!string.IsNullOrEmpty(KpayQrData.MockPaymentUrl))
+                {
+                    <a href="@KpayQrData.MockPaymentUrl" target="_blank" style="font-size: 0.78rem; color: #003B95; text-decoration: underline;">
+                        <i class="fas fa-external-link-alt me-1"></i> Open in Mock Server UI
+                    </a>
+                }
+
+                <button type="button" class="btn-modal" style="background: #e2e8f0; color: #475569; padding: 8px; margin-top: 4px;" @onclick="CloseQrModal">
+                    ပိတ်မည် (Close)
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Official KBZPay E-Receipt Slip Modal -->
+@if (ShowReceiptSlipModal)
+{
+    <div class="modal-overlay">
+        <div class="kpay-slip-modal-content">
+            <!-- Header Section -->
+            <div class="kpay-slip-top">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 28px; height: 28px; background: #ffffff; color: #003B95; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.6rem;">
+                            KPay
+                        </div>
+                        <span style="font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;">KBZPay E-Receipt</span>
+                    </div>
+                    <span class="slip-badge-success" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border-color: rgba(110, 231, 183, 0.4);">
+                        <i class="fas fa-check-circle"></i> Completed
+                    </span>
+                </div>
+
+                <div style="width: 52px; height: 52px; background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 10px;">
+                    <i class="fas fa-check"></i>
+                </div>
+
+                <h3 style="margin: 0 0 4px; font-size: 1.1rem; font-weight: 800; color: #ffffff;">ငွေလွှဲပြောင်းမှု အောင်မြင်ပါသည်</h3>
+                <p style="margin: 0; font-size: 0.8rem; opacity: 0.85;margin-top:10px;">Transfer Successful</p>
+
+                <div style="margin-top: 14px; font-size: 1.8rem; font-weight: 900; color: #ffd700; letter-spacing: -0.5px;">
+                    - @SlipAmountPaid.ToString("N0") <span style="font-size: 1rem; font-weight: 700; color: #ffffff;">MMK</span>
+                </div>
+            </div>
+
+            <!-- Body Details Section -->
+            <div class="kpay-slip-body">
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-university me-1 text-primary"></i> လက်ခံသူ (Merchant)</span>
+                    <span class="slip-value">Smart Campus (PUMUB)</span>
+                </div>
+
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-user-graduate me-1 text-primary"></i> ကျောင်းသားအမည်</span>
+                    <span class="slip-value">@InputStudentName @(!string.IsNullOrEmpty(InputRollNo) ? $"({InputRollNo})" : "")</span>
+                </div>
+
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-layer-group me-1 text-primary"></i> အတန်း/မေဂျာ</span>
+                    <span class="slip-value">@InputAcademicYear</span>
+                </div>
+
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-receipt me-1 text-primary"></i> Transaction ID</span>
+                    <span class="slip-value" style="font-family: monospace; font-size: 0.82rem; color: #003B95;">@SlipTxnId</span>
+                </div>
+
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-hashtag me-1 text-primary"></i> Order ID</span>
+                    <span class="slip-value" style="font-family: monospace; font-size: 0.82rem;">@SlipOrderId</span>
+                </div>
+
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-credit-card me-1 text-primary"></i> ပေးချေသည့်စနစ်</span>
+                    <span class="slip-value">KBZPay (MMQR)</span>
+                </div>
+
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-clock me-1 text-primary"></i> ရက်စွဲနှင့် အချိန်</span>
+                    <span class="slip-value" style="font-size: 0.82rem;">@SlipPaymentDate.ToString("dd MMM yyyy, hh:mm tt")</span>
+                </div>
+
+                <div class="slip-detail-row">
+                    <span class="slip-label"><i class="fas fa-info-circle me-1 text-primary"></i> အခြေအနေ</span>
+                    <span class="slip-badge-success">
+                        <i class="fas fa-check-circle"></i> အတည်ပြုပြီး (Approved)
+                    </span>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; margin-top: 14px; text-align: center;">
+                    <small style="color: #059669; font-weight: 700;">
+                        <i class="fas fa-user-check me-1"></i> ကျောင်းသားမှတ်ပုံတင်ခြင်းနှင့် ဘာသာရပ်များ စာရင်းသွင်းပြီးပါပြီ။
+                    </small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="slip-actions">
+                    <button type="button" class="btn-slip-print" @onclick="PrintReceiptSlip">
+                        <i class="fas fa-print"></i> ပရင့်ထုတ်မည်
+                    </button>
+                    <button type="button" class="btn-slip-home" @onclick="CloseReceiptSlip">
+                        <i class="fas fa-home"></i> Home သို့ သွားမည်
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- General Status Modal -->
 @if (ShowModal)
 {
     <div class="modal-overlay" @onclick="CloseModal">
@@ -521,3 +1006,4 @@
         </div>
     </div>
 }
+

@@ -45,6 +45,8 @@ public partial class SmartCampusDbContext : DbContext
 
     public virtual DbSet<Subject> Subjects { get; set; }
 
+    public virtual DbSet<SystemSetting> SystemSettings { get; set; }
+
     public virtual DbSet<Tutor> Tutors { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -62,6 +64,7 @@ public partial class SmartCampusDbContext : DbContext
     public virtual DbSet<SubjectPrerequisite> SubjectPrerequisites { get; set; }
     public virtual DbSet<StudentSubjectEnrollment> StudentSubjectEnrollments { get; set; }
     public virtual DbSet<StudentSubjectResult> StudentSubjectResults { get; set; }
+    public virtual DbSet<FacultySemesterCredit> FacultySemesterCredits { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

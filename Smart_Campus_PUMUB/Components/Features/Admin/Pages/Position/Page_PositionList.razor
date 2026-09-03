@@ -4,6 +4,8 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "ရာထူးများ" : "Position Directory")</PageTitle>
+
 @* 🎨 Tech-Themed Modern Table & Button Styles *@
 <style>
     .custom-table {
@@ -66,33 +68,24 @@
         color: #ffffff;
         box-shadow: 0 0 12px rgba(220, 53, 69, 0.4);
     }
-    .btn-add-modern {
-        background: linear-gradient(135deg, #0d6efd, #0052cc);
-        border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-weight: 500;
-        box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2);
-        transition: all 0.2s ease;
-    .btn-add-modern:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
-    }
     .search-input {
         padding-left: 2.6rem !important;
     }
 </style>
 
 <div class="tab-pane fade show active" id="v-pills-position">
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-        <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-                <i class="bi bi-person-badge fs-5" style="color: #5A4FCF;"></i>
-            </div>
-            <div>
-                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Position Directory</h4>
-                <small class="text-secondary">တက္ကသိုလ်ဝန်ထမ်းများနှင့် ဆရာ/ဆရာမများ၏ ရာထူးအဆင့်ဆင့် စီမံခန့်ခွဲခြင်း</small>
-            </div>
+    <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+            <i class="bi bi-person-badge fs-5" style="color: #0d6efd;"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "ရာထူးများ" : "Position Directory")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "တက္ကသိုလ်ဝန်ထမ်းများနှင့် ဆရာ/ဆရာမများ၏ ရာထူးများ စီမံခန့်ခွဲခြင်း" : "Manage staff and faculty positions")
+            </small>
         </div>
     </div>
 
@@ -103,16 +96,16 @@
             <div class="col">
                 <div class="position-relative">
                     <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Position Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "ရာထူးအမည်ဖြင့် ရှာရန်..." : "Search by Position Name...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
             <!-- Search and Reset Buttons -->
             <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                     <i class="bi bi-search"></i>
                 </button>
-                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
@@ -120,7 +113,7 @@
             <!-- Add Button -->
             <AuthorizeView Policy="Position.Create">
                 <div class="col-auto">
-                    <NavLink href="/admin/position/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Position">
+                    <NavLink href="/admin/position/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Position")">
                         <i class="bi bi-plus-lg"></i>
                     </NavLink>
                 </div>
@@ -136,7 +129,7 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <div class="text-dark mt-3 small fw-bold">Positions စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading positions...")</div>
             </div>
         }
         else if (!string.IsNullOrEmpty(ErrorMessage))
@@ -149,7 +142,7 @@
         {
             <div class="text-center my-5 text-dark">
                 <i class="bi bi-folder-x display-4 text-secondary"></i>
-                <p class="mt-3 mb-0 small fw-bold text-dark">ပြသရန် Position မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
+                <p class="mt-3 mb-0 small fw-bold text-dark">@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No positions found.")</p>
             </div>
         }
         else
@@ -158,11 +151,11 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 15%;">No.</th>
-                            <th style="width: 50%;">Position Name</th>
+                            <th style="width: 15%;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th style="width: 50%;">@(LangService.IsMyanmar ? "ရာထူး အမည်" : "Position Name")</th>
                             @if (canManagePosition)
                             {
-                                <th style="width: 35%; text-align: center;">Actions</th>
+                                <th style="width: 35%; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                             }
                         </tr>
                     </thead>
@@ -182,14 +175,14 @@
                                             <AuthorizeView Policy="Position.Edit">
                                                 <NavLink href="@($"/admin/position/edit/{position.PositionId}")"
                                                          class="btn btn-action-edit d-inline-flex align-items-center">
-                                                    <i class="bi bi-pencil me-1.5"></i> Edit
+                                                    <i class="bi bi-pencil me-1.5"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
                                                 </NavLink>
                                             </AuthorizeView>
 
                                             <AuthorizeView Policy="Position.Delete">
                                                 <button class="btn btn-action-delete d-inline-flex align-items-center"
                                                         @onclick="() => OpenDeleteModal(position)">
-                                                    <i class="bi bi-trash me-1.5"></i> Delete
+                                                    <i class="bi bi-trash me-1.5"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
                                                 </button>
                                             </AuthorizeView>
                                         </div>
@@ -215,11 +208,11 @@
             <div class="modal-content tech-card">
 
                 <div class="modal-header border-0">
-                    <h5 class="text-danger">Confirm Delete</h5>
+                    <h5 class="text-danger">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
                 </div>
 
                 <div class="modal-body text-center">
-                    Are you sure to delete <strong>@SelectedPosition?.PositionName</strong>?
+                    @(LangService.IsMyanmar ? $"ဤ ရာထူး \"{SelectedPosition?.PositionName}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure to delete {SelectedPosition?.PositionName}?")
 
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
@@ -240,13 +233,13 @@
                     <button class="btn btn-secondary"
                             @onclick="CloseDeleteModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
                     <button class="btn btn-danger"
                             @onclick="DeletePosition"
                             disabled="@(IsProcessing || IsSuccess)">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
 

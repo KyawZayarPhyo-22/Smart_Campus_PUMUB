@@ -140,11 +140,11 @@ public class NewStudentAccController : ControllerBase
         }
         catch { valid = acc.PasswordHash == request.CurrentPassword; }
 
-        if (!valid)
-            return BadRequest(new { message = "လက်ရှိ Password မှားယွင်းနေပါသည်။" });
-
         if (request.NewPassword.Length < 8)
             return BadRequest(new { message = "Password သည် အနည်းဆုံး ၈ လုံး ရှိရမည်။" });
+
+        if (request.NewPassword == request.CurrentPassword)
+            return BadRequest(new { message = "စကားဝှက်အသစ်သည် လက်ရှိ (Email မှ ပို့ပေးထားသော) စကားဝှက်ဟောင်းနှင့် မတူညီရပါ။" });
 
         acc.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         acc.MustChangePassword = false;

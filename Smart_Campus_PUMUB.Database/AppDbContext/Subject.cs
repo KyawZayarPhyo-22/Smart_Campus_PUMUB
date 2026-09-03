@@ -34,6 +34,9 @@ public partial class Subject
     [Column("Subject_Type")]
     public EnumSubjectType SubjectType { get; set; } = EnumSubjectType.None;
 
+    [Column("Credit")]
+    public int Credit { get; set; } = 3;
+
     [Column(TypeName = "datetime")]
     public DateTime? CreatedDateTime { get; set; }
 

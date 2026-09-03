@@ -2,20 +2,30 @@
 @layout AdminLayout
 @namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student
 @using Smart_Campus_PUMUB.WebApi.Models
-@* @using Smart_Campus_PUMUB.Components.Admin.Pages.Student *@
 @rendermode InteractiveServer
 
-<div class="page-header">
-    <div class="d-flex align-items-center gap-2">
-        <NavLink href="/admin/student" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i>
-        </NavLink>
-        <h3><i class="bi bi-person-gear me-2 text-warning"></i>Edit Student</h3>
+<div class="d-flex align-items-start gap-3 mb-4 mt-2">
+    <NavLink href="/admin/student" class="btn btn-outline-secondary rounded-3 p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">
+        <i class="bi bi-arrow-left fs-5"></i>
+    </NavLink>
+    <div>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">
+            @(LangService.IsMyanmar ? "ကျောင်းသား အချက်အလက် ပြင်ဆင်ခြင်း" : "Edit Student")
+        </h4>
+        <small class="text-secondary">
+            @(LangService.IsMyanmar ? "ကျောင်းသား၏ ပညာရေးနှင့် အခြေအနေ အချက်အလက်များ ပြင်ဆင်ခြင်း" : "Update student profile and academic status")
+        </small>
     </div>
 </div>
 
 @if (studentModel == null)
 {
-    <div class="text-center text-white">Loading...</div>
+    <div class="text-center text-muted py-5">
+        <div class="spinner-border text-primary mb-2" role="status">
+            <span class="visually-hidden">@(LangService.IsMyanmar ? "ရယူနေပါသည်..." : "Loading...")</span>
+        </div>
+        <div>@(LangService.IsMyanmar ? "ကျောင်းသား အချက်အလက်များ ရယူနေပါသည်..." : "Loading student details...")</div>
+    </div>
 }
 else
 {
@@ -25,12 +35,12 @@ else
                 <DataAnnotationsValidator />
                 <div class="tech-card p-4">
                     <div class="mb-4 pb-3 border-bottom">
-                        <h5 class="fw-bold mb-0">Student Details for @studentModel.CurrentRollNo</h5>
+                        <h5 class="fw-bold mb-0">@(LangService.IsMyanmar ? $"{studentModel.CurrentRollNo} ၏ ကျောင်းသား အချက်အလက်များ" : $"Student Details for {studentModel.CurrentRollNo}")</h5>
                     </div>
 
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">User Account <span class="text-danger">*</span></label>
+                            <label class="form-label">@(LangService.IsMyanmar ? "အသုံးပြုသူ အကောင့်" : "User Account") <span class="text-danger">*</span></label>
                             <InputSelect @bind-Value="updateModel.UserId" class="form-select" disabled>
                                 @foreach (var user in UserList)
                                 {
@@ -39,11 +49,11 @@ else
                             </InputSelect>
                         </div>
                         <div class="col-12 col-sm-6">
-                            <label class="form-label">Roll Number</label>
+                            <label class="form-label">@(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll Number")</label>
                             <InputText @bind-Value="updateModel.CurrentRollNo" class="form-control" />
                         </div>
                         <div class="col-12 col-sm-6">
-                            <label class="form-label">Status</label>
+                            <label class="form-label">@(LangService.IsMyanmar ? "အခြေအနေ" : "Status")</label>
                             <InputSelect @bind-Value="updateModel.Status" class="form-select">
                                 <option value="Active">Active</option>
                                 <option value="Suspended">Suspended</option>
@@ -51,7 +61,7 @@ else
                             </InputSelect>
                         </div>
                         <div class="col-12 col-sm-6">
-                            <label class="form-label">Class Year</label>
+                            <label class="form-label">@(LangService.IsMyanmar ? "သင်တန်းနှစ်" : "Class Year")</label>
                             <InputSelect @bind-Value="updateModel.CurrentClassYear" class="form-select">
                                 <option value="First Year">First Year</option>
                                 <option value="Second Year">Second Year</option>
@@ -59,7 +69,7 @@ else
                             </InputSelect>
                         </div>
                         <div class="col-12 col-sm-6">
-                            <label class="form-label">Major</label>
+                            <label class="form-label">@(LangService.IsMyanmar ? "မေဂျာ" : "Major")</label>
                             <InputText @bind-Value="updateModel.CurrentMajor" class="form-control" />
                         </div>
                     </div>
@@ -70,9 +80,9 @@ else
                     }
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
-                        <NavLink href="/admin/student" class="btn btn-secondary">Cancel</NavLink>
+                        <NavLink href="/admin/student" class="btn btn-secondary">@(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")</NavLink>
                         <button type="submit" class="btn btn-warning" disabled="@isProcessing">
-                            @(isProcessing ? "Saving..." : "Save Changes")
+                            @(isProcessing ? (LangService.IsMyanmar ? "သိမ်းဆည်းနေပါသည်..." : "Saving...") : (LangService.IsMyanmar ? "သိမ်းဆည်းမည်" : "Save Changes"))
                         </button>
                     </div>
                 </div>

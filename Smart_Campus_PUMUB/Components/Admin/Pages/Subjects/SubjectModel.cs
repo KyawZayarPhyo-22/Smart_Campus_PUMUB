@@ -27,6 +27,9 @@ public class SubjectCreateRequestModel
     [Range(1, 2, ErrorMessage = "မှန်ကန်သော Subject Type ကို ရွေးချယ်ပေးပါ။")]
     public EnumSubjectType SubjectType { get; set; } = EnumSubjectType.None;
 
+    [Range(0, 15, ErrorMessage = "Credit Point သည် ၀ မှ ၁၅ ကြား ဖြစ်ရပါမည်။")]
+    public int Credit { get; set; } = 3;
+
     public string? CreatedBy { get; set; }
 
     public List<int> PrerequisiteSubjectIds { get; set; } = new();
@@ -53,6 +56,9 @@ public class SubjectUpdateRequestModel
     [Range(1, 2, ErrorMessage = "မှန်ကန်သော Subject Type ကို ရွေးချယ်ပေးပါ။")]
     public EnumSubjectType SubjectType { get; set; } = EnumSubjectType.None;
 
+    [Range(0, 15, ErrorMessage = "Credit Point သည် ၀ မှ ၁၅ ကြား ဖြစ်ရပါမည်။")]
+    public int Credit { get; set; } = 3;
+
     public string? ModifiedBy { get; set; }
 
     public List<int> PrerequisiteSubjectIds { get; set; } = new();
@@ -74,6 +80,7 @@ public class SubjectModel
     public string? MajorName { get; set; }
     public string? SubjectName { get; set; }
     public string? SubjectCode { get; set; }
+    public int Credit { get; set; } = 3;
     public EnumSubjectType SubjectType { get; set; } = EnumSubjectType.None;
     public string SubjectTypeName => SubjectType.ToString();
 
@@ -82,5 +89,30 @@ public class SubjectModel
     public bool IsPrerequisiteSatisfied { get; set; } = true;
     public string? PrerequisiteStatusMessage { get; set; }
     public bool IsRetake { get; set; } = false;
+    public bool IsCarriedOver { get; set; } = false;
     public bool IsSelected { get; set; } = false;
+    public bool IsSubjectDisqualified { get; set; } = false;
+    public bool IsReexamPending { get; set; } = false;
+}
+
+public class FacultySemesterCreditModel
+{
+    public int Id { get; set; }
+    public int FacultyId { get; set; }
+    public string? FacultyName { get; set; }
+    public int SemesterId { get; set; }
+    public string? SemesterName { get; set; }
+    public int? Sequence { get; set; }
+    public int RequiredCredits { get; set; } = 24;
+    public int? MinCredits { get; set; }
+    public int? MaxCredits { get; set; }
+}
+
+public class FacultySemesterCreditUpdateRequest
+{
+    public int FacultyId { get; set; }
+    public int SemesterId { get; set; }
+    public int RequiredCredits { get; set; } = 24;
+    public int? MinCredits { get; set; } = 18;
+    public int? MaxCredits { get; set; } = 24;
 }

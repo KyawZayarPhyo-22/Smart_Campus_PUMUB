@@ -35,8 +35,8 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
                          .Where(x => x.IsDelete == false || x.IsDelete == null);
 
             // Hierarchical RBAC Data Scoping:
-            // Super Admin sees ALL faculties. Faculty Admin sees ONLY their assigned faculty.
-            if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User))
+            // Super Admin, Students, and Public see ALL faculties. Faculty Admin sees ONLY their assigned faculty.
+            if (User?.Identity?.IsAuthenticated == true && !_scopeService.IsSuperAdmin(User) && !User.IsInRole("Student") && !User.IsInRole("student"))
             {
                 var scopedFacultyId = _scopeService.GetScopedFacultyId(User);
                 if (scopedFacultyId.HasValue)
@@ -204,7 +204,7 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
         }
 
         [HttpGet("paginate")]
-        [AllowAnonymous]
+        [Permission("Faculty.View")]
         public IActionResult GetFacultiesPaginated(
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,

@@ -104,10 +104,15 @@ builder.Services.AddRazorComponents()
 // ==========================================
 
 // ၁။ Base API URL အား "SmartCampusApi" အမည်ဖြင့် သတ်မှတ်ခြင်း
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5077";
 builder.Services.AddHttpClient("SmartCampusApi", client =>
 {
-    // မင်းရဲ့ API Server သို့ တိုက်ရိုက်လမ်းကြောင်း (End-slash ပါရပါမည်)
-    client.BaseAddress = new Uri("https://localhost:7297/api/");
+    // API Server သို့ လမ်းကြောင်း
+    client.BaseAddress = new Uri($"{apiBaseUrl.TrimEnd('/')}/api/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+{
+    AutomaticDecompression = System.Net.DecompressionMethods.All
 });
 
 // ၂။ ဗဟို API Engine ဖြစ်သော HttpClientService အား Register လုပ်ခြင်း
@@ -130,6 +135,7 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.Cookies.C
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<PermissionService>();
+builder.Services.AddScoped<AdminLanguageService>();
 builder.Services.AddAuthenticationCore();
 builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, AuthCircuitHandler>();
 builder.Services.AddSingleton<Smart_Campus_PUMUB.BlazorServer.Frontend.Services.StudentRegistrationNotifierService>();

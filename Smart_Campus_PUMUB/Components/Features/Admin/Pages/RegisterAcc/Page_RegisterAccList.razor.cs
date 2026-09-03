@@ -4,14 +4,19 @@ using Microsoft.JSInterop;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.WebApi.Models;
 using Microsoft.AspNetCore.Components.Authorization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.RegisterAcc;
 
-public partial class Page_RegisterAccList
+public partial class Page_RegisterAccList : IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     // ── State ──────────────────────────────────────────────────────────────
     private List<RegisterAccListItem> Items { get; set; } = new();
@@ -46,11 +51,27 @@ public partial class Page_RegisterAccList
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         CurrentAdminName = user.Identity?.Name ?? "Admin";
 
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
     }
 
     private bool isStatusDropdownOpen = false;
@@ -77,13 +98,16 @@ public partial class Page_RegisterAccList
         StateHasChanged();
         try
         {
-            await Task.Delay(1000);
-            var response = await HttpClientService.ExecuteAsync<RegisterAccPagedResponse>(
+            var delayTask = Task.Delay(500);
+            var fetchTask = HttpClientService.ExecuteAsync<RegisterAccPagedResponse>(
                 $"registeracc?pageNumber={CurrentPage}&pageSize={PageSize}" +
                 $"&status={Uri.EscapeDataString(SelectedStatus)}" +
                 $"&searchTerm={Uri.EscapeDataString(SearchTerm)}",
                 EnumHttpMethod.Get
             );
+
+            await Task.WhenAll(fetchTask, delayTask);
+            var response = await fetchTask;
 
             if (response != null && response.IsSuccess)
             {
@@ -94,7 +118,7 @@ public partial class Page_RegisterAccList
         }
         catch (Exception ex)
         {
-            ShowToast($"Data ဆွဲယူရာတွင် အမှားဖြစ်ပါသည်: {ex.Message}", false);
+            ShowToast(LangService.IsMyanmar ? $"Data ဆွဲယူရာတွင် အမှားဖြစ်ပါသည်: {ex.Message}" : $"Failed to load data: {ex.Message}", false);
         }
         finally
         {
@@ -168,13 +192,13 @@ public partial class Page_RegisterAccList
 
             if (response != null && response.IsSuccess)
             {
-                ShowToast(response.Message ?? "Approve လုပ်ပြီးပါပြီ။", true);
+                ShowToast(response.Message ?? (LangService.IsMyanmar ? "အတည်ပြုပြီးပါပြီ။" : "Approved successfully."), true);
                 CloseApproveModal();
                 await LoadData();
             }
             else
             {
-                ShowToast(response?.Message ?? "Approve မလုပ်နိုင်ပါ။", false);
+                ShowToast(response?.Message ?? (LangService.IsMyanmar ? "အတည်မပြုနိုင်ပါ။" : "Approval failed."), false);
             }
         }
         catch (Exception ex)
@@ -223,13 +247,13 @@ public partial class Page_RegisterAccList
 
             if (response != null && response.IsSuccess)
             {
-                ShowToast(response.Message ?? "Reject လုပ်ပြီးပါပြီ။", true);
+                ShowToast(LangService.IsMyanmar ? "ပယ်ချပြီးပါပြီ။" : (response.Message ?? "Rejected successfully."), true);
                 CloseRejectModal();
                 await LoadData();
             }
             else
             {
-                ShowToast(response?.Message ?? "Reject မလုပ်နိုင်ပါ။", false);
+                ShowToast(LangService.IsMyanmar ? "ပယ်ချ၍ မရပါ။" : (response?.Message ?? "Rejection failed."), false);
             }
         }
         catch (Exception ex)
@@ -289,12 +313,12 @@ public partial class Page_RegisterAccList
                 if (response.IsSuccess)
                 {
                     item.AccountStatus = nextStatus;
-                    ShowToast(response.Message ?? $"Account status updated to {nextStatus}", true);
+                    ShowToast(LangService.IsMyanmar ? $"အကောင့် အခြေအနေကို {nextStatus} သို့ ပြောင်းလဲပြီးပါပြီ။" : (response.Message ?? $"Account status updated to {nextStatus}"), true);
                     StateHasChanged();
                 }
                 else
                 {
-                    ShowToast(response.Message ?? "Status update failed", false);
+                    ShowToast(LangService.IsMyanmar ? "အခြေအနေ ပြောင်းလဲ၍ မရပါ။" : (response.Message ?? "Status update failed"), false);
                 }
             }
             else
@@ -344,4 +368,9 @@ public partial class Page_RegisterAccList
         "Rejected" => "badge-rejected",
         _ => "badge-pending"
     };
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
+    }
 }

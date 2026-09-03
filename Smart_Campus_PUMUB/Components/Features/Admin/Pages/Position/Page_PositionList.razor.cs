@@ -5,13 +5,12 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Position;
 
-public partial class Page_PositionList
+public partial class Page_PositionList : IDisposable
 {
     [Inject]
     public HttpClientService HttpClientService { get; set; } = null!;
@@ -21,6 +20,9 @@ public partial class Page_PositionList
 
     [Inject]
     public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    [Inject]
+    public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<PositionModel> PositionList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -80,12 +82,23 @@ public partial class Page_PositionList
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadPositions();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -103,7 +116,6 @@ public partial class Page_PositionList
         }
     }
 
-    // 🚀 GET Method ဖြင့် API မှ Positions စာရင်းအားလုံးအား ဆွဲယူခြင်း
     private async Task LoadPositions()
     {
         IsLoading = true;
@@ -111,7 +123,7 @@ public partial class Page_PositionList
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<PositionModel>>(
                 $"position/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
@@ -128,7 +140,7 @@ public partial class Page_PositionList
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားအယွင်းရှိပါသည်။ Error: {ex.Message}";
+            ErrorMessage = LangService.IsMyanmar ? $"ဒေတာဆွဲယူရာတွင် အမှားအယွင်းရှိပါသည်။ Error: {ex.Message}" : $"Failed to load data. Error: {ex.Message}";
         }
         finally
         {
@@ -153,14 +165,12 @@ public partial class Page_PositionList
         ShowModal = false;
     }
 
-    // 🚀 DELETE Method ဖြင့် သက်ဆိုင်ရာ Position ID အား ဖျက်ချခြင်း
     private async Task DeletePosition()
     {
-        // ရွေးချယ်ထားတဲ့ Position မရှိရင် အလုပ်မလုပ်အောင် တားထားပါမယ်
         if (SelectedPosition == null) return;
 
         IsProcessing = true;
-        statusMessage = "ရာထူးကို ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = LangService.IsMyanmar ? "ရာထူးကို ဖျက်သိမ်းနေပါသည်..." : "Deleting position...";
         IsSuccess = false;
 
         try
@@ -170,35 +180,33 @@ public partial class Page_PositionList
                 EnumHttpMethod.Delete
             );
 
-            // API ကနေ IsSuccess = true ပြန်လာတဲ့အခါ
             if (response?.IsSuccess == true)
             {
-                statusMessage = response.Message ?? "ရာထူး ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                statusMessage = LangService.IsMyanmar ? "ရာထူး ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
                 IsSuccess = true;
-                SelectedPosition = null; // ဖျက်ပြီးသွားရင် ရွေးထားတာကို အလွတ်ပြန်ထားပေးတာက ပိုကောင်းပါတယ်
+                SelectedPosition = null;
                 CloseDeleteModal();
-                await LoadPositions(); // List ကို အသစ်ပြန်ခေါ်ပါမယ်
+                await LoadPositions();
             }
             else
             {
                 IsSuccess = false;
-                // API ကနေ BadRequest နဲ့ ပို့လိုက်တဲ့ Validation Message တွေ ဒီနေရာမှာ ပေါ်လာပါလိမ့်မယ်
-                statusMessage = response?.Message ?? "ရာထူး ဖျက်သိမ်း၍ မရပါ။ (အသုံးပြုနေသူများ ရှိနိုင်ပါသည်)";
+                statusMessage = LangService.IsMyanmar ? "ဤ ရာထူး ကို အသုံးပြုထားသောကြောင့် ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this position because it is in use.");
             }
         }
         catch (Exception ex)
         {
             IsSuccess = false;
-            // Network အခက်အခဲ ဒါမှမဟုတ် တခြား Error တွေအတွက်
-            statusMessage = $"စနစ်ချို့ယွင်းမှု ဖြစ်ပွားနေပါသည်။ Error: {ex.Message}";
+            statusMessage = LangService.IsMyanmar ? $"စနစ်ချို့ယွင်းမှု ဖြစ်ပွားနေပါသည်။ Error: {ex.Message}" : $"System error: {ex.Message}";
         }
         finally
         {
             IsProcessing = false;
-
-            // မှတ်ချက် - အကယ်၍ Blazor ကို အသုံးပြုထားတာဆိုရင် UI ချက်ချင်း Update ဖြစ်သွားအောင် 
-            // အောက်က StateHasChanged(); ကို ဖွင့်သုံးပေးဖို့ လိုနိုင်ပါတယ်နော်။
-            // StateHasChanged(); 
         }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

@@ -75,5 +75,10 @@ namespace Smart_Campus_PUMUB.Components.Admin.Services
             }
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Role?> GetRoleByIdAsync(int id)
+        {
+            return await _context.Roles.FindAsync(id);
+        }
     }
 }

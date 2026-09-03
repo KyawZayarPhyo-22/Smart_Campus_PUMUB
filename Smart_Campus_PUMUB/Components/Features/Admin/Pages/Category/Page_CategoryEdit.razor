@@ -19,12 +19,8 @@
                 <DataAnnotationsValidator />
                 <div class="modal-body">
                     <div class="col-12 mb-3">
-                        <label class="form-label text-light">Category ID</label>
-                        <input type="text" class="form-control" value="@Id" disabled />
-                    </div>
-                    <div class="col-12 mb-2">
-                        <label class="form-label text-light">Category Name</label>
-                        <InputText @bind-Value="categoryModel.CategoryName" class="form-control" />
+                        <label class="form-label text-light">Category Name <span class="text-danger">*</span></label>
+                        <InputText @bind-Value="categoryModel.CategoryName" class="form-control" placeholder="Enter Category Name" />
                     </div>
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {

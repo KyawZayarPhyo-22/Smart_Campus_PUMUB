@@ -5,127 +5,297 @@
 @using Smart_Campus_PUMUB.Components.Features.Admin.Layout
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "ကျောင်းသား အကောင့်တောင်းဆိုမှုများ" : "Account Register Requests")</PageTitle>
+
 <style>
-    /* ── Status Badges ─────────────────────────────── */
-    .badge-approved {
-        background: rgba(16, 185, 129, 0.15);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        border-radius: 50px;
-        padding: 4px 14px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+    /* ── Custom Table Container & Scrollbar ── */
+    .custom-table-container {
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     }
 
-    .badge-rejected {
-        background: rgba(239, 68, 68, 0.12);
-        color: #f87171;
-        border: 1px solid rgba(239, 68, 68, 0.25);
-        border-radius: 50px;
-        padding: 4px 14px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+    .custom-table-container::-webkit-scrollbar {
+        height: 8px;
     }
 
-    .badge-pending {
-        background: rgba(234, 179, 8, 0.15);
-        color: #fbbf24;
-        border: 1px solid rgba(234, 179, 8, 0.3);
-        border-radius: 50px;
-        padding: 4px 14px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+    .custom-table-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
     }
 
-    /* Action Buttons */
+    .custom-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .custom-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .custom-table {
+        min-width: 1200px;
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .custom-table thead {
+        background: linear-gradient(135deg, #5A4FCF 0%, #4B3EB8 100%) !important;
+        border: none !important;
+    }
+
+    .custom-table th {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.86rem;
+        color: #ffffff !important;
+        padding: 15px 18px;
+        letter-spacing: 0.04em;
+        white-space: nowrap !important;
+        border: none !important;
+        vertical-align: middle;
+    }
+
+    .custom-table td {
+        padding: 15px 18px;
+        color: #1e293b !important;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.88rem;
+        vertical-align: middle;
+        white-space: nowrap !important;
+    }
+
+    .table-row-hover:hover {
+        background: #f8fafc;
+        box-shadow: inset 4px 0 0 #5A4FCF;
+    }
+
+    /* ── Status Badges (Snug Icon & Pure White Text) ── */
+    .badge-status-approved {
+        background-color: #10b981 !important;
+        color: #ffffff !important;
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 0.82rem;
+        font-weight: 700 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap !important;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+    }
+    .badge-status-approved i,
+    .badge-status-approved span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        line-height: 1 !important;
+    }
+
+    .badge-status-rejected {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 0.82rem;
+        font-weight: 700 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    }
+    .badge-status-rejected i,
+    .badge-status-rejected span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        line-height: 1 !important;
+    }
+
+    .badge-status-pending {
+        background-color: #f59e0b !important;
+        color: #ffffff !important;
+        border-radius: 20px;
+        padding: 5px 14px;
+        font-size: 0.82rem;
+        font-weight: 700 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap !important;
+        box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
+    }
+    .badge-status-pending i,
+    .badge-status-pending span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        line-height: 1 !important;
+    }
+
+    /* ── Action Buttons (Snug Icon & Pure White Text) ── */
     .btn-action-approve {
-        background: #10b981;
-        color: #ffffff;
-        border: 1px solid #10b981;
+        background-color: #10b981 !important;
+        border: 1px solid #10b981 !important;
+        color: #ffffff !important;
         border-radius: 6px;
         padding: 5px 12px;
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: 0.84rem;
+        font-weight: 700 !important;
         transition: all 0.2s ease;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap !important;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
     }
 
-        .btn-action-approve:hover {
-            background: #059669;
-            color: #ffffff;
-            border-color: #059669;
-        }
+    .btn-action-approve:hover {
+        background-color: #059669 !important;
+        border-color: #059669 !important;
+        color: #ffffff !important;
+    }
 
-        .btn-action-approve:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
+    .btn-action-approve:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    .btn-action-approve i,
+    .btn-action-approve span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        line-height: 1 !important;
+    }
 
     .btn-action-reject {
-        background: #dc3545;
-        color: #ffffff;
-        border: 1px solid #dc3545;
+        background-color: #ef4444 !important;
+        border: 1px solid #ef4444 !important;
+        color: #ffffff !important;
         border-radius: 6px;
         padding: 5px 12px;
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: 0.84rem;
+        font-weight: 700 !important;
         transition: all 0.2s ease;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
     }
 
-        .btn-action-reject:hover {
-            background: #bb2d3b;
-            color: #ffffff;
-            border-color: #bb2d3b;
-        }
-
-        .btn-action-reject:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-        }
-
-
-    /* ── Table ─────────────────────────────────────── */
-    .acc-table {
-        background: rgba(20, 24, 33, 0.6);
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+    .btn-action-reject:hover {
+        background-color: #dc2626 !important;
+        border-color: #dc2626 !important;
+        color: #ffffff !important;
     }
 
-    .acc-table thead {
-        background: rgba(13, 110, 253, 0.1);
-        border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+    .btn-action-reject:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
     }
 
-    .acc-table th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.78rem;
-        color: #0d6efd;
-        padding: 14px 16px;
-        letter-spacing: 0.04em;
+    .btn-action-reject i,
+    .btn-action-reject span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        line-height: 1 !important;
     }
 
-    .acc-table td {
-        padding: 14px 16px;
-        color: #e2e8f0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        font-size: 0.88rem;
+    /* ── Account Status Buttons (Snug Icon & Pure White Text) ── */
+    .btn-acc-active {
+        background-color: #10b981 !important;
+        border: 1px solid #10b981 !important;
+        color: #ffffff !important;
+        font-size: 0.82rem;
+        font-weight: 700 !important;
+        padding: 5px 14px;
+        border-radius: 6px;
+        white-space: nowrap !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
     }
 
-    .acc-table tr:hover {
-        background: rgba(255, 255, 255, 0.02);
-        box-shadow: inset 4px 0 0 #0d6efd;
+    .btn-acc-active:hover {
+        background-color: #059669 !important;
+        border-color: #059669 !important;
+        color: #ffffff !important;
+    }
+
+    .btn-acc-active i,
+    .btn-acc-active span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        line-height: 1 !important;
+    }
+
+    .btn-acc-inactive {
+        background-color: #ef4444 !important;
+        border: 1px solid #ef4444 !important;
+        color: #ffffff !important;
+        font-size: 0.82rem;
+        font-weight: 700 !important;
+        padding: 5px 14px;
+        border-radius: 6px;
+        white-space: nowrap !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-acc-inactive:hover {
+        background-color: #dc2626 !important;
+        border-color: #dc2626 !important;
+        color: #ffffff !important;
+    }
+
+    .btn-acc-inactive i,
+    .btn-acc-inactive span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        line-height: 1 !important;
     }
 
     /* ── Toast ─────────────────────────────────────── */
@@ -166,10 +336,10 @@
 
     /* ── Modal fields ──────────────────────────────── */
     .reject-textarea {
-        background: rgba(30, 35, 50, 0.8) !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 10px !important;
-        color: #e2e8f0 !important;
+        color: #0f172a !important;
         font-size: 0.9rem !important;
         resize: vertical;
     }
@@ -180,17 +350,6 @@
         outline: none !important;
     }
 
-    /* info row inside modals */
-    .modal-info-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-        font-size: 0.87rem;
-    }
-
-    .modal-info-row:last-child { border-bottom: none; }
-    .modal-info-label { color: #64748b; font-weight: 500; }
     .search-input {
         padding-left: 2.6rem !important;
     }
@@ -267,17 +426,22 @@
 <!-- ── Page Header ──────────────────────────────────────────────────── -->
 <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
     <div class="d-flex align-items-center gap-3">
-        <div class="rounded p-2 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-            <i class="bi bi-person-check fs-5" style="color: #5A4FCF;"></i>
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(90, 79, 207, 0.1); border: 1.5px solid rgba(90, 79, 207, 0.3);">
+            <i class="bi bi-person-check-fill fs-5" style="color: #5A4FCF;"></i>
         </div>
         <div>
-            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Account Register Requests</h4>
-            <small class="text-secondary">Semester I ကျောင်းသားများ Account Request စီမံချက်</small>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "ကျောင်းသား အကောင့်တောင်းဆိုမှုများ" : "Account Register Requests")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "Semester I ကျောင်းသားများ၏ အကောင့် လျှောက်ထားမှု စီမံခန့်ခွဲခြင်း" : "Manage Semester I student registration account requests")
+            </small>
         </div>
     </div>
     <div class="d-flex align-items-center gap-2">
-        <span class="badge-pending" style="font-size:0.82rem; padding:6px 16px;">
-            Total: @TotalCount records
+        <span class="badge px-3 py-2 fw-bold shadow-sm" style="background: rgba(90, 79, 207, 0.1); color: #5A4FCF; border: 1.5px solid rgba(90, 79, 207, 0.3); border-radius: 20px; font-size: 0.85rem; white-space: nowrap !important;">
+            @(LangService.IsMyanmar ? $"စုစုပေါင်း: {TotalCount} ခု" : $"Total: {TotalCount} records")
         </span>
     </div>
 </div>
@@ -291,7 +455,7 @@
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top:50%;left:14px;transform:translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
                 <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;"
-                       placeholder="Search by name, email, form no..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                       placeholder="@(LangService.IsMyanmar ? "အမည်၊ အီးမေးလ်၊ ဖောင်အမှတ်တို့ဖြင့် ရှာရန်..." : "Search by name, email, form no...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
@@ -300,7 +464,14 @@
             <div class="custom-dropdown-container">
                 <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                         @onclick="ToggleStatusDropdown">
-                    <span class="text-truncate">@(SelectedStatusInput == "All" ? "All Status" : SelectedStatusInput)</span>
+                    <span class="text-truncate">
+                        @(SelectedStatusInput switch {
+                            "Pending" => (LangService.IsMyanmar ? "စောင့်ဆိုင်းဆဲ" : "Pending"),
+                            "Approved" => (LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved"),
+                            "Rejected" => (LangService.IsMyanmar ? "ပယ်ချပြီး" : "Rejected"),
+                            _ => (LangService.IsMyanmar ? "အခြေအနေ အားလုံး" : "All Status")
+                        })
+                    </span>
                     <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                 </button>
 
@@ -308,23 +479,23 @@
                 {
                     <div class="custom-dropdown-menu shadow">
                         <div class="dropdown-item-custom @(SelectedStatusInput == "All" ? "selected" : "")" 
-                             @onclick='() => SelectStatus("All")'>
-                            <span>All Status</span>
+                              @onclick='() => SelectStatus("All")'>
+                            <span>@(LangService.IsMyanmar ? "အခြေအနေ အားလုံး" : "All Status")</span>
                             @if (SelectedStatusInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         <div class="dropdown-item-custom @(SelectedStatusInput == "Pending" ? "selected" : "")" 
-                             @onclick='() => SelectStatus("Pending")'>
-                            <span>Pending</span>
+                              @onclick='() => SelectStatus("Pending")'>
+                            <span>@(LangService.IsMyanmar ? "စောင့်ဆိုင်းဆဲ" : "Pending")</span>
                             @if (SelectedStatusInput == "Pending") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         <div class="dropdown-item-custom @(SelectedStatusInput == "Approved" ? "selected" : "")" 
-                             @onclick='() => SelectStatus("Approved")'>
-                            <span>Approved</span>
+                              @onclick='() => SelectStatus("Approved")'>
+                            <span>@(LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved")</span>
                             @if (SelectedStatusInput == "Approved") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         <div class="dropdown-item-custom @(SelectedStatusInput == "Rejected" ? "selected" : "")" 
-                             @onclick='() => SelectStatus("Rejected")'>
-                            <span>Rejected</span>
+                              @onclick='() => SelectStatus("Rejected")'>
+                            <span>@(LangService.IsMyanmar ? "ပယ်ချပြီး" : "Rejected")</span>
                             @if (SelectedStatusInput == "Rejected") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                     </div>
@@ -332,12 +503,16 @@
             </div>
         </div>
 
-        <!-- Buttons -->
-        <div class="col-md-2 d-flex gap-2">
-            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" @onclick="ApplyFilter" title="Search">
+        <!-- Buttons with fixed 42px height matching inputs -->
+        <div class="col-md-2 d-flex gap-2 align-items-center">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" 
+                    style="height: 42px; min-height: 42px; background-color: #5A4FCF !important; border-color: #5A4FCF !important; border-radius: 8px; font-size: 1rem;" 
+                    @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                 <i class="bi bi-search"></i>
             </button>
-            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" @onclick="ResetFilter" title="Reset">
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" 
+                    style="height: 42px; min-height: 42px; border-radius: 8px; font-size: 1rem;" 
+                    @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>
@@ -350,31 +525,31 @@
     {
         <div class="text-center my-5">
             <div class="spinner-border text-primary"></div>
-            <div class="text-dark mt-3 small fw-bold">Account Register Request စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+            <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading account requests...")</div>
         </div>
     }
     else if (Items == null || !Items.Any())
     {
         <div class="text-center py-5 text-dark fw-bold">
             <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
-            ပြသရန် Account Request မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။
+            @(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No account requests found.")
         </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 acc-table">
+        <div class="custom-table-container">
+            <table class="table align-middle mb-0 custom-table">
                 <thead>
                     <tr>
-                        <th style="width: 5%;">NO.</th>
-                        <th>Name</th>
-                        <th>Email / Phone</th>
-                        <th>Form No</th>
-                        <th>Exam Seat No</th>
-                        <th>Status</th>
-                        <th>Submitted</th>
-                        <th class="text-center">Actions</th>
-                        <th class="text-center">Acc Status</th>
+                        <th style="width: 60px; text-align: center;">@(LangService.IsMyanmar ? "စဉ်" : "NO.")</th>
+                        <th style="min-width: 140px;">@(LangService.IsMyanmar ? "အမည်" : "Name")</th>
+                        <th style="min-width: 220px;">@(LangService.IsMyanmar ? "အီးမေးလ် / ဖုန်း" : "Email / Phone")</th>
+                        <th style="min-width: 130px; text-align: center;">@(LangService.IsMyanmar ? "ဖောင်အမှတ်" : "Form No")</th>
+                        <th style="min-width: 130px; text-align: center;">@(LangService.IsMyanmar ? "ခုံအမှတ်" : "Exam Seat No")</th>
+                        <th style="min-width: 140px; text-align: center;">@(LangService.IsMyanmar ? "အခြေအနေ" : "Status")</th>
+                        <th style="min-width: 150px;">@(LangService.IsMyanmar ? "တင်သွင်းချိန်" : "Submitted")</th>
+                        <th style="min-width: 180px; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
+                        <th style="min-width: 140px; text-align: center;">@(LangService.IsMyanmar ? "အကောင့် အခြေအနေ" : "Acc Status")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -384,67 +559,86 @@
                     @foreach (var item in Items)
                     {
                         <tr class="table-row-hover">
-                            <td class="fw-bold text-dark">@rowNo.ToString("D2")</td>
+                            <td class="fw-bold text-dark text-center">@rowNo.ToString("D2")</td>
                             <td>
-                                <div class="fw-bold text-dark">@item.FullName</div>
+                                <span class="fw-bold text-dark d-block">@item.FullName</span>
                             </td>
                             <td>
-                                <div class="fw-bold text-primary" style="font-size:0.83rem;">@item.Email</div>
-                                @if (!string.IsNullOrEmpty(item.Phone))
+                                <div>
+                                    <span class="text-dark fw-bold" style="font-size: 0.88rem;">@item.Email</span>
+                                    <small class="text-secondary d-block">@(item.Phone ?? "-")</small>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="badge bg-light text-dark fw-bold border px-2.5 py-1.5" style="font-size: 0.85rem; border-color: #cbd5e1 !important;">@(item.FormNo ?? "-")</span></td>
+                            <td class="text-center"><span class="badge bg-light text-dark fw-bold border px-2.5 py-1.5" style="font-size: 0.85rem; border-color: #cbd5e1 !important;">@(item.ExamSeatNo ?? "-")</span></td>
+                            <td class="text-center">
+                                @if (item.Status == "Approved")
                                 {
-                                    <div class="fw-bold text-secondary small">@item.Phone</div>
+                                    <span class="badge-status-approved">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span style="color:#ffffff !important">@(LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved")</span>
+                                    </span>
+                                }
+                                else if (item.Status == "Rejected")
+                                {
+                                    <span class="badge-status-rejected me-4">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                        <span style="color:#ffffff !important">@(LangService.IsMyanmar ? "ပယ်ချပြီး" : "Rejected")</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status-pending">
+                                        <i class="bi bi-clock-fill"></i>
+                                        <span style="color:#ffffff !important">@(LangService.IsMyanmar ? "စောင့်ဆိုင်းဆဲ" : "Pending")</span>
+                                    </span>
                                 }
                             </td>
-                            <td><code class="fw-bold text-info">@(item.FormNo ?? "-")</code></td>
-                            <td><code class="fw-bold text-warning">@(item.ExamSeatNo ?? "-")</code></td>
-                            <td>
-                                <span class="@StatusBadgeClass(item.Status) fw-bold">@item.Status</span>
-                                @if (item.Status == "Rejected" && !string.IsNullOrEmpty(item.RejectionReason))
+                            <td class="text-secondary fw-semibold small">
+                                @(item.CreatedDateTime?.ToString("dd-MM-yyyy HH:mm") ?? "-")
+                            </td>
+                            <td class="text-center">
+                                @if (item.Status == "Pending")
                                 {
-                                    <div class="fw-bold text-secondary" style="font-size:0.74rem; margin-top:3px; max-width:180px;" title="@item.RejectionReason">
-                                        @(item.RejectionReason.Length > 40 ? item.RejectionReason[..40] + "…" : item.RejectionReason)
+                                    <div class="d-inline-flex gap-2">
+                                        <button class="btn-action-approve" @onclick="() => OpenApproveModal(item)" title="@(LangService.IsMyanmar ? "အတည်ပြုမည်" : "Approve")">
+                                            <i class="bi bi-check-lg"></i>
+                                            <span style="color:#ffffff !important">@(LangService.IsMyanmar ? "အတည်ပြုမည်" : "Approve")</span>
+                                        </button>
+                                        <button class="btn-action-reject" @onclick="() => OpenRejectModal(item)" title="@(LangService.IsMyanmar ? "ပယ်ချမည်" : "Reject")">
+                                            <i class="bi bi-x-lg"></i>
+                                            <span style="color:#ffffff !important">@(LangService.IsMyanmar ? "ပယ်ချမည်" : "Reject")</span>
+                                        </button>
                                     </div>
                                 }
-                            </td>
-                            <td class="fw-bold text-dark">@item.CreatedDateTime?.ToString("dd-MM-yyyy HH:mm")</td>
-                            <td>
-                                <div class="d-flex justify-content-center gap-2">
-                                     @if (item.Status == "Pending")
-                                     {
-                                         <button class="btn-action-approve fw-bold" @onclick="() => OpenApproveModal(item)" disabled="@IsProcessing">
-                                              <i class="bi bi-check-circle-fill"></i> Approve
-                                         </button>
-                                         <button class="btn-action-reject fw-bold" @onclick="() => OpenRejectModal(item)" disabled="@IsProcessing">
-                                              <i class="bi bi-x-circle-fill"></i> Reject
-                                         </button>
-                                     }
-                                     else
-                                     {
-                                         <span class="fw-bold text-dark" style="font-size:0.8rem;">
-                                             @item.ReviewedBy — @item.ReviewedDateTime?.ToString("dd-MM-yyyy")
-                                         </span>
-                                     }
-                                 </div>
+                                else
+                                {
+                                    <span class="text-secondary small fw-semibold">
+                                        @(item.ReviewedBy != null ? $"{item.ReviewedBy} — {item.ReviewedDateTime?.ToString("dd-MM-yyyy")}" : "-")
+                                    </span>
+                                }
                             </td>
                             <td class="text-center">
                                 @if (item.Status == "Approved")
                                 {
                                     @if ((item.AccountStatus ?? "Active") == "Active")
                                     {
-                                        <button class="btn btn-sm btn-success fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
-                                            <i class="bi bi-shield-check me-1 text-white"></i> Active
+                                        <button class="btn-acc-active" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-shield-check"></i>
+                                            <span style="color:#ffffff !important">@(LangService.IsMyanmar ? "အသုံးပြုဆဲ" : "Active")</span>
                                         </button>
                                     }
                                     else
                                     {
-                                        <button class="btn btn-sm btn-danger fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
-                                            <i class="bi bi-shield-slash me-1 text-white"></i> Inactive
+                                        <button class="btn-acc-inactive" @onclick="() => OpenStatusModal(item)" disabled="@IsProcessing">
+                                            <i class="bi bi-shield-slash"></i>
+                                            <span style="color:#ffffff !important">@(LangService.IsMyanmar ? "ပိတ်ထားသည်" : "Inactive")</span>
                                         </button>
                                     }
                                 }
                                 else
                                 {
-                                    <span class="text-muted fw-bold" style="font-size:0.8rem;">-</span>
+                                    <span class="text-muted fw-bold" style="font-size:0.85rem;">-</span>
                                 }
                             </td>
                         </tr>
@@ -458,55 +652,93 @@
     }
 </div>
 
-<!-- ── Approve Confirmation Modal ──────────────────────────────────── -->
+<!-- ── Material Design 3 Approve Confirmation Modal ─────────────────── -->
 @if (ShowApproveModal && SelectedItem != null)
 {
-    <div class="modal show d-block" style="background:rgba(0,0,0,0.6);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content tech-card">
-                <div class="modal-header border-0 pb-0">
-                    <div class="d-flex align-items-center gap-2">
-                        <div style="width:36px;height:36px;background:rgba(16,185,129,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-                            <i class="bi bi-check-circle-fill text-success"></i>
+    <div class="modal show d-block" style="background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+            <div class="modal-content border-0 shadow-24" style="border-radius: 24px; overflow: hidden; background: #ffffff;">
+                
+                <!-- Modal Header -->
+                <div class="modal-header border-0 pb-2 pt-4 px-4 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-4 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
+                             style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%); color: #10b981; border: 1.5px solid rgba(16, 185, 129, 0.3);">
+                            <i class="bi bi-shield-check fs-4"></i>
                         </div>
-                        <h5 class="text-success mb-0">Confirm Approve</h5>
-                    </div>
-                </div>
-                <div class="modal-body">
-                    <p class="text-secondary mb-3" style="font-size:0.87rem;">
-                        ဤ Request ကို Approve လုပ်မည်။ Student Account အသစ် auto-create ဖြစ်ပြီး Login credentials ကို Email ဖြင့် ပေးပို့မည်။
-                    </p>
-                    <div class="p-3" style="background:rgba(255,255,255,0.03);border-radius:10px;">
-                        <div class="modal-info-row">
-                            <span class="modal-info-label">Name</span>
-                            <span class="modal-info-val">@SelectedItem.FullName</span>
-                        </div>
-                        <div class="modal-info-row">
-                            <span class="modal-info-label">Email</span>
-                            <span class="modal-info-val" style="color:#93c5fd;">@SelectedItem.Email</span>
-                        </div>
-                        <div class="modal-info-row">
-                            <span class="modal-info-label">Form No</span>
-                            <span class="modal-info-val">@SelectedItem.FormNo</span>
-                        </div>
-                        <div class="modal-info-row">
-                            <span class="modal-info-label">Exam Seat No</span>
-                            <span class="modal-info-val">@SelectedItem.ExamSeatNo</span>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.2px;">
+                                @(LangService.IsMyanmar ? "ကျောင်းသားအကောင့် အတည်ပြုရန်" : "Confirm Account Approval")
+                            </h5>
+                            <small class="text-secondary" style="font-size: 0.82rem;">
+                                @(LangService.IsMyanmar ? "Student Account ဖွင့်ပေးပြီး Email ပေးပို့မည်" : "Student account will be generated & credentials emailed")
+                            </small>
                         </div>
                     </div>
+                    <button type="button" class="btn-close" @onclick="CloseApproveModal" disabled="@IsProcessing"></button>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button class="btn btn-secondary" @onclick="CloseApproveModal" disabled="@IsProcessing">Cancel</button>
-                    <button class="btn btn-success" @onclick="ConfirmApprove" disabled="@IsProcessing">
+
+                <!-- Modal Body -->
+                <div class="modal-body px-4 py-3">
+                    <!-- Surface Card Info Container -->
+                    <div class="p-3 rounded-4 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                            <span class="text-secondary small fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-person text-muted fs-6"></i>
+                                @(LangService.IsMyanmar ? "ကျောင်းသား အမည်" : "Student Name")
+                            </span>
+                            <span class="text-dark fw-bold" style="font-size: 0.95rem;">@SelectedItem.FullName</span>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                            <span class="text-secondary small fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-envelope text-muted fs-6"></i>
+                                @(LangService.IsMyanmar ? "အီးမေးလ် လိပ်စာ" : "Email Address")
+                            </span>
+                            <span class="fw-bold" style="color: #0d6efd; font-size: 0.9rem;">@SelectedItem.Email</span>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom" style="border-color: #e2e8f0 !important;">
+                            <span class="text-secondary small fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-text text-muted fs-6"></i>
+                                @(LangService.IsMyanmar ? "တက္ကသိုလ်ဝင် Form No" : "Form No")
+                            </span>
+                            <span class="badge bg-light text-dark fw-bold border px-2.5 py-1.5" style="font-size: 0.88rem; border-color: #cbd5e1 !important;">@SelectedItem.FormNo</span>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between py-2">
+                            <span class="text-secondary small fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-card-heading text-muted fs-6"></i>
+                                @(LangService.IsMyanmar ? "ဆယ်တန်း ခုံအမှတ်" : "Exam Seat No")
+                            </span>
+                            <span class="badge bg-light text-dark fw-bold border px-2.5 py-1.5" style="font-size: 0.88rem; border-color: #cbd5e1 !important;">@SelectedItem.ExamSeatNo</span>
+                        </div>
+                    </div>
+
+                    <div class="alert d-flex align-items-center gap-2 py-2 px-3 mb-0 rounded-3 border-0" 
+                         style="background: rgba(16, 185, 129, 0.1); color: #065f46; font-size: 0.82rem;">
+                        <i class="bi bi-info-circle-fill text-success fs-6 flex-shrink-0"></i>
+                        <span>@(LangService.IsMyanmar ? "အတည်ပြုပြီးပါက ကျောင်းသားထံသို့ Username နှင့် Password အား Email သို့ အလိုအလျောက် ပေးပို့ပါမည်။" : "Upon approval, login credentials will be automatically emailed to the student.")</span>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer border-0 px-4 pb-4 pt-1 d-flex justify-content-end gap-2">
+                    <button class="btn btn-light rounded-pill px-4 fw-semibold" style="border: 1px solid #cbd5e1;" @onclick="CloseApproveModal" disabled="@IsProcessing">
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
+                    </button>
+                    <button class="btn btn-success rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2" 
+                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding-top: 8px; padding-bottom: 8px;"
+                            @onclick="ConfirmApprove" disabled="@IsProcessing">
                         @if (IsProcessing)
                         {
-                            <span class="spinner-border spinner-border-sm me-1"></span>
-                            <span>Processing...</span>
+                            <span class="spinner-border spinner-border-sm"></span>
+                            <span>@(LangService.IsMyanmar ? "ဆောင်ရွက်နေသည်..." : "Processing...")</span>
                         }
                         else
                         {
-                            <i class="bi bi-check-lg me-1"></i>
-                            <span>Yes, Approve</span>
+                            <i class="bi bi-check2-circle fs-5"></i>
+                            <span>@(LangService.IsMyanmar ? "အတည်ပြုမည်" : "Yes, Approve")</span>
                         }
                     </button>
                 </div>
@@ -526,39 +758,41 @@
                         <div style="width:36px;height:36px;background:rgba(239,68,68,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;">
                             <i class="bi bi-x-circle-fill text-danger"></i>
                         </div>
-                        <h5 class="text-danger mb-0">Confirm Reject</h5>
+                        <h5 class="text-danger mb-0">@(LangService.IsMyanmar ? "ပယ်ချရန် သေချာပါသလား" : "Confirm Reject")</h5>
                     </div>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3 p-3" style="background:rgba(255,255,255,0.03);border-radius:10px;">
                         <div class="modal-info-row">
-                            <span class="modal-info-label">Name</span>
-                            <span class="modal-info-val">@SelectedItem.FullName</span>
+                            <span class="modal-info-label">@(LangService.IsMyanmar ? "အမည်" : "Name")</span>
+                            <span class="modal-info-val text-dark fw-bold">@SelectedItem.FullName</span>
                         </div>
                         <div class="modal-info-row">
-                            <span class="modal-info-label">Email</span>
-                            <span class="modal-info-val" style="color:#93c5fd;">@SelectedItem.Email</span>
+                            <span class="modal-info-label">@(LangService.IsMyanmar ? "အီးမေးလ်" : "Email")</span>
+                            <span class="modal-info-val" style="color:#0d6efd;">@SelectedItem.Email</span>
                         </div>
                     </div>
                     <label class="form-label text-secondary mb-1" style="font-size:0.85rem; font-weight:600;">
-                        Rejection Reason <span style="color:#64748b;">(Optional)</span>
+                        @(LangService.IsMyanmar ? "ပယ်ချရသည့် အကြောင်းအရင်း" : "Rejection Reason") <span style="color:#64748b;">(@(LangService.IsMyanmar ? "ရွေးချယ်ရန်" : "Optional"))</span>
                     </label>
                     <textarea class="form-control reject-textarea" rows="3"
-                              placeholder="ငြင်းပယ်ရတဲ့ အကြောင်းရင်းကို ဖော်ပြနိုင်ပါသည်..."
+                              placeholder="@(LangService.IsMyanmar ? "ငြင်းပယ်ရသည့် အကြောင်းရင်းကို ဖော်ပြနိုင်ပါသည်..." : "Enter reason for rejection...")"
                               @bind="RejectReason"></textarea>
                 </div>
                 <div class="modal-footer border-0 pt-0">
-                    <button class="btn btn-secondary" @onclick="CloseRejectModal" disabled="@IsProcessing">Cancel</button>
+                    <button class="btn btn-secondary" @onclick="CloseRejectModal" disabled="@IsProcessing">
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
+                    </button>
                     <button class="btn btn-danger" @onclick="ConfirmReject" disabled="@IsProcessing">
                         @if (IsProcessing)
                         {
                             <span class="spinner-border spinner-border-sm me-1"></span>
-                            <span>Processing...</span>
+                            <span>@(LangService.IsMyanmar ? "ဆောင်ရွက်နေသည်..." : "Processing...")</span>
                         }
                         else
                         {
                             <i class="bi bi-x-lg me-1"></i>
-                            <span>Yes, Reject</span>
+                            <span>@(LangService.IsMyanmar ? "ပယ်ချမည်" : "Yes, Reject")</span>
                         }
                     </button>
                 </div>
@@ -578,29 +812,31 @@
                         <div style="width:36px;height:36px;background:rgba(13,110,253,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;">
                             <i class="bi bi-shield-check text-primary"></i>
                         </div>
-                        <h5 class="text-primary mb-0">Confirm Status Change</h5>
+                        <h5 class="text-primary mb-0">@(LangService.IsMyanmar ? "အကောင့် အခြေအနေ ပြောင်းလဲခြင်း" : "Confirm Status Change")</h5>
                     </div>
                 </div>
-                <div class="modal-body text-center text-white">
-                    <p class="text-secondary mb-3" style="font-size:0.87rem;">
-                        ဤအသုံးပြုသူ <strong>@SelectedItem.FullName</strong> ၏ Account Status အား 
+                <div class="modal-body text-center text-dark">
+                    <p class="mb-3" style="font-size:0.87rem;">
+                        @(LangService.IsMyanmar ? $"ဤအသုံးပြုသူ \"{SelectedItem.FullName}\" ၏ Account Status အား " : $"Are you sure to change account status of {SelectedItem.FullName} to ")
                         <strong class="@(string.Equals(SelectedItem.AccountStatus, "Active", StringComparison.OrdinalIgnoreCase) ? "text-danger" : "text-success")">
-                            @(string.Equals(SelectedItem.AccountStatus, "Active", StringComparison.OrdinalIgnoreCase) ? "Inactive" : "Active")
-                        </strong> သို့ ပြောင်းလဲရန် သေချာပါသလား?
+                            @(string.Equals(SelectedItem.AccountStatus, "Active", StringComparison.OrdinalIgnoreCase) ? (LangService.IsMyanmar ? "Inactive" : "Inactive") : (LangService.IsMyanmar ? "Active" : "Active"))
+                        </strong> @(LangService.IsMyanmar ? "သို့ ပြောင်းလဲရန် သေချာပါသလား?" : "?")
                     </p>
                 </div>
                 <div class="modal-footer border-0 pt-0">
-                    <button class="btn btn-secondary" @onclick="CloseStatusModal" disabled="@IsProcessing">Cancel</button>
-                    <button class="btn btn-primary" @onclick="ConfirmToggleStatus" disabled="@IsProcessing">
+                    <button class="btn btn-secondary" @onclick="CloseStatusModal" disabled="@IsProcessing">
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
+                    </button>
+                    <button class="btn btn-primary" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" @onclick="ConfirmToggleStatus" disabled="@IsProcessing">
                         @if (IsProcessing)
                         {
                             <span class="spinner-border spinner-border-sm me-1"></span>
-                            <span>Processing...</span>
+                            <span>@(LangService.IsMyanmar ? "ဆောင်ရွက်နေသည်..." : "Processing...")</span>
                         }
                         else
                         {
                             <i class="bi bi-check-lg me-1"></i>
-                            <span>Confirm</span>
+                            <span>@(LangService.IsMyanmar ? "အတည်ပြုသည်" : "Confirm")</span>
                         }
                     </button>
                 </div>

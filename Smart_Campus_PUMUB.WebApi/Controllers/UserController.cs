@@ -404,6 +404,9 @@ public class UserController : ControllerBase
             item.Status = request.Status;
         }
 
+        // 🔄 Synchronize updated student data across Student, StudentPersonalInfo, and StudentRegistrations
+        SyncStudentData(item.UserId, item.RoleNo, item.FullName, item.Email);
+
         int result = _db.SaveChanges();
         _db.Activities.Add(new Activity
         {
@@ -503,6 +506,9 @@ public class UserController : ControllerBase
         {
             return BadRequest(new UserUpdateResponseModel { IsSuccess = false, Message = "ပြင်ဆင်ရန် အချက်အလက်များ လိုအပ်ပါသည်။" });
         }
+
+        // 🔄 Synchronize updated student data across Student, StudentPersonalInfo, and StudentRegistrations
+        SyncStudentData(item.UserId, item.RoleNo, item.FullName, item.Email);
 
         int result = _db.SaveChanges();
 
@@ -848,6 +854,48 @@ public class UserController : ControllerBase
         };
 
         return Ok(result);
+    }
+
+    // 🔄 Helper method to synchronize updated student data across related tables
+    private void SyncStudentData(int userId, string? roleNo, string? fullName, string? email)
+    {
+        try
+        {
+            // 1. Sync Student table
+            var students = _db.Students.Where(s => s.UserId == userId).ToList();
+            foreach (var s in students)
+            {
+                if (!string.IsNullOrWhiteSpace(roleNo)) s.CurrentRollNo = roleNo.Trim();
+                if (!string.IsNullOrWhiteSpace(fullName)) s.StudentName = fullName.Trim();
+                if (!string.IsNullOrWhiteSpace(email)) s.Email = email.Trim();
+            }
+
+            // 2. Sync StudentPersonalInfo table
+            var personalInfos = _db.StudentPersonalInfos.Where(p => p.UserId == userId).ToList();
+            foreach (var p in personalInfos)
+            {
+                if (!string.IsNullOrWhiteSpace(roleNo))
+                {
+                    p.roll_no = roleNo.Trim();
+                    p.previous_year_roll_no = roleNo.Trim();
+                }
+                if (!string.IsNullOrWhiteSpace(fullName)) p.student_name_mm = fullName.Trim();
+                if (!string.IsNullOrWhiteSpace(email)) p.email = email.Trim();
+            }
+
+            // 3. Sync Student_Registrations table
+            var registrations = _db.StudentRegistrations.Where(r => r.UserId == userId).ToList();
+            foreach (var r in registrations)
+            {
+                if (!string.IsNullOrWhiteSpace(roleNo)) r.RollNo = roleNo.Trim();
+                if (!string.IsNullOrWhiteSpace(fullName)) r.StudentNameMm = fullName.Trim();
+                if (!string.IsNullOrWhiteSpace(email)) r.Email = email.Trim();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error syncing student data for User {userId}: {ex.Message}");
+        }
     }
 
     // 💡 ကုဒ်များ ထပ်ခါတလဲလဲ မဖြစ်စေရန် Password Policy ကို ခွဲထုတ်ထားသော သီးသန့် Private Method

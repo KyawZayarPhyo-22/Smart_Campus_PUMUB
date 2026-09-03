@@ -11,13 +11,26 @@ using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Activity;
 
-public partial class Page_ActivityList
+public partial class Page_ActivityList : IDisposable
 {
     private bool confirmed;
 
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
+    [Inject] public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; set; } = null!;
+
+    public string GetFullImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return "";
+        if (path.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return path;
+        if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return path;
+
+        var baseUrl = Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5077";
+        return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
+    }
 
     private List<ActivityModel> ActivityList { get; set; } = new();
     private List<string> LocationList { get; set; } = new();
@@ -46,7 +59,6 @@ public partial class Page_ActivityList
     {
         SelectedLocationInput = loc ?? "All";
         isLocationDropdownOpen = false;
-        // Search button နှိပ်မှသာ Filter ဖြစ်မည်
     }
 
     private void CloseAllDropdowns()
@@ -100,6 +112,7 @@ public partial class Page_ActivityList
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadLocations();
         await LoadActivities();
     }
@@ -117,6 +130,16 @@ public partial class Page_ActivityList
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -141,7 +164,7 @@ public partial class Page_ActivityList
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<ActivityModel>>(
                 $"activity/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}&location={Uri.EscapeDataString(SelectedLocation)}", 
                 EnumHttpMethod.Get
@@ -157,7 +180,7 @@ public partial class Page_ActivityList
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
+            ErrorMessage = LangService.IsMyanmar ? $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}" : $"Failed to load data. Error: {ex.Message}";
         }
         finally 
         { 
@@ -192,9 +215,7 @@ public partial class Page_ActivityList
         if (SelectedActivity == null) return;
 
         IsProcessing = true;
-
-        // UI reset + loading message
-        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -207,17 +228,17 @@ public partial class Page_ActivityList
             if (response?.IsSuccess == true)
             {
                 IsSuccess = true;
-                statusMessage = response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
 
                 await LoadActivities();
 
-                await Task.Delay(800); // show success message briefly
+                await Task.Delay(800);
                 CloseDeleteModal();
             }
             else
             {
                 IsSuccess = false;
-                statusMessage = response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။";
+                statusMessage = LangService.IsMyanmar ? "ဤ လှုပ်ရှားမှု ကို ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this activity.");
             }
         }
         catch (Exception ex)
@@ -229,5 +250,10 @@ public partial class Page_ActivityList
         {
             IsProcessing = false;
         }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

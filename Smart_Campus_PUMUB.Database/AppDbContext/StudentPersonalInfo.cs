@@ -63,6 +63,14 @@ public class StudentPersonalInfo
     public string? nrc_township { get; set; }
     public string? nrc_type { get; set; }
     public string? nrc_number { get; set; }
+    public string? student_image { get; set; }
+    public string? nrc_front_image { get; set; }
+    public string? nrc_back_image { get; set; }
+    public string? census_image { get; set; }
+    public string? father_nrc_front_image { get; set; }
+    public string? father_nrc_back_image { get; set; }
+    public string? mother_nrc_front_image { get; set; }
+    public string? mother_nrc_back_image { get; set; }
     
     // Legacy mapping aliases (since I used these in previous version)
     [NotMapped]

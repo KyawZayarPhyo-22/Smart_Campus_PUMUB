@@ -5,19 +5,19 @@ using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Semester;
 
-public partial class Page_SemesterList
+public partial class Page_SemesterList : IDisposable
 {
-    private string statusMessage;
+    private string statusMessage = "";
 
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<SemesterModel> SemesterList { get; set; } = new();
     private string SearchTerm { get; set; } = "";
@@ -73,12 +73,23 @@ public partial class Page_SemesterList
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadSemesters();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -103,7 +114,7 @@ public partial class Page_SemesterList
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<SemesterModel>>(
                 $"semester/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
@@ -119,7 +130,7 @@ public partial class Page_SemesterList
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
+            ErrorMessage = LangService.IsMyanmar ? $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}" : $"Failed to load data. Error: {ex.Message}";
         }
         finally 
         { 
@@ -148,8 +159,7 @@ public partial class Page_SemesterList
         if (SelectedSemester == null) return;
 
         IsProcessing = true;
-
-        statusMessage = string.Empty;
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -162,7 +172,7 @@ public partial class Page_SemesterList
             if (response != null && response.IsSuccess)
             {
                 IsSuccess = true;
-                statusMessage = response.Message ?? "Deleted successfully.";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
 
                 await LoadSemesters();
 
@@ -172,21 +182,22 @@ public partial class Page_SemesterList
             else
             {
                 IsSuccess = false;
-
-                // 🔥 same as Role style (simple fallback message)
-                statusMessage = response?.Message
-                    ?? "ဒီ Semester ကို အသုံးပြုထားသော Data များရှိနေသောကြောင့် ဖျက်၍ မရပါ။";
+                statusMessage = LangService.IsMyanmar ? "ဤ စာသင်နှစ်ဝက် ကို အသုံးပြုထားသောကြောင့် ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this semester because it is in use.");
             }
         }
         catch
         {
             IsSuccess = false;
-
-            statusMessage = "Server သို့ ချိတ်ဆက်ရာတွင် အမှားဖြစ်နေပါသည်။";
+            statusMessage = LangService.IsMyanmar ? "ဤ စာသင်နှစ်ဝက် ကို အသုံးပြုထားသောကြောင့် ဖျက်၍ မရပါ။" : "Cannot delete this semester.";
         }
         finally
         {
             IsProcessing = false;
         }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

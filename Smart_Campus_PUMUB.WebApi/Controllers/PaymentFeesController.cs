@@ -189,7 +189,7 @@ public class PaymentFeesController : ControllerBase
     }
 
     [HttpGet("paginate")]
-    [AllowAnonymous]
+    [Permission("PaymentFee.View")]
     public IActionResult GetPaymentFeesPaginated(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,

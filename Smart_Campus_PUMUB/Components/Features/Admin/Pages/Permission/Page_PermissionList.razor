@@ -4,6 +4,8 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "လုပ်ပိုင်ခွင့်များ" : "Permission Directory")</PageTitle>
+
 <style>
     .custom-table {
         background: rgba(20, 24, 33, 0.6);
@@ -76,15 +78,18 @@
 </style>
 
 <div class="tab-pane fade show active" id="v-pills-permission">
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-        <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-                <i class="bi bi-shield-lock fs-5" style="color: #5A4FCF;"></i>
-            </div>
-            <div>
-                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Permission Directory</h4>
-                <small class="text-secondary">စနစ်တွင်း အသုံးပြုသူများ၏ လုပ်ပိုင်ခွင့် ခွင့်ပြုချက်များ စီမံခန့်ခွဲခြင်း</small>
-            </div>
+    <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+            <i class="bi bi-shield-lock fs-5" style="color: #0d6efd;"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "လုပ်ပိုင်ခွင့်များ" : "Permission Directory")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "စနစ်တွင်း အသုံးပြုသူများ၏ လုပ်ပိုင်ခွင့် ခွင့်ပြုချက်များ စီမံခန့်ခွဲခြင်း" : "Manage system permissions and access rights")
+            </small>
         </div>
     </div>
 
@@ -95,23 +100,23 @@
             <div class="col">
                 <div class="position-relative">
                     <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Permission Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "လုပ်ပိုင်ခွင့်အမည်ဖြင့် ရှာရန်..." : "Search by Permission Name...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
             <!-- Search and Reset Buttons -->
             <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                     <i class="bi bi-search"></i>
                 </button>
-                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
 
             <!-- Add Button -->
             <div class="col-auto">
-                <NavLink href="/admin/permission/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Permission">
+                <NavLink href="/admin/permission/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Permission")">
                     <i class="bi bi-plus-lg"></i>
                 </NavLink>
             </div>
@@ -126,7 +131,7 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <div class="text-dark mt-3 small fw-bold">Permissions စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading permissions...")</div>
             </div>
         }
         else if (!string.IsNullOrEmpty(ErrorMessage))
@@ -139,7 +144,7 @@
         {
             <div class="text-center my-5 text-dark">
                 <i class="bi bi-folder-x display-4 text-secondary"></i>
-                <p class="mt-3 mb-0 small fw-bold text-dark">ပြသရန် Permission မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
+                <p class="mt-3 mb-0 small fw-bold text-dark">@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No permissions found.")</p>
             </div>
         }
         else
@@ -148,9 +153,9 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 15%;">ID</th>
-                            <th style="width: 50%;">Permission Name</th>
-                            <th style="width: 35%; text-align: center;">Actions</th>
+                            <th style="width: 15%;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th style="width: 55%;">@(LangService.IsMyanmar ? "လုပ်ပိုင်ခွင့် အမည်" : "Permission Name")</th>
+                            <th style="width: 30%; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -167,10 +172,10 @@
                                 <td>
                                     <div class="d-flex justify-content-center align-items-center gap-2">
                                         <NavLink href="@($"/admin/permission/edit/{perm.PermissionId}")" class="btn btn-action-edit">
-                                            <i class="bi bi-pencil me-1.5"></i> Edit
+                                            <i class="bi bi-pencil me-1.5"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
                                         </NavLink>
                                         <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(perm)">
-                                            <i class="bi bi-trash me-1.5"></i> Delete
+                                            <i class="bi bi-trash me-1.5"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
                                         </button>
                                     </div>
                                 </td>
@@ -194,11 +199,11 @@
             <div class="modal-content tech-card">
 
                 <div class="modal-header border-0">
-                    <h5 class="text-danger">Confirm Delete</h5>
+                    <h5 class="text-danger">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
                 </div>
 
                 <div class="modal-body text-center">
-                    Are you sure to delete <strong>@SelectedPermission?.PermissionName</strong>?
+                    @(LangService.IsMyanmar ? $"ဤ လုပ်ပိုင်ခွင့် \"{SelectedPermission?.PermissionName}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure to delete {SelectedPermission?.PermissionName}?")
 
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
@@ -218,13 +223,13 @@
                     <button class="btn btn-secondary"
                             @onclick="CloseDeleteModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
                     <button class="btn btn-danger"
                             @onclick="DeletePermission"
                             disabled="@(IsProcessing || IsSuccess)">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
 

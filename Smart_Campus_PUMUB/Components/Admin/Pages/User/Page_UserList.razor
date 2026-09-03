@@ -4,7 +4,7 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
-<PageTitle>User Management</PageTitle>
+<PageTitle>@(LangService.IsMyanmar ? "အသုံးပြုသူများ" : "User Directory")</PageTitle>
 
 <style>
     .custom-table {
@@ -95,7 +95,7 @@
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        max-height: 228px; /* Approximately 6 items */
+        max-height: 228px;
         overflow-y: auto;
         z-index: 1050;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
@@ -136,13 +136,13 @@
 
     .dropdown-item-custom:hover {
         background-color: #f3f4f6;
-        color: #5A4FCF;
+        color: #0d6efd;
         font-weight: 600;
     }
 
     .dropdown-item-custom.selected {
-        background-color: rgba(90, 79, 207, 0.08);
-        color: #5A4FCF;
+        background-color: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
         font-weight: 700;
     }
 </style>
@@ -152,15 +152,18 @@
     <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
 }
 
-<div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-    <div class="d-flex align-items-center">
-        <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-            <i class="bi bi-people-fill fs-5" style="color: #5A4FCF;"></i>
-        </div>
-        <div>
-            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">User Management</h4>
-            <small class="text-secondary">အသုံးပြုသူ အကောင့်များနှင့် အခန်းကဏ္ဍများ စီမံခန့်ခွဲခြင်း</small>
-        </div>
+<div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+    <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+         style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+        <i class="bi bi-people-fill fs-5" style="color: #0d6efd;"></i>
+    </div>
+    <div>
+        <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+            @(LangService.IsMyanmar ? "အသုံးပြုသူများ" : "User Directory")
+        </h4>
+        <small class="text-secondary d-block">
+            @(LangService.IsMyanmar ? "အသုံးပြုသူ အကောင့်များနှင့် အခန်းကဏ္ဍများ စီမံခန့်ခွဲခြင်း" : "Manage user accounts and role assignments")
+        </small>
     </div>
 </div>
 
@@ -171,16 +174,16 @@
         <div class="col">
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Username or Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "အမည် သို့မဟုတ် အကောင့်အမည်ဖြင့် ရှာရန်..." : "Search by Username or Name...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <!-- Role Custom Dropdown (approx 6 items height with scroll) -->
+        <!-- Role Custom Dropdown -->
         <div class="col-md-3">
             <div class="custom-dropdown-container">
                 <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                         @onclick="ToggleRoleDropdown">
-                    <span class="text-truncate">@(SelectedRoleInput == "All" ? "All Roles" : SelectedRoleInput)</span>
+                    <span class="text-truncate">@(SelectedRoleInput == "All" ? (LangService.IsMyanmar ? "အခန်းကဏ္ဍ အားလုံး" : "All Roles") : SelectedRoleInput)</span>
                     <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                 </button>
 
@@ -189,7 +192,7 @@
                     <div class="custom-dropdown-menu shadow">
                         <div class="dropdown-item-custom @(SelectedRoleInput == "All" ? "selected" : "")" 
                              @onclick='() => SelectRole("All")'>
-                            <span>All Roles</span>
+                            <span>@(LangService.IsMyanmar ? "အခန်းကဏ္ဍ အားလုံး" : "All Roles")</span>
                             @if (SelectedRoleInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         @if (RoleList != null)
@@ -208,12 +211,12 @@
             </div>
         </div>
 
-        <!-- Faculty Custom Dropdown (approx 6 items height with scroll) -->
+        <!-- Faculty Custom Dropdown -->
         <div class="col-md-3">
             <div class="custom-dropdown-container">
                 <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                         @onclick="ToggleFacultyDropdown">
-                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? "All Faculties" : SelectedFacultyInput)</span>
+                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? (LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties") : SelectedFacultyInput)</span>
                     <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                 </button>
 
@@ -222,7 +225,7 @@
                     <div class="custom-dropdown-menu shadow">
                         <div class="dropdown-item-custom @(SelectedFacultyInput == "All" ? "selected" : "")" 
                              @onclick='() => SelectFaculty("All")'>
-                            <span>All Faculties</span>
+                            <span>@(LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties")</span>
                             @if (SelectedFacultyInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         @if (FacultyList != null)
@@ -243,10 +246,10 @@
 
         <!-- Search and Reset Buttons -->
         <div class="col-md-2 d-flex gap-2">
-            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                 <i class="bi bi-search"></i>
             </button>
-            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>
@@ -254,7 +257,7 @@
         <!-- Add Button -->
         <AuthorizeView Policy="User.Create">
             <div class="col-auto">
-                <NavLink href="/admin/user/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add User">
+                <NavLink href="/admin/user/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add User")">
                     <i class="bi bi-plus-lg"></i>
                 </NavLink>
             </div>
@@ -268,7 +271,7 @@
             {
                 <div class="text-center my-5">
                     <div class="spinner-border text-primary"></div>
-                    <div class="text-dark mt-3 small fw-bold">အသုံးပြုသူ စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                    <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading users...")</div>
                 </div>
             }
             else
@@ -277,15 +280,15 @@
                     <table class="table align-middle mb-0">
                         <thead>
                             <tr>
-                                <th>No.</th>
-                                <th>Username</th>
-                                <th>Roll No</th>
-                                <th>Role</th>
-                                <th>Faculty</th>
-                                <th class="text-center">Status</th>
+                                <th>@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                                <th>@(LangService.IsMyanmar ? "အကောင့်အမည်" : "Username")</th>
+                                <th>@(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll No")</th>
+                                <th>@(LangService.IsMyanmar ? "အခန်းကဏ္ဍ" : "Role")</th>
+                                <th>@(LangService.IsMyanmar ? "မဟာဌာန" : "Faculty")</th>
+                                <th class="text-center">@(LangService.IsMyanmar ? "အခြေအနေ" : "Status")</th>
                                 @if (canManageUser)
                                 {
-                                    <th class="text-center">Actions</th>
+                                    <th class="text-center">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                                 }
                             </tr>
                         </thead>
@@ -341,13 +344,13 @@
                                         @if (user.Status == "Active")
                                         {
                                             <button class="btn btn-sm btn-success fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => ToggleUserStatus(user)" disabled="@IsProcessing">
-                                                <i class="bi bi-shield-check me-1 text-white"></i> Active
+                                                <i class="bi bi-shield-check me-1 text-white"></i> @(LangService.IsMyanmar ? "အသုံးပြုဆဲ" : "Active")
                                             </button>
                                         }
                                         else
                                         {
                                             <button class="btn btn-sm btn-danger fw-bold text-white" style="font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:6px; min-width: 90px; color: #ffffff !important;" @onclick="() => ToggleUserStatus(user)" disabled="@IsProcessing">
-                                                <i class="bi bi-shield-slash me-1 text-white"></i> Inactive
+                                                <i class="bi bi-shield-slash me-1 text-white"></i> @(LangService.IsMyanmar ? "ပိတ်ထားသည်" : "Inactive")
                                             </button>
                                         }
                                     </td>
@@ -357,12 +360,12 @@
                                             <div class="d-flex justify-content-center align-items-center gap-2">
                                                 <AuthorizeView Policy="User.Edit">
                                                     <NavLink href="@($"/admin/user/edit/{user.UserId}")" class="btn btn-action-edit">
-                                                        <i class="bi bi-pencil me-1"></i> Edit
+                                                        <i class="bi bi-pencil me-1"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
                                                     </NavLink>
                                                 </AuthorizeView>
                                                 <AuthorizeView Policy="User.Delete">
                                                     <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(user)">
-                                                        <i class="bi bi-trash me-1"></i> Delete
+                                                        <i class="bi bi-trash me-1"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
                                                     </button>
                                                 </AuthorizeView>
                                             </div>
@@ -377,11 +380,10 @@
                                 <tr>
                                     <td colspan="@(canManageUser ? 7 : 6)" class="text-center py-5" style="text-align: center;">
                                         <div class="d-flex flex-column align-items-center justify-content-center py-4 w-100 text-center" style="min-height: 180px;">
-                                            <div class="rounded-circle p-3 mb-3 d-flex align-items-center justify-content-center" style="background: rgba(90, 79, 207, 0.08); width: 64px; height: 64px;">
-                                                <i class="bi bi-people fs-1" style="color: #5A4FCF;"></i>
+                                            <div class="rounded-circle p-3 mb-3 d-flex align-items-center justify-content-center" style="background: rgba(13, 110, 253, 0.08); width: 64px; height: 64px;">
+                                                <i class="bi bi-people fs-1" style="color: #0d6efd;"></i>
                                             </div>
-                                            <div class="fw-bold text-dark fs-6 mb-1">ပြသရန် User မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</div>
-                                            <small class="text-muted">ရှာဖွေမှုစကားလုံး သို့မဟုတ် Filter များကို ပြောင်းလဲရှာဖွေကြည့်ပါ</small>
+                                            <div class="fw-bold text-dark fs-6 mb-1">@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No users found.")</div>
                                         </div>
                                     </td>
                                 </tr>
@@ -394,7 +396,7 @@
             }
         </div>
 
-        @* Delete Modal (Department ပုံစံအတိုင်း ပြင်ထားသည်) *@
+@* Delete Modal *@
 @if (ShowModal)
 {
     <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
@@ -402,26 +404,36 @@
             <div class="modal-content tech-card">
 
                 <div class="modal-header border-0">
-                    <h5 class="text-danger">Confirm Delete</h5>
+                    <h5 class="text-danger">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
                 </div>
 
                 <div class="modal-body text-center">
+                    @(LangService.IsMyanmar ? $"ဤ အသုံးပြုသူ \"{SelectedUser?.FullName}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure to delete {SelectedUser?.FullName}?")
 
-                    Are you sure to delete <strong>@SelectedUser?.FullName</strong>?
-
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="mt-3 p-3 rounded"
+                             style="background: @(IsSuccess ? "rgba(25, 135, 84, 0.15)" : "rgba(220, 53, 69, 0.15)");
+                            border: 1px solid @(IsSuccess ? "#198754" : "#dc3545");">
+                            <span style="color: @(IsSuccess ? "#75b798" : "#ea868f"); font-size: 0.9rem;">
+                                <i class="bi @(IsSuccess ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+                                @statusMessage
+                            </span>
+                        </div>
+                    }
                 </div>
 
                 <div class="modal-footer border-0">
                     <button class="btn btn-secondary"
                             @onclick="CloseDeleteModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
                     <button class="btn btn-danger"
                             @onclick="DeleteUser"
-                            disabled="@IsProcessing">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                            disabled="@(IsProcessing || IsSuccess)">
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
 
@@ -438,25 +450,24 @@
             <div class="modal-content tech-card">
 
                 <div class="modal-header border-0">
-                    <h5 class="text-primary">Confirm Status Change</h5>
+                    <h5 class="text-primary">@(LangService.IsMyanmar ? "အခြေအနေ ပြောင်းလဲခြင်း" : "Confirm Status Change")</h5>
                 </div>
 
-                <div class="modal-body text-center text-white">
-                    ဤအသုံးပြုသူ <strong>@SelectedUserForStatus?.FullName</strong> ၏ Status အား 
-                    <strong class="@(TargetStatusString == "Active" ? "text-success" : "text-danger")">@TargetStatusString</strong> သို့ ပြောင်းလဲရန် သေချာပါသလား?
+                <div class="modal-body text-center text-dark">
+                    @(LangService.IsMyanmar ? $"ဤအသုံးပြုသူ \"{SelectedUserForStatus?.FullName}\" ၏ Status အား {(TargetStatusString == "Active" ? "Active" : "Inactive")} သို့ ပြောင်းလဲရန် သေချာပါသလား?" : $"Are you sure to change status of {SelectedUserForStatus?.FullName} to {TargetStatusString}?")
                 </div>
 
                 <div class="modal-footer border-0">
                     <button class="btn btn-secondary"
                             @onclick="CloseStatusModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
-                    <button class="btn btn-primary"
+                    <button class="btn btn-primary" style="background-color: #0d6efd !important; border-color: #0d6efd !important;"
                             @onclick="ConfirmToggleUserStatus"
                             disabled="@IsProcessing">
-                        @(IsProcessing ? "Processing..." : "Confirm")
+                        @(IsProcessing ? (LangService.IsMyanmar ? "လုပ်ဆောင်နေသည်..." : "Processing...") : (LangService.IsMyanmar ? "အတည်ပြုသည်" : "Confirm"))
                     </button>
                 </div>
 

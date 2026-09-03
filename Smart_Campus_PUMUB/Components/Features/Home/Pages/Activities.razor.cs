@@ -1,97 +1,7 @@
-// using Microsoft.AspNetCore.Components;
-// using Smart_Campus_PUMUB.WebApi.Models;
-// using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
-
-// namespace Smart_Campus_PUMUB.Components.Pages
-// {
-//     public class ActivityBase : ComponentBase
-//     {
-//         [Inject] public HttpClientService HttpClientService { get; set; } = default!;
-
-//         public List<ActivityModel> masterActivities { get; set; } = new();
-//         public List<ActivityModel> filteredActivities { get; set; } = new();
-
-//         public string searchQuery { get; set; } = "";
-//         public DateTime? FromDate { get; set; }
-//         public DateTime? ToDate { get; set; }
-
-//         public bool isPopupOpen { get; set; } = false;
-//         public ActivityModel? selectedActivity { get; set; }
-
-//         protected override async Task OnInitializedAsync()
-//         {
-//             await LoadActivities();
-//         }
-
-//         public async Task LoadActivities()
-//         {
-//             masterActivities = await HttpClientService.ExecuteAsync<List<ActivityModel>>("activity", EnumHttpMethod.Get) ?? new();
-//             ApplyFilters();
-//         }
-
-//         // public void ApplyFilters()
-//         // {
-//         //     var query = masterActivities.AsEnumerable();
-
-//         //     if (!string.IsNullOrWhiteSpace(searchQuery))
-//         //         query = query.Where(a => a.ActivityTitle != null && a.ActivityTitle.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
-
-//         //     if (FromDate.HasValue)
-//         //         query = query.Where(a => a.CreatedAt.Date >= FromDate.Value.Date);
-
-//         //     if (ToDate.HasValue)
-//         //         query = query.Where(a => a.CreatedAt.Date <= ToDate.Value.Date);
-
-//         //     filteredActivities = query.OrderByDescending(a => a.CreatedAt).ToList();
-//         //     StateHasChanged();
-//         // }
-//         public void ApplyFilters()
-//         {
-//             var query = masterActivities.AsEnumerable();
-
-//             // Title နဲ့ ရှာမယ်
-//             if (!string.IsNullOrWhiteSpace(searchQuery))
-//                 query = query.Where(a => a.ActivityTitle != null &&
-//                                          a.ActivityTitle.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
-
-//             // Date နဲ့ ရှာမယ် (FromDate နှင့် ToDate ကို ကိုကိုရွေးထားတဲ့ အချိန်နဲ့ စစ်တာပါ)
-//             if (FromDate.HasValue)
-//                 query = query.Where(a => a.CreatedAt.Date >= FromDate.Value.Date);
-
-//             if (ToDate.HasValue)
-//                 query = query.Where(a => a.CreatedAt.Date <= ToDate.Value.Date);
-
-//             filteredActivities = query.OrderByDescending(a => a.CreatedAt).ToList();
-//             StateHasChanged();
-//         }
-
-//         public void OpenPopup(ActivityModel activity)
-//         {
-//             selectedActivity = activity;
-//             isPopupOpen = true;
-//         }
-//         public void ResetFilters()
-//         {
-//             // Search နှင့် Date တန်ဖိုးများကို အလွတ်ဖြစ်အောင် ပြန်လုပ်သည်
-//             searchQuery = "";
-//             FromDate = null;
-//             ToDate = null;
-
-//             // Data အားလုံးကို ပြန်ခေါ်ပြီး ပြသသည်
-//             ApplyFilters();
-//         }
-
-//         public void ClosePopup()
-//         {
-//             isPopupOpen = false;
-//             selectedActivity = null;
-//         }
-//     }
-    
-// }
 using Microsoft.AspNetCore.Components;
-using Smart_Campus_PUMUB.WebApi.Models;
+using Microsoft.Extensions.Configuration;
 using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
+using Smart_Campus_PUMUB.WebApi.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -102,11 +12,10 @@ namespace Smart_Campus_PUMUB.Components.Pages
     public class ActivityBase : ComponentBase
     {
         [Inject] public HttpClientService HttpClientService { get; set; } = default!;
+        [Inject] public IConfiguration Configuration { get; set; } = default!;
 
         public List<ActivityModel> masterActivities { get; set; } = new();
         public List<ActivityModel> filteredActivities { get; set; } = new();
-        
-        // 🌟 Pagination အတွက် UI က သုံးမယ့် List အသစ်
         public List<ActivityModel> pagedActivities { get; set; } = new();
 
         public string searchQuery { get; set; } = "";
@@ -116,12 +25,16 @@ namespace Smart_Campus_PUMUB.Components.Pages
         public bool isPopupOpen { get; set; } = false;
         public ActivityModel? selectedActivity { get; set; }
 
+        // Lightbox viewer state
+        public bool isLightboxOpen { get; set; } = false;
+        public int lightboxIndex { get; set; } = 0;
+
         // Loading state
         public bool isLoading { get; set; } = true;
 
-        // 🌟 Pagination အတွက် လိုအပ်သော Variables များ
+        // Pagination Variables
         public int CurrentPage { get; set; } = 1;
-        public int PageSize { get; set; } = 8; // 💡 တစ်မျက်နှာမှာ ၈ ခု ပြသမည် (စိတ်ကြိုက်ပြင်နိုင်သည်)
+        public int PageSize { get; set; } = 8;
         public int TotalPages { get; set; } = 1;
 
         protected override async Task OnInitializedAsync()
@@ -142,27 +55,35 @@ namespace Smart_Campus_PUMUB.Components.Pages
         {
             var query = masterActivities.AsEnumerable();
 
-            // Title နဲ့ ရှာမယ်
             if (!string.IsNullOrWhiteSpace(searchQuery))
-                query = query.Where(a => a.ActivityTitle != null &&
-                                         a.ActivityTitle.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+            {
+                var term = searchQuery.Trim();
+                query = query.Where(a => (a.ActivityTitle != null && a.ActivityTitle.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                                         (a.Location != null && a.Location.Contains(term, StringComparison.OrdinalIgnoreCase)));
+            }
 
-            // Date နဲ့ ရှာမယ်
             if (FromDate.HasValue)
-                query = query.Where(a => a.CreatedAt.Date >= FromDate.Value.Date);
+            {
+                query = query.Where(a => {
+                    var d = a.ActivityDate ?? (a.CreatedAt.Year > 1 ? a.CreatedAt : (DateTime?)null);
+                    return d.HasValue && d.Value.Date >= FromDate.Value.Date;
+                });
+            }
 
             if (ToDate.HasValue)
-                query = query.Where(a => a.CreatedAt.Date <= ToDate.Value.Date);
+            {
+                query = query.Where(a => {
+                    var d = a.ActivityDate ?? (a.CreatedAt.Year > 1 ? a.CreatedAt : (DateTime?)null);
+                    return d.HasValue && d.Value.Date <= ToDate.Value.Date;
+                });
+            }
 
-            // မူလ Filter လုပ်ထားတဲ့ List ထဲ ထည့်သည်
-            filteredActivities = query.OrderByDescending(a => a.CreatedAt).ToList();
+            filteredActivities = query.OrderByDescending(a => a.ActivityDate ?? a.CreatedAt).ToList();
             
-            // 🌟 Filter လုပ်ပြီးတိုင်း Page 1 ကို ပြန်သွားပြီး Pagination တွက်ချက်သည်
             CurrentPage = 1;
             CalculatePagination();
         }
 
-        // 🌟 Pagination ဖြတ်ထုတ်ပေးသည့် Logic Method
         public void CalculatePagination()
         {
             if (filteredActivities == null || !filteredActivities.Any())
@@ -173,14 +94,11 @@ namespace Smart_Campus_PUMUB.Components.Pages
                 return;
             }
 
-            // Total Pages ကို တွက်ချက်ခြင်း
             TotalPages = (int)Math.Ceiling((double)filteredActivities.Count / PageSize);
 
-            // CurrentPage Scope ကို ထိန်းညှိခြင်း
             if (CurrentPage > TotalPages) CurrentPage = TotalPages;
             if (CurrentPage < 1) CurrentPage = 1;
 
-            // 💡 လက်ရှိ စာမျက်နှာအတွက် Data ကို ဖြတ်ထုတ်ယူခြင်း
             pagedActivities = filteredActivities
                                 .Skip((CurrentPage - 1) * PageSize)
                                 .Take(PageSize)
@@ -189,11 +107,10 @@ namespace Smart_Campus_PUMUB.Components.Pages
             StateHasChanged();
         }
 
-        // 🌟 Shared Pagination Component က ခလုတ်နှိပ်ရင် ဒီ Method ကို လှမ်းခေါ်ပါမည်
         public void OnPageChanged(int newPage)
         {
             CurrentPage = newPage;
-            CalculatePagination(); // Page ရွှေ့ရင် Data အသစ် ထပ်မံဖြတ်ထုတ်သည်
+            CalculatePagination();
         }
 
         public void ResetFilters()
@@ -207,13 +124,56 @@ namespace Smart_Campus_PUMUB.Components.Pages
         public void OpenPopup(ActivityModel activity)
         {
             selectedActivity = activity;
+            isLightboxOpen = false;
+            lightboxIndex = 0;
             isPopupOpen = true;
         }
 
         public void ClosePopup()
         {
             isPopupOpen = false;
+            isLightboxOpen = false;
             selectedActivity = null;
+            lightboxIndex = 0;
+        }
+
+        public void OpenLightbox(int index)
+        {
+            lightboxIndex = index;
+            isLightboxOpen = true;
+        }
+
+        public void CloseLightbox()
+        {
+            isLightboxOpen = false;
+        }
+
+        public void NextLightbox()
+        {
+            if (selectedActivity != null && selectedActivity.ImageList.Any())
+            {
+                lightboxIndex = (lightboxIndex + 1) % selectedActivity.ImageList.Count;
+            }
+        }
+
+        public void PrevLightbox()
+        {
+            if (selectedActivity != null && selectedActivity.ImageList.Any())
+            {
+                lightboxIndex = (lightboxIndex - 1 + selectedActivity.ImageList.Count) % selectedActivity.ImageList.Count;
+            }
+        }
+
+        public string GetFullImageUrl(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || path.Equals("string", StringComparison.OrdinalIgnoreCase)) 
+                return "https://via.placeholder.com/600x400";
+            if (path.StartsWith("data:", StringComparison.OrdinalIgnoreCase)) return path;
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return path;
+
+            var baseUrl = Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5077";
+            return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
         }
     }
 }

@@ -1,169 +1,255 @@
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @implements IDisposable
 
 <div class="sidebar-nav-wrapper">
 
     <!-- ── 1. DASHBOARD (Direct Link) ──────────── -->
-    <NavLink href="/admin/dashboard" class="sidebar-nav-link mb-2" Match="NavLinkMatch.All">
-        <i class="bi bi-speedometer2 text-info"></i>
-        <span class="sidebar-label">Dashboard</span>
-    </NavLink>
+    <div class="sidebar-group-wrapper mb-1">
+        <NavLink href="/admin/dashboard" class="sidebar-nav-link" Match="NavLinkMatch.All">
+            <i class="bi bi-speedometer2 sidebar-icon text-info"></i>
+            <span class="sidebar-label">@(LangService.IsMyanmar ? "ပင်မစာမျက်နှာ" : "Dashboard")</span>
+        </NavLink>
+    </div>
 
     <!-- ── 2. STUDENTS DROPDOWN ────────────────── -->
-    <AuthorizeView Policy="Student.View">
-        <Authorized>
-            <div class="sidebar-group-wrapper mb-1">
-                <button type="button" class="sidebar-dropdown-btn @(isStudentsOpen ? "open" : "")" @onclick='() => ToggleGroup("students")'>
-                    <i class="bi bi-mortarboard-fill sidebar-icon text-info"></i>
-                    <span class="sidebar-label">Students</span>
-                    <span class="sidebar-dropdown-badge sidebar-label">5</span>
-                    <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
-                </button>
+    @if (HasStudentsGroup())
+    {
+        <div class="sidebar-group-wrapper mb-1">
+            <button type="button" class="sidebar-dropdown-btn @(isStudentsOpen ? "open" : "")" @onclick='() => ToggleGroup("students")'>
+                <i class="bi bi-mortarboard-fill sidebar-icon text-info"></i>
+                <span class="sidebar-label">@(LangService.IsMyanmar ? "ကျောင်းသားများ" : "Students")</span>
+                <div class="sidebar-btn-end">
+                    <span class="sidebar-dropdown-badge">@GetStudentsCount()</span>
+                    <i class="bi bi-chevron-down sidebar-chevron"></i>
+                </div>
+            </button>
 
-                @if (isStudentsOpen)
-                {
-                    <div class="sidebar-submenu">
+            @if (isStudentsOpen)
+            {
+                <div class="sidebar-submenu">
+                    @if (HasPermission("StudentDatabank.View") || HasPermission("Student.View"))
+                    {
                         <NavLink href="/admin/student-databank" class="sidebar-sub-link">
                             <i class="bi bi-database"></i>
-                            <span class="sidebar-label">Student Databank</span>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ကျောင်းသားမှတ်တမ်း" : "Student Databank")</span>
                         </NavLink>
+                    }
+                    @if (HasPermission("StudentRegistrations.View") || HasPermission("Student.View"))
+                    {
                         <NavLink href="/admin/student" class="sidebar-sub-link">
                             <i class="bi bi-people"></i>
-                            <span class="sidebar-label">Register Databank</span>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "စာရင်းသွင်းမှတ်တမ်း" : "Register Databank")</span>
                         </NavLink>
+                    }
+                    @if (HasPermission("Student.View"))
+                    {
                         <NavLink href="/admin/student-directory" class="sidebar-sub-link">
                             <i class="bi bi-person-lines-fill"></i>
-                            <span class="sidebar-label">Student Directory</span>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ကျောင်းသားလမ်းညွှန်" : "Student Directory")</span>
                         </NavLink>
                         <NavLink href="/admin/enrollment-results" class="sidebar-sub-link">
                             <i class="bi bi-journal-check"></i>
-                            <span class="sidebar-label">Enrollment Results</span>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "စာမေးပွဲရလဒ်များ" : "Enrollment Results")</span>
+                        </NavLink>
+                        <NavLink href="/admin/student-ranking" class="sidebar-sub-link">
+                            <i class="bi bi-award-fill text-warning"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "အဆင့်သတ်မှတ်ချက်နှင့် မဟာဘွဲ့အရည်အချင်း" : "Student Ranking & Master Eligibility")</span>
                         </NavLink>
                         <NavLink href="/admin/reports" class="sidebar-sub-link">
                             <i class="bi bi-file-earmark-bar-graph"></i>
-                            <span class="sidebar-label">Admission Report</span>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ကျောင်းဝင်ခွင့်အစီရင်ခံစာ" : "Admission Report")</span>
                         </NavLink>
-                    </div>
-                }
-            </div>
-        </Authorized>
-    </AuthorizeView>
+                    }
+                </div>
+            }
+        </div>
+    }
 
     <!-- ── 3. ACADEMICS & STAFF DROPDOWN ───────── -->
-    <div class="sidebar-group-wrapper mb-1">
-        <button type="button" class="sidebar-dropdown-btn @(isAcademicsOpen ? "open" : "")" @onclick='() => ToggleGroup("academics")'>
-            <i class="bi bi-bank2 sidebar-icon text-primary"></i>
-            <span class="sidebar-label">Academics</span>
-            <span class="sidebar-dropdown-badge sidebar-label">7</span>
-            <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
-        </button>
+    @if (HasAcademicsGroup())
+    {
+        <div class="sidebar-group-wrapper mb-1">
+            <button type="button" class="sidebar-dropdown-btn @(isAcademicsOpen ? "open" : "")" @onclick='() => ToggleGroup("academics")'>
+                <i class="bi bi-bank2 sidebar-icon text-primary"></i>
+                <span class="sidebar-label">@(LangService.IsMyanmar ? "ပညာရေးနှင့် ဝန်ထမ်း" : "Academics")</span>
+                <div class="sidebar-btn-end">
+                    <span class="sidebar-dropdown-badge">@GetAcademicsCount()</span>
+                    <i class="bi bi-chevron-down sidebar-chevron"></i>
+                </div>
+            </button>
 
-        @if (isAcademicsOpen)
-        {
-            <div class="sidebar-submenu">
-                <NavLink href="/admin/faculties" class="sidebar-sub-link">
-                    <i class="bi bi-building"></i>
-                    <span class="sidebar-label">Faculty</span>
-                </NavLink>
-                <NavLink href="/admin/departments" class="sidebar-sub-link">
-                    <i class="bi bi-diagram-3"></i>
-                    <span class="sidebar-label">Department</span>
-                </NavLink>
-                <NavLink href="/admin/majors" class="sidebar-sub-link">
-                    <i class="bi bi-collection"></i>
-                    <span class="sidebar-label">Major</span>
-                </NavLink>
-                <NavLink href="/admin/subjects" class="sidebar-sub-link">
-                    <i class="bi bi-journal-bookmark"></i>
-                    <span class="sidebar-label">Subject</span>
-                </NavLink>
-                <NavLink href="/admin/semesters" class="sidebar-sub-link">
-                    <i class="bi bi-calendar2-range"></i>
-                    <span class="sidebar-label">Semester</span>
-                </NavLink>
-                <NavLink href="/admin/tutors" class="sidebar-sub-link">
-                    <i class="bi bi-person-workspace"></i>
-                    <span class="sidebar-label">Tutor Directory</span>
-                </NavLink>
-                <NavLink href="/admin/positions" class="sidebar-sub-link">
-                    <i class="bi bi-person-badge"></i>
-                    <span class="sidebar-label">Position</span>
-                </NavLink>
-            </div>
-        }
-    </div>
+            @if (isAcademicsOpen)
+            {
+                <div class="sidebar-submenu">
+                    @if (HasPermission("Faculty.View"))
+                    {
+                        <NavLink href="/admin/faculties" class="sidebar-sub-link">
+                            <i class="bi bi-building"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "မဟာဌာန" : "Faculty")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Department.View"))
+                    {
+                        <NavLink href="/admin/departments" class="sidebar-sub-link">
+                            <i class="bi bi-diagram-3"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ဌာန" : "Department")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Major.View"))
+                    {
+                        <NavLink href="/admin/majors" class="sidebar-sub-link">
+                            <i class="bi bi-collection"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "မေဂျာ" : "Major")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Subject.View"))
+                    {
+                        <NavLink href="/admin/subjects" class="sidebar-sub-link">
+                            <i class="bi bi-journal-bookmark"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ဘာသာရပ်" : "Subject")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Semester.View"))
+                    {
+                        <NavLink href="/admin/semesters" class="sidebar-sub-link">
+                            <i class="bi bi-calendar2-range"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester")</span>
+                        </NavLink>
+                    }
+                    @if (isSuperAdmin || HasPermission("Rules.View") || HasPermission("AcademicPolicy.View"))
+                    {
+                        <NavLink href="/admin/academic-policies" class="sidebar-sub-link">
+                            <i class="bi bi-shield-lock-fill"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ပညာရေးမူဝါဒ" : "Academic Policy")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Tutor.View"))
+                    {
+                        <NavLink href="/admin/tutors" class="sidebar-sub-link">
+                            <i class="bi bi-person-workspace"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ဆရာ/ဆရာမ စာရင်း" : "Tutor Directory")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Position.View"))
+                    {
+                        <NavLink href="/admin/positions" class="sidebar-sub-link">
+                            <i class="bi bi-person-badge"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ရာထူး" : "Position")</span>
+                        </NavLink>
+                    }
+                </div>
+            }
+        </div>
+    }
 
     <!-- ── 4. CAMPUS & FINANCE DROPDOWN ────────── -->
-    <div class="sidebar-group-wrapper mb-1">
-        <button type="button" class="sidebar-dropdown-btn @(isCampusOpen ? "open" : "")" @onclick='() => ToggleGroup("campus")'>
-            <i class="bi bi-grid-1x2-fill sidebar-icon text-warning"></i>
-            <span class="sidebar-label">Campus & Finance</span>
-            <span class="sidebar-dropdown-badge sidebar-label">5</span>
-            <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
-        </button>
+    @if (HasCampusGroup())
+    {
+        <div class="sidebar-group-wrapper mb-1">
+            <button type="button" class="sidebar-dropdown-btn @(isCampusOpen ? "open" : "")" @onclick='() => ToggleGroup("campus")'>
+                <i class="bi bi-grid-1x2-fill sidebar-icon text-warning"></i>
+                <span class="sidebar-label">@(LangService.IsMyanmar ? "ငွေကြေးနှင့် ဝန်ဆောင်မှု" : "Campus & Finance")</span>
+                <div class="sidebar-btn-end">
+                    <span class="sidebar-dropdown-badge">@GetCampusCount()</span>
+                    <i class="bi bi-chevron-down sidebar-chevron"></i>
+                </div>
+            </button>
 
-        @if (isCampusOpen)
-        {
-            <div class="sidebar-submenu">
-                <NavLink href="/admin/payment-fees" class="sidebar-sub-link">
-                    <i class="bi bi-cash-stack"></i>
-                    <span class="sidebar-label">Payment Fees</span>
-                </NavLink>
-                <NavLink href="/admin/books" class="sidebar-sub-link">
-                    <i class="bi bi-book-half"></i>
-                    <span class="sidebar-label">Books</span>
-                </NavLink>
-                <NavLink href="/admin/categories" class="sidebar-sub-link">
-                    <i class="bi bi-tags"></i>
-                    <span class="sidebar-label">Category</span>
-                </NavLink>
-                <NavLink href="/admin/activities" class="sidebar-sub-link">
-                    <i class="bi bi-clipboard-check"></i>
-                    <span class="sidebar-label">Activities</span>
-                </NavLink>
-                <NavLink href="/admin/rules" class="sidebar-sub-link">
-                    <i class="bi bi-file-earmark-ruled"></i>
-                    <span class="sidebar-label">Rules</span>
-                </NavLink>
-            </div>
-        }
-    </div>
+            @if (isCampusOpen)
+            {
+                <div class="sidebar-submenu">
+                    @if (HasPermission("PaymentFee.View"))
+                    {
+                        <NavLink href="/admin/payment-fees" class="sidebar-sub-link">
+                            <i class="bi bi-cash-stack"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "အခကြေးငွေ သတ်မှတ်ချက်" : "Payment Fees")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Book.View"))
+                    {
+                        <NavLink href="/admin/books" class="sidebar-sub-link">
+                            <i class="bi bi-book-half"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "စာအုပ်များ" : "Books")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Category.View"))
+                    {
+                        <NavLink href="/admin/categories" class="sidebar-sub-link">
+                            <i class="bi bi-tags"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "စာအုပ်အမျိုးအစား" : "Category")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Activity.View"))
+                    {
+                        <NavLink href="/admin/activities" class="sidebar-sub-link">
+                            <i class="bi bi-clipboard-check"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "လှုပ်ရှားမှုများ" : "Activities")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Rules.View"))
+                    {
+                        <NavLink href="/admin/rules" class="sidebar-sub-link">
+                            <i class="bi bi-file-earmark-ruled"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "စည်းမျဉ်းများ" : "Rules")</span>
+                        </NavLink>
+                    }
+                </div>
+            }
+        </div>
+    }
 
     <!-- ── 5. ADMINISTRATION DROPDOWN ──────────── -->
-    <div class="sidebar-group-wrapper mb-1">
-        <button type="button" class="sidebar-dropdown-btn @(isSystemOpen ? "open" : "")" @onclick='() => ToggleGroup("system")'>
-            <i class="bi bi-gear-fill sidebar-icon text-danger"></i>
-            <span class="sidebar-label">Administration</span>
-            <span class="sidebar-dropdown-badge sidebar-label">4</span>
-            <i class="bi bi-chevron-down sidebar-chevron sidebar-label"></i>
-        </button>
+    @if (HasAdminGroup())
+    {
+        <div class="sidebar-group-wrapper mb-1">
+            <button type="button" class="sidebar-dropdown-btn @(isSystemOpen ? "open" : "")" @onclick='() => ToggleGroup("system")'>
+                <i class="bi bi-gear-fill sidebar-icon text-danger"></i>
+                <span class="sidebar-label">@(LangService.IsMyanmar ? "စနစ်စီမံခန့်ခွဲမှု" : "Administration")</span>
+                <div class="sidebar-btn-end">
+                    <span class="sidebar-dropdown-badge">@GetAdminCount()</span>
+                    <i class="bi bi-chevron-down sidebar-chevron"></i>
+                </div>
+            </button>
 
-        @if (isSystemOpen)
-        {
-            <div class="sidebar-submenu">
-                <NavLink href="/admin/users" class="sidebar-sub-link">
-                    <i class="bi bi-people-fill"></i>
-                    <span class="sidebar-label">User Management</span>
-                </NavLink>
-                <NavLink href="/admin/acc-register" class="sidebar-sub-link">
-                    <i class="bi bi-person-check-fill"></i>
-                    <span class="sidebar-label">Acc Register</span>
-                </NavLink>
-                <AuthorizeView Policy="view.role">
-                    <Authorized>
+            @if (isSystemOpen)
+            {
+                <div class="sidebar-submenu">
+                    @if (HasPermission("User.View"))
+                    {
+                        <NavLink href="/admin/users" class="sidebar-sub-link">
+                            <i class="bi bi-people-fill"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "အသုံးပြုသူ စီမံခန့်ခွဲမှု" : "User Management")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("RegisterAcc.View"))
+                    {
+                        <NavLink href="/admin/acc-register" class="sidebar-sub-link">
+                            <i class="bi bi-person-check-fill"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "အကောင့်ဖွင့်ခြင်း" : "Acc Register")</span>
+                        </NavLink>
+                    }
+                    @if (HasPermission("Role.View"))
+                    {
                         <NavLink href="/admin/roles" class="sidebar-sub-link">
                             <i class="bi bi-shield-check"></i>
-                            <span class="sidebar-label">Roles</span>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "အခန်းကဏ္ဍများ" : "Roles")</span>
                         </NavLink>
-                    </Authorized>
-                </AuthorizeView>
-                <NavLink href="/admin/permissions" class="sidebar-sub-link">
-                    <i class="bi bi-shield-lock"></i>
-                    <span class="sidebar-label">Permissions</span>
-                </NavLink>
-            </div>
-        }
-    </div>
+                    }
+                    @if (HasPermission("Role.View") || isSuperAdmin)
+                    {
+                        <NavLink href="/admin/permissions" class="sidebar-sub-link">
+                            <i class="bi bi-shield-lock"></i>
+                            <span class="sidebar-label">@(LangService.IsMyanmar ? "ခွင့်ပြုချက်များ" : "Permissions")</span>
+                        </NavLink>
+                    }
+                </div>
+            }
+        </div>
+    }
 
 </div>
 
@@ -173,10 +259,107 @@
     private bool isCampusOpen = false;
     private bool isSystemOpen = false;
 
-    protected override void OnInitialized()
+    private bool isSuperAdmin = false;
+    private HashSet<string> userPermissions = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
     {
         AutoExpandActiveCategory();
         NavigationManager.LocationChanged += OnLocationChanged;
+        LangService.OnLanguageChanged += HandleLanguageChanged;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var roleName = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                var roleId = user.FindFirst("RoleId")?.Value ?? "";
+                isSuperAdmin = string.Equals(roleName, "Super Admin", StringComparison.OrdinalIgnoreCase) || roleId == "4";
+
+                userPermissions = user.Claims
+                    .Where(c => c.Type == "Permission")
+                    .Select(c => c.Value)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading sidebar permissions: {ex.Message}");
+        }
+    }
+
+    private bool HasPermission(string perm) => isSuperAdmin || userPermissions.Contains(perm);
+
+    private bool HasStudentsGroup() => isSuperAdmin || 
+        HasPermission("Student.View") || 
+        HasPermission("StudentDatabank.View") || 
+        HasPermission("StudentRegistrations.View");
+
+    private bool HasAcademicsGroup() => isSuperAdmin || 
+        HasPermission("Faculty.View") || 
+        HasPermission("Department.View") || 
+        HasPermission("Major.View") || 
+        HasPermission("Subject.View") || 
+        HasPermission("Semester.View") || 
+        HasPermission("Tutor.View") || 
+        HasPermission("Position.View");
+
+    private bool HasCampusGroup() => isSuperAdmin || 
+        HasPermission("PaymentFee.View") || 
+        HasPermission("Book.View") || 
+        HasPermission("Category.View") || 
+        HasPermission("Activity.View") || 
+        HasPermission("Rules.View");
+
+    private bool HasAdminGroup() => isSuperAdmin || 
+        HasPermission("User.View") || 
+        HasPermission("RegisterAcc.View") || 
+        HasPermission("Role.View");
+
+    private int GetStudentsCount()
+    {
+        int count = 0;
+        if (HasPermission("StudentDatabank.View") || HasPermission("Student.View")) count++;
+        if (HasPermission("StudentRegistrations.View") || HasPermission("Student.View")) count++;
+        if (HasPermission("Student.View")) count += 4;
+        return count;
+    }
+
+    private int GetAcademicsCount()
+    {
+        int count = 0;
+        if (HasPermission("Faculty.View")) count++;
+        if (HasPermission("Department.View")) count++;
+        if (HasPermission("Major.View")) count++;
+        if (HasPermission("Subject.View")) count++;
+        if (HasPermission("Semester.View")) count++;
+        if (isSuperAdmin || HasPermission("Rules.View") || HasPermission("AcademicPolicy.View")) count++;
+        if (HasPermission("Tutor.View")) count++;
+        if (HasPermission("Position.View")) count++;
+        return count;
+    }
+
+    private int GetCampusCount()
+    {
+        int count = 0;
+        if (HasPermission("PaymentFee.View")) count++;
+        if (HasPermission("Book.View")) count++;
+        if (HasPermission("Category.View")) count++;
+        if (HasPermission("Activity.View")) count++;
+        if (HasPermission("Rules.View")) count++;
+        return count;
+    }
+
+    private int GetAdminCount()
+    {
+        int count = 0;
+        if (HasPermission("User.View")) count++;
+        if (HasPermission("RegisterAcc.View")) count++;
+        if (HasPermission("Role.View")) count++;
+        if (HasPermission("Role.View") || isSuperAdmin) count++;
+        return count;
     }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
@@ -190,7 +373,7 @@
         var uri = NavigationManager.Uri.ToLower();
         if (uri.Contains("student") || uri.Contains("enrollment") || uri.Contains("report"))
             isStudentsOpen = true;
-        if (uri.Contains("facult") || uri.Contains("department") || uri.Contains("major") || uri.Contains("subject") || uri.Contains("semester") || uri.Contains("tutor") || uri.Contains("position"))
+        if (uri.Contains("facult") || uri.Contains("department") || uri.Contains("major") || uri.Contains("subject") || uri.Contains("semester") || uri.Contains("tutor") || uri.Contains("position") || uri.Contains("academic-polic") || uri.Contains("policy"))
             isAcademicsOpen = true;
         if (uri.Contains("payment") || uri.Contains("fee") || uri.Contains("book") || uri.Contains("categor") || uri.Contains("activit") || uri.Contains("rule"))
             isCampusOpen = true;
@@ -209,8 +392,14 @@
         }
     }
 
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
     }
 }

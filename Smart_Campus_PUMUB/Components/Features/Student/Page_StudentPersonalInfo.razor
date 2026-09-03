@@ -164,7 +164,8 @@
     .input-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 24px;
+        gap: 16px 24px;
+        align-items: start;
         animation: fadeIn 0.4s ease-in-out;
     }
     @@keyframes fadeIn {
@@ -176,6 +177,78 @@
         to {
             opacity: 1;
             transform: translateY(0);
+        }
+    }
+
+    .doc-upload-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+        align-items: stretch;
+    }
+
+    .doc-upload-grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+        align-items: stretch;
+    }
+
+    .doc-card-header {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .doc-card-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .doc-card-subtitle {
+        font-size: 0.68rem;
+        color: #64748b;
+        white-space: nowrap;
+        margin-left: 4px;
+        flex-shrink: 0;
+    }
+
+    .upload-dropzone {
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+        height: 110px !important;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .upload-dropzone:hover {
+        border-color: #2563eb !important;
+        background-color: rgba(37, 99, 235, 0.05) !important;
+    }
+
+    @@media (max-width: 850px) {
+        .doc-upload-grid-4 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .doc-upload-grid-3, .doc-upload-grid-4 {
+            grid-template-columns: 1fr;
         }
     }
 
@@ -518,103 +591,38 @@
     }
 </style>
 
-<div class="modern-form-card" style="margin-top: 80px;">
+<div class="modern-form-card" style="@(IsAdminView ? "margin-top: 0; padding: 0; box-shadow: none; border: none; background: transparent;" : "margin-top: 80px;")">
 
-    @if (IsGraduated)
-    {
-        <!-- Premium Graduation Banner -->
-        <div style="text-align:center; padding: 60px 40px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0d3b6e 100%); border-radius: 20px; color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-bottom: 32px;">
-            <div style="font-size:4rem; margin-bottom: 16px;">🎓</div>
-            <h2 style="font-size:2rem; font-weight:800; margin-bottom:12px; background: linear-gradient(90deg, #fbbf24, #f59e0b, #fde68a); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Congratulations, Graduate!</h2>
-            <p style="font-size:1.15rem; color:#cbd5e1; max-width:520px; margin:0 auto 28px auto; line-height:1.8;">
-                You have successfully completed <strong style="color:#fbbf24;">all 9 Semesters</strong>. Your academic journey is complete.
-                No further registration is required.
-            </p>
-            <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
-                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
-                    <div style="font-size:1.8rem; font-weight:800; color:#fbbf24;">9 / 9</div>
-                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Semesters Completed</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
-                    <div style="font-size:1.8rem; font-weight:800; color:#34d399;">✓ Pass</div>
-                    <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Final Status</div>
-                </div>
-            </div>
-        </div>
-    }
-    else if (ShowRegistrationStatusPanel)
-    {
-        <div class="review-status-panel">
-            <div class="review-status-top">
-                <div>
-                    <h3 style="margin: 0 0 8px 0; color: #0f172a; font-size: 1.25rem;">Registration Review</h3>
-                    <p style="margin: 0; color: #475569;">@GetReviewStatusMessage()</p>
-                </div>
-                <span class="status-badge @GetReviewStatusClass()">
-                    <i class="fas @(IsApproved ? "fa-check-circle" : IsRejected ? "fa-times-circle" : "fa-clock")"></i>
-                    @RegistrationReviewStatus
-                </span>
-            </div>
-
-            @if (SubmittedRegistrationId > 0)
-            {
-                <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 10px;">
-                    @if (!string.IsNullOrEmpty(requestModel.student_name_en) || !string.IsNullOrEmpty(requestModel.student_name_mm))
-                    {
-                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
-                            <span style="font-weight: 600; color: #0f172a;">Name:</span>
-                            @(!string.IsNullOrEmpty(requestModel.student_name_en) ? requestModel.student_name_en : requestModel.student_name_mm)
-                        </div>
-                    }
-                    @if (!string.IsNullOrEmpty(requestModel.major))
-                    {
-                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
-                            <span style="font-weight: 600; color: #0f172a;">Major:</span> @requestModel.major
-                        </div>
-                    }
-                    @if (!string.IsNullOrEmpty(AllowedSemesterName))
-                    {
-                        <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
-                            <span style="font-weight: 600; color: #0f172a;">Semester:</span> @AllowedSemesterName
-                        </div>
-                    }
-                </div>
-            }
-
-            <div class="review-actions">
-                @if (CanProceedToPayment)
-                {
-                    <button type="button" class="btn-review-primary" @onclick="ContinueToPayment">
-                        Continue to Payment <i class="fas fa-credit-card ms-1"></i>
-                    </button>
-                }
-                else if (IsRejected)
-                {
-                    <button type="button" class="btn-review-primary" @onclick="StartCorrectedRegistration">
-                        Submit Corrected Form <i class="fas fa-edit ms-1"></i>
-                    </button>
-                }
-
-                <button type="button" class="btn-review-secondary" disabled="@IsRefreshingStatus" @onclick="RefreshRegistrationStatus">
-                    @if (IsRefreshingStatus)
-                    {
-                        <span>Checking... <i class="fas fa-spinner fa-spin ms-1"></i></span>
-                    }
-                    else
-                    {
-                        <span>Refresh Status <i class="fas fa-sync-alt ms-1"></i></span>
-                    }
-                </button>
-            </div>
-        </div>
-    }
-    else
-    {
-    <fieldset disabled="@IsFormDisabled" style="border: none; padding: 0; margin: 0; display: block; width: 100%;">
-    <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">၁။ ကိုယ်ရေးအချက်အလက်</h3>
+    <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; line-height: 1.5;">၁။ ကိုယ်ရေးအချက်အလက်</h3>
         <div class="input-grid">
             <!-- 💡 User ID ကို ဖောင်တွင် မပြတော့ဘဲ နောက်ကွယ်မှ Auto ခေါ်ယူရန် ပြန်ဖျောက်ထားပါသည် 💡 -->
             <input type="hidden" @bind="requestModel.UserId" />
+
+            <!-- 📷 Passport Photo Upload Dropzone -->
+            <div class="photo-upload-wrapper" style="position: relative; grid-column: span 2; display: flex; justify-content: center; margin-bottom: 15px;">
+                <div class="photo-box" style="@(string.IsNullOrEmpty(PreviewImageUrl) ? "border: 2px dashed #3b82f6; background: rgba(37, 99, 235, 0.03);" : "border: 2px solid #2563EB; background: #fff;") cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; width: 150px; height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; transition: all 0.2s; opacity: @(IsFormDisabled ? "0.8" : "1");">
+                    @if (!string.IsNullOrEmpty(PreviewImageUrl))
+                    {
+                        <img src="@PreviewImageUrl" alt="Student Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;" />
+                        @if (!IsFormDisabled)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-1 position-absolute bottom-0 mb-2" style="z-index: 20; font-size: 0.7rem; padding: 1px 8px;" @onclick="RemovePhoto" @onclick:stopPropagation="true">
+                                <i class="fas fa-trash-alt me-1"></i> ဖျက်မည်
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <i class="bi bi-cloud-arrow-up text-primary d-block mb-1" style="font-size: 2.2rem;"></i>
+                        <span class="photo-text" style="font-size: 0.82rem; font-weight: 600; color: #1e40af;">ပတ်စပို့စ်အရွယ်<br>ဓာတ်ပုံ <span style="color:red; font-weight: bold;">*</span></span>
+                        <small class="text-muted" style="font-size: 0.72rem; margin-top: 2px;">Click to select</small>
+                    }
+                    @if (!IsFormDisabled)
+                    {
+                        <InputFile @key="PreviewImageUrl" id="photoUpload_pi" OnChange="OnPhotoSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept="image/*" />
+                    }
+                </div>
+            </div>
 
             <!-- User ID Status Display (Only for student view, hide in admin view) -->
             @if (!IsAdminView)
@@ -645,18 +653,18 @@
 
             <div class="input-group">
                 <label class="input-label">အမည် (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
-                <input type="text" class="modern-input" placeholder="ကိုအောင်မင်း" @bind="requestModel.student_name_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required disabled="@(!((requestModel.UserId.HasValue && requestModel.UserId > 0) || (requestModel.NewStudentAccId.HasValue && requestModel.NewStudentAccId > 0)))">
+                <input type="text" class="modern-input" placeholder="ကိုအောင်မင်း" @bind="requestModel.student_name_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">အမည် (အင်္ဂလိပ်စာဖြင့်)</label>
-                <input type="text" class="modern-input" placeholder="Ko Aung Min" @bind="requestModel.student_name_en" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')" disabled="@(!((requestModel.UserId.HasValue && requestModel.UserId > 0) || (requestModel.NewStudentAccId.HasValue && requestModel.NewStudentAccId > 0)))">
+                <input type="text" class="modern-input" placeholder="Ko Aung Min" @bind="requestModel.student_name_en" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')" disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">မှတ်ပုံတင် (NRC) <span style="color:red;">*</span></label>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnNrcStateChanged" required>
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnNrcStateChanged" required disabled="@IsFormDisabled">
                         <option value="">တိုင်း</option>
                         @for (int i = 1; i <= 14; i++)
                         {
@@ -664,14 +672,14 @@
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
-                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="requestModel.nrc_township" required>
-                        <option value="">မြို့နယ်</option>
-                        @foreach (var town in CurrentTownshipList)
-                        {
-                            <option value="@town">@town</option>
-                        }
-                    </select>
-                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="NrcType">
+                    <CustomSelectDropdown Style="flex:1;"
+                                          Items="CurrentTownshipList"
+                                          @bind-Value="requestModel.nrc_township"
+                                          Placeholder="မြို့နယ်"
+                                          SearchPlaceholder="ရှာရန်..."
+                                          Disabled="@IsFormDisabled"
+                                          MaxHeight="190px" />
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="NrcType" disabled="@IsFormDisabled">
                         <option value="(နိုင်)">(နိုင်)</option>
                         <option value="(ဧည့်)">(ဧည့်)</option>
                         <option value="(ပြု)">(ပြု)</option>
@@ -679,25 +687,25 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="requestModel.nrc_number" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)" required>
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="requestModel.nrc_number" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)" required disabled="@IsFormDisabled">
                 </div>
             </div>
 
             <div class="input-group">
                 <label class="input-label">မွေးသက္ကရာဇ် <span style="color:red;">*</span></label>
-                <input type="date" class="modern-input" @bind="DobDate" required>
+                <input type="date" class="modern-input" @bind="DobDate" max="@MaxAllowedDobString" required disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">ကျား / မ</label>
-                <select class="modern-input" @bind="requestModel.gender_relation">
+                <select class="modern-input" @bind="requestModel.gender_relation" disabled="@IsFormDisabled">
                     <option value="ကျား">ကျား</option>
                     <option value="မ">မ</option>
                 </select>
             </div>
             <div class="input-group">
                 <label class="input-label">သွေးအုပ်စု</label>
-                <select class="modern-input" @bind="requestModel.blood_type">
+                <select class="modern-input" @bind="requestModel.blood_type" disabled="@IsFormDisabled">
                     <option value="A">A</option>
                     <option value="B">B</option>
                     <option value="AB">AB</option>
@@ -708,7 +716,7 @@
             <div class="input-group">
                 <label class="input-label">လူမျိုး နှင့် ကိုးကွယ်သည့်ဘာသာ</label>
                 <div style="display: flex; gap:10px;">
-                    <select class="modern-input" @bind="requestModel.ethnicity">
+                    <select class="modern-input" @bind="requestModel.ethnicity" disabled="@IsFormDisabled">
                         <option value="">-- လူမျိုး ရွေးပါ --</option>
                         <option value="ဗမာ">ဗမာ</option>
                         <option value="ကချင်">ကချင်</option>
@@ -719,7 +727,7 @@
                         <option value="ရခိုင်">ရခိုင်</option>
                         <option value="ရှမ်း">ရှမ်း</option>
                     </select>
-                    <select class="modern-input" @bind="requestModel.religion">
+                    <select class="modern-input" @bind="requestModel.religion" disabled="@IsFormDisabled">
                         <option value="">-- ဘာသာ ရွေးပါ --</option>
                         <option value="ဗုဒ္ဓဘာသာ">ဗုဒ္ဓဘာသာ</option>
                         <option value="ခရစ်ယာန်ဘာသာ">ခရစ်ယာန်ဘာသာ</option>
@@ -731,56 +739,191 @@
             <div class="input-group">
                 <label class="input-label">နိုင်ငံသား အမျိုးအစား</label>
                 <div class="radio-group" style="padding: 10px 0;">
-                    <label class="radio-item"><input type="radio" name="nationality" checked="@(requestModel.nationality_status == "တိုင်းရင်းသား")" @onchange='() => requestModel.nationality_status = "တိုင်းရင်းသား"'> တိုင်းရင်းသား</label>
-                    <label class="radio-item"><input type="radio" name="nationality" checked="@(requestModel.nationality_status == "နိုင်ငံခြားသား")" @onchange='() => requestModel.nationality_status = "နိုင်ငံခြားသား"'> နိုင်ငံခြားသား</label>
+                    <label class="radio-item"><input type="radio" name="nationality" checked="@(requestModel.nationality_status == "တိုင်းရင်းသား")" @onchange='() => { if (!IsFormDisabled) requestModel.nationality_status = "တိုင်းရင်းသား"; }' disabled="@IsFormDisabled"> တိုင်းရင်းသား</label>
+                    <label class="radio-item"><input type="radio" name="nationality" checked="@(requestModel.nationality_status == "နိုင်ငံခြားသား")" @onchange='() => { if (!IsFormDisabled) requestModel.nationality_status = "နိုင်ငံခြားသား"; }' disabled="@IsFormDisabled"> နိုင်ငံခြားသား</label>
                 </div>
             </div>
 
             <div class="input-group">
                 <label class="input-label">မွေးဖွားရာ ဇာတိမြို့နယ်</label>
-                <input type="text" class="modern-input" placeholder="မွေးဖွားရာဇာတိမြို့" @bind="requestModel.pob">
+                <input type="text" class="modern-input" placeholder="မွေးဖွားရာဇာတိမြို့" @bind="requestModel.pob" disabled="@IsFormDisabled">
             </div>
             <div class="input-group">
                 <label class="input-label">မွေးဖွားရာ တိုင်းဒေသကြီး/ပြည်နယ်</label>
-                <input type="text" class="modern-input" placeholder="ဥပမာ - ရန်ကုန်တိုင်း" @bind="requestModel.birth_place_region">
+                <input type="text" class="modern-input" placeholder="ဥပမာ - ရန်ကုန်တိုင်း" @bind="requestModel.birth_place_region" disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">ဖုန်းနံပါတ် (09XXXXXXXXX) <span style="color:red;">*</span></label>
-                <input type="text" class="modern-input" placeholder="09765432100" @bind="requestModel.app_student_phone" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+                <input type="text" class="modern-input" placeholder="09765432100" @bind="requestModel.app_student_phone" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required disabled="@IsFormDisabled">
             </div>
             <div class="input-group">
                 <label class="input-label">Email</label>
-                <input type="email" class="modern-input" placeholder="student@example.com" @bind="requestModel.email">
+                <input type="email" class="modern-input" placeholder="student@example.com" @bind="requestModel.email" disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">ကိုဗစ်ကာကွယ်ရေးထိုးနှံမှုပြီးစီးသည့်ရက်</label>
-                <input type="date" class="modern-input" @bind="CovidDate">
+                <input type="date" class="modern-input" @bind="CovidDate" disabled="@IsFormDisabled">
+            </div>
+
+            <!-- 📄 Document Uploads: NRC Front, NRC Back, Household Census -->
+            <div class="input-group full-width" style="margin-top: 14px; grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color: #e2e8f0;">
+                    <span style="font-weight: 700; color: #1e40af; font-size: 0.9rem;">
+                        <i class="fas fa-file-upload me-2 text-primary"></i> ပူးတွဲတင်ပြရမည့် စာရွက်စာတမ်းများ (Attached Documents)
+                    </span>
+                    <span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 0.72rem;">JPG, PNG, WEBP (Max 5MB)</span>
+                </div>
+                
+                <div class="doc-upload-grid-3">
+                    
+                    <!-- 🪪 1. NRC Front Upload Box -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card me-1 text-primary"></i> မှတ်ပုံတင် (ရှေ့)</span>
+                            <small class="doc-card-subtitle">NRC Front</small>
+                        </div>
+                        
+                        <div class="upload-dropzone p-2 text-center" 
+                             style="border: 1.5px dashed rgba(37, 99, 235, 0.4); background: @(string.IsNullOrEmpty(PreviewNrcFrontUrl) ? "rgba(37, 99, 235, 0.02)" : "#f8fafc"); cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: @(IsFormDisabled && string.IsNullOrEmpty(PreviewNrcFrontUrl) ? "0.6" : "1");">
+                            
+                            @if (!string.IsNullOrEmpty(PreviewNrcFrontUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewNrcFrontUrl" alt="NRC Front" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    @if (!IsFormDisabled)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveNrcFront" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-primary d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            
+                            @if (!IsFormDisabled)
+                            {
+                                <InputFile @key="PreviewNrcFrontUrl" id="nrcFrontUpload_pi" OnChange="OnNrcFrontSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 🪪 2. NRC Back Upload Box -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card-alt me-1 text-primary"></i> မှတ်ပုံတင် (နောက်)</span>
+                            <small class="doc-card-subtitle">NRC Back</small>
+                        </div>
+                        
+                        <div class="upload-dropzone p-2 text-center" 
+                             style="border: 1.5px dashed rgba(37, 99, 235, 0.4); background: @(string.IsNullOrEmpty(PreviewNrcBackUrl) ? "rgba(37, 99, 235, 0.02)" : "#f8fafc"); cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: @(IsFormDisabled && string.IsNullOrEmpty(PreviewNrcBackUrl) ? "0.6" : "1");">
+                            
+                            @if (!string.IsNullOrEmpty(PreviewNrcBackUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewNrcBackUrl" alt="NRC Back" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    @if (!IsFormDisabled)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveNrcBack" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-primary d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            
+                            @if (!IsFormDisabled)
+                            {
+                                <InputFile @key="PreviewNrcBackUrl" id="nrcBackUpload_pi" OnChange="OnNrcBackSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 📜 3. Household Census Upload Box -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-file-invoice me-1 text-primary"></i> သန်းခေါင်စာရင်း</span>
+                            <small class="doc-card-subtitle">Census</small>
+                        </div>
+                        
+                        <div class="upload-dropzone p-2 text-center" 
+                             style="border: 1.5px dashed rgba(37, 99, 235, 0.4); background: @(string.IsNullOrEmpty(PreviewCensusUrl) ? "rgba(37, 99, 235, 0.02)" : "#f8fafc"); cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: @(IsFormDisabled && string.IsNullOrEmpty(PreviewCensusUrl) ? "0.6" : "1");">
+                            
+                            @if (!string.IsNullOrEmpty(PreviewCensusUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewCensusUrl" alt="Census" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    @if (!IsFormDisabled)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveCensus" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-primary d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            
+                            @if (!IsFormDisabled)
+                            {
+                                <InputFile @key="PreviewCensusUrl" id="censusUpload_pi" OnChange="OnCensusSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                            }
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
         
-        <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px;">၂။ ပညာရေးအချက်အလက်</h3>
+        <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-top: 28px; margin-bottom: 18px; line-height: 1.4;">၂။ ပညာရေးအချက်အလက်</h3>
         <div class="input-grid">
             <div class="input-group full-width">
                 <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
-                <textarea class="modern-input" placeholder="နေရပ်လိပ်စာ အပြည့်အစုံ ရေးရန်..." @bind="requestModel.permanent_address_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F0-9\s.,/-]/g, '')" required></textarea>
+                <textarea class="modern-input" placeholder="နေရပ်လိပ်စာ အပြည့်အစုံ ရေးရန်..." @bind="requestModel.permanent_address_mm" oninput="this.value = this.value.replace(/[^\u1000-\u109F0-9\s.,/-]/g, '')" required disabled="@IsFormDisabled"></textarea>
             </div>
             <div class="input-group full-width">
                 <label class="input-label">အမြဲတမ်းနေရပ်လိပ်စာ(အပြည့်အစုံ) (အင်္ဂလိပ်စာဖြင့်)</label>
-                <textarea class="modern-input" placeholder="Full permanent address..." @bind="requestModel.permanent_address_en" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\s.,/-]/g, '')"></textarea>
+                <textarea class="modern-input" placeholder="Full permanent address..." @bind="requestModel.permanent_address_en" oninput="this.value = this.value.replace(/[^a-zA-Z0-9\s.,/-]/g, '')" disabled="@IsFormDisabled"></textarea>
             </div>
 
             <div class="input-group">
                 <label class="input-label">ပညာသင်နှစ် (Academic Year Range) <span style="color:red;">*</span></label>
-                <input type="text" class="modern-input" placeholder="ဥပမာ - 2023-2024" @bind="requestModel.academic_year_range" required>
+                <input type="text" class="modern-input" placeholder="ဥပမာ - 2023-2024" @bind="requestModel.academic_year_range" required disabled="@IsFormDisabled">
             </div>
-
-
 
             <div class="input-group">
                 <label class="input-label">ကာလပညာရေးဌာန (Faculty)</label>
-                <select class="modern-input" @bind="SelectedFacultyIdStr" @bind:after="OnFacultyChangedAfterBind">
+                <select class="modern-input" @bind="SelectedFacultyIdStr" @bind:after="OnFacultyChangedAfterBind" disabled="@IsFormDisabled">
                     <option value="">-- Faculty ရွေးချယ်ပါ --</option>
                     @foreach (var fac in FacultyList)
                     {
@@ -790,7 +933,7 @@
             </div>
             <div class="input-group">
                 <label class="input-label">အထူးပြုဘာသာ</label>
-                <select class="modern-input" @bind="requestModel.major">
+                <select class="modern-input" @bind="requestModel.major" disabled="@IsFormDisabled">
                     <option value="">-- အထူးပြုဘာသာ ရွေးချယ်ပါ --</option>
                     @foreach (var m in FilteredMajors)
                     {
@@ -800,45 +943,45 @@
             </div>
             <div class="input-group">
                 <label class="input-label">ခုံအမှတ်</label>
-                <input type="text" class="modern-input" placeholder="ခုံအမှတ် ရိုတ်ထည့်ပါ" @bind="requestModel.roll_no">
+                <input type="text" class="modern-input" placeholder="ခုံအမှတ် ရိုတ်ထည့်ပါ" @bind="requestModel.roll_no" disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">တက္ကသိုလ်မှတ်ပုံတင်အမှတ်</label>
-                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် ရိုက်ထည့်ပါ" @bind="requestModel.university_reg_no">
+                <input type="text" class="modern-input" placeholder="မှတ်ပုံတင်အမှတ် ရိုက်ထည့်ပါ" @bind="requestModel.university_reg_no" disabled="@IsFormDisabled">
             </div>
             <div class="input-group">
                 <label class="input-label">တက္ကသိုလ်ဝင်ရောက်သည့်နှစ် (ခုနှစ်)</label>
-                <input type="number" class="modern-input" placeholder="e.g. 2024" @bind="requestModel.admission_year">
+                <input type="number" class="modern-input" placeholder="e.g. 2024" @bind="requestModel.admission_year" disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">အောင်မြင်သည့် ခုနှစ်</label>
-                <input type="number" class="modern-input" placeholder="e.g. 2022" @bind="requestModel.matric_passed_year">
+                <input type="number" class="modern-input" placeholder="e.g. 2022" @bind="requestModel.matric_passed_year" disabled="@IsFormDisabled">
             </div>
             <div class="input-group">
                 <label class="input-label">တက္ကသိုလ်ဝင်တန်း ခုံအမှတ်</label>
-                <input type="text" class="modern-input" placeholder="e.g. အမ-၁၂၃၄" @bind="requestModel.matric_roll_no">
+                <input type="text" class="modern-input" placeholder="e.g. အမ-၁၂၃၄" @bind="requestModel.matric_roll_no" disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">စာစစ်ဌာန</label>
-                <input type="text" class="modern-input" placeholder="စာစစ်ဌာန အမည်" @bind="requestModel.exam_center">
+                <input type="text" class="modern-input" placeholder="စာစစ်ဌာန အမည်" @bind="requestModel.exam_center" disabled="@IsFormDisabled">
             </div>
         </div>
         
-        <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px;">၃။ မိသားစုအချက်အလက်</h3>
+        <h3 style="color: #2563EB; font-weight: 700; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-top: 28px; margin-bottom: 18px; line-height: 1.4;">၃။ မိသားစုအချက်အလက်</h3>
         <div class="input-grid">
 
             <div class="input-group">
                 <label class="input-label">အဘ အမည် (မြန်မာစာဖြင့်) <span style="color:red;">*</span></label>
-                <input type="text" class="modern-input" placeholder="အဘ အမည်" @bind="requestModel.father_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required>
+                <input type="text" class="modern-input" placeholder="အဘ အမည်" @bind="requestModel.father_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" required disabled="@IsFormDisabled">
             </div>
 
             <div class="input-group">
                 <label class="input-label">အဘ မှတ်ပုံတင်အမှတ် (NRC)</label>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnFatherNrcStateChanged">
+                    <select class="modern-input" style="width:80px; padding: 14px 8px; appearance: auto;" @onchange="OnFatherNrcStateChanged" disabled="@IsFormDisabled">
                         <option value="">တိုင်း</option>
                         @for (int i = 1; i <= 14; i++)
                         {
@@ -846,14 +989,14 @@
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
-                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="FatherNrcTownship">
-                        <option value="">မြို့နယ်</option>
-                        @foreach (var town in FatherTownshipList)
-                        {
-                            <option value="@town">@town</option>
-                        }
-                    </select>
-                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="FatherNrcType">
+                    <CustomSelectDropdown Style="flex:1;"
+                                          Items="FatherTownshipList"
+                                          @bind-Value="FatherNrcTownship"
+                                          Placeholder="မြို့နယ်"
+                                          SearchPlaceholder="ရှာရန်..."
+                                          Disabled="@IsFormDisabled"
+                                          MaxHeight="190px" />
+                    <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="FatherNrcType" disabled="@IsFormDisabled">
                         <option value="(နိုင်)">(နိုင်)</option>
                         <option value="(ဧည့်)">(ဧည့်)</option>
                         <option value="(ပြု)">(ပြု)</option>
@@ -861,53 +1004,224 @@
                         <option value="(သီ)">(သီ)</option>
                         <option value="(သ)">(သ)</option>
                     </select>
-                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="FatherNrcNumber" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)">
+                    <input type="text" class="modern-input" style="width:100px; padding: 14px 8px;" placeholder="၁၂၃၄၅၆" @bind="FatherNrcNumber" maxlength="6" inputmode="numeric" pattern="[၀-၉]*" oninput="this.value = this.value.replace(/[^၀-၉]/g, '').slice(0, 6)" disabled="@IsFormDisabled">
                 </div>
             </div>
 
             <div class="input-group">
                 <label class="input-label">အဘ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
-                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="requestModel.father_occupation">
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="requestModel.father_occupation" disabled="@IsFormDisabled">
             </div>
-            <div class="input-group"></div>
 
             <div class="input-group">
                 <label class="input-label">အမိ အမည် (မြန်မာစာဖြင့်)</label>
-                <input type="text" class="modern-input" placeholder="အမိ အမည်" @bind="requestModel.mother_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')">
+                <input type="text" class="modern-input" placeholder="အမိ အမည်" @bind="requestModel.mother_name" oninput="this.value = this.value.replace(/[^\u1000-\u109F\s]/g, '')" disabled="@IsFormDisabled">
             </div>
             <div class="input-group">
                 <label class="input-label">အမိ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
-                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="requestModel.mother_occupation">
+                <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="requestModel.mother_occupation" disabled="@IsFormDisabled">
+            </div>
+
+            <!-- Parent NRC Document Uploads -->
+            <div class="input-group full-width" style="margin-top: 14px; grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color: #e2e8f0;">
+                    <span style="font-weight: 700; color: #1e40af; font-size: 0.9rem;">
+                        <i class="fas fa-id-card-alt me-2 text-primary"></i> မိဘများ မှတ်ပုံတင်ပုံများ (Parent NRC Documents)
+                    </span>
+                    <span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 0.72rem;">JPG, PNG, WEBP (Max 5MB)</span>
+                </div>
+
+                <div class="doc-upload-grid-4">
+
+                    <!-- Father NRC Front -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card me-1 text-warning"></i> အဘ (ရှေ့ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Father Front</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(245, 158, 11, 0.4); background: @(string.IsNullOrEmpty(PreviewFatherNrcFrontUrl) ? "rgba(245, 158, 11, 0.02)" : "#f8fafc"); cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: @(IsFormDisabled && string.IsNullOrEmpty(PreviewFatherNrcFrontUrl) ? "0.6" : "1");">
+                            @if (!string.IsNullOrEmpty(PreviewFatherNrcFrontUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewFatherNrcFrontUrl" alt="Father NRC Front" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    @if (!IsFormDisabled)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveFatherNrcFront" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-warning d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            @if (!IsFormDisabled)
+                            {
+                                <InputFile @key="PreviewFatherNrcFrontUrl" id="fatherNrcFrontUpload_pi" OnChange="OnFatherNrcFrontSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Father NRC Back -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card-alt me-1 text-warning"></i> အဘ (နောက်ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Father Back</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(245, 158, 11, 0.4); background: @(string.IsNullOrEmpty(PreviewFatherNrcBackUrl) ? "rgba(245, 158, 11, 0.02)" : "#f8fafc"); cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: @(IsFormDisabled && string.IsNullOrEmpty(PreviewFatherNrcBackUrl) ? "0.6" : "1");">
+                            @if (!string.IsNullOrEmpty(PreviewFatherNrcBackUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewFatherNrcBackUrl" alt="Father NRC Back" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    @if (!IsFormDisabled)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveFatherNrcBack" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-warning d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            @if (!IsFormDisabled)
+                            {
+                                <InputFile @key="PreviewFatherNrcBackUrl" id="fatherNrcBackUpload_pi" OnChange="OnFatherNrcBackSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Mother NRC Front -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card me-1 text-pink" style="color:#ec4899;"></i> အမိ (ရှေ့ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Mother Front</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(236, 72, 153, 0.4); background: @(string.IsNullOrEmpty(PreviewMotherNrcFrontUrl) ? "rgba(236, 72, 153, 0.02)" : "#f8fafc"); cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: @(IsFormDisabled && string.IsNullOrEmpty(PreviewMotherNrcFrontUrl) ? "0.6" : "1");">
+                            @if (!string.IsNullOrEmpty(PreviewMotherNrcFrontUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewMotherNrcFrontUrl" alt="Mother NRC Front" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    @if (!IsFormDisabled)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveMotherNrcFront" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up d-block mb-1" style="font-size: 1.6rem; color:#ec4899; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            @if (!IsFormDisabled)
+                            {
+                                <InputFile @key="PreviewMotherNrcFrontUrl" id="motherNrcFrontUpload_pi" OnChange="OnMotherNrcFrontSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Mother NRC Back -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card-alt me-1" style="color:#ec4899;"></i> အမိ (နောက်ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Mother Back</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(236, 72, 153, 0.4); background: @(string.IsNullOrEmpty(PreviewMotherNrcBackUrl) ? "rgba(236, 72, 153, 0.02)" : "#f8fafc"); cursor: @(IsFormDisabled ? "not-allowed" : "pointer"); position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: @(IsFormDisabled && string.IsNullOrEmpty(PreviewMotherNrcBackUrl) ? "0.6" : "1");">
+                            @if (!string.IsNullOrEmpty(PreviewMotherNrcBackUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewMotherNrcBackUrl" alt="Mother NRC Back" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    @if (!IsFormDisabled)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveMotherNrcBack" @onclick:stopPropagation="true">
+                                            <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up d-block mb-1" style="font-size: 1.6rem; color:#ec4899; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            @if (!IsFormDisabled)
+                            {
+                                <InputFile @key="PreviewMotherNrcBackUrl" id="motherNrcBackUpload_pi" OnChange="OnMotherNrcBackSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                            }
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
         </div>
-    </fieldset>
         
-        <div class="form-footer">
+        <div class="form-footer" style="margin-top: 24px; padding-top: 16px;">
             @if (!IsAdminView)
             {
                 @if (IsFormDisabled)
                 {
                     <button class="btn-submit" style="background: #2563eb;" type="button" @onclick="EnableEditing">
-                        <span>Edit Profile <i class="fas fa-edit ms-1"></i></span>
+                        <span>အချက်အလက် ပြင်ဆင်မည် <i class="fas fa-edit ms-1"></i></span>
                     </button>
                 }
                 else
                 {
-                    <button class="btn-submit" style="background: #10b981;" disabled="@IsSubmitting" type="button" @onclick="SavePersonalInfoForm">
-                        @if (IsSubmitting)
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn-submit" style="background: #10b981;" disabled="@IsSubmitting" type="button" @onclick="SavePersonalInfoForm">
+                            @if (IsSubmitting)
+                            {
+                                <span>သိမ်းဆည်းနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                            }
+                            else
+                            {
+                                <span>အချက်အလက်များ သိမ်းဆည်းမည် <i class="fas fa-save ms-1"></i></span>
+                            }
+                        </button>
+                        @if (isUpdate)
                         {
-                            <span>Submitting... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                            <button class="btn btn-outline-secondary px-4 py-2" style="border-radius: 50px; font-weight: 600;" type="button" @onclick="CancelEditing">
+                                <span>မပြင်ဆင်တော့ပါ</span>
+                            </button>
                         }
-                        else
-                        {
-                            <span>Submit Form <i class="fas fa-save ms-1"></i></span>
-                        }
-                    </button>
+                    </div>
                 }
             }
         </div>
-    }
 </div>
 
 @if (ShowModal)

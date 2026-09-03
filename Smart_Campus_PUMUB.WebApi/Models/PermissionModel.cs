@@ -22,4 +22,17 @@ namespace Smart_Campus_PUMUB.WebApi.Models
         public bool IsSuccess { get; set; }
         public string Message { get; set; } = string.Empty;
     }
+
+    public class ApplyNowStatusResponseModel
+    {
+        public bool IsSuccess { get; set; } = true;
+        public bool IsEnabled { get; set; } = true;
+        public string Message { get; set; } = string.Empty;
+    }
+
+    public class ApplyNowToggleRequestModel
+    {
+        public bool IsEnabled { get; set; }
+    }
 }
+

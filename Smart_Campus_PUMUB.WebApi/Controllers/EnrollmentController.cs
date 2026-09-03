@@ -83,6 +83,13 @@ namespace Smart_Campus_PUMUB.WebApi.Controllers
             return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
+        [HttpPost("save-reexam-grades")]
+        public async Task<IActionResult> SaveReexamGrades([FromBody] SaveReexamGradesRequestModel request)
+        {
+            var response = await _enrollmentService.SaveReexamGradesAsync(request);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
         [HttpGet("previous-grades")]
         public async Task<IActionResult> GetPreviousGrades([FromQuery] int? userId, [FromQuery] int? newStudentAccId, [FromQuery] string? rollNo, [FromQuery] int semesterId, [FromQuery] string? major)
         {

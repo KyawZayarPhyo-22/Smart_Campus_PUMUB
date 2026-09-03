@@ -11,6 +11,7 @@
 @inject Smart_Campus_PUMUB.BlazorServer.Frontend.Services.HttpClientService HttpClientService
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @inject IHttpContextAccessor HttpContextAccessor
+@inject Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService
 <style>
     .kpi-card-modern {
         background: #ffffff;
@@ -25,108 +26,83 @@
 
     .kpi-card-modern:hover {
         transform: translateY(-3px);
-        box-shadow: 0 14px 28px -6px rgba(90, 79, 207, 0.1);
-        border-color: #cbd5e1;
+        box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08);
     }
-
-    .kpi-card-modern::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3.5px;
-        border-radius: 0 0 18px 18px;
-    }
-
-    .kpi-theme-sky::after { background: linear-gradient(90deg, #0284c7, #38bdf8); }
-    .kpi-theme-purple::after { background: linear-gradient(90deg, #7c3aed, #a855f7); }
-    .kpi-theme-emerald::after { background: linear-gradient(90deg, #059669, #34d399); }
-    .kpi-theme-rose::after { background: linear-gradient(90deg, #e11d48, #fb7185); }
 
     .kpi-icon-box {
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
+        font-size: 1.25rem;
     }
 
-    .kpi-theme-sky .kpi-icon-box { background: rgba(2, 132, 199, 0.1); color: #0284c7; }
-    .kpi-theme-purple .kpi-icon-box { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
-    .kpi-theme-emerald .kpi-icon-box { background: rgba(5, 150, 105, 0.1); color: #059669; }
-    .kpi-theme-rose .kpi-icon-box { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
+    .kpi-theme-sky .kpi-icon-box { background: rgba(56, 189, 248, 0.12); color: #0284c7; }
+    .kpi-theme-purple .kpi-icon-box { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+    .kpi-theme-emerald .kpi-icon-box { background: rgba(16, 185, 129, 0.12); color: #059669; }
+    .kpi-theme-rose .kpi-icon-box { background: rgba(244, 63, 94, 0.12); color: #e11d48; }
 
     .kpi-pill {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
         font-weight: 700;
-        padding: 3px 10px;
+        padding: 3px 9px;
         border-radius: 20px;
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        letter-spacing: 0.2px;
     }
 
-    .kpi-pill-sky { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
-    .kpi-pill-purple { background: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
-    .kpi-pill-emerald { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
-    .kpi-pill-rose { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
-
-    .kpi-pulse-dot {
-        width: 6px;
-        height: 6px;
-        background-color: #e11d48;
-        border-radius: 50%;
-        display: inline-block;
-        animation: kpiPulseAnim 1.5s infinite;
-    }
-
-    @@keyframes kpiPulseAnim {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.4; transform: scale(1.3); }
-    }
+    .kpi-pill-sky { background: rgba(56, 189, 248, 0.12); color: #0284c7; }
+    .kpi-pill-purple { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+    .kpi-pill-emerald { background: rgba(16, 185, 129, 0.12); color: #059669; }
+    .kpi-pill-rose { background: rgba(244, 63, 94, 0.12); color: #e11d48; }
 
     .kpi-value {
         font-size: 2rem;
         font-weight: 800;
-        color: #0f172a;
-        line-height: 1.1;
-        margin-top: 0.6rem;
+        line-height: 1.15;
         letter-spacing: -0.5px;
+        color: #0f172a;
+        margin-top: 0.75rem;
+        margin-bottom: 0.2rem;
     }
 
     .kpi-label {
-        font-size: 0.8rem;
+        font-size: 0.82rem;
         font-weight: 600;
         color: #64748b;
-        margin-top: 0.25rem;
-        text-transform: capitalize;
+    }
+
+    .kpi-pulse-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #e11d48;
+        display: inline-block;
+        animation: pulseLive 1.5s infinite;
+    }
+
+    @@keyframes pulseLive {
+        0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
+        70% { box-shadow: 0 0 0 6px rgba(225, 29, 72, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
     }
 
     .chart-card-modern {
         background: #ffffff;
         border: 1.5px solid #f1f5f9;
         border-radius: 18px;
-        padding: 1.3rem;
+        padding: 1.35rem 1.5rem;
         box-shadow: 0 4px 18px -4px rgba(0, 0, 0, 0.04);
-        transition: all 0.2s ease;
-    }
-
-    .chart-card-modern:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.07);
     }
 
     .chart-card-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 1rem;
-        padding-bottom: 0.8rem;
-        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 1.25rem;
     }
 
     .chart-header-icon {
@@ -136,46 +112,78 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
     }
 
     .chart-header-icon-cyan { background: rgba(6, 182, 212, 0.1); color: #0891b2; }
     .chart-header-icon-purple { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
     .chart-header-icon-blue { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
-
-    .chart-header-title {
-        font-size: 0.95rem;
-        font-weight: 800;
-        color: #0f172a;
-    }
-
-    .chart-badge {
-        font-size: 0.72rem;
-        font-weight: 700;
-        background: #f8fafc;
-        color: #475569;
-        border: 1px solid #e2e8f0;
-        border-radius: 20px;
-        padding: 3px 10px;
-    }
 </style>
 
 <!-- Page Header -->
 <div class="page-header mb-4">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
             <div class="rounded-3 p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px; background: rgba(90, 79, 207, 0.08); border: 1.5px solid rgba(90, 79, 207, 0.25);">
                 <i class="bi bi-speedometer2 fs-5" style="color: #5A4FCF;"></i>
             </div>
             <div>
-                <h3 class="fw-bolder mb-0 text-dark" style="letter-spacing: -0.3px;">Command Center</h3>
-                <p class="text-muted mb-0 small">စနစ်တစ်ခုလုံးဆိုင်ရာ ခြုံငုံသုံးသပ်ချက်၊ ဇယားများနှင့် တိုက်ရိုက်အချက်အလက်များ</p>
+                <h3 class="fw-bolder mb-0 text-dark" style="letter-spacing: -0.3px;">
+                    @(currentLang == "my" ? "ကွပ်ကဲမှုစင်တာ" : "Command Center")
+                </h3>
+                <p class="text-muted mb-0 small">
+                    @(currentLang == "my" ? "စနစ်တစ်ခုလုံးဆိုင်ရာ ခြုံငုံသုံးသပ်ချက်နှင့် တိုက်ရိုက်အချက်အလက်များ" : "Complete system overview, analytics, and live telemetry")
+                </p>
             </div>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <!-- Language Dropdown -->
+            <div class="position-relative d-inline-block">
+                <button type="button" class="btn btn-white shadow-sm border d-flex align-items-center gap-2 fw-bold"
+                        style="border-color: #cbd5e1; border-radius: 10px; padding: 7px 14px; font-size: 0.85rem; color: #1e293b; background: #ffffff;"
+                        @onclick="ToggleLangDropdown">
+                    <i class="bi bi-translate" style="color: #5A4FCF; font-size: 0.95rem;"></i>
+                    <span>@(currentLang == "my" ? "🇲🇲 မြန်မာ" : "🇬🇧 English")</span>
+                    <i class="bi bi-chevron-down text-muted" style="font-size: 0.72rem; transition: transform 0.2s ease; transform: @(isLangDropdownOpen ? "rotate(180deg)" : "rotate(0deg)");"></i>
+                </button>
+
+                @if (isLangDropdownOpen)
+                {
+                    <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseLangDropdown"></div>
+                    <div class="dropdown-menu show shadow-lg border-0 p-1.5"
+                         style="position: absolute; right: 0; top: calc(100% + 6px); min-width: 175px; border-radius: 12px; z-index: 1050; background: #ffffff; border: 1px solid #e2e8f0 !important;">
+                        <div class="px-2.5 py-1.5 small text-muted fw-bold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            @(currentLang == "my" ? "ဘာသာစကား ရွေးချယ်ရန်" : "Select Language")
+                        </div>
+                        <button type="button" class="dropdown-item d-flex align-items-center justify-content-between rounded-2 px-3 py-2 fw-semibold @(currentLang == "en" ? "active" : "")"
+                                style="@(currentLang == "en" ? "background-color: #5A4FCF; color: #ffffff;" : "color: #334155;") font-size: 0.84rem; cursor: pointer;"
+                                @onclick='() => SelectLanguage("en")'>
+                            <span class="d-flex align-items-center gap-2">
+                                <span>🇬🇧</span> English
+                            </span>
+                            @if (currentLang == "en")
+                            {
+                                <i class="bi bi-check-lg fw-bold"></i>
+                            }
+                        </button>
+                        <button type="button" class="dropdown-item d-flex align-items-center justify-content-between rounded-2 px-3 py-2 fw-semibold @(currentLang == "my" ? "active" : "")"
+                                style="@(currentLang == "my" ? "background-color: #5A4FCF; color: #ffffff;" : "color: #334155;") font-size: 0.84rem; cursor: pointer;"
+                                @onclick='() => SelectLanguage("my")'>
+                            <span class="d-flex align-items-center gap-2">
+                                <span>🇲🇲</span> မြန်မာ
+                            </span>
+                            @if (currentLang == "my")
+                            {
+                                <i class="bi bi-check-lg fw-bold"></i>
+                            }
+                        </button>
+                    </div>
+                }
+            </div>
+
             <span class="badge px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2" style="background: #ecfdf5; color: #059669; font-weight: 700; border: 1px solid #a7f3d0; font-size: 0.8rem;">
                 <span class="d-inline-block rounded-circle bg-success" style="width: 7px; height: 7px;"></span>
-                Live System Telemetry
+                @(currentLang == "my" ? "တိုက်ရိုက်စနစ်အချက်အလက်" : "Live System Telemetry")
             </span>
         </div>
     </div>
@@ -190,11 +198,11 @@
                     <i class="bi bi-people-fill"></i>
                 </div>
                 <span class="kpi-pill kpi-pill-sky">
-                    <i class="bi bi-person-check-fill"></i> Enrolled
+                    <i class="bi bi-person-check-fill"></i> @(currentLang == "my" ? "စာရင်းသွင်းပြီး" : "Enrolled")
                 </span>
             </div>
             <div class="kpi-value">@activeStudentCount.ToString("N0")</div>
-            <div class="kpi-label">Active Students</div>
+            <div class="kpi-label">@(currentLang == "my" ? "ကျောင်းသားဦးရေ" : "Active Students")</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
@@ -204,11 +212,11 @@
                     <i class="bi bi-person-workspace"></i>
                 </div>
                 <span class="kpi-pill kpi-pill-purple">
-                    <i class="bi bi-mortarboard-fill"></i> Faculty
+                    <i class="bi bi-mortarboard-fill"></i> @(currentLang == "my" ? "ဆရာ/ဆရာမ" : "Faculty")
                 </span>
             </div>
             <div class="kpi-value">@totalTutorCount</div>
-            <div class="kpi-label">Total Tutors</div>
+            <div class="kpi-label">@(currentLang == "my" ? "ဆရာ/ဆရာမ ဦးရေ" : "Total Tutors")</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
@@ -218,11 +226,11 @@
                     <i class="bi bi-book-half"></i>
                 </div>
                 <span class="kpi-pill kpi-pill-emerald">
-                    <i class="bi bi-journal-check"></i> E-Library
+                    <i class="bi bi-journal-check"></i> @(currentLang == "my" ? "စာကြည့်တိုက်" : "E-Library")
                 </span>
             </div>
             <div class="kpi-value">@bookCount.ToString("N0")</div>
-            <div class="kpi-label">Library PDF Files</div>
+            <div class="kpi-label">@(currentLang == "my" ? "စာကြည့်တိုက် စာအုပ်များ" : "Library PDF Files")</div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
@@ -232,11 +240,11 @@
                     <i class="bi bi-broadcast"></i>
                 </div>
                 <span class="kpi-pill kpi-pill-rose">
-                    <span class="kpi-pulse-dot"></span> Live Logs
+                    <span class="kpi-pulse-dot"></span> @(currentLang == "my" ? "တိုက်ရိုက်မှတ်တမ်း" : "Live Logs")
                 </span>
             </div>
             <div class="kpi-value">@activeAlertCount</div>
-            <div class="kpi-label">Activity Logs</div>
+            <div class="kpi-label">@(currentLang == "my" ? "လုပ်ဆောင်မှု မှတ်တမ်းများ" : "Activity Logs")</div>
         </div>
     </div>
 </div>
@@ -255,11 +263,11 @@
                         <i class="bi bi-pie-chart-fill"></i>
                     </div>
                     <div>
-                        <h6 class="chart-header-title mb-0">Role Distribution</h6>
-                        <small class="text-muted" style="font-size:0.75rem;">အသုံးပြုသူအခန်းကဏ္ဍ ခွဲခြမ်းစိတ်ဖြာမှု</small>
+                        <h6 class="chart-header-title mb-0">@(currentLang == "my" ? "အသုံးပြုသူ အခန်းကဏ္ဍ ခွဲခြမ်းစိတ်ဖြာမှု" : "Role Distribution")</h6>
+                        <small class="text-muted" style="font-size:0.75rem;">@(currentLang == "my" ? "အသုံးပြုသူ အခန်းကဏ္ဍအလိုက် စာရင်းဇယား" : "User role breakdown & analysis")</small>
                     </div>
                 </div>
-                <span class="chart-badge">2026</span>
+                <span class="chart-badge">@(currentLang == "my" ? "၂၀၂၆" : "2026")</span>
             </div>
             <!-- Highcharts renders into this div — NO canvas needed -->
             <div id="hc-pie-chart" style="min-height:260px; width:100%;"></div>
@@ -275,11 +283,11 @@
                         <i class="bi bi-bar-chart-fill"></i>
                     </div>
                     <div>
-                        <h6 class="chart-header-title mb-0">Students by Faculty</h6>
-                        <small class="text-muted" style="font-size:0.75rem;">ပညာသင်နှစ်အလိုက် FC နှင့် FE ကျောင်းသားအရေအတွက် နှိုင်းယှဉ်ချက်</small>
+                        <h6 class="chart-header-title mb-0">@(currentLang == "my" ? "မဟာဌာနအလိုက် ကျောင်းသားဦးရေ" : "Students by Faculty")</h6>
+                        <small class="text-muted" style="font-size:0.75rem;">@(currentLang == "my" ? "ပညာသင်နှစ်အလိုက် ကျောင်းသားအရေအတွက် နှိုင်းယှဉ်ချက်" : "FC & FE student count comparison by academic year")</small>
                     </div>
                 </div>
-                <span class="chart-badge">FC & FE</span>
+                <span class="chart-badge">@(currentLang == "my" ? "မဟာဌာနများ" : "FC & FE")</span>
             </div>
             <!-- Highcharts renders into this div — NO canvas needed -->
             <div id="hc-bar-chart" style="min-height:260px; width:100%;"></div>
@@ -299,8 +307,8 @@
                         <i class="bi bi-clock-history"></i>
                     </div>
                     <div>
-                        <h6 class="chart-header-title mb-0">Recent Activity</h6>
-                        <small class="text-muted" style="font-size:0.75rem;">နောက်ဆုံးလှုပ်ရှားမှုမှတ်တမ်းများ (Latest 6)</small>
+                        <h6 class="chart-header-title mb-0">@(currentLang == "my" ? "လတ်တလော လှုပ်ရှားမှုများ" : "Recent Activity")</h6>
+                        <small class="text-muted" style="font-size:0.75rem;">@(currentLang == "my" ? "နောက်ဆုံး လုပ်ဆောင်မှုမှတ်တမ်း (၆) ခု" : "Latest activity logs (Latest 6)")</small>
                     </div>
                 </div>
             </div>
@@ -321,7 +329,7 @@
                                 <div class="d-flex align-items-center gap-2 mb-1">
                                     <p class="mb-0 fw-bold small text-truncate text-dark">@activity.ActivityTitle</p>
                                     <span class="badge bg-light text-secondary border flex-shrink-0" style="font-size: 0.65rem; padding: 2px 6px;">
-                                        <i class="bi bi-person-fill me-1"></i>@(string.IsNullOrWhiteSpace(activity.CreatedBy) ? "Admin" : activity.CreatedBy)
+                                        <i class="bi bi-person-fill me-1"></i>@(currentLang == "my" ? (activity.CreatedBy == "Admin" || string.IsNullOrWhiteSpace(activity.CreatedBy) ? "စီမံခန့်ခွဲသူ" : activity.CreatedBy) : (string.IsNullOrWhiteSpace(activity.CreatedBy) ? "Admin" : activity.CreatedBy))
                                     </span>
                                 </div>
 
@@ -352,7 +360,7 @@
                 }
                 else
                 {
-                    <li class="p-4 text-center text-muted small">No recent activity found.</li>
+                    <li class="p-4 text-center text-muted small">@(currentLang == "my" ? "လတ်တလော လှုပ်ရှားမှုမှတ်တမ်း မရှိသေးပါ။" : "No recent activity found.")</li>
                 }
             </ul>
         </div>
@@ -367,8 +375,8 @@
                         <i class="bi bi-grid-fill"></i>
                     </div>
                     <div>
-                        <h6 class="chart-header-title mb-0">System Summary</h6>
-                        <small class="text-muted" style="font-size:0.75rem;">စနစ်ဆိုင်ရာ အချက်အလက်များ အကျဉ်းချုပ်</small>
+                        <h6 class="chart-header-title mb-0">@(currentLang == "my" ? "စနစ်ဆိုင်ရာ အကျဉ်းချုပ်" : "System Summary")</h6>
+                        <small class="text-muted" style="font-size:0.75rem;">@(currentLang == "my" ? "စနစ်အတွင်းရှိ ဌာန၊ ဘာသာရပ်နှင့် စည်းမျဉ်းများ စုစုပေါင်း" : "Overview of registered campus entities")</small>
                     </div>
                 </div>
             </div>
@@ -377,42 +385,42 @@
                     <div class="p-3 rounded-3 text-center"
                          style="background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.15);">
                         <div class="fw-bolder fs-4" style="color:#0284c7;">@summary.Faculties</div>
-                        <div class="text-muted small fw-semibold">Faculties</div>
+                        <div class="text-muted small fw-semibold">@(currentLang == "my" ? "မဟာဌာန" : "Faculties")</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-3 text-center"
                          style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.15);">
                         <div class="fw-bolder fs-4" style="color:#7c3aed;">@summary.Departments</div>
-                        <div class="text-muted small fw-semibold">Departments</div>
+                        <div class="text-muted small fw-semibold">@(currentLang == "my" ? "ဌာနများ" : "Departments")</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-3 text-center"
                          style="background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.15);">
                         <div class="fw-bolder fs-4" style="color:#059669;">@summary.Subjects</div>
-                        <div class="text-muted small fw-semibold">Subjects</div>
+                        <div class="text-muted small fw-semibold">@(currentLang == "my" ? "ဘာသာရပ်များ" : "Subjects")</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-3 text-center"
                          style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);">
                         <div class="fw-bolder fs-4" style="color:#d97706;">@summary.Semesters</div>
-                        <div class="text-muted small fw-semibold">Semesters</div>
+                        <div class="text-muted small fw-semibold">@(currentLang == "my" ? "စာသင်နှစ်ဝက်များ" : "Semesters")</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-3 text-center"
                          style="background:rgba(225,29,72,0.06);border:1px solid rgba(225,29,72,0.15);">
                         <div class="fw-bolder fs-4" style="color:#e11d48;">@summary.Positions</div>
-                        <div class="text-muted small fw-semibold">Positions</div>
+                        <div class="text-muted small fw-semibold">@(currentLang == "my" ? "ရာထူးများ" : "Positions")</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="p-3 rounded-3 text-center"
                          style="background:rgba(90,79,207,0.06);border:1px solid rgba(90,79,207,0.15);">
                         <div class="fw-bolder fs-4" style="color:#5A4FCF;">@summary.Rules</div>
-                        <div class="text-muted small fw-semibold">Rules</div>
+                        <div class="text-muted small fw-semibold">@(currentLang == "my" ? "စည်းမျဉ်းများ" : "Rules")</div>
                     </div>
                 </div>
             </div>
@@ -424,18 +432,18 @@
 <div class="row g-3 mb-4 mt-2">
     <div class="col-12">
         <div class="chart-card-modern">
-            <div class="chart-card-header d-flex align-items-center justify-content-between">
+            <div class="chart-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <div class="chart-header-icon" style="background:rgba(245,158,11,0.12);color:#d97706;">
                         <i class="bi bi-mortarboard-fill"></i>
                     </div>
                     <div>
-                        <h6 class="chart-header-title mb-0">Completed Students</h6>
-                        <small class="text-muted" style="font-size:0.75rem;">အောင်မြင်စွာ ဘွဲ့ရရှိပြီးသော ကျောင်းသားများ (All 9 Semesters Passed)</small>
+                        <h6 class="chart-header-title mb-0">@(currentLang == "my" ? "ဘွဲ့ရရှိပြီးသော ကျောင်းသားများ" : "Completed Students")</h6>
+                        <small class="text-muted" style="font-size:0.75rem;">@(currentLang == "my" ? "သတ်မှတ်ထားသော စာသင်နှစ်ဝက် အားလုံး အောင်မြင်ပြီးသော ကျောင်းသားများ" : "Graduated students who passed all required semesters")</small>
                     </div>
                 </div>
                 <span class="badge px-3 py-1.5 rounded-pill" style="background:rgba(5,150,105,0.1);color:#059669;border:1px solid rgba(5,150,105,0.25);font-size:0.8rem;font-weight:700;">
-                    @completedStudents.Count Graduates
+                    @(currentLang == "my" ? $"{completedStudents.Count} ဦး ဘွဲ့ရပြီး" : $"{completedStudents.Count} Graduates")
                 </span>
             </div>
             @if (completedStudents.Any())
@@ -444,12 +452,12 @@
                     <table class="table table-hover mb-0" style="font-size:0.9rem;">
                         <thead style="background:rgba(241,245,249,0.6);">
                             <tr>
-                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">No.</th>
-                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">Roll No</th>
-                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">Full Name</th>
-                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">Major</th>
-                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">Class Year</th>
-                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">Status</th>
+                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">@(currentLang == "my" ? "စဉ်" : "No.")</th>
+                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">@(currentLang == "my" ? "ခုံအမှတ်" : "Roll No")</th>
+                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">@(currentLang == "my" ? "အမည်" : "Full Name")</th>
+                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">@(currentLang == "my" ? "မေဂျာ" : "Major")</th>
+                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">@(currentLang == "my" ? "ပညာသင်နှစ်" : "Class Year")</th>
+                                <th style="color:#64748b;font-weight:700;padding:12px 16px;border-bottom:1px solid #e2e8f0;">@(currentLang == "my" ? "အခြေအနေ" : "Status")</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -465,7 +473,7 @@
                                     <td style="padding:12px 16px;color:#64748b;">@(stu.CurrentClassYear ?? "-")</td>
                                     <td style="padding:12px 16px;">
                                         <span class="badge rounded-pill" style="background:rgba(245,158,11,0.12);color:#d97706;border:1px solid rgba(245,158,11,0.25);font-size:0.75rem;">
-                                            <i class="bi bi-mortarboard me-1"></i>Graduated
+                                             <i class="bi bi-mortarboard me-1"></i>@(currentLang == "my" ? "ဘွဲ့ရပြီး" : "Graduated")
                                         </span>
                                     </td>
                                 </tr>
@@ -478,7 +486,7 @@
             {
                 <div style="text-align:center;padding:48px 24px;color:#94a3b8;">
                     <i class="bi bi-mortarboard" style="font-size:2.5rem;opacity:0.35;"></i>
-                    <p class="mt-3 mb-0 fw-semibold" style="font-size:0.95rem;">No students have completed all 9 semesters yet.</p>
+                    <p class="mt-3 mb-0 fw-semibold" style="font-size:0.95rem;">@(currentLang == "my" ? "ဘွဲ့ရရှိပြီးသော ကျောင်းသားမှတ်တမ်း မရှိသေးပါ။" : "No students have completed all required semesters yet.")</p>
                 </div>
             }
         </div>
@@ -585,11 +593,58 @@
 
 @code
 {
+    private string currentLang = "en";
+    private bool isLangDropdownOpen = false;
     private readonly List<RoleDistributionChartPoint> RoleDistributionData = new();
     private readonly List<RoleDistributionChartPoint> FacultyDistributionData = new();
     private Timer? _timer;
     private List<ActivityItem> recentActivities = new();
     private bool _isRendered = false; // JS Interop အတွက် အရေးကြီးသည်
+
+    private void ToggleLangDropdown()
+    {
+        isLangDropdownOpen = !isLangDropdownOpen;
+    }
+
+    private void CloseLangDropdown()
+    {
+        isLangDropdownOpen = false;
+    }
+
+    private async Task SelectLanguage(string lang)
+    {
+        isLangDropdownOpen = false;
+        await SetLanguage(lang);
+    }
+
+    private async Task SetLanguage(string lang)
+    {
+        currentLang = lang;
+        LangService.SetLanguage(lang);
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "admin_dashboard_lang", lang);
+        }
+        catch { }
+        StateHasChanged();
+        if (_isRendered)
+        {
+            await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData, currentLang);
+        }
+    }
+
+    private void HandleLanguageChanged()
+    {
+        if (currentLang != LangService.CurrentLanguage)
+        {
+            currentLang = LangService.CurrentLanguage;
+            InvokeAsync(StateHasChanged);
+            if (_isRendered)
+            {
+                InvokeAsync(async () => await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData, currentLang));
+            }
+        }
+    }
 
     private int activeStudentCount = 0;
     private int previousStudentCount = 0;
@@ -632,16 +687,7 @@
                     s.Sem4_Result, s.Sem5_Result, s.Sem6_Result, s.Sem7_Result,
                     s.Sem8_Result, s.Sem9_Result }.Any(r => string.Equals(r, "Fail", StringComparison.OrdinalIgnoreCase))),
 
-                "AllPass" => q.Where(s =>
-                    string.Equals(s.Sem1_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem2_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem3_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem4_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem5_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem6_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem7_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem8_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem9_Result, "Pass", StringComparison.OrdinalIgnoreCase)),
+                "AllPass" => q.Where(s => IsStudentGraduated(s)),
 
                 "NoResult" => q.Where(s => new[] { s.Sem1_Result, s.Sem2_Result, s.Sem3_Result,
                     s.Sem4_Result, s.Sem5_Result, s.Sem6_Result, s.Sem7_Result,
@@ -658,13 +704,14 @@
     {
         try
         {
+            currentLang = LangService.CurrentLanguage;
+            LangService.OnLanguageChanged += HandleLanguageChanged;
+
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             
             _timer = new Timer(TimerCallback, null, 0, 60000);
             var client = ClientFactory.CreateClient("SmartCampusApi");
-
-
 
         try
         {
@@ -727,17 +774,7 @@
             if (studentData != null)
             {
                 allStudents = studentData;
-                completedStudents = studentData.Where(s =>
-                    string.Equals(s.Sem1_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem2_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem3_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem4_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem5_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem6_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem7_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem8_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(s.Sem9_Result, "Pass", StringComparison.OrdinalIgnoreCase)
-                ).ToList();
+                completedStudents = studentData.Where(s => IsStudentGraduated(s)).ToList();
             }
         }
         catch (Exception ex) { Console.WriteLine($"Error loading students: {ex.Message}"); }
@@ -762,9 +799,6 @@
         }
     }
 
-
-
-
     private async void TimerCallback(object? state)
     {
         try
@@ -775,7 +809,7 @@
             await InvokeAsync(StateHasChanged);
             if (_isRendered)
             {
-                await InvokeAsync(async () => await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData));
+                await InvokeAsync(async () => await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData, currentLang));
             }
         }
         catch (Exception ex)
@@ -787,12 +821,11 @@
     public void Dispose()
     {
         _timer?.Dispose();
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-
-
         if (firstRender)
         {
             var token = HttpContextAccessor.HttpContext?.Request.Cookies["authToken"];
@@ -801,17 +834,29 @@
                 NavigationManager.NavigateTo("/login", forceLoad: true);
             }
 
+            try
+            {
+                var savedLang = await JS.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang))
+                {
+                    currentLang = savedLang;
+                    LangService.SetLanguage(savedLang);
+                    StateHasChanged();
+                }
+            }
+            catch { }
+
             _isRendered = true;
             try
             {
-                await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData);
+                await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData, currentLang);
             }
             catch
             {
                 try
                 {
                     await Task.Delay(500);
-                    await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData);
+                    await JS.InvokeVoidAsync("initCharts", RoleDistributionData, FacultyYearData, currentLang);
                 }
                 catch (Exception ex)
                 {
@@ -861,6 +906,40 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading faculty year data: {ex.Message}");
+        }
+    }
+
+    private static bool IsStudentGraduated(StudentModel s)
+    {
+        if (string.Equals(s.Status, "Disqualified", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (string.Equals(s.Status, "Graduated", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        string major = (s.CurrentMajor ?? s.FacultyName ?? "").ToLowerInvariant();
+        bool isEngineering = major.Contains("civil") ||
+                             major.Contains("electronic") ||
+                             major.Contains("electrical") ||
+                             major.Contains("mechanical") ||
+                             major.Contains("engineering");
+
+        bool sem1To8Passed = string.Equals(s.Sem1_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
+                             string.Equals(s.Sem2_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
+                             string.Equals(s.Sem3_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
+                             string.Equals(s.Sem4_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
+                             string.Equals(s.Sem5_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
+                             string.Equals(s.Sem6_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
+                             string.Equals(s.Sem7_Result, "Pass", StringComparison.OrdinalIgnoreCase) &&
+                             string.Equals(s.Sem8_Result, "Pass", StringComparison.OrdinalIgnoreCase);
+
+        if (isEngineering)
+        {
+            return sem1To8Passed && string.Equals(s.Sem9_Result, "Pass", StringComparison.OrdinalIgnoreCase) && string.Equals(s.Status, "Graduated", StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            return sem1To8Passed && string.Equals(s.Status, "Graduated", StringComparison.OrdinalIgnoreCase);
         }
     }
 

@@ -162,7 +162,8 @@
     .input-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 24px;
+        gap: 16px 24px;
+        align-items: start;
         animation: fadeIn 0.4s ease-in-out;
     }
     @@keyframes fadeIn {
@@ -174,6 +175,78 @@
         to {
             opacity: 1;
             transform: translateY(0);
+        }
+    }
+
+    .doc-upload-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+        align-items: stretch;
+    }
+
+    .doc-upload-grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+        align-items: stretch;
+    }
+
+    .doc-card-header {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    .doc-card-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .doc-card-subtitle {
+        font-size: 0.68rem;
+        color: #64748b;
+        white-space: nowrap;
+        margin-left: 4px;
+        flex-shrink: 0;
+    }
+
+    .upload-dropzone {
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+        height: 110px !important;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .upload-dropzone:hover {
+        border-color: #2563eb !important;
+        background-color: rgba(37, 99, 235, 0.05) !important;
+    }
+
+    @@media (max-width: 850px) {
+        .doc-upload-grid-4 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .doc-upload-grid-3, .doc-upload-grid-4 {
+            grid-template-columns: 1fr;
         }
     }
 
@@ -247,24 +320,74 @@
         margin-top: 10px;
     }
 
+    .subject-table-container {
+        max-height: 380px;
+        overflow-y: auto;
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        margin-top: 10px;
+        background: #ffffff;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f8fafc;
+    }
+
+    .subject-table-container::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .subject-table-container::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+
+    .subject-table-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .subject-table-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .subject-table-container table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background-color: #f8fafc;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
     .modern-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
         text-align: left;
     }
 
+        .modern-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
         .modern-table th {
-            background-color: #f8fafc;
-            color: #475569;
-            font-size: 0.85rem;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #334155;
+            font-size: 0.86rem;
             font-weight: 700;
-            padding: 12px 16px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 13px 16px;
+            border-bottom: 2px solid #cbd5e1;
+            letter-spacing: 0.01em;
+            box-shadow: inset 0 -1px 0 #cbd5e1, 0 1px 2px rgba(0, 0, 0, 0.04);
         }
 
         .modern-table td {
-            padding: 10px 16px;
+            padding: 11px 16px;
             border-bottom: 1px solid #e2e8f0;
+            background-color: #ffffff;
         }
 
             .modern-table td .modern-input {
@@ -493,6 +616,37 @@
         <h2>Online Registration Form</h2>
     </div>
 
+    @if (RetakeStatus != null)
+    {
+        @if (RetakeStatus.IsDisqualified)
+        {
+            <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 14px; padding: 1.5rem 2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 16px;">
+                <i class="fas fa-ban" style="font-size: 2.5rem; color: #ef4444;"></i>
+                <div>
+                    <h4 style="color: #b91c1c; font-weight: 800; margin: 0 0 6px;">ကျောင်းတက်ရောက်ခွင့် အရည်အချင်း မပြည့်မီတော့ပါ (Disqualified)</h4>
+                    <p style="margin: 0; color: #7f1d1d; font-size: 0.95rem; font-weight: 500; line-height: 1.6;">
+                        သင်၏ စုစုပေါင်း Retake အကြိမ်အရေအတွက်မှာ (<strong style="color: #b91c1c;">@RetakeStatus.TotalRetakesTaken / @RetakeStatus.MaxRetakeLimit ကြိမ်</strong>) ပြည့်သွားပြီဖြစ်သဖြင့် တက္ကသိုလ်စည်းမျဉ်းအရ နောက်ထပ် ကျောင်းအပ်နှံခွင့် / ဘာသာရပ်စာရင်းသွင်းခွင့် မရှိတော့ပါ။
+                    </p>
+                </div>
+            </div>
+        }
+        else if (RetakeStatus.DangerLevel == "HighDanger" || RetakeStatus.DangerLevel == "Warning")
+        {
+            <div style="background: @(RetakeStatus.DangerLevel == "HighDanger" ? "rgba(249, 115, 22, 0.08)" : "rgba(245, 158, 11, 0.08)"); border-left: 5px solid @RetakeStatus.BadgeColor; border-radius: 10px; padding: 14px 18px; margin-bottom: 1.8rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas @(RetakeStatus.DangerLevel == "HighDanger" ? "fa-fire" : "fa-exclamation-triangle")" style="color: @RetakeStatus.BadgeColor; font-size: 1.4rem;"></i>
+                    <div>
+                        <div style="font-size: 0.92rem; font-weight: 700; color: #0f172a;">@RetakeStatus.DangerStatusText</div>
+                        <div style="font-size: 0.8rem; color: #64748b;">(ကျန်ရှိသော Retake ခွင့်ပြုချက်: @RetakeStatus.RemainingRetakes ကြိမ်)</div>
+                    </div>
+                </div>
+                <span style="font-size: 0.85rem; font-weight: 700; color: @RetakeStatus.BadgeColor; background: #ffffff; padding: 6px 14px; border-radius: 999px; border: 1px solid @RetakeStatus.BadgeColor; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+                    Retake: @RetakeStatus.TotalRetakesTaken / @RetakeStatus.MaxRetakeLimit
+                </span>
+            </div>
+        }
+    }
+
     @if (IsGraduated)
     {
         <!-- Premium Graduation Banner -->
@@ -500,12 +654,12 @@
             <div style="font-size:4rem; margin-bottom: 16px;">🎓</div>
             <h2 style="font-size:2rem; font-weight:800; margin-bottom:12px; background: linear-gradient(90deg, #fbbf24, #f59e0b, #fde68a); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Congratulations, Graduate!</h2>
             <p style="font-size:1.15rem; color:#cbd5e1; max-width:520px; margin:0 auto 28px auto; line-height:1.8;">
-                You have successfully completed <strong style="color:#fbbf24;">all 9 Semesters</strong>. Your academic journey is complete.
+                You have successfully completed <strong style="color:#fbbf24;">all @(TotalRequiredSemesters) Semesters</strong>. Your academic journey is complete.
                 No further registration is required.
             </p>
             <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
                 <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
-                    <div style="font-size:1.8rem; font-weight:800; color:#fbbf24;">9 / 9</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#fbbf24;">@(TotalRequiredSemesters) / @(TotalRequiredSemesters)</div>
                     <div style="font-size:0.85rem; color:#94a3b8; margin-top:4px;">Semesters Completed</div>
                 </div>
                 <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px 28px;">
@@ -520,7 +674,7 @@
         <div class="review-status-panel">
             <div class="review-status-top">
                 <div>
-                    <h3 style="margin: 0 0 8px 0; color: #0f172a; font-size: 1.25rem;">Registration Review</h3>
+                    <h3 style="margin: 0 0 8px 0; color: #0f172a; font-size: 1.25rem;">ကျောင်းအပ်နှံမှု အတည်ပြုစိစစ်ချက်</h3>
                     <p style="margin: 0; color: #475569;">@GetReviewStatusMessage()</p>
                 </div>
                 <span class="status-badge @GetReviewStatusClass()">
@@ -535,14 +689,14 @@
                     @if (!string.IsNullOrEmpty(RegModel.student_name_en) || !string.IsNullOrEmpty(RegModel.student_name_mm))
                     {
                         <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
-                            <span style="font-weight: 600; color: #0f172a;">Name:</span>
+                            <span style="font-weight: 600; color: #0f172a;">အမည်:</span>
                             @(!string.IsNullOrEmpty(RegModel.student_name_en) ? RegModel.student_name_en : RegModel.student_name_mm)
                         </div>
                     }
                     @if (!string.IsNullOrEmpty(RegModel.major))
                     {
                         <div style="background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #475569;">
-                            <span style="font-weight: 600; color: #0f172a;">Major:</span> @RegModel.major
+                            <span style="font-weight: 600; color: #0f172a;">အထူးပြုဘာသာ:</span> @RegModel.major
                         </div>
                     }
                     @if (!string.IsNullOrEmpty(AllowedSemesterName))
@@ -558,24 +712,24 @@
                 @if (CanProceedToPayment)
                 {
                     <button type="button" class="btn-review-primary" @onclick="ContinueToPayment">
-                        Continue to Payment <i class="fas fa-credit-card ms-1"></i>
+                        ငွေပေးချေရန် ဆက်လက်လုပ်ဆောင်မည် <i class="fas fa-credit-card ms-1"></i>
                     </button>
                 }
                 else if (IsRejected)
                 {
                     <button type="button" class="btn-review-primary" @onclick="StartCorrectedRegistration">
-                        Submit Corrected Form <i class="fas fa-edit ms-1"></i>
+                        ပြင်ဆင်ပြီး ပြန်လည်တင်သွင်းမည် <i class="fas fa-edit ms-1"></i>
                     </button>
                 }
 
                 <button type="button" class="btn-review-secondary" disabled="@IsRefreshingStatus" @onclick="RefreshRegistrationStatus">
                     @if (IsRefreshingStatus)
                     {
-                        <span>Checking... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                        <span>စစ်ဆေးနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
                     }
                     else
                     {
-                        <span>Refresh Status <i class="fas fa-sync-alt ms-1"></i></span>
+                        <span>အခြေအနေ ပြန်လည်စစ်ဆေးမည် <i class="fas fa-sync-alt ms-1"></i></span>
                     }
                 </button>
             </div>
@@ -585,29 +739,29 @@
     {
     <div class="stepper-wrapper">
         <div class="stepper-progress" style="width: @((CurrentStep - 1) * 25)%"></div>
-        <div class="step-block @(CurrentStep >= 1 ? "active" : "")"><div class="step-circle">1</div><div class="step-label">Personal Info</div></div>
-        <div class="step-block @(CurrentStep >= 2 ? "active" : "")"><div class="step-circle">2</div><div class="step-label">Academic Info</div></div>
-        <div class="step-block @(CurrentStep >= 3 ? "active" : "")"><div class="step-circle">3</div><div class="step-label">Subject Grade</div></div>
-        <div class="step-block @(CurrentStep >= 4 ? "active" : "")"><div class="step-circle">4</div><div class="step-label">Family Info</div></div>
-        <div class="step-block @(CurrentStep >= 5 ? "active" : "")"><div class="step-circle">5</div><div class="step-label">Submit</div></div>
+        <div class="step-block @(CurrentStep >= 1 ? "active" : "")"><div class="step-circle">1</div><div class="step-label">ကိုယ်ရေးအချက်အလက်</div></div>
+        <div class="step-block @(CurrentStep >= 2 ? "active" : "")"><div class="step-circle">2</div><div class="step-label">ပညာရေးအချက်အလက်</div></div>
+        <div class="step-block @(CurrentStep >= 3 ? "active" : "")"><div class="step-circle">3</div><div class="step-label">ဘာသာရပ်များ</div></div>
+        <div class="step-block @(CurrentStep >= 4 ? "active" : "")"><div class="step-circle">4</div><div class="step-label">မိသားစုအချက်အလက်</div></div>
+        <div class="step-block @(CurrentStep >= 5 ? "active" : "")"><div class="step-circle">5</div><div class="step-label">အတည်ပြုတင်သွင်းရန်</div></div>
     </div>
 
     @if (CurrentStep == 1)
     {
         <div class="input-grid">
-            <div class="photo-upload-wrapper">
-                <label for="photoUpload" class="photo-box">
+            <div class="photo-upload-wrapper" style="position: relative;">
+                <div class="photo-box" style="@(string.IsNullOrEmpty(PreviewImageUrl) ? "border: 2px dashed #3b82f6; background: rgba(37, 99, 235, 0.03);" : "border: 2px solid #2563EB; background: #fff;") cursor: pointer; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                     @if (!string.IsNullOrEmpty(PreviewImageUrl))
                     {
                         <img src="@PreviewImageUrl" alt="Student Photo" />
                     }
                     else
                     {
-                        <i class="far fa-user"></i>
-                        <span class="photo-text">ပတ်စပို့စ်အရွယ်<br>ဓာတ်ပုံ</span>
+                        <i class="bi bi-cloud-arrow-up text-primary d-block mb-1" style="font-size: 2rem;"></i>
+                        <span class="photo-text">ပတ်စပို့စ်အရွယ်<br>ဓာတ်ပုံ <span style="color:red; font-weight: bold;">*</span></span>
                     }
-                </label>
-                <InputFile @key="PreviewImageUrl" id="photoUpload" OnChange="OnPhotoSelected" accept="image/*" style="display: none;" />
+                    <InputFile @key="PreviewImageUrl" id="photoUpload" OnChange="OnPhotoSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept="image/*" />
+                </div>
             </div>
 
             <!-- 💡 User ID ကို ဖောင်တွင် မပြတော့ဘဲ နောက်ကွယ်မှ Auto ခေါ်ယူရန် ပြန်ဖျောက်ထားပါသည် 💡 -->
@@ -709,13 +863,12 @@
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
-                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="RegModel.nrc_township" required>
-                        <option value="">မြို့နယ်</option>
-                        @foreach (var town in CurrentTownshipList)
-                        {
-                            <option value="@town">@town</option>
-                        }
-                    </select>
+                    <CustomSelectDropdown Style="flex:1;"
+                                          Items="CurrentTownshipList"
+                                          @bind-Value="RegModel.nrc_township"
+                                          Placeholder="မြို့နယ်"
+                                          SearchPlaceholder="ရှာရန်..."
+                                          MaxHeight="190px" />
                     <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="NrcType">
                         <option value="(နိုင်)">(နိုင်)</option>
                         <option value="(ဧည့်)">(ဧည့်)</option>
@@ -730,7 +883,7 @@
 
             <div class="input-group">
                 <label class="input-label">မွေးသက္ကရာဇ် <span style="color:red;">*</span></label>
-                <input type="date" class="modern-input" @bind="DobDate" required>
+                <input type="date" class="modern-input" @bind="DobDate" max="@MaxAllowedDobString" required>
             </div>
 
             <div class="input-group">
@@ -803,10 +956,129 @@
                 <label class="input-label">ကိုဗစ်ကာကွယ်ရေးထိုးနှံမှုပြီးစီးသည့်ရက်</label>
                 <input type="date" class="modern-input" @bind="CovidDate">
             </div>
+
+            <!-- 📄 Document Uploads: NRC Front, NRC Back, Household Census -->
+            <div class="input-group full-width" style="margin-top: 14px; grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color: #e2e8f0;">
+                    <span style="font-weight: 700; color: #1e40af; font-size: 0.9rem;">
+                        <i class="fas fa-file-upload me-2 text-primary"></i> ပူးတွဲတင်ပြရမည့် စာရွက်စာတမ်းများ (Attached Documents)
+                    </span>
+                    <span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 0.72rem;">JPG, PNG, WEBP (Max 5MB)</span>
+                </div>
+                
+                <div class="doc-upload-grid-3">
+                    
+                    <!-- 🪪 1. NRC Front Upload Box -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card me-1 text-primary"></i> မှတ်ပုံတင် (ရှေ့)</span>
+                            <small class="doc-card-subtitle">NRC Front</small>
+                        </div>
+                        
+                        <div class="upload-dropzone p-2 text-center" 
+                             style="border: 1.5px dashed rgba(37, 99, 235, 0.4); background: @(string.IsNullOrEmpty(PreviewNrcFrontUrl) ? "rgba(37, 99, 235, 0.02)" : "#f8fafc"); cursor: pointer; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            
+                            @if (!string.IsNullOrEmpty(PreviewNrcFrontUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewNrcFrontUrl" alt="NRC Front" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveNrcFront" @onclick:stopPropagation="true">
+                                        <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-primary d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            
+                            <InputFile @key="PreviewNrcFrontUrl" OnChange="OnNrcFrontSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        </div>
+                    </div>
+
+                    <!-- 🪪 2. NRC Back Upload Box -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card-alt me-1 text-primary"></i> မှတ်ပုံတင် (နောက်)</span>
+                            <small class="doc-card-subtitle">NRC Back</small>
+                        </div>
+                        
+                        <div class="upload-dropzone p-2 text-center" 
+                             style="border: 1.5px dashed rgba(37, 99, 235, 0.4); background: @(string.IsNullOrEmpty(PreviewNrcBackUrl) ? "rgba(37, 99, 235, 0.02)" : "#f8fafc"); cursor: pointer; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            
+                            @if (!string.IsNullOrEmpty(PreviewNrcBackUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewNrcBackUrl" alt="NRC Back" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveNrcBack" @onclick:stopPropagation="true">
+                                        <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-primary d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            
+                            <InputFile @key="PreviewNrcBackUrl" OnChange="OnNrcBackSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        </div>
+                    </div>
+
+                    <!-- 📜 3. Household Census Upload Box -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-file-invoice me-1 text-primary"></i> သန်းခေါင်စာရင်း</span>
+                            <small class="doc-card-subtitle">Census</small>
+                        </div>
+                        
+                        <div class="upload-dropzone p-2 text-center" 
+                             style="border: 1.5px dashed rgba(37, 99, 235, 0.4); background: @(string.IsNullOrEmpty(PreviewCensusUrl) ? "rgba(37, 99, 235, 0.02)" : "#f8fafc"); cursor: pointer; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            
+                            @if (!string.IsNullOrEmpty(PreviewCensusUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewCensusUrl" alt="Census" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveCensus" @onclick:stopPropagation="true">
+                                        <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-primary d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            
+                            <InputFile @key="PreviewCensusUrl" OnChange="OnCensusSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
 
         <div class="form-footer">
-            <button class="btn-next" @onclick="NextStep">Next: Academic Info <i class="fas fa-arrow-right"></i></button>
+            <button class="btn-next" @onclick="NextStep">ရှေ့သို့ (ပညာရေး အချက်အလက်) <i class="fas fa-arrow-right"></i></button>
         </div>
     }
 
@@ -905,8 +1177,8 @@
                 <input type="number" class="modern-input" placeholder="e.g. 2022" @bind="RegModel.matric_passed_year">
             </div>
             <div class="input-group">
-                <label class="input-label">တက္ကသိုလ်ဝင်တန်း ခုံအမှတ်</label>
-                <input type="text" class="modern-input" placeholder="e.g. အမ-၁၂၃၄" @bind="RegModel.matric_roll_no">
+                <label class="input-label">တက္ကသိုလ်ဝင်တန်း ခုံအမှတ် (မြန်မာအက္ခရာ/ဂဏန်း)</label>
+                <input type="text" class="modern-input mm-only-input" placeholder="e.g. အမ-၁၂၃၄ သို့မဟုတ် သရ-၁၂၃" @bind="RegModel.matric_roll_no" @bind:event="oninput">
             </div>
 
             <div class="input-group">
@@ -916,57 +1188,237 @@
         </div>
 
         <div class="form-footer">
-            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
-            <button class="btn-next" @onclick="NextStep">Next: Subject Grade <i class="fas fa-arrow-right"></i></button>
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> နောက်သို့</button>
+            <button class="btn-next" @onclick="NextStep">ရှေ့သို့ (ဘာသာရပ်များ ရွေးချယ်ရန်) <i class="fas fa-arrow-right"></i></button>
         </div>
     }
 
     @if (CurrentStep == 3)
     {
-        var coreAndRetakes = UpcomingSubjects?.Where(s => s.SubjectType != Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective || s.IsRetake).ToList() ?? new();
-        var electives = UpcomingSubjects?.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake).ToList() ?? new();
+        var coreAndRetakes = UpcomingSubjects?
+            .Where(s => s.SubjectType != Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective || s.IsRetake || s.IsSubjectDisqualified)
+            .OrderByDescending(s => s.IsRetake)
+            .ThenByDescending(s => s.IsCarriedOver)
+            .ThenBy(s => s.SubjectCode)
+            .ToList() ?? new();
+        var blockedCoreSubjects = coreAndRetakes.Where(s => !s.IsRetake && !s.IsSubjectDisqualified && !s.IsPrerequisiteSatisfied).ToList();
+        var electives = UpcomingSubjects?.Where(s => s.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective && !s.IsRetake && !s.IsSubjectDisqualified).ToList() ?? new();
+        var electiveGroupsList = electives.GroupBy(e => e.SemesterId).OrderBy(g => g.Key).ToList();
         int maxElective = GetMaxElectiveForCurrentSemester();
+        int eligibleElectiveCount = electives.Count(e => e.IsPrerequisiteSatisfied);
+        int requiredElectiveCount = Math.Min(maxElective, eligibleElectiveCount);
         int selectedElectiveCount = electives.Count(e => e.IsSelected);
 
-        <div class="input-grid">
-            <div class="input-group" style="border-right: 1px dashed #e2e8f0; padding-right: 20px;">
-                <label class="input-label" style="font-size: 1.1rem; color: #1e40af;"><i class="fas fa-book me-2"></i> မဖြစ်မနေ တက်ရောက်ရမည့် ဘာသာရပ်များ (Core & Retake)</label>
+        int totalSelectedCredits = GetTotalSelectedCredits();
+        int minCredits = MinSemesterCredits;
+        int maxCredits = MaxSemesterCredits;
+        int coreCredits = GetSelectedCoreCredits();
+        int retakeCredits = GetSelectedRetakeCredits();
+        int electiveCredits = GetSelectedElectiveCredits();
+        double creditPercent = GetCreditProgressPercentage();
+        bool isCreditCompleted = totalSelectedCredits >= minCredits && totalSelectedCredits <= maxCredits;
+        int remainingToMin = Math.Max(0, minCredits - totalSelectedCredits);
+
+        <!-- 🎯 Live Dynamic Academic Credit Points Budget Card (Modern Material Design 3) -->
+        <div class="credit-budget-card mb-4" style="background: #ffffff; border-radius: 16px; border: 1.5px solid @(isCreditCompleted ? "#86efac" : (totalSelectedCredits > maxCredits ? "#fca5a5" : "#bfdbfe")); padding: 20px 24px; box-shadow: 0 4px 20px -2px @(isCreditCompleted ? "rgba(34, 197, 94, 0.12)" : (totalSelectedCredits > maxCredits ? "rgba(239, 68, 68, 0.12)" : "rgba(59, 130, 246, 0.12)")); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: @(isCreditCompleted ? "linear-gradient(90deg, #10b981 0%, #059669 100%)" : (totalSelectedCredits > maxCredits ? "#ef4444" : "linear-gradient(90deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)"));"></div>
+
+            <div class="row align-items-center g-3">
+                <div class="col-lg-7 col-md-12">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="d-flex align-items-center justify-content-center flex-shrink-0" 
+                             style="width: 52px; height: 52px; border-radius: 14px; background: @(isCreditCompleted ? "linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.1) 100%)" : (totalSelectedCredits > maxCredits ? "linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%)" : "linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%)")); border: 1.5px solid @(isCreditCompleted ? "rgba(16, 185, 129, 0.3)" : (totalSelectedCredits > maxCredits ? "rgba(239, 68, 68, 0.3)" : "rgba(59, 130, 246, 0.3)"));">
+                            <i class="fas @(isCreditCompleted ? "fa-check-circle text-success" : (totalSelectedCredits > maxCredits ? "fa-exclamation-triangle text-danger" : "fa-award text-primary"))" style="font-size: 1.6rem;"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                                <h5 class="fw-bold mb-0" style="color: #0f172a; font-size: 1.15rem; letter-spacing: -0.2px;">
+                                    Semester Credit Points Requirement
+                                </h5>
+                                <span class="badge" style="background: @(isCreditCompleted ? "#dcfce7" : (totalSelectedCredits > maxCredits ? "#fee2e2" : "#e0f2fe")); color: @(isCreditCompleted ? "#15803d" : (totalSelectedCredits > maxCredits ? "#b91c1c" : "#0369a1")); border: 1px solid @(isCreditCompleted ? "#bbf7d0" : (totalSelectedCredits > maxCredits ? "#fca5a5" : "#bae6fd")); font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 999px;">
+                                    🎯 သတ်မှတ်ချက်: @minCredits ~ @maxCredits Credits
+                                </span>
+                            </div>
+                            <p class="text-secondary mb-0" style="font-size: 0.86rem; line-height: 1.45;">
+                                @if (isCreditCompleted)
+                                {
+                                    <span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> Credit သတ်မှတ်ချက် (@minCredits ~ @maxCredits Credits) ပြည့်မီပါပြီ (လက်ရှိ: @totalSelectedCredits Credits)။ နောက်တစ်ဆင့်သို့ ဆက်လက်သွားရောက်နိုင်ပါသည်။</span>
+                                }
+                                else if (totalSelectedCredits > maxCredits)
+                                {
+                                    <span class="text-danger fw-bold"><i class="fas fa-exclamation-circle me-1"></i> သတ်မှတ်ထားသော အများဆုံး @maxCredits Credits ထက် @(totalSelectedCredits - maxCredits) Credits ပိုနေပါသည် (လက်ရှိ: @totalSelectedCredits Credits)။ @maxCredits Credits မကျော်အောင် ပြန်လည်ချိန်ညှိပါ။</span>
+                                }
+                                else
+                                {
+                                    <span>ဤ Semester တက်ရောက်ရန် အနည်းဆုံး <strong>@minCredits မှ အများဆုံး @maxCredits Credits</strong> ကြား ရွေးချယ်ပေးရန် လိုအပ်ပါသည်။ (အနည်းဆုံးပြည့်ရန် ကျန်ရှိ: <strong>@remainingToMin Credits</strong>)</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 col-md-12">
+                    <div class="d-flex flex-wrap align-items-center justify-content-lg-end gap-2 mb-2">
+                        <span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 0.82rem; padding: 6px 12px; border-radius: 8px;">
+                            📚 Core: <strong>@coreCredits Pts</strong>
+                        </span>
+                        @if (retakeCredits > 0)
+                        {
+                            <span class="badge" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.82rem; padding: 6px 12px; border-radius: 8px;">
+                                🔄 Retake: <strong>@retakeCredits Pts</strong>
+                            </span>
+                        }
+                        <span class="badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.82rem; padding: 6px 12px; border-radius: 8px;">
+                            ✨ Elective: <strong>@electiveCredits Pts</strong>
+                        </span>
+                        <span class="badge" style="background: @(isCreditCompleted ? "#ecfdf5" : (totalSelectedCredits > maxCredits ? "#fef2f2" : "#fff7ed")); color: @(isCreditCompleted ? "#047857" : (totalSelectedCredits > maxCredits ? "#dc2626" : "#c2410c")); border: 1.5px solid @(isCreditCompleted ? "#a7f3d0" : (totalSelectedCredits > maxCredits ? "#fecaca" : "#fed7aa")); font-size: 0.85rem; font-weight: 700; padding: 6px 12px; border-radius: 8px;">
+                            @if (isCreditCompleted)
+                            {
+                                <span><i class="fas fa-check me-1"></i> ပြည့်မီပါသည် (@totalSelectedCredits Pts)</span>
+                            }
+                            else if (totalSelectedCredits > maxCredits)
+                            {
+                                <span><i class="fas fa-exclamation-triangle me-1"></i> @(totalSelectedCredits - maxCredits) Pts ပိုနေ</span>
+                            }
+                            else
+                            {
+                                <span>⏳ ကျန်ရှိ: <strong style="font-size: 0.95rem;">@remainingToMin Pts</strong> (Min: @minCredits)</span>
+                            }
+                        </span>
+                    </div>
+
+                    <!-- Animated Progress Bar -->
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="progress flex-grow-1" style="height: 10px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="width: @(creditPercent)%; background: @(isCreditCompleted ? "#10b981" : (totalSelectedCredits > maxCredits ? "#ef4444" : "linear-gradient(90deg, #3b82f6 0%, #6366f1 100%)")); transition: width 0.4s ease;" 
+                                 aria-valuenow="@totalSelectedCredits" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="@maxCredits">
+                            </div>
+                        </div>
+                        <span class="fw-bold" style="font-size: 0.85rem; color: @(isCreditCompleted ? "#059669" : (totalSelectedCredits > maxCredits ? "#dc2626" : "#2563eb")); min-width: 90px; text-align: right;">
+                            @totalSelectedCredits / @maxCredits Pts
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📚 ROW 1: Current Semester Core/Retake Subjects (Left) & Previous Semester Grades (Right) Side-by-Side -->
+        <div class="input-grid mb-4" style="align-items: stretch;">
+            <!-- LEFT BOX: Core & Retake Subjects -->
+            <div class="input-group" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; height: 100%;">
+                <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                    <label class="input-label mb-0" style="font-size: 1.05rem; color: #1e40af; font-weight: 700;">
+                        <i class="fas fa-book me-2"></i> မဖြစ်မနေ တက်ရောက်ရမည့် ဘာသာရပ်များ (@(!string.IsNullOrEmpty(RegModel.academic_year_level) ? RegModel.academic_year_level : "") Core & Retake)
+                    </label>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" style="font-size: 0.78rem; border-radius: 6px; padding: 3px 8px;" @onclick="SelectAllEligibleCoreSubjects">
+                            <i class="fas fa-check-double me-1"></i> Core အားလုံး
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" style="font-size: 0.78rem; border-radius: 6px; padding: 3px 8px;" @onclick="DeselectAllSubjects">
+                            <i class="fas fa-times me-1"></i> ဖြုတ်မည်
+                        </button>
+                    </div>
+                </div>
                 
                 @if (coreAndRetakes.Any())
                 {
-                    <div class="table-responsive" style="margin-top: 10px;">
+                    <div class="subject-table-container flex-grow-1" style="max-height: 380px;">
                         <table class="modern-table">
-                            <thead>
+                            <thead style="box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);">
                                 <tr>
+                                    <th style="width: 55px; text-align: center;">ရွေးရန်</th>
                                     <th>ဘာသာရပ် (Subject)</th>
                                     <th>ကုဒ် (Code)</th>
-                                    <th style="text-align: center; width: 110px;">အမျိုးအစား</th>
+                                    <th style="text-align: center; width: 80px;">Credit</th>
+                                    <th style="text-align: center; width: 130px;">အမျိုးအစား</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var sub in coreAndRetakes)
                                 {
-                                    <tr style="@(sub.IsRetake ? "background-color: rgba(245, 158, 11, 0.06);" : "")">
-                                        <td>
-                                            <span style="font-weight: 500;">@sub.SubjectName</span>
-                                            @if (sub.IsRetake && !string.IsNullOrEmpty(sub.SemesterName))
-                                            {
-                                                <small style="display: block; color: #d97706; font-size: 0.78rem; font-weight: 600;">
-                                                    <i class="fas fa-undo-alt me-1"></i> @sub.SemesterName မှ Retake
-                                                </small>
-                                            }
+                                    var isBlocked = sub.IsSubjectDisqualified || (!sub.IsRetake && !sub.IsPrerequisiteSatisfied);
+                                    bool canToggle = !isBlocked && !sub.IsRetake && !sub.IsSubjectDisqualified;
+
+                                    <tr style="@(sub.IsSubjectDisqualified ? "background-color: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444;" : (sub.IsRetake ? "background: linear-gradient(90deg, rgba(254, 243, 199, 0.5) 0%, rgba(255, 251, 235, 0.85) 100%); border-left: 4px solid #f59e0b;" : (sub.IsCarriedOver ? "background: linear-gradient(90deg, rgba(240, 249, 255, 0.6) 0%, rgba(255, 255, 255, 0.9) 100%); border-left: 4px solid #0284c7;" : (sub.IsSelected ? "background-color: rgba(37, 99, 235, 0.06);" : (isBlocked ? "background-color: rgba(239, 68, 68, 0.04); opacity: 0.75;" : "")))))) cursor: @(canToggle ? "pointer" : (sub.IsRetake ? "default" : "not-allowed"));"
+                                        @onclick="() => { if (canToggle) ToggleSubjectSelection(sub); }">
+                                        <td style="text-align: center;" @onclick:stopPropagation="true">
+                                            <input type="checkbox"
+                                                   @key="@($"core_{sub.SubjectId}_{sub.IsSelected}")"
+                                                   checked="@(sub.IsRetake ? true : (sub.IsSubjectDisqualified ? false : sub.IsSelected))"
+                                                   disabled="@(!canToggle)"
+                                                   @onchange="() => { if (canToggle) ToggleSubjectSelection(sub); }"
+                                                   title="@(sub.IsSubjectDisqualified ? "ဤဘာသာရပ်အား ၂ ကြိမ်မြောက် Re-exam ကျရှုံးခဲ့သဖြင့် အပြီးတိုင် Retake ယူခွင့်ပိတ်သိမ်းထားပါသည်" : (sub.IsRetake ? "Retake ဘာသာရပ်ဖြစ်သဖြင့် မဖြစ်မနေယူရမည်ဖြစ်ပါသည်" : (sub.IsCarriedOver ? "ယခင် Semester မှ ယူရန်ကျန်ရှိသော ဘာသာရပ်ဖြစ်ပါသည်" : "")))"
+                                                   style="width: 18px; height: 18px; cursor: @(canToggle ? "pointer" : (sub.IsRetake ? "default" : "not-allowed")); accent-color: @(sub.IsRetake ? "#d97706" : (sub.IsCarriedOver ? "#0284c7" : "#2563eb"));" />
                                         </td>
-                                        <td><span style="font-weight: 600; color: #1e293b;">@sub.SubjectCode</span></td>
+                                        <td>
+                                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                                <span style="font-weight: 600; color: @(isBlocked ? "#64748b" : "#1e293b");">
+                                                    @sub.SubjectName
+                                                </span>
+
+                                                @if (sub.IsSubjectDisqualified)
+                                                {
+                                                    <small style="color: #dc2626; font-size: 0.78rem; font-weight: 600; background: #fef2f2; padding: 2px 8px; border-radius: 4px; border: 1px solid #fecaca; display: inline-block; width: fit-content; margin-top: 3px;">
+                                                        <i class="fas fa-ban me-1 text-danger"></i> ဤဘာသာရပ်အား ထပ်မံရွေးချယ်ခွင့် မရှိတော့ပါ (Credit ဆုံးရှုံး)
+                                                    </small>
+                                                }
+                                                else if (sub.IsRetake && !string.IsNullOrEmpty(sub.SemesterName))
+                                                {
+                                                    <small style="color: #d97706; font-size: 0.78rem; font-weight: 600;">
+                                                        <i class="fas fa-undo-alt me-1"></i> @sub.SemesterName မှ Retake
+                                                    </small>
+                                                }
+                                                else if (sub.IsCarriedOver)
+                                                {
+                                                    <small style="color: #0284c7; font-size: 0.78rem; font-weight: 600; background: #f0f9ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; width: fit-content; margin-top: 3px;">
+                                                        <i class="fas fa-arrow-circle-right me-1 text-info"></i> @(!string.IsNullOrEmpty(sub.SemesterName) ? $"{sub.SemesterName} မှ " : "")Carry over
+                                                    </small>
+                                                }
+                                                else if (isBlocked)
+                                                {
+                                                    <small style="color: #dc2626; font-size: 0.78rem; font-weight: 600;">
+                                                        <i class="fas fa-exclamation-circle me-1"></i> @sub.PrerequisiteStatusMessage
+                                                    </small>
+                                                }
+                                                else if (!string.IsNullOrEmpty(sub.SemesterName))
+                                                {
+                                                    <small style="color: #64748b; font-size: 0.78rem; font-weight: 500;">
+                                                        <i class="fas fa-calendar-alt me-1 text-primary"></i> @sub.SemesterName
+                                                    </small>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 600; color: @(isBlocked ? "#94a3b8" : "#1e293b");">@sub.SubjectCode</span>
+                                        </td>
                                         <td style="text-align: center;">
-                                            @if (sub.IsRetake)
+                                            @if (sub.IsSubjectDisqualified)
                                             {
-                                                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); font-weight: 700; padding: 4px 10px; border-radius: 6px;">
-                                                    <i class="fas fa-redo-alt me-1"></i> Retake
+                                                <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.25); font-weight: 700; font-size: 0.78rem; padding: 3px 8px; border-radius: 6px;">
+                                                    0 Pts (မရရှိပါ)
                                                 </span>
                                             }
                                             else
                                             {
-                                                <span class="badge" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.2); font-weight: 600; padding: 4px 8px; border-radius: 6px;">
+                                                <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); font-weight: 700; font-size: 0.78rem; padding: 3px 8px; border-radius: 6px;">
+                                                    @(sub.Credit > 0 ? sub.Credit : 3) Pts
+                                                </span>
+                                            }
+                                        </td>
+                                        <td style="text-align: center;">
+                                            @if (sub.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective)
+                                            {
+                                                <span class="badge" style="background: rgba(217, 119, 6, 0.12); color: #d97706; border: 1px solid rgba(217, 119, 6, 0.3); font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; white-space: nowrap;">
+                                                    Elective
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge" style="background: rgba(79, 70, 229, 0.12); color: #4F46E5; border: 1px solid rgba(79, 70, 229, 0.3); font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; white-space: nowrap;">
                                                     Core
                                                 </span>
                                             }
@@ -979,89 +1431,41 @@
                 }
                 else
                 {
-                    <div style="padding: 10px; color: #94a3b8; font-style: italic;">
+                    <div style="padding: 20px; color: #94a3b8; font-style: italic; text-align: center;">
                         မှတ်တမ်း မရှိသေးပါ။
                     </div>
                 }
 
-                @if (electives.Any())
+                @if (blockedCoreSubjects.Any())
                 {
-                    <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <label class="input-label" style="font-size: 1.05rem; color: #b45309; margin-bottom: 0;">
-                                <i class="fas fa-check-double me-2"></i> Elective ဘာသာရပ် ရွေးချယ်ရန်
-                            </label>
-                            <span class="badge" style="background: @(selectedElectiveCount == maxElective ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)"); color: @(selectedElectiveCount == maxElective ? "#059669" : "#d97706"); border: 1px solid @(selectedElectiveCount == maxElective ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"); font-weight: 600; padding: 4px 10px; border-radius: 6px;">
-                                ရွေးချယ်ထားမှု: @selectedElectiveCount / @maxElective ဘာသာ
-                            </span>
+                    <div style="margin-top: 12px; padding: 12px 16px; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 10px;">
+                        <div style="font-weight: 700; color: #b45309; font-size: 0.88rem; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-exclamation-triangle"></i> Pre-Requisite မပြည့်မီသဖြင့် မတက်ရောက်နိုင်သော ဘာသာရပ်များ:
                         </div>
-                        <small style="color: #64748b; display: block; margin-bottom: 10px; font-size: 0.85rem;">
-                            (Pre-Requisite ပြည့်မီသော ဘာသာရပ်များထဲမှ အများဆုံး @maxElective ဘာသာ ရွေးချယ်ပါ)
-                        </small>
-
-                        <div class="table-responsive">
-                            <table class="modern-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 55px; text-align: center;">ရွေးရန်</th>
-                                        <th>ဘာသာရပ် (Subject)</th>
-                                        <th>Pre-Requisite လိုအပ်ချက်</th>
-                                        <th style="text-align: center; width: 140px;">အခြေအနေ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var ele in electives)
-                                    {
-                                        var isEligible = ele.IsPrerequisiteSatisfied;
-                                        <tr style="@(ele.IsSelected ? "background-color: rgba(37, 99, 235, 0.06);" : (!isEligible ? "background-color: rgba(241, 245, 249, 0.6); opacity: 0.75;" : "")) cursor: @(isEligible ? "pointer" : "not-allowed");"
-                                            @onclick="() => { if (isEligible) ToggleElectiveSelection(ele); }">
-                                            <td style="text-align: center;" @onclick:stopPropagation="true">
-                                                <input type="checkbox"
-                                                       checked="@ele.IsSelected"
-                                                       disabled="@(!isEligible)"
-                                                       @onchange="() => ToggleElectiveSelection(ele)"
-                                                       style="width: 18px; height: 18px; cursor: @(isEligible ? "pointer" : "not-allowed"); accent-color: #2563eb;" />
-                                            </td>
-                                            <td>
-                                                <span style="font-weight: 600; color: #1e293b;">@ele.SubjectName</span>
-                                                <small style="display: block; color: #64748b; font-weight: 500;">@ele.SubjectCode</small>
-                                            </td>
-                                            <td>
-                                                <span style="font-size: 0.88rem; color: #475569;">@ele.PrerequisiteInfo</span>
-                                            </td>
-                                            <td style="text-align: center;">
-                                                @if (isEligible)
-                                                {
-                                                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">
-                                                        <i class="fas fa-check-circle me-1"></i> ရွေးချယ်နိုင်သည်
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;" title="@ele.PrerequisiteStatusMessage">
-                                                        <i class="fas fa-ban me-1"></i> မပြည့်မီပါ
-                                                    </span>
-                                                    <small style="display: block; color: #dc2626; font-size: 0.72rem; margin-top: 2px;">Pre-Requisite မအောင်ပါ</small>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                        @foreach (var blocked in blockedCoreSubjects)
+                        {
+                            <div style="font-size: 0.82rem; color: #92400e; margin-bottom: 2px; padding-left: 6px;">
+                                • <strong>@blocked.SubjectCode (@blocked.SubjectName):</strong> @blocked.PrerequisiteStatusMessage
+                            </div>
+                        }
                     </div>
                 }
             </div>
 
-            <div class="input-group">
-                <label class="input-label" style="font-size: 1.1rem; color: #047857;"><i class="fas fa-history me-2"></i> အရင် Semester ရဲ့ အမှတ်များ (Previous Grades)</label>
-                <div class="table-responsive" style="margin-top: 10px;">
+            <!-- RIGHT BOX: Previous Semester Grades & Info -->
+            <div class="input-group" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; height: 100%;">
+                <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                    <label class="input-label mb-0" style="font-size: 1.05rem; color: #047857; font-weight: 700;">
+                        <i class="fas fa-history me-2"></i> @(string.IsNullOrEmpty(PreviousSemesterDisplayName) ? "အရင် Semester ရဲ့ အမှတ်များ (Previous Grades)" : $"အရင် Semester ရဲ့ အမှတ်များ ({PreviousSemesterDisplayName})")
+                    </label>
+                </div>
+                <div class="subject-table-container flex-grow-1" style="max-height: 380px;">
                     <table class="modern-table">
-                        <thead>
+                        <thead style="box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);">
                             <tr>
                                 <th>ဘာသာရပ် (Subject)</th>
                                 <th>ကုဒ် (Code)</th>
-                                <th style="text-align: center; width: 140px;">ရမှတ် (Grade)</th>
+                                <th style="text-align: center; width: 130px;">ရမှတ် (Grade)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1069,36 +1473,68 @@
                             {
                                 @foreach (var pSub in PreviousSubjects)
                                 {
-                                    <tr style="@(pSub.IsRetake ? "background-color: rgba(239, 68, 68, 0.05);" : "")">
+                                    bool isReexamSubject = pSub.IsReexam || !string.IsNullOrWhiteSpace(pSub.ReexamGrade);
+                                    string rowBg = pSub.IsRetake ? "background-color: rgba(245, 158, 11, 0.06);" :
+                                                   (pSub.IsCarriedOver ? "background-color: rgba(2, 132, 199, 0.06);" :
+                                                   (isReexamSubject ? "background-color: rgba(147, 51, 234, 0.06);" : ""));
+                                    <tr style="@rowBg">
                                         <td>
-                                            <span style="font-weight: 500;">@pSub.SubjectName</span>
-                                            @if (!string.IsNullOrEmpty(pSub.SemesterName))
-                                            {
-                                                <small style="display: block; color: @(pSub.IsRetake ? "#dc2626" : "#64748b"); font-size: 0.78rem; font-weight: 600;">
-                                                    @if (pSub.IsRetake)
+                                            <div style="display: flex; flex-direction: column; gap: 3px;">
+                                                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                                    <span style="font-weight: 600; color: #1e293b;">@pSub.SubjectName</span>
+                                                    @if (isReexamSubject)
                                                     {
-                                                        <i class="fas fa-exclamation-circle me-1"></i>
-                                                        <span>@pSub.SemesterName (Retake Subject)</span>
+                                                        <span class="badge" style="background: rgba(147, 51, 234, 0.14); color: #7e22ce; border: 1px solid rgba(147, 51, 234, 0.35); font-size: 0.73rem; padding: 2px 8px; border-radius: 5px; font-weight: 700;">
+                                                            <i class="fas fa-redo-alt me-1"></i>Re-exam ဖြေဆိုခဲ့သောဘာသာ
+                                                        </span>
                                                     }
-                                                    else
-                                                    {
-                                                        <span>@pSub.SemesterName</span>
-                                                    }
-                                                </small>
-                                            }
+                                                </div>
+                                                @if (pSub.IsRetake && !string.IsNullOrEmpty(pSub.SemesterName))
+                                                {
+                                                    <small style="color: #d97706; font-size: 0.78rem; font-weight: 600;">
+                                                        <i class="fas fa-undo-alt me-1"></i> @pSub.SemesterName မှ Retake
+                                                    </small>
+                                                }
+                                                else if (pSub.IsCarriedOver && !string.IsNullOrEmpty(pSub.SemesterName))
+                                                {
+                                                    <small style="color: #0284c7; font-size: 0.78rem; font-weight: 600;">
+                                                        <i class="fas fa-arrow-circle-right me-1 text-info"></i> @pSub.SemesterName မှ Carry over
+                                                    </small>
+                                                }
+                                                else if (!string.IsNullOrEmpty(pSub.SemesterName))
+                                                {
+                                                    <small style="color: #64748b; font-size: 0.78rem; font-weight: 500;">
+                                                        <i class="fas fa-calendar-alt me-1 text-primary"></i> @pSub.SemesterName
+                                                    </small>
+                                                }
+                                                else if (!string.IsNullOrEmpty(PreviousSemesterDisplayName))
+                                                {
+                                                    <small style="color: #64748b; font-size: 0.78rem; font-weight: 500;">
+                                                        <i class="fas fa-calendar-alt me-1 text-primary"></i> @PreviousSemesterDisplayName
+                                                    </small>
+                                                }
+                                            </div>
                                         </td>
                                         <td><span style="font-weight: 600; color: #1e293b;">@pSub.SubjectCode</span></td>
                                         <td style="text-align: center;">
                                             @if (!string.IsNullOrWhiteSpace(pSub.Grade))
                                             {
                                                 var isFailGrade = pSub.Grade == "D" || pSub.Grade == "F";
-                                                <span class="badge" style="background: @(isFailGrade ? "rgba(239, 68, 68, 0.12)" : "rgba(37,99,235,0.12)"); color: @(isFailGrade ? "#dc2626" : "#1d4ed8"); font-weight: 700; font-size: 0.92rem; padding: 5px 14px; border-radius: 6px; border: 1px solid @(isFailGrade ? "rgba(239, 68, 68, 0.3)" : "rgba(37,99,235,0.25)"); display: inline-block;">
-                                                    @pSub.Grade
-                                                </span>
+                                                <div style="display: inline-flex; flex-direction: column; align-items: center; gap: 2px;">
+                                                    <span class="badge" style="background: @(isFailGrade ? "rgba(239, 68, 68, 0.12)" : (isReexamSubject ? "rgba(147, 51, 234, 0.12)" : "rgba(37,99,235,0.12)")); color: @(isFailGrade ? "#dc2626" : (isReexamSubject ? "#7e22ce" : "#1d4ed8")); font-weight: 700; font-size: 0.92rem; padding: 5px 14px; border-radius: 6px; border: 1px solid @(isFailGrade ? "rgba(239, 68, 68, 0.3)" : (isReexamSubject ? "rgba(147, 51, 234, 0.3)" : "rgba(37,99,235,0.25)")); display: inline-block;">
+                                                        @pSub.Grade
+                                                    </span>
+                                                    @if (isReexamSubject)
+                                                    {
+                                                        <span style="font-size: 0.7rem; color: #7e22ce; font-weight: 700; white-space: nowrap;">(Re-exam Grade)</span>
+                                                    }
+                                                </div>
                                             }
                                             else
                                             {
-                                                <span style="color: #94a3b8; font-style: italic; font-size: 0.88rem;">မရှိသေးပါ</span>
+                                                <span class="badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-weight: 600; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px;">
+                                                    မဖြေဆိုထားပါ
+                                                </span>
                                             }
                                         </td>
                                     </tr>
@@ -1107,7 +1543,7 @@
                             else
                             {
                                 <tr>
-                                    <td colspan="3" style="text-align: center; padding: 20px; color: #94a3b8; font-style: italic;">
+                                    <td colspan="3" style="text-align: center; padding: 25px; color: #94a3b8; font-style: italic;">
                                         အရင် Semester ဘာသာရပ်များ မတွေ့ရှိပါ။
                                     </td>
                                 </tr>
@@ -1117,9 +1553,193 @@
                 </div>
             </div>
         </div>
+
+        <!-- 🌟 ROW 2: Elective Subjects Section (Side-by-side if multiple semesters) -->
+        @if (electives.Any())
+        {
+            <div class="elective-section mb-4" style="background: #ffffff; border: 1.5px solid #fed7aa; border-radius: 14px; padding: 20px 22px; box-shadow: 0 3px 12px rgba(245, 158, 11, 0.06);">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2 border-bottom pb-2" style="border-color: #ffedd5 !important;">
+                    <label class="input-label mb-0" style="font-size: 1.12rem; color: #b45309; font-weight: 700;">
+                        <i class="fas fa-layer-group me-2"></i> Elective ဘာသာရပ်များ ရွေးချယ်ရန်
+                    </label>
+                    <span class="badge" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-size: 0.82rem; font-weight: 600; padding: 5px 12px; border-radius: 8px;">
+                        စုစုပေါင်း Elective အုပ်စု: <strong>@electiveGroupsList.Count ခု</strong>
+                    </span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: @(electiveGroupsList.Count > 1 ? "repeat(auto-fit, minmax(460px, 1fr))" : "1fr"); gap: 20px; align-items: stretch;">
+                    @foreach (var semGroup in electiveGroupsList)
+                    {
+                        var semId = semGroup.Key;
+                        var semElectives = semGroup.ToList();
+                        var firstEle = semElectives.FirstOrDefault();
+                        string semName = firstEle?.SemesterName ?? $"Semester {semId}";
+                        var currentSemObj = SemesterList.FirstOrDefault(s => s.SemesterName == RegModel.academic_year_level);
+                        bool isCurrentSem = semId == currentSemObj?.SemesterId;
+
+                        int maxForSem = GetMaxElectiveForSemester(semId);
+                        int eligibleInSem = semElectives.Count(e => e.IsPrerequisiteSatisfied);
+                        int requiredForSem = Math.Min(maxForSem, eligibleInSem);
+                        int selectedInSem = semElectives.Count(e => e.IsSelected);
+
+                        <div style="padding: 16px 18px; background: @(isCurrentSem ? "#f8fafc" : "#fffdfa"); border: 1.5px solid @(isCurrentSem ? "#bfdbfe" : "#fed7aa"); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column; height: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 1.02rem; color: @(isCurrentSem ? "#1e40af" : "#b45309"); font-weight: 700;">
+                                        <i class="fas @(isCurrentSem ? "fa-check-double" : "fa-history") me-1"></i> @semName - Elective
+                                    </span>
+                                    @if (!isCurrentSem)
+                                    {
+                                        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); font-size: 0.75rem; padding: 3px 8px; border-radius: 4px;">
+                                            <i class="fas fa-clock me-1"></i> ယခင် Semester မှ မရွေးရသေးသော Elective
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge" style="background: rgba(37, 99, 235, 0.1); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.25); font-size: 0.75rem; padding: 3px 8px; border-radius: 4px;">
+                                            <i class="fas fa-star me-1"></i> လက်ရှိ Semester
+                                        </span>
+                                    }
+                                </div>
+
+                                @if (eligibleInSem == 0)
+                                {
+                                    <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.82rem;">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Pre-Requisite မပြည့်မီသဖြင့် ရွေးရန်မလိုပါ
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge" style="background: @(selectedInSem == requiredForSem ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)"); color: @(selectedInSem == requiredForSem ? "#059669" : "#d97706"); border: 1px solid @(selectedInSem == requiredForSem ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"); font-weight: 600; padding: 4px 10px; border-radius: 6px; font-size: 0.82rem;">
+                                        ရွေးချယ်ထားမှု: @selectedInSem / @requiredForSem ဘာသာ
+                                    </span>
+                                }
+                            </div>
+
+                            @if (eligibleInSem == 0)
+                            {
+                                <small style="color: #dc2626; display: block; margin-bottom: 10px; font-size: 0.83rem;">
+                                    (Pre-Requisite မအောင်မြင်သေးသောကြောင့် ဤ Semester အတွက် Elective ရွေးချယ်ရန် မလိုပါ)
+                                </small>
+                            }
+                            else
+                            {
+                                <small style="color: #64748b; display: block; margin-bottom: 10px; font-size: 0.83rem;">
+                                    (Pre-Requisite ပြည့်မီသော ဘာသာရပ်များထဲမှ @semName အတွက် အများဆုံး @requiredForSem ဘာသာ ရွေးချယ်ပါ)
+                                </small>
+                            }
+
+                            <div class="subject-table-container flex-grow-1" style="max-height: 260px;">
+                                <table class="modern-table">
+                                    <thead style="box-shadow: 0 3px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);">
+                                        <tr>
+                                            <th style="width: 55px; text-align: center;">ရွေးရန်</th>
+                                            <th>ဘာသာရပ် (Subject)</th>
+                                            <th style="text-align: center; width: 80px;">Credit</th>
+                                            <th>Pre-Requisite လိုအပ်ချက်</th>
+                                            <th style="text-align: center; width: 130px;">အခြေအနေ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var ele in semElectives)
+                                        {
+                                            var isEligible = ele.IsPrerequisiteSatisfied;
+                                            bool isMaxReachedInSem = (selectedInSem >= requiredForSem);
+                                            bool isBlockedByMax = !ele.IsSelected && isMaxReachedInSem;
+                                            bool canCheck = isEligible && !isBlockedByMax;
+
+                                            <tr style="@(ele.IsSelected ? "background-color: rgba(37, 99, 235, 0.06);" : (!isEligible ? "background-color: rgba(241, 245, 249, 0.6); opacity: 0.75;" : (isBlockedByMax ? "background-color: rgba(241, 245, 249, 0.4); opacity: 0.85;" : ""))) cursor: @(canCheck ? "pointer" : "not-allowed");"
+                                                @onclick="() => OnElectiveRowClicked(ele)">
+                                                <td style="text-align: center;" @onclick:stopPropagation="true">
+                                                    <input type="checkbox"
+                                                           @key="@($"ele_{ele.SubjectId}_{ele.IsSelected}_{selectedInSem}")"
+                                                           checked="@ele.IsSelected"
+                                                           disabled="@(!canCheck)"
+                                                           @onchange="() => ToggleElectiveSelection(ele)"
+                                                           title="@(isBlockedByMax ? $"အများဆုံး {requiredForSem} ခု ပြည့်ပြီးဖြစ်ပါသည်" : "")"
+                                                           style="width: 18px; height: 18px; cursor: @(canCheck ? "pointer" : "not-allowed"); accent-color: #2563eb;" />
+                                                </td>
+                                                <td>
+                                                    <span style="font-weight: 600; color: #1e293b;">@ele.SubjectName</span>
+                                                    <div style="display: flex; gap: 8px; align-items: center; margin-top: 2px; flex-wrap: wrap;">
+                                                        <small style="color: #64748b; font-weight: 500;">@ele.SubjectCode</small>
+                                                        @if (!string.IsNullOrEmpty(ele.SemesterName))
+                                                        {
+                                                            <span style="font-size: 0.73rem; color: #475569; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 500;">
+                                                                <i class="fas fa-calendar-alt me-1 text-primary"></i>@ele.SemesterName
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    @if (ele.IsCarriedOver)
+                                                    {
+                                                        <div style="margin-top: 3px;">
+                                                            <small style="color: #0284c7; font-size: 0.76rem; font-weight: 600; background: #f0f9ff; padding: 1px 7px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block;">
+                                                                <i class="fas fa-arrow-circle-right me-1 text-info"></i> @(!string.IsNullOrEmpty(ele.SemesterName) ? $"{ele.SemesterName} မှ " : "")ယူရန်ကျန်ရှိသော Elective
+                                                            </small>
+                                                        </div>
+                                                    }
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.25); font-weight: 700; font-size: 0.78rem; padding: 3px 8px; border-radius: 6px;">
+                                                        @(ele.Credit > 0 ? ele.Credit : 3) Pts
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span style="font-size: 0.88rem; color: #475569;">@ele.PrerequisiteInfo</span>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    @if (!isEligible)
+                                                    {
+                                                        <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;" title="@ele.PrerequisiteStatusMessage">
+                                                            <i class="fas fa-ban me-1"></i> မပြည့်မီပါ
+                                                        </span>
+                                                        <small style="display: block; color: #dc2626; font-size: 0.72rem; margin-top: 2px;">Pre-Requisite မအောင်ပါ</small>
+                                                    }
+                                                    else if (ele.IsSelected)
+                                                    {
+                                                        <span class="badge" style="background: rgba(37, 99, 235, 0.12); color: #2563eb; border: 1px solid rgba(37, 99, 235, 0.3); font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">
+                                                            <i class="fas fa-check-circle me-1"></i> ရွေးချယ်ပြီး
+                                                        </span>
+                                                    }
+                                                    else if (isBlockedByMax)
+                                                    {
+                                                        <span class="badge" style="background: rgba(100, 116, 139, 0.12); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.25); font-weight: 500; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;" title="အများဆုံး အရေအတွက် ပြည့်ပြီးဖြစ်ပါသည်">
+                                                            <i class="fas fa-lock me-1"></i> အကန့်အသတ်ပြည့်
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">
+                                                            <i class="fas fa-plus-circle me-1"></i> ရွေးချယ်နိုင်သည်
+                                                        </span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
         <div class="form-footer">
-            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
-            <button class="btn-next" @onclick="NextStep">Next: Family Info <i class="fas fa-arrow-right"></i></button>
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> နောက်သို့</button>
+            <button class="btn-next" style="@(!isCreditCompleted ? "background: #94a3b8; cursor: not-allowed;" : "")" @onclick="NextStep">
+                @if (isCreditCompleted)
+                {
+                    <span>ရှေ့သို့ (မိသားစု အချက်အလက်) <i class="fas fa-arrow-right"></i></span>
+                }
+                else if (totalSelectedCredits > maxCredits)
+                {
+                    <span><i class="fas fa-exclamation-triangle me-1"></i> @maxCredits Credits ထက်ကျော်နေပါသည်</span>
+                }
+                else
+                {
+                    <span><i class="fas fa-lock me-1"></i> Credit မပြည့်မီသေးပါ (ကျန်: @remainingToMin Pts)</span>
+                }
+            </button>
         </div>
     }
 
@@ -1142,8 +1762,7 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <select class="modern-input" @bind="PastExamSemester">
-                                        <option value="">-- ရွေးချယ်ပါ --</option>
+                                    <select class="modern-input" @bind="PastExamSemester" @bind:after="OnPastExamSemesterChanged">
                                         <option value="တက္ကသိုလ်ဝင်စာမေးပွဲ">တက္ကသိုလ်ဝင်စာမေးပွဲ</option>
                                         @if (SemesterList != null && SemesterList.Any())
                                         {
@@ -1154,12 +1773,43 @@
                                         }
                                     </select>
                                 </td>
-                                <td><input type="text" class="modern-input" @bind="RegModel.past_exam_major"></td>
-                                <td><input type="text" class="modern-input" @bind="RegModel.past_exam_roll_no"></td>
+                                <td>
+                                    @if (IsMatriculationPastExam)
+                                    {
+                                        <select class="modern-input" @bind="RegModel.past_exam_major">
+                                            <option value="မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဇီဝ">မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဇီဝ</option>
+                                            <option value="မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဘောဂ">မြန်မာ/အင်္ဂလိပ်/သင်္ချာ/ရူပ/ဓါတု/ဘောဂ</option>
+                                            <option value="မြန်မာ/အင်္ဂလိပ်/ပထဝီ/သမိုင်း/ဘောဂ">မြန်မာ/အင်္ဂလိပ်/ပထဝီ/သမိုင်း/ဘောဂ</option>
+                                        </select>
+                                    }
+                                    else
+                                    {
+                                        <select class="modern-input" @bind="RegModel.past_exam_major">
+                                            @if (!string.IsNullOrEmpty(RegModel.major))
+                                            {
+                                                <option value="@RegModel.major">@RegModel.major</option>
+                                            }
+                                            @if (FilteredMajors != null && FilteredMajors.Any())
+                                            {
+                                                @foreach (var m in FilteredMajors.Where(m => m != RegModel.major))
+                                                {
+                                                    <option value="@m">@m</option>
+                                                }
+                                            }
+                                            else if (MajorList != null && MajorList.Any())
+                                            {
+                                                @foreach (var m in MajorList.Select(m => m.MajorName).Where(m => !string.IsNullOrEmpty(m) && m != RegModel.major).Distinct())
+                                                {
+                                                    <option value="@m">@m</option>
+                                                }
+                                            }
+                                        </select>
+                                    }
+                                </td>
+                                <td><input type="text" class="modern-input" @bind="RegModel.past_exam_roll_no" placeholder="ခုံအမှတ်"></td>
                                 <td><input type="date" class="modern-input" @bind="PastExamDate"></td>
                                 <td>
                                     <select class="modern-input" @bind="RegModel.past_exam_status">
-                                        <option value="">-- ရွေးပါ --</option>
                                         <option value="Pass">အောင်</option>
                                         <option value="Fail">ကျ</option>
                                     </select>
@@ -1186,13 +1836,12 @@
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
-                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="FatherNrcTownship">
-                        <option value="">မြို့နယ်</option>
-                        @foreach (var town in FatherTownshipList)
-                        {
-                            <option value="@town">@town</option>
-                        }
-                    </select>
+                    <CustomSelectDropdown Style="flex:1;"
+                                          Items="FatherTownshipList"
+                                          @bind-Value="FatherNrcTownship"
+                                          Placeholder="မြို့နယ်"
+                                          SearchPlaceholder="ရှာရန်..."
+                                          MaxHeight="190px" />
                     <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="FatherNrcType">
                         <option value="(နိုင်)">(နိုင်)</option>
                         <option value="(ဧည့်)">(ဧည့်)</option>
@@ -1209,7 +1858,6 @@
                 <label class="input-label">အဘ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
                 <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="RegModel.father_occupation">
             </div>
-            <div class="input-group"></div>
 
             <div class="input-group">
                 <label class="input-label">အမိ အမည် (မြန်မာစာဖြင့်)</label>
@@ -1218,6 +1866,148 @@
             <div class="input-group">
                 <label class="input-label">အမိ အလုပ်အကိုင်၊ ရာထူး၊ ဌာန</label>
                 <input type="text" class="modern-input" placeholder="အလုပ်အကိုင်" @bind="RegModel.mother_occupation">
+            </div>
+
+            <!-- Parent NRC Document Uploads -->
+            <div class="input-group full-width" style="margin-top: 14px; grid-column: 1 / -1;">
+                <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color: #e2e8f0;">
+                    <span style="font-weight: 700; color: #1e40af; font-size: 0.9rem;">
+                        <i class="fas fa-id-card-alt me-2 text-primary"></i> မိဘများ မှတ်ပုံတင်ပုံများ (Parent NRC Documents)
+                    </span>
+                    <span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 0.72rem;">JPG, PNG, WEBP (Max 5MB)</span>
+                </div>
+
+                <div class="doc-upload-grid-4">
+
+                    <!-- Father NRC Front -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card me-1 text-warning"></i> အဘ (ရှေ့ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Father Front</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(245, 158, 11, 0.4); background: @(string.IsNullOrEmpty(PreviewFatherNrcFrontUrl) ? "rgba(245, 158, 11, 0.02)" : "#f8fafc"); cursor: pointer; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            @if (!string.IsNullOrEmpty(PreviewFatherNrcFrontUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewFatherNrcFrontUrl" alt="Father NRC Front" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveFatherNrcFront" @onclick:stopPropagation="true">
+                                        <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-warning d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            <InputFile @key="PreviewFatherNrcFrontUrl" id="fatherNrcFrontUpload_reg" OnChange="OnFatherNrcFrontSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        </div>
+                    </div>
+
+                    <!-- Father NRC Back -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card-alt me-1 text-warning"></i> အဘ (နောက်ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Father Back</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(245, 158, 11, 0.4); background: @(string.IsNullOrEmpty(PreviewFatherNrcBackUrl) ? "rgba(245, 158, 11, 0.02)" : "#f8fafc"); cursor: pointer; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            @if (!string.IsNullOrEmpty(PreviewFatherNrcBackUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewFatherNrcBackUrl" alt="Father NRC Back" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveFatherNrcBack" @onclick:stopPropagation="true">
+                                        <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up text-warning d-block" style="font-size: 1.6rem; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            <InputFile @key="PreviewFatherNrcBackUrl" id="fatherNrcBackUpload_reg" OnChange="OnFatherNrcBackSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        </div>
+                    </div>
+
+                    <!-- Mother NRC Front -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card me-1 text-pink" style="color:#ec4899;"></i> အမိ (ရှေ့ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Mother Front</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(236, 72, 153, 0.4); background: @(string.IsNullOrEmpty(PreviewMotherNrcFrontUrl) ? "rgba(236, 72, 153, 0.02)" : "#f8fafc"); cursor: pointer; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            @if (!string.IsNullOrEmpty(PreviewMotherNrcFrontUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewMotherNrcFrontUrl" alt="Mother NRC Front" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveMotherNrcFront" @onclick:stopPropagation="true">
+                                        <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up d-block mb-1" style="font-size: 1.6rem; color:#ec4899; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            <InputFile @key="PreviewMotherNrcFrontUrl" id="motherNrcFrontUpload_reg" OnChange="OnMotherNrcFrontSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        </div>
+                    </div>
+
+                    <!-- Mother NRC Back -->
+                    <div>
+                        <div class="doc-card-header">
+                            <span class="doc-card-title"><i class="fas fa-id-card-alt me-1" style="color:#ec4899;"></i> အမိ (နောက်ခြမ်း)</span>
+                            <small class="doc-card-subtitle">Mother Back</small>
+                        </div>
+                        <div class="upload-dropzone p-2 text-center"
+                             style="border: 1.5px dashed rgba(236, 72, 153, 0.4); background: @(string.IsNullOrEmpty(PreviewMotherNrcBackUrl) ? "rgba(236, 72, 153, 0.02)" : "#f8fafc"); cursor: pointer; position: relative; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            @if (!string.IsNullOrEmpty(PreviewMotherNrcBackUrl))
+                            {
+                                <div style="height: 65px; width: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@PreviewMotherNrcBackUrl" alt="Mother NRC Back" style="max-height: 62px; max-width: 90%; border-radius: 6px; object-fit: contain; box-shadow: 0 1px 4px rgba(0,0,0,0.08);" />
+                                </div>
+                                <div style="height: 24px; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; width: 100%;">
+                                    <span class="badge bg-success" style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px;">
+                                        <i class="fas fa-check-circle me-1"></i> တင်ပြီး
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" style="position: relative; z-index: 20; font-size: 0.68rem; padding: 1px 6px; line-height: 1.2;" @onclick="RemoveMotherNrcBack" @onclick:stopPropagation="true">
+                                        <i class="fas fa-trash-alt me-1"></i>ဖျက်မည်
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cloud-arrow-up d-block mb-1" style="font-size: 1.6rem; color:#ec4899; line-height: 1;"></i>
+                                <span class="fw-semibold text-dark mt-1" style="font-size: 0.8rem;">Click to select</span>
+                                <small class="text-muted" style="font-size: 0.68rem;">(ပုံရွေးချယ်ပါ)</small>
+                            }
+                            <InputFile @key="PreviewMotherNrcBackUrl" id="motherNrcBackUpload_reg" OnChange="OnMotherNrcBackSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer; z-index: 10;" accept=".jpg,.jpeg,.png,.webp,image/*" />
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
             <div class="input-group full-width" style="border-top: 1px dashed #e2e8f0; padding-top: 20px; margin-top: 10px;">
@@ -1244,8 +2034,8 @@
         </div>
 
         <div class="form-footer">
-            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
-            <button class="btn-next" @onclick="NextStep">Next: Submit <i class="fas fa-arrow-right"></i></button>
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> နောက်သို့</button>
+            <button class="btn-next" @onclick="NextStep">ရှေ့သို့ (အတည်ပြု တင်သွင်းရန်) <i class="fas fa-arrow-right"></i></button>
         </div>
     }
 
@@ -1300,13 +2090,12 @@
                         }
                     </select>
                     <span style="font-weight:bold; color:#334155;">/</span>
-                    <select class="modern-input" style="flex:1; padding: 14px 8px;" @bind="GuardianNrcTownship">
-                        <option value="">မြို့နယ်</option>
-                        @foreach (var town in GuardianTownshipList)
-                        {
-                            <option value="@town">@town</option>
-                        }
-                    </select>
+                    <CustomSelectDropdown Style="flex:1;"
+                                          Items="GuardianTownshipList"
+                                          @bind-Value="GuardianNrcTownship"
+                                          Placeholder="မြို့နယ်"
+                                          SearchPlaceholder="ရှာရန်..."
+                                          MaxHeight="190px" />
                     <select class="modern-input" style="width:85px; padding: 14px 8px;" @bind="GuardianNrcType">
                         <option value="(နိုင်)">(နိုင်)</option>
                         <option value="(ဧည့်)">(ဧည့်)</option>
@@ -1333,15 +2122,15 @@
         </div>
 
         <div class="form-footer">
-            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> Back</button>
+            <button class="btn-prev" @onclick="PrevStep"><i class="fas fa-arrow-left"></i> နောက်သို့</button>
             <button class="btn-submit" style="background: #10b981;" disabled="@IsSubmitting" @onclick="SubmitRegistrationForm">
                 @if (IsSubmitting)
                 {
-                    <span>Submitting... <i class="fas fa-spinner fa-spin ms-1"></i></span>
+                    <span>တင်သွင်းနေပါသည်... <i class="fas fa-spinner fa-spin ms-1"></i></span>
                 }
                 else
                 {
-                    <span>Submit for Admin Review <i class="fas fa-paper-plane"></i></span>
+                    <span>ကျောင်းအပ်နှံမှု အချက်အလက်များ တင်သွင်းမည် <i class="fas fa-paper-plane ms-1"></i></span>
                 }
             </button>
         </div>

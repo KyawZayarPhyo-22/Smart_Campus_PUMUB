@@ -5,61 +5,104 @@
 @using Smart_Campus_PUMUB.Database.AppDbContext
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "ဘာသာရပ်များ" : "Subject Directory")</PageTitle>
+
 <style>
+    .custom-table-wrapper {
+        background: #ffffff;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        overflow-x: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
     .custom-table {
-        background: rgba(20, 24, 33, 0.6);
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: collapse;
     }
     .custom-table thead {
-        background: rgba(13, 110, 253, 0.1);
-        border-bottom: 2px solid rgba(13, 110, 253, 0.2);
+        background: linear-gradient(135deg, #5A4FCF 0%, #4338ca 100%);
     }
     .custom-table th {
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
-        font-size: 0.85rem;
-        color: #0d6efd;
-        padding: 16px 20px;
+        font-size: 0.78rem;
+        color: #ffffff !important;
+        padding: 12px 8px;
+        letter-spacing: 0.4px;
+        white-space: nowrap;
+        border: none;
     }
     .custom-table td {
-        padding: 16px 20px;
-        color: #e2e8f0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 10px 8px;
+        color: #1e293b;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+        vertical-align: middle;
     }
     .table-row-hover:hover {
-        background: rgba(255, 255, 255, 0.02);
-        box-shadow: inset 4px 0 0 #0d6efd;
+        background-color: #f8fafc;
+    }
+    .btn-action-edit, a.btn-action-edit, a.btn-action-edit:visited, a.btn-action-edit:hover, a.btn-action-edit:active, a.btn-action-edit * {
+        color: #ffffff !important;
     }
     .btn-action-edit {
-        background: rgba(13, 110, 253, 0.1);
-        color: #39b5ff;
-        border: 1px solid rgba(13, 110, 253, 0.3);
+        background: #0d6efd;
+        color: #ffffff !important;
+        border: 1px solid #0d6efd;
         border-radius: 6px;
-        padding: 6px 14px;
-        transition: all 0.2s ease;
+        padding: 4px 10px !important;
+        font-size: 0.78rem !important;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(13, 110, 253, 0.2);
+        transition: all 0.15s ease;
+        text-decoration: none;
     }
-    .btn-action-edit:hover { background: #0d6efd; color: #ffffff; }
+    .btn-action-edit:hover {
+        background: #0b5ed7;
+        border-color: #0b5ed7;
+        transform: translateY(-1px);
+        color: #ffffff !important;
+    }
+    .btn-action-delete, button.btn-action-delete, button.btn-action-delete * {
+        color: #ffffff !important;
+    }
     .btn-action-delete {
-        background: rgba(220, 53, 69, 0.1);
-        color: #ff6b6b;
-        border: 1px solid rgba(220, 53, 69, 0.3);
+        background: #dc3545;
+        color: #ffffff !important;
+        border: 1px solid #dc3545;
         border-radius: 6px;
-        padding: 6px 14px;
-        transition: all 0.2s ease;
+        padding: 4px 10px !important;
+        font-size: 0.78rem !important;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(220, 53, 69, 0.2);
+        transition: all 0.15s ease;
     }
-    .btn-action-delete:hover { background: #dc3545; color: #ffffff; }
+    .btn-action-delete:hover {
+        background: #bb2d3b;
+        border-color: #bb2d3b;
+        transform: translateY(-1px);
+        color: #ffffff !important;
+    }
 
     .badge-faculty {
-        background: rgba(90, 79, 207, 0.12) !important;
-        color: #1e1b4b !important;
-        border: 1px solid rgba(90, 79, 207, 0.3) !important;
-        border-radius: 20px;
-        padding: 4px 14px;
-        font-size: 0.84rem;
-        font-weight: 700;
+        background: rgba(90, 79, 207, 0.1) !important;
+        color: #4338ca !important;
+        border: 1px solid rgba(90, 79, 207, 0.25) !important;
+        border-radius: 14px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
+        font-weight: 600;
         display: inline-block;
+        white-space: nowrap;
     }
 
     .search-input {
@@ -78,7 +121,7 @@
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        max-height: 228px; /* Approximately 6 items */
+        max-height: 228px;
         overflow-y: auto;
         z-index: 1050;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
@@ -119,13 +162,13 @@
 
     .dropdown-item-custom:hover {
         background-color: #f3f4f6;
-        color: #5A4FCF;
+        color: #0d6efd;
         font-weight: 600;
     }
 
     .dropdown-item-custom.selected {
-        background-color: rgba(90, 79, 207, 0.08);
-        color: #5A4FCF;
+        background-color: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
         font-weight: 700;
     }
 </style>
@@ -136,15 +179,18 @@
 }
 
 <div class="tab-pane fade show active" id="v-pills-subject">
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-        <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-                <i class="bi bi-journal-bookmark fs-5" style="color: #5A4FCF;"></i>
-            </div>
-            <div>
-                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Subject Directory</h4>
-                <small class="text-secondary">သင်ရိုးညွှန်းတမ်း ဘာသာရပ်များနှင့် သင်ကြားမှုကဏ္ဍများ စီမံခန့်ခွဲခြင်း</small>
-            </div>
+    <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+            <i class="bi bi-journal-bookmark fs-5" style="color: #0d6efd;"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "ဘာသာရပ်များ" : "Subject Directory")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "သင်ရိုးညွှန်းတမ်း ဘာသာရပ်များ စီမံခန့်ခွဲခြင်း" : "Manage curriculum subjects and course units")
+            </small>
         </div>
     </div>
 
@@ -155,16 +201,16 @@
             <div class="col">
                 <div class="position-relative">
                     <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Subject Name or Code..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "ဘာသာရပ်အမည် သို့မဟုတ် ကုဒ်ဖြင့် ရှာရန်..." : "Search by Subject Name or Code...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
-            <!-- Semester Dropdown (approx 6 items height with scroll) -->
+            <!-- Semester Dropdown -->
             <div class="col-md-3">
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="ToggleSemesterDropdown">
-                        <span class="text-truncate">@(SelectedSemesterInput == "All" ? "All Semesters" : SelectedSemesterInput)</span>
+                        <span class="text-truncate">@(SelectedSemesterInput == "All" ? (LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters") : SelectedSemesterInput)</span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -173,7 +219,7 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(SelectedSemesterInput == "All" ? "selected" : "")" 
                                  @onclick='() => SelectSemester("All")'>
-                                <span>All Semesters</span>
+                                <span>@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters")</span>
                                 @if (SelectedSemesterInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
                             @foreach (var sem in SubjectList.Select(s => s.SemesterName).Distinct().Where(se => !string.IsNullOrEmpty(se)))
@@ -191,10 +237,10 @@
 
             <!-- Search and Reset Buttons -->
             <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                     <i class="bi bi-search"></i>
                 </button>
-                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
@@ -202,7 +248,7 @@
             <!-- Add Button -->
             <AuthorizeView Policy="Subject.Create">
                 <div class="col-auto">
-                    <NavLink href="/admin/subject/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Subject">
+                    <NavLink href="/admin/subject/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Subject")">
                         <i class="bi bi-plus-lg"></i>
                     </NavLink>
                 </div>
@@ -215,23 +261,24 @@
         @if (IsLoading) {
             <div class="text-center my-5">
                 <div class="spinner-border text-primary"></div>
-                <div class="text-dark mt-3 small fw-bold">Subject စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading subjects...")</div>
             </div>
         } else {
-            <div class="table-responsive custom-table">
-                <table class="table align-middle mb-0">
+            <div class="custom-table-wrapper">
+                <table class="table align-middle mb-0 custom-table">
                     <thead>
                         <tr>
-                            <th style="width: 8%;">No.</th>
-                            <th style="width: 25%;">Subject Name</th>
-                            <th style="width: 10%;">Code</th>
-                            <th style="width: 12%;">Type</th>
-                            <th style="width: 12%;">Semester</th>
-                            <th style="width: 15%;">Faculty</th>
-                            <th style="width: 18%;">Major</th>
+                            <th style="width: 45px; text-align: center;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th style="text-align: left; padding-left: 14px;">@(LangService.IsMyanmar ? "ဘာသာရပ် အမည်" : "Subject Name")</th>
+                            <th style="width: 85px; text-align: center;">@(LangService.IsMyanmar ? "ကုဒ်" : "Code")</th>
+                            <th style="width: 80px; text-align: center;">@(LangService.IsMyanmar ? "ခရက်ဒစ်" : "Credit")</th>
+                            <th style="width: 95px; text-align: center;">@(LangService.IsMyanmar ? "အမျိုးအစား" : "Type")</th>
+                            <th style="width: 120px; text-align: center;">@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester")</th>
+                            <th style="width: 155px; text-align: center;">@(LangService.IsMyanmar ? "မဟာဌာန" : "Faculty")</th>
+                            <th style="width: 165px; text-align: center;">@(LangService.IsMyanmar ? "အထူးပြု" : "Major")</th>
                             @if (canManageSubject)
                             {
-                                <th style="text-align: center;">Actions</th>
+                                <th style="width: 145px; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                             }
                         </tr>
                     </thead>
@@ -239,20 +286,31 @@
                         @{ int count = (CurrentPage - 1) * PageSize + 1; }
                         @foreach (var item in FilteredSubjects) {
                             <tr class="table-row-hover">
-                                <td class="fw-bold text-dark">@count.ToString("D2")</td>
-                                <td class="fw-bold text-dark">@item.SubjectName</td>
-                                <td><code class="text-dark fw-bold">@item.SubjectCode</code></td>
-                                <td>
+                                <td style="text-align: center; font-weight: 700; color: #475569; font-size: 0.84rem;">@count.ToString("D2")</td>
+                                <td style="padding-left: 14px;">
+                                    <span style="font-weight: 600; color: #0f172a; font-size: 0.88rem; display: block; line-height: 1.35;">@item.SubjectName</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: #1e293b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: nowrap;">
+                                        @item.SubjectCode
+                                    </span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="badge px-2.5 py-1 fw-bold d-inline-flex align-items-center shadow-sm" style="background: rgba(16, 185, 129, 0.12); color: #059669 !important; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.78rem; border-radius: 6px; white-space: nowrap;">
+                                        <i class="bi bi-award-fill me-1 small"></i>@(item.Credit > 0 ? item.Credit : 3) Pts
+                                    </span>
+                                </td>
+                                <td style="text-align: center;">
                                     @if (item.SubjectType == EnumSubjectType.Core)
                                     {
-                                        <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #4F46E5; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
-                                            <i class="bi bi-star-fill me-1.5 small" style="color: #ffffff !important;"></i>Core
+                                        <span class="badge px-2.5 py-1 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #4F46E5; color: #ffffff !important; font-size: 0.78rem; border-radius: 6px; letter-spacing: 0.3px; white-space: nowrap;">
+                                            <i class="bi bi-star-fill me-1 small" style="color: #ffffff !important;"></i>@(LangService.IsMyanmar ? "ပင်မ" : "Core")
                                         </span>
                                     }
                                     else if (item.SubjectType == EnumSubjectType.Elective)
                                     {
-                                        <span class="badge px-3 py-1.5 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #d97706; color: #ffffff !important; font-size: 0.82rem; border-radius: 6px; letter-spacing: 0.3px;">
-                                            <i class="bi bi-puzzle-fill me-1.5 small" style="color: #ffffff !important;"></i>Elective
+                                        <span class="badge px-2.5 py-1 fw-bold d-inline-flex align-items-center shadow-sm" style="background-color: #d97706; color: #ffffff !important; font-size: 0.78rem; border-radius: 6px; letter-spacing: 0.3px; white-space: nowrap;">
+                                            <i class="bi bi-puzzle-fill me-1 small" style="color: #ffffff !important;"></i>@(LangService.IsMyanmar ? "ရွေးချယ်" : "Elective")
                                         </span>
                                     }
                                     else
@@ -260,25 +318,25 @@
                                         <span class="text-dark fw-bold small">—</span>
                                     }
                                 </td>
-                                <td>
-                                    <span class="badge rounded-pill fw-bold" style="background: #4F46E5; color: #ffffff !important; font-size: 0.82rem; padding: 6px 12px; letter-spacing: 0.3px;">
+                                <td style="text-align: center;">
+                                    <span class="badge rounded-pill fw-bold" style="background: #4F46E5; color: #ffffff !important; font-size: 0.78rem; padding: 4px 10px; letter-spacing: 0.3px; white-space: nowrap;">
                                         @item.SemesterName
                                     </span>
                                 </td>
-                                <td>
+                                <td style="text-align: center;">
                                     @if (!string.IsNullOrEmpty(item.FacultyName))
                                     {
-                                        <span class="badge-faculty" style="background: rgba(90, 79, 207, 0.12) !important; color: #1e1b4b !important; border: 1px solid rgba(90, 79, 207, 0.3) !important; border-radius: 20px; padding: 4px 14px; font-size: 0.84rem; font-weight: 700; display: inline-block;">@item.FacultyName</span>
+                                        <span class="badge-faculty" style="white-space: nowrap;">@item.FacultyName</span>
                                     }
                                     else
                                     {
                                         <span class="text-dark fw-bold small">—</span>
                                     }
                                 </td>
-                                <td>
+                                <td style="text-align: center;">
                                     @if (!string.IsNullOrEmpty(item.MajorName))
                                     {
-                                        <span class="badge bg-info bg-opacity-10 text-info fw-bold border border-info border-opacity-25">
+                                        <span class="badge bg-info bg-opacity-10 text-info fw-bold border border-info border-opacity-25" style="white-space: nowrap; font-size: 0.78rem; padding: 4px 8px;">
                                             <i class="bi bi-mortarboard me-1"></i>@item.MajorName
                                         </span>
                                     }
@@ -289,16 +347,16 @@
                                 </td>
                                 @if (canManageSubject)
                                 {
-                                    <td>
-                                        <div class="d-flex justify-content-center align-items-center gap-2">
+                                    <td style="text-align: center; white-space: nowrap; width: 145px;">
+                                        <div class="d-flex justify-content-center align-items-center gap-1.5 flex-nowrap">
                                             <AuthorizeView Policy="Subject.Edit">
-                                                <NavLink href="@($"/admin/subject/edit/{item.SubjectId}")" class="btn btn-action-edit">
-                                                    <i class="bi bi-pencil me-1"></i> Edit
+                                                <NavLink href="@($"/admin/subject/edit/{item.SubjectId}")" class="btn-action-edit" style="color: #ffffff !important; text-decoration: none;">
+                                                    <i class="bi bi-pencil me-1" style="color: #ffffff !important;"></i> <span style="color: #ffffff !important;">@(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")</span>
                                                 </NavLink>
                                             </AuthorizeView>
                                             <AuthorizeView Policy="Subject.Delete">
-                                                <button class="btn btn-action-delete" @onclick="() => OpenDeleteModal(item)">
-                                                    <i class="bi bi-trash me-1"></i> Delete
+                                                <button class="btn-action-delete" style="color: #ffffff !important;" @onclick="() => OpenDeleteModal(item)">
+                                                    <i class="bi bi-trash me-1" style="color: #ffffff !important;"></i> <span style="color: #ffffff !important;">@(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")</span>
                                                 </button>
                                             </AuthorizeView>
                                         </div>
@@ -311,13 +369,12 @@
                         @if (!FilteredSubjects.Any())
                         {
                             <tr>
-                                <td colspan="8" class="text-center py-5" style="text-align: center;">
+                                <td colspan="9" class="text-center py-5" style="text-align: center;">
                                     <div class="d-flex flex-column align-items-center justify-content-center py-4 w-100 text-center" style="min-height: 180px;">
                                         <div class="rounded-circle p-3 mb-3 d-flex align-items-center justify-content-center" style="background: rgba(90, 79, 207, 0.08); width: 64px; height: 64px;">
                                             <i class="bi bi-folder-x fs-1" style="color: #5A4FCF;"></i>
                                         </div>
-                                        <div class="fw-bold text-dark fs-6 mb-1">ပြသရန် Subject မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</div>
-                                        <small class="text-muted">ရှာဖွေမှုစကားလုံး သို့မဟုတ် Filter များကို ပြောင်းလဲရှာဖွေကြည့်ပါ</small>
+                                        <div class="fw-bold text-dark fs-6 mb-1">@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No subjects found.")</div>
                                     </div>
                                 </td>
                             </tr>
@@ -339,11 +396,11 @@
             <div class="modal-content tech-card">
 
                 <div class="modal-header border-0">
-                    <h5 class="text-danger">Confirm Delete</h5>
+                    <h5 class="text-danger">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
                 </div>
 
                 <div class="modal-body text-center">
-                    Are you sure to delete <strong>@SelectedSubject?.SubjectName</strong>?
+                    @(LangService.IsMyanmar ? $"ဤဘာသာရပ် \"{SelectedSubject?.SubjectName}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure to delete {SelectedSubject?.SubjectName}?")
 
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
@@ -363,13 +420,13 @@
                     <button class="btn btn-secondary"
                             @onclick="CloseDeleteModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
                     <button class="btn btn-danger"
                             @onclick="DeleteSubject"
                             disabled="@(IsProcessing || IsSuccess)">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
 

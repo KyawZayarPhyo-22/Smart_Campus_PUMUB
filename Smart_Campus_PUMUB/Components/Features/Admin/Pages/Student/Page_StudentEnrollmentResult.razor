@@ -1,20 +1,23 @@
 @using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
 @using Smart_Campus_PUMUB.WebApi.Models
 @inject HttpClientService HttpClientService
+@inject AdminLanguageService LangService
+@inject IJSRuntime JS
+@implements IDisposable
 
 <div class="table-responsive table-container">
     <table class="table custom-table">
         <thead>
             <tr>
-                <th>NO.</th>
-                <th>Semester</th>
-                <th>Subject Code</th>
-                <th>Subject Name</th>
-                <th>Enrollment Date</th>
-                <th>Max Marks</th>
-                <th>Marks Obtained</th>
-                <th>Grade</th>
-                <th>Status</th>
+                <th>@(LangService.IsMyanmar ? "စဉ်" : "NO.")</th>
+                <th>@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester")</th>
+                <th>@(LangService.IsMyanmar ? "ဘာသာရပ်ကုဒ်" : "Subject Code")</th>
+                <th>@(LangService.IsMyanmar ? "ဘာသာရပ်အမည်" : "Subject Name")</th>
+                <th>@(LangService.IsMyanmar ? "ရက်စွဲ" : "Enrollment Date")</th>
+                <th>@(LangService.IsMyanmar ? "အပြည့်ရမှတ်" : "Max Marks")</th>
+                <th>@(LangService.IsMyanmar ? "ရမှတ်" : "Marks Obtained")</th>
+                <th>@(LangService.IsMyanmar ? "အဆင့်" : "Grade")</th>
+                <th>@(LangService.IsMyanmar ? "အခြေအနေ" : "Status")</th>
             </tr>
         </thead>
         <tbody>
@@ -48,16 +51,16 @@
                             {
                                 if (result.IsPass)
                                 {
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">Pass</span>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">@(LangService.IsMyanmar ? "အောင်မြင်" : "Pass")</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">Fail</span>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">@(LangService.IsMyanmar ? "ကျရှုံး" : "Fail")</span>
                                 }
                             }
                             else
                             {
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">Pending</span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">@(LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending")</span>
                             }
                         </td>
                     </tr>
@@ -69,7 +72,7 @@
                 <tr>
                     <td colspan="9" class="text-center py-5">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                            <span class="visually-hidden">@(LangService.IsMyanmar ? "ရယူနေပါသည်..." : "Loading...")</span>
                         </div>
                     </td>
                 </tr>
@@ -79,7 +82,7 @@
                 <tr>
                     <td colspan="9" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
                         <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                        No enrollment results found.
+                        @(LangService.IsMyanmar ? "ရလဒ်မှတ်တမ်းများ မတွေ့ရှိပါ။" : "No enrollment results found.")
                     </td>
                 </tr>
             }
@@ -96,7 +99,32 @@
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += HandleLanguageChanged;
         await LoadResults();
+    }
+
+    private void HandleLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedLang = await JS.InvokeAsync<string?>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang) && savedLang != LangService.CurrentLanguage)
+                {
+                    LangService.SetLanguage(savedLang);
+                    StateHasChanged();
+                }
+            }
+            catch { }
+        }
     }
 
     private async Task LoadResults()

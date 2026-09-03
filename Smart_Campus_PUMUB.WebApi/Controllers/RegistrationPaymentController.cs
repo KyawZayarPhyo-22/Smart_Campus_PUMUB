@@ -19,11 +19,16 @@ public class RegistrationPaymentController : ControllerBase
 
     private readonly SmartCampusDbContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly Smart_Campus_PUMUB.WebApi.Services.IKpayGatewayService _kpayGatewayService;
 
-    public RegistrationPaymentController(SmartCampusDbContext db, IWebHostEnvironment env)
+    public RegistrationPaymentController(
+        SmartCampusDbContext db, 
+        IWebHostEnvironment env,
+        Smart_Campus_PUMUB.WebApi.Services.IKpayGatewayService kpayGatewayService)
     {
         _db = db;
         _env = env;
+        _kpayGatewayService = kpayGatewayService;
     }
 
     // GET: api/registrationpayment (Read All)
@@ -259,50 +264,13 @@ public class RegistrationPaymentController : ControllerBase
         if (request.Status == "Approved")
         {
             var registration = _db.StudentRegistrations.FirstOrDefault(r => r.RegistrationId == item.RegistrationId && (r.IsDelete == false || r.IsDelete == null));
-            if (registration != null && registration.UserId != null)
+            if (registration != null)
             {
-                var student = _db.Students.FirstOrDefault(s => s.UserId == registration.UserId && (s.IsDelete == false || s.IsDelete == null));
-                if (student == null)
-                {
-                    student = new Student
-                    {
-                        UserId = registration.UserId.Value,
-                        CurrentClassYear = registration.AcademicYearLevel ?? "First Year",
-                        CurrentMajor = registration.Major ?? "N/A",
-                        CurrentRollNo = registration.RollNo ?? string.Empty,
-                        Status = "Active",
-                        CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
-                        IsDelete = false
-                    };
-                    _db.Students.Add(student);
-                    _db.SaveChanges();
-                }
-
-                var semester = _db.Semesters.FirstOrDefault(s => s.SemesterName == registration.AcademicYearLevel && (s.IsDelete == false || s.IsDelete == null));
-                if (semester != null)
-                {
-                    var subjects = _db.Subjects.Where(s => s.SemesterId == semester.SemesterId).ToList();
-                    foreach (var sub in subjects)
-                    {
-                        bool alreadyEnrolled = _db.StudentSubjectEnrollments.Any(e => e.StudentId == student.StudentId && e.SubjectId == sub.SubjectId && e.SemesterId == semester.SemesterId && (e.IsDelete == false || e.IsDelete == null));
-                        if (!alreadyEnrolled)
-                        {
-                            var newEnrollment = new StudentSubjectEnrollment
-                            {
-                                StudentId = student.StudentId,
-                                SubjectId = sub.SubjectId,
-                                SemesterId = semester.SemesterId,
-                                EnrollmentDate = DateTime.UtcNow.AddHours(6).AddMinutes(30),
-                                Status = 1,
-                                CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
-                                CreatedBy = staffCheck.FullName ?? "System",
-                                IsDelete = false
-                            };
-                            _db.StudentSubjectEnrollments.Add(newEnrollment);
-                        }
-                    }
-                }
+                registration.Status = "Approved";
+                registration.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+                registration.ModifiedBy = staffCheck.FullName ?? "Staff";
             }
+            ProcessStudentEnrollmentOnApproval(item, staffCheck.FullName ?? "Staff");
         }
 
         int result = _db.SaveChanges();
@@ -313,6 +281,199 @@ public class RegistrationPaymentController : ControllerBase
             Message = result > 0 ? $"ငွေသွင်းပြေစာကို အောင်မြင်စွာ {request.Status} ပြုလုပ်ပြီးပါပြီ။" : "အတည်ပြုခြင်း မအောင်မြင်ပါ။"
         });
     }
+
+    #region KBZPay MMQR Integration Endpoints
+
+    // POST: api/registrationpayment/initiate-kpay
+    [HttpPost("initiate-kpay")]
+    public async System.Threading.Tasks.Task<IActionResult> InitiateKpayPayment([FromBody] KpayPrecreateRequestModel request)
+    {
+        if (request.RegistrationId <= 0 || request.Amount <= 0)
+        {
+            return BadRequest(new KpayPrecreateResponseModel 
+            { 
+                IsSuccess = false, 
+                Message = "ကျောင်းအပ်နှံမှု အချက်အလက်နှင့် ငွေပမာဏ မမှန်ကန်ပါ။" 
+            });
+        }
+
+        var registration = _db.StudentRegistrations.FirstOrDefault(x => x.RegistrationId == request.RegistrationId && (x.IsDelete == false || x.IsDelete == null));
+        if (registration == null)
+        {
+            return NotFound(new KpayPrecreateResponseModel 
+            { 
+                IsSuccess = false, 
+                Message = "ကျောင်းအပ်နှံမှု မှတ်တမ်း ရှာမတွေ့ပါ။" 
+            });
+        }
+
+        // Call gateway service to generate QR
+        var precreateResult = await _kpayGatewayService.PrecreateQrPaymentAsync(request);
+
+        if (!precreateResult.IsSuccess)
+        {
+            return BadRequest(precreateResult);
+        }
+
+        // Create pending payment record in DB
+        var payment = new RegistrationPayment
+        {
+            RegistrationId = request.RegistrationId,
+            AmountPaid = request.Amount,
+            PaymentMethod = "KBZPay (MMQR)",
+            ReceiptImage = precreateResult.OrderId, // Store OrderId in ReceiptImage field for tracking
+            PaymentDate = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+            Status = "Pending",
+            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+            CreatedBy = request.CreatedBy ?? "Student",
+            IsDelete = false
+        };
+
+        _db.RegistrationPayments.Add(payment);
+        _db.SaveChanges();
+
+        precreateResult.PaymentId = payment.PaymentId;
+        return Ok(precreateResult);
+    }
+
+    // POST: api/registrationpayment/kpay-callback (Webhook from Payment Gateway / Mock Server)
+    [AllowAnonymous]
+    [HttpPost("kpay-callback")]
+    public IActionResult KpayCallback([FromBody] KpayCallbackRequestModel payload)
+    {
+        var orderId = payload.OrderId ?? payload.MerchOrderId;
+        if (string.IsNullOrEmpty(orderId))
+        {
+            return BadRequest(new { return_code = "FAIL", message = "OrderId is required" });
+        }
+
+        var payment = _db.RegistrationPayments
+            .FirstOrDefault(p => (p.ReceiptImage == orderId || p.ReceiptImage.Contains(orderId)) && (p.IsDelete == false || p.IsDelete == null));
+
+        if (payment == null)
+        {
+            return NotFound(new { return_code = "FAIL", message = "Payment order not found" });
+        }
+
+        if (payment.Status == "Approved")
+        {
+            return Ok(new { return_code = "SUCCESS", message = "Already approved" });
+        }
+
+        // Auto-approve payment
+        payment.Status = "Approved";
+        payment.ModifiedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+        payment.ModifiedBy = "KBZPay System Callback";
+
+        var registration = _db.StudentRegistrations.FirstOrDefault(r => r.RegistrationId == payment.RegistrationId && (r.IsDelete == false || r.IsDelete == null));
+        if (registration != null)
+        {
+            registration.Status = "Approved";
+            registration.ModifiedDatetime = DateTime.UtcNow.AddHours(6).AddMinutes(30);
+            registration.ModifiedBy = "KBZPay (MMQR) Auto-Approved";
+        }
+
+        ProcessStudentEnrollmentOnApproval(payment, "KBZPay Gateway");
+
+        _db.SaveChanges();
+
+        return Ok(new { return_code = "SUCCESS", message = "Payment successfully confirmed" });
+    }
+
+    // GET: api/registrationpayment/check-status/{orderId} (Polling check from Frontend)
+    [AllowAnonymous]
+    [HttpGet("check-status/{orderId}")]
+    public IActionResult CheckPaymentStatus(string orderId)
+    {
+        var payment = _db.RegistrationPayments
+            .FirstOrDefault(p => (p.ReceiptImage == orderId || p.ReceiptImage.Contains(orderId)) && (p.IsDelete == false || p.IsDelete == null));
+
+        if (payment == null)
+        {
+            return NotFound(new PaymentStatusCheckResponseModel
+            {
+                IsSuccess = false,
+                Message = "Payment order not found"
+            });
+        }
+
+        bool isPaid = string.Equals(payment.Status, "Approved", StringComparison.OrdinalIgnoreCase);
+
+        return Ok(new PaymentStatusCheckResponseModel
+        {
+            IsSuccess = true,
+            Status = payment.Status ?? "Pending",
+            IsPaid = isPaid,
+            PaymentId = payment.PaymentId,
+            RegistrationId = payment.RegistrationId,
+            Message = isPaid ? "Payment confirmed successfully" : "Waiting for payment..."
+        });
+    }
+
+    // POST: api/registrationpayment/mock-complete-kpay/{orderId} (Simulate instant success for testing)
+    [AllowAnonymous]
+    [HttpPost("mock-complete-kpay/{orderId}")]
+    public IActionResult MockCompleteKpay(string orderId)
+    {
+        return KpayCallback(new KpayCallbackRequestModel
+        {
+            OrderId = orderId,
+            Status = "SUCCESS",
+            TradeStatus = "PAY_SUCCESS"
+        });
+    }
+
+    private void ProcessStudentEnrollmentOnApproval(RegistrationPayment payment, string verifierName)
+    {
+        var registration = _db.StudentRegistrations.FirstOrDefault(r => r.RegistrationId == payment.RegistrationId && (r.IsDelete == false || r.IsDelete == null));
+        if (registration != null && registration.UserId != null)
+        {
+            var student = _db.Students.FirstOrDefault(s => s.UserId == registration.UserId && (s.IsDelete == false || s.IsDelete == null));
+            if (student == null)
+            {
+                student = new Student
+                {
+                    UserId = registration.UserId.Value,
+                    CurrentClassYear = registration.AcademicYearLevel ?? "First Year",
+                    CurrentMajor = registration.Major ?? "N/A",
+                    CurrentRollNo = !string.IsNullOrWhiteSpace(registration.User?.RoleNo) ? registration.User.RoleNo : (registration.RollNo ?? string.Empty),
+                    Status = "Active",
+                    CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                    CreatedBy = verifierName,
+                    IsDelete = false
+                };
+                _db.Students.Add(student);
+                _db.SaveChanges();
+            }
+
+            var semester = _db.Semesters.FirstOrDefault(s => s.SemesterName == registration.AcademicYearLevel && (s.IsDelete == false || s.IsDelete == null));
+            if (semester != null)
+            {
+                var subjects = _db.Subjects.Where(s => s.SemesterId == semester.SemesterId).ToList();
+                foreach (var sub in subjects)
+                {
+                    bool alreadyEnrolled = _db.StudentSubjectEnrollments.Any(e => e.StudentId == student.StudentId && e.SubjectId == sub.SubjectId && e.SemesterId == semester.SemesterId && (e.IsDelete == false || e.IsDelete == null));
+                    if (!alreadyEnrolled)
+                    {
+                        var newEnrollment = new StudentSubjectEnrollment
+                        {
+                            StudentId = student.StudentId,
+                            SubjectId = sub.SubjectId,
+                            SemesterId = semester.SemesterId,
+                            EnrollmentDate = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                            Status = 1,
+                            CreatedDateTime = DateTime.UtcNow.AddHours(6).AddMinutes(30),
+                            CreatedBy = verifierName,
+                            IsDelete = false
+                        };
+                        _db.StudentSubjectEnrollments.Add(newEnrollment);
+                    }
+                }
+            }
+        }
+    }
+
+    #endregion
 }
 
 

@@ -10,11 +10,12 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Major;
 
-public partial class Page_MajorList
+public partial class Page_MajorList : IDisposable
 {
     [Inject] public HttpClientService HttpClientService { get; set; } = null!;
     [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     private List<MajorModel> MajorList { get; set; } = new();
     private List<FacultyModel> FacultyList { get; set; } = new();
@@ -35,7 +36,6 @@ public partial class Page_MajorList
     {
         FacultyFilter = facultyId ?? "";
         isFacultyDropdownOpen = false;
-        // Search button နှိပ်မှသာ filter ဖြစ်မည်
     }
 
     private void CloseAllDropdowns()
@@ -45,13 +45,13 @@ public partial class Page_MajorList
 
     private string GetSelectedFacultyName()
     {
-        if (string.IsNullOrWhiteSpace(FacultyFilter)) return "All Faculties";
+        if (string.IsNullOrWhiteSpace(FacultyFilter)) return LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties";
         if (int.TryParse(FacultyFilter, out int fid))
         {
             var match = FacultyList.FirstOrDefault(f => f.FacultyId == fid);
-            return match?.FacultyName ?? "All Faculties";
+            return match?.FacultyName ?? (LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties");
         }
-        return "All Faculties";
+        return LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties";
     }
 
     private bool IsLoading { get; set; } = true;
@@ -100,8 +100,24 @@ public partial class Page_MajorList
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadFaculties();
         await LoadMajors();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
     }
 
     private async Task LoadFaculties()
@@ -133,7 +149,7 @@ public partial class Page_MajorList
                 url += $"&facultyId={parsedFacultyId.Value}";
             }
 
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<MajorModel>>(url, EnumHttpMethod.Get);
 
             await Task.WhenAll(fetchTask, delayTask);
@@ -176,7 +192,7 @@ public partial class Page_MajorList
         if (SelectedMajor == null) return;
 
         IsProcessing = true;
-        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -188,26 +204,31 @@ public partial class Page_MajorList
 
             if (response != null && response.IsSuccess)
             {
-                statusMessage = "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : "Deleted successfully.";
                 IsSuccess = true;
-                await Task.Delay(1500);
+                await Task.Delay(1000);
                 CloseDeleteModal();
                 await LoadMajors();
             }
             else
             {
-                statusMessage = response?.Message ?? "ဖျက်သိမ်းမှု မအောင်မြင်ပါ။";
+                statusMessage = LangService.IsMyanmar ? "ဤ အထူးပြုဘာသာရပ် ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this major because it is in use.");
                 IsSuccess = false;
             }
         }
         catch
         {
-            statusMessage = "ဖျက်သိမ်းမှုတွင် အမှားဖြစ်နေပါသည်။";
+            statusMessage = LangService.IsMyanmar ? "ဤ အထူးပြုဘာသာရပ် ကို အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။" : "Cannot delete this major because it is in use.";
             IsSuccess = false;
         }
         finally
         {
             IsProcessing = false;
         }
+    }
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
     }
 }

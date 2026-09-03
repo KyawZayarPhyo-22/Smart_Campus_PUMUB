@@ -66,12 +66,33 @@ public class EmailService : IEmailService
             DeliveryMethod = SmtpDeliveryMethod.Network
         };
 
-    private MailMessage BuildMessage(string subject, string htmlBody) =>
-        new MailMessage
+    private MailMessage BuildMessage(string subject, string htmlBody)
+    {
+        var mail = new MailMessage
         {
-            From       = new MailAddress(SenderEmail, SenderName),
-            Subject    = subject,
-            Body       = htmlBody,
-            IsBodyHtml = true
+            From = new MailAddress(SenderEmail, SenderName),
+            Subject = subject
         };
+
+        var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, null, "text/html");
+
+        string logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "pumub_logo.png");
+        if (!File.Exists(logoPath))
+        {
+            logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "images", "pumub_logo.png");
+        }
+
+        if (File.Exists(logoPath))
+        {
+            var logoResource = new LinkedResource(logoPath, "image/png")
+            {
+                ContentId = "pumub_logo",
+                TransferEncoding = System.Net.Mime.TransferEncoding.Base64
+            };
+            htmlView.LinkedResources.Add(logoResource);
+        }
+
+        mail.AlternateViews.Add(htmlView);
+        return mail;
+    }
 }

@@ -5,13 +5,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <PageTitle>Smart Campus</PageTitle>
+    <PageTitle>Academic University Registration Assistant (AURA)</PageTitle>
+    <title>Academic University Registration Assistant (AURA)</title>
     <!-- Bootstrap 5.1.0 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/app.css?v=20260819_03" />
     <link rel="stylesheet" href="Smart_Campus_PUMUB.styles.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="icon" type="image/png" href="/puu.png?v=20260821_02" />
+    <link rel="shortcut icon" type="image/png" href="/puu.png?v=20260821_02" />
+    <link rel="apple-touch-icon" href="/puu.png?v=20260821_02" />
 
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap"
           rel="stylesheet">
@@ -29,7 +32,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
     <script src="_framework/blazor.web.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script src="js/main.js?v=1.1"></script>
+    <script src="js/main.js?v=20260819_03"></script>
 
     <script>
         // Blazor ရဲ့ Enhanced Navigation လည်ပတ်တိုင်း Scroll ကို အပေါ်တင်ပေးမယ့် Event ပါ
@@ -80,6 +83,90 @@
                 return null;
             }
         };
+
+        // ─────────────────────────────────────────────────────────────────
+        // Global Strict Interceptors for Myanmar-Only & Number-Only Inputs
+        // ─────────────────────────────────────────────────────────────────
+        (function() {
+            const mmRegex = /^[\u1000-\u1049\u104E\u103F\-\/\s]$/;
+            const nonMmGlobalRegex = /[^\u1000-\u1049\u104E\u103F\-\/\s]/g;
+            const nonDigitRegex = /[^0-9]/g;
+
+            // 1. Intercept physical keyboard typing (keydown)
+            document.addEventListener('keydown', function (e) {
+                const target = e.target;
+                if (!target || !target.classList) return;
+
+                // Allow control/nav keys
+                if (e.ctrlKey || e.metaKey || e.altKey ||
+                    ['Backspace', 'Delete', 'Tab', 'Enter', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'SelectAll'].includes(e.key)) {
+                    return;
+                }
+
+                if (target.classList.contains('mm-only-input')) {
+                    if (e.key && e.key.length === 1) {
+                        if (!mmRegex.test(e.key)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+                        }
+                    }
+                }
+
+                if (target.classList.contains('number-only-input')) {
+                    if (e.key && e.key.length === 1) {
+                        if (!/^[0-9]$/.test(e.key)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+                        }
+                    }
+                }
+            }, true);
+
+            // 2. Intercept mobile virtual keyboard & IME input (beforeinput)
+            document.addEventListener('beforeinput', function (e) {
+                const target = e.target;
+                if (!target || !target.classList) return;
+
+                if (target.classList.contains('mm-only-input') && e.data) {
+                    const filtered = e.data.replace(nonMmGlobalRegex, '');
+                    if (filtered !== e.data) {
+                        e.preventDefault();
+                    }
+                }
+
+                if (target.classList.contains('number-only-input') && e.data) {
+                    if (nonDigitRegex.test(e.data)) {
+                        e.preventDefault();
+                    }
+                }
+            }, true);
+
+            // 3. Clean up pasted or programmatic input immediately (input)
+            document.addEventListener('input', function (e) {
+                const target = e.target;
+                if (!target || !target.classList) return;
+
+                if (target.classList.contains('mm-only-input')) {
+                    const original = target.value;
+                    const cleaned = original.replace(nonMmGlobalRegex, '');
+                    if (original !== cleaned) {
+                        target.value = cleaned;
+                        target.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+
+                if (target.classList.contains('number-only-input')) {
+                    const original = target.value;
+                    const cleaned = original.replace(nonDigitRegex, '');
+                    if (original !== cleaned) {
+                        target.value = cleaned;
+                        target.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            }, true);
+        })();
     </script>
 </body>
 

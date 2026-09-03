@@ -3,8 +3,13 @@
 @rendermode InteractiveServer
 @using Smart_Campus_PUMUB.BlazorServer.Frontend.Services
 @using Smart_Campus_PUMUB.WebApi.Models
+@using Smart_Campus_PUMUB.Database.Services
+@using GradeCalculator = Smart_Campus_PUMUB.Database.Services.GradeCalculator
 @using Microsoft.AspNetCore.Components.Web
 @inject HttpClientService HttpClientService
+@inject AdminLanguageService LangService
+@inject IJSRuntime JS
+@implements IDisposable
 
 <style>
     .material-card {
@@ -145,15 +150,15 @@
     }
 
     .btn-theme-primary {
-        background-color: #5A4FCF !important;
-        background: #5A4FCF !important;
-        border-color: #5A4FCF !important;
+        background-color: #4f46e5 !important;
+        background: #4f46e5 !important;
+        border-color: #4f46e5 !important;
         color: #ffffff !important;
     }
     .btn-theme-primary:hover {
-        background-color: #483eb0 !important;
-        background: #483eb0 !important;
-        border-color: #483eb0 !important;
+        background-color: #4338ca !important;
+        background: #4338ca !important;
+        border-color: #4338ca !important;
         color: #ffffff !important;
     }
 </style>
@@ -163,13 +168,17 @@
     <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
 }
 
-<div class="d-flex align-items-center mb-4 mt-2">
-    <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+<div class="d-flex align-items-start gap-3 mb-4 mt-2">
+    <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background: rgba(90, 79, 207, 0.08); border: 1.5px solid rgba(90, 79, 207, 0.25);">
         <i class="bi bi-journal-check fs-5" style="color: #5A4FCF;"></i>
     </div>
     <div>
-        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Enrollment Results</h4>
-        <small class="text-secondary">ကျောင်းသား/သူများ၏ ဘာသာရပ်စာရင်းသွင်း ရလဒ်များ စီမံခန့်ခွဲခြင်း</small>
+        <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">
+            @(LangService.IsMyanmar ? "စာမေးပွဲရလဒ်များ" : "Enrollment Results")
+        </h4>
+        <small class="text-secondary">
+            @(LangService.IsMyanmar ? "ကျောင်းသားများ၏ ဘာသာရပ်စာရင်းသွင်း ရလဒ်များ စီမံခန့်ခွဲခြင်း" : "Manage student course enrollment results and grade records")
+        </small>
     </div>
 </div>
 
@@ -180,7 +189,9 @@
         <div class="col-md-6">
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by name, roll no or subject..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" 
+                       placeholder="@(LangService.IsMyanmar ? "အမည်၊ ခုံအမှတ် သို့မဟုတ် ဘာသာရပ်ဖြင့် ရှာရန်..." : "Search by name, roll no or subject...")" 
+                       @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
@@ -189,7 +200,7 @@
             <div class="custom-dropdown-container">
                 <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                         @onclick="ToggleSemesterDropdown">
-                    <span class="text-truncate">@(SelectedSemesterInput == "All" ? "All Semesters" : SelectedSemesterInput)</span>
+                    <span class="text-truncate">@(SelectedSemesterInput == "All" ? (LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters") : SelectedSemesterInput)</span>
                     <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                 </button>
 
@@ -198,7 +209,7 @@
                     <div class="custom-dropdown-menu shadow">
                         <div class="dropdown-item-custom @(SelectedSemesterInput == "All" ? "selected" : "")" 
                              @onclick='() => SelectSemester("All")'>
-                            <span>All Semesters</span>
+                            <span>@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters")</span>
                             @if (SelectedSemesterInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         @if (AvailableSemesters != null)
@@ -219,10 +230,10 @@
 
         <!-- Search and Reset Buttons -->
         <div class="col-md-2 text-end d-flex gap-2 justify-content-end">
-            <button class="btn btn-theme-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+            <button class="btn btn-theme-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                 <i class="bi bi-search"></i>
             </button>
-            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "မူလအတိုင်း" : "Reset")">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>
@@ -235,11 +246,11 @@
         <table class="table custom-table align-middle">
             <thead>
                 <tr>
-                    <th class="text-center" style="width: 60px;">No</th>
-                    <th>Student Name</th>
-                    <th class="text-center">Roll No.</th>
-                    <th class="text-center">Semester</th>
-                    <th class="text-center">Action</th>
+                    <th class="text-center" style="width: 60px; white-space: nowrap;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                    <th style="white-space: nowrap; min-width: 180px;">@(LangService.IsMyanmar ? "ကျောင်းသားအမည်" : "Student Name")</th>
+                    <th class="text-center" style="white-space: nowrap;">@(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll No.")</th>
+                    <th class="text-center" style="white-space: nowrap;">@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester")</th>
+                    <th class="text-center" style="white-space: nowrap;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Action")</th>
                 </tr>
             </thead>
             <tbody>
@@ -249,9 +260,11 @@
                         <td colspan="5">
                             <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 250px;">
                                 <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
-                                    <span class="visually-hidden">ရယူနေပါသည်...</span>
+                                    <span class="visually-hidden">@(LangService.IsMyanmar ? "ရယူနေပါသည်..." : "Loading...")</span>
                                 </div>
-                                <div class="text-muted fs-6 fw-bold" style="font-weight: 700;">Enrollment Result အချက်အလက်များ ရယူနေပါသည်...</div>
+                                <div class="text-muted fs-6 fw-bold" style="font-weight: 700;">
+                                    @(LangService.IsMyanmar ? "ရလဒ်အချက်အလက်များ ရယူနေပါသည်..." : "Loading enrollment results...")
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -263,8 +276,8 @@
                     {
                         int rowNumber = (CurrentPage - 1) * PageSize + index;
                         <tr>
-                            <td class="text-center text-muted fw-bold">@rowNumber.ToString("D2")</td>
-                            <td style="font-weight: 500; color: #495057;">@result.StudentName</td>
+                            <td class="text-center text-muted fw-bold" style="white-space: nowrap;">@rowNumber.ToString("D2")</td>
+                            <td class="fw-bold text-dark text-nowrap" style="font-weight: 700; color: #1e293b; white-space: nowrap; min-width: 180px;">@result.StudentName</td>
                             <td class="text-center">
                                 <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.85rem; font-weight: 600;">
                                     @(string.IsNullOrWhiteSpace(result.RollNo) ? "-" : result.RollNo)
@@ -276,8 +289,9 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                <button class="btn btn-outline-info btn-action" style="padding: 0.25rem 0.6rem;" @onclick="() => OpenViewModal(result)" title="View Details">
-                                    <i class="bi bi-file-earmark-person me-1"></i> View
+                                <button class="btn btn-primary" style="padding: 4px 11px; font-size: 0.78rem; font-weight: 700; background-color: #0d6efd !important; border-color: #0d6efd !important; color: #ffffff !important; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;" @onclick="() => OpenViewModal(result)" title="@(LangService.IsMyanmar ? "အသေးစိတ်ကြည့်မည်" : "View Details")">
+                                    <i class="bi bi-file-earmark-person" style="color: #ffffff !important; font-size: 0.82rem;"></i> 
+                                    <span style="color: #ffffff !important; font-size: 0.78rem; font-weight: 700;">@(LangService.IsMyanmar ? "ကြည့်မည်" : "View")</span>
                                 </button>
                             </td>
                         </tr>
@@ -289,7 +303,7 @@
                     <tr>
                         <td colspan="5" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
                             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                            Enrollment Result မှတ်တမ်းများ မတွေ့ရှိပါ။
+                            @(LangService.IsMyanmar ? "ရလဒ်မှတ်တမ်းများ မတွေ့ရှိပါ။" : "No enrollment results found.")
                         </td>
                     </tr>
                 }
@@ -304,7 +318,7 @@
 @if (ShowDetailModal)
 {
     <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1050; overflow-y: auto;">
-        <div class="modal-dialog modal-lg modal-dialog-centered" style="z-index: 1051; max-width: 900px;">
+        <div class="modal-dialog modal-xl modal-dialog-centered" style="z-index: 1051; max-width: 1150px; width: 95%;">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; background-color: #ffffff; color: #212529;">
 
                 <!-- Modal Header -->
@@ -312,37 +326,37 @@
                     <div>
                         <h5 class="modal-title fw-bold text-dark d-flex align-items-center mb-0" style="font-size: 1.15rem;">
                             <i class="bi bi-journal-text text-primary me-2 fs-5"></i>
-                            <span>Course Description & Enrollment Form</span>
+                            <span>@(LangService.IsMyanmar ? "ဘာသာရပ်နှင့် စာရင်းသွင်းမှု ရလဒ်ဖောင်" : "Course Description & Enrollment Form")</span>
                         </h5>
                         @if (DetailData != null)
                         {
                             <div class="small text-muted mt-1">
-                                Student: <strong class="text-dark">@DetailData.StudentName</strong> 
+                                @(LangService.IsMyanmar ? "ကျောင်းသား" : "Student"): <strong class="text-dark">@DetailData.StudentName</strong> 
                                 @if (!string.IsNullOrEmpty(DetailData.RollNo))
                                 {
-                                    <text> | Roll No: <strong class="text-dark">@DetailData.RollNo</strong></text>
+                                    <text> | @(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll No"): <strong class="text-dark">@DetailData.RollNo</strong></text>
                                 }
                                 @if (!string.IsNullOrEmpty(DetailData.SemesterName))
                                 {
-                                    <text> | Semester: <strong class="text-primary">@DetailData.SemesterName</strong></text>
+                                    <text> | @(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester"): <strong class="text-primary">@DetailData.SemesterName</strong></text>
                                 }
                                 @if (!string.IsNullOrEmpty(DetailData.MajorName))
                                 {
-                                    <text> | Major: <strong class="text-info">@DetailData.MajorName</strong></text>
+                                    <text> | @(LangService.IsMyanmar ? "မေဂျာ" : "Major"): <strong class="text-info">@DetailData.MajorName</strong></text>
                                 }
                             </div>
                         }
                         else if (SelectedResult != null)
                         {
                             <div class="small text-muted mt-1">
-                                Student: <strong class="text-dark">@SelectedResult.StudentName</strong> 
+                                @(LangService.IsMyanmar ? "ကျောင်းသား" : "Student"): <strong class="text-dark">@SelectedResult.StudentName</strong> 
                                 @if (!string.IsNullOrEmpty(SelectedResult.RollNo))
                                 {
-                                    <text> | Roll No: <strong class="text-dark">@SelectedResult.RollNo</strong></text>
+                                    <text> | @(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll No"): <strong class="text-dark">@SelectedResult.RollNo</strong></text>
                                 }
                                 @if (!string.IsNullOrEmpty(SelectedResult.SemesterName))
                                 {
-                                    <text> | Semester: <strong class="text-primary">@SelectedResult.SemesterName</strong></text>
+                                    <text> | @(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester"): <strong class="text-primary">@SelectedResult.SemesterName</strong></text>
                                 }
                             </div>
                         }
@@ -356,57 +370,225 @@
                     {
                         <div class="text-center py-5">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading subjects...</span>
+                                <span class="visually-hidden">@(LangService.IsMyanmar ? "ရယူနေပါသည်..." : "Loading...")</span>
                             </div>
-                            <div class="text-muted small mt-2">Loading student subjects and prerequisites...</div>
+                            <div class="text-muted small mt-2">
+                                @(LangService.IsMyanmar ? "ဘာသာရပ်နှင့် ရလဒ်များ ရယူနေပါသည်..." : "Loading student subjects and prerequisites...")
+                            </div>
                         </div>
                     }
                     else if (DetailData != null && DetailData.Subjects.Any())
                     {
+                        bool isSemesterFail = IsEntireSemesterFailed();
+                        bool hasGraded = HasAnyGradedSubjects();
+
+                        @if (hasGraded && isSemesterFail)
+                        {
+                            <div class="alert alert-danger d-flex align-items-center mb-3 py-2 px-3 shadow-sm" style="border-radius: 8px; font-size: 0.88rem;">
+                                <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                                <div>
+                                    <strong>@(LangService.IsMyanmar ? "နှစ်ဝက်တစ်ခုလုံး ကျရှုံးပါသည် (Semester Fail / Repeat Year)!" : "Semester Fail (Repeat Semester)!")</strong>
+                                    <span class="ms-1">@(LangService.IsMyanmar ? "ဘာသာရပ် ၅၀% နှင့်အထက် ကျရှုံးထားသဖြင့် ဤ Semester တစ်ခုလုံးကို ပြန်တက်ရမည်ဖြစ်ပြီး Re-exam ဖြေဆိုခွင့် မရှိပါ။" : "Student failed >50% of semester curriculum subjects. Student must repeat the semester; Re-exam is not permitted.")</span>
+                                </div>
+                            </div>
+                        }
+                        else if (hasGraded && !isSemesterFail && DetailData.Subjects.Any(s => s.Grade == "D" || s.Grade == "F"))
+                        {
+                            <div class="alert alert-warning d-flex align-items-center mb-3 py-2 px-3 shadow-sm" style="border-radius: 8px; font-size: 0.88rem;">
+                                <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                <div>
+                                    <strong>@(LangService.IsMyanmar ? "နှစ်ဝက် အောင်မြင်ပါသည် (Semester Pass - Re-exam ခွင့်ပြု)" : "Semester Passed (Re-exam Permitted)")</strong>
+                                    <span class="ms-1">@(LangService.IsMyanmar ? "ကျရှုံးသော ဘာသာရပ်များအတွက် Re-exam အမှတ်/Grade ထည့်သွင်းနိုင်ပါသည်။" : "Re-exam grades can be entered for failed subjects.")</span>
+                                </div>
+                            </div>
+                        }
+
                         <div class="table-responsive">
                             <table class="table table-bordered align-middle mb-0" style="border: 1px solid #dee2e6;">
                                 <thead style="background-color: #f8fafc; border-bottom: 2px solid #dee2e6;">
-                                    <tr class="text-center align-middle" style="font-weight: 600; font-size: 0.9rem; color: #495057;">
-                                        <th style="width: 50px; padding: 10px 8px;">Sr.</th>
-                                        <th style="width: 120px; padding: 10px 8px;">Subject<br/>Code</th>
-                                        <th style="padding: 10px 12px; text-align: left;">Course Description</th>
-                                        <th style="width: 140px; padding: 10px 8px;">Grade</th>
-                                        <th style="width: 220px; padding: 10px 8px;">Pre-requisite</th>
+                                    <tr class="text-center align-middle" style="font-weight: 600; font-size: 0.85rem; color: #495057; white-space: nowrap;">
+                                        <th style="width: 35px; padding: 10px 4px;">@(LangService.IsMyanmar ? "စဉ်" : "No")</th>
+                                        <th style="width: 90px; padding: 10px 4px;">@(LangService.IsMyanmar ? "ဘာသာရပ်ကုဒ်" : "Subject Code")</th>
+                                        <th style="padding: 10px 12px; text-align: left;">@(LangService.IsMyanmar ? "ဘာသာရပ်အမည်" : "Course Description")</th>
+                                        <th style="width: 65px; padding: 10px 4px;">@(LangService.IsMyanmar ? "Credit" : "Credit Unit")</th>
+                                        <th style="width: 100px; padding: 10px 4px;">@(LangService.IsMyanmar ? "ရမှတ် (၀-၁၀၀)" : "Total Marks (0-100)")</th>
+                                        <th style="width: 80px; padding: 10px 4px;">@(LangService.IsMyanmar ? "အဆင့်" : "Grade")</th>
+                                        <th style="width: 75px; padding: 10px 4px;">@(LangService.IsMyanmar ? "Grade အမှတ်" : "Grade Score")</th>
+                                        <th style="width: 90px; padding: 10px 4px;">@(LangService.IsMyanmar ? "ရရှိ Credit" : "Grade Point Earned")</th>
+                                        <th style="width: 95px; padding: 10px 4px;">@(LangService.IsMyanmar ? "အခြေအနေ" : "Grade Status")</th>
+                                        <th style="width: 95px; padding: 10px 4px;">@(LangService.IsMyanmar ? "Re-exam အဆင့်" : "Re-exam Grade")</th>
+                                        <th style="width: 130px; padding: 10px 4px;">@(LangService.IsMyanmar ? "ရလဒ်" : "Result / Status")</th>
+                                        <th style="width: 100px; padding: 10px 4px;">@(LangService.IsMyanmar ? "ကြိုတင်လိုအပ်ချက်" : "Pre-requisite")</th>
                                     </tr>
                                 </thead>
-                                <tbody style="font-size: 0.9rem; color: #212529;">
+                                <tbody style="font-size: 0.88rem; color: #212529;">
                                     @{ int sCount = 1; }
                                     @foreach (var sub in DetailData.Subjects)
                                     {
-                                        <tr>
+                                        bool isRegularFail = sub.Grade == "D" || sub.Grade == "F";
+                                        bool showReexam = isRegularFail && !isSemesterFail && !sub.IsSubjectDisqualified;
+
+                                        <tr style="@(sub.IsSubjectDisqualified ? "background-color: rgba(239, 68, 68, 0.08);" : (sub.IsRetake ? "background-color: rgba(245, 158, 11, 0.06);" : ""))">
                                             <td class="text-center fw-semibold text-muted">@sCount</td>
                                             <td class="text-center fw-bold text-primary">@sub.SubjectCode</td>
                                             <td>
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <span>@sub.SubjectName</span>
-                                                    @if (sub.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective)
-                                                    {
-                                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 ms-2 py-0.5 px-1.5" style="font-size: 0.75rem;">Elective</span>
-                                                    }
+                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
+                                                    <div>
+                                                        <div class="fw-bold text-dark" style="font-size: 0.9rem;">@sub.SubjectName</div>
+                                                        <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
+                                                            @if (sub.IsSubjectDisqualified)
+                                                            {
+                                                                <span class="badge rounded-pill shadow-sm" style="background-color: #dc2626 !important; color: #ffffff !important; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                                                                    <i class="bi bi-slash-circle-fill"></i> @(LangService.IsMyanmar ? "Retake ပိတ်သိမ်း" : "Retake Barred")
+                                                                </span>
+                                                            }
+                                                            else if (sub.IsRetake && !string.IsNullOrEmpty(sub.SemesterName))
+                                                            {
+                                                                <span class="badge rounded-pill shadow-sm" style="background-color: #d97706 !important; color: #ffffff !important; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                                                                    <i class="bi bi-arrow-repeat"></i> @sub.SemesterName Retake
+                                                                </span>
+                                                            }
+                                                            else if (sub.IsCarriedOver && !string.IsNullOrEmpty(sub.SemesterName))
+                                                            {
+                                                                <span class="badge rounded-pill shadow-sm" style="background-color: #0284c7 !important; color: #ffffff !important; font-size: 0.72rem; font-weight: 700; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                                                                    <i class="bi bi-arrow-right-circle"></i> @sub.SemesterName Carry
+                                                                </span>
+                                                            }
+                                                            else if (!string.IsNullOrEmpty(sub.SemesterName))
+                                                            {
+                                                                <span class="badge rounded-pill shadow-sm" style="background-color: #4f46e5 !important; color: #ffffff !important; font-size: 0.72rem; font-weight: 600; padding: 2px 7px;">
+                                                                    @sub.SemesterName
+                                                                </span>
+                                                            }
+
+                                                            @if (sub.SubjectType == Smart_Campus_PUMUB.Database.AppDbContext.EnumSubjectType.Elective)
+                                                            {
+                                                                <span class="badge rounded-pill shadow-sm" style="background-color: #d97706 !important; color: #ffffff !important; font-size: 0.72rem; font-weight: 700; padding: 2px 7px;">
+                                                                    @(LangService.IsMyanmar ? "စိတ်ကြိုက်ဘာသာ" : "Elective")
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td class="text-center">
-                                                <select class="form-select form-select-sm" @bind="sub.Grade" style="min-width: 100px;">
-                                                    <option value="">-- Grade --</option>
-                                                    @if (AvailableGrades != null)
-                                                    {
-                                                        @foreach (var g in AvailableGrades)
-                                                        {
-                                                            <option value="@g.Name">@g.Name</option>
-                                                        }
-                                                    }
-                                                </select>
+                                            <td class="text-center fw-bold text-dark" style="vertical-align: middle;">
+                                                <span class="badge bg-light text-dark border px-2 py-1">@sub.CreditUnit</span>
                                             </td>
-                                            <td class="text-muted small" style="font-size: 0.85rem;">
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                <input type="text"
+                                                       inputmode="decimal"
+                                                       maxlength="5"
+                                                       class="form-control form-control-sm text-center fw-bold shadow-none mark-input" 
+                                                       style="min-width: 75px; height: 36px; line-height: 1.5; font-size: 0.88rem; color: #1e293b; background-color: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 6px; text-align: center;"
+                                                       value="@(sub.MarksObtained.HasValue ? sub.MarksObtained.Value.ToString("0.##") : "")" 
+                                                       @oninput="(e) => OnMarksChanged(sub, e)" 
+                                                       placeholder="0-100" />
+                                            </td>
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                @if (!string.IsNullOrEmpty(sub.Grade))
+                                                {
+                                                    <span class="badge px-2.5 py-1.5 fw-bolder fs-6 shadow-sm" style="background: @(sub.Grade == "F" || sub.Grade == "D" ? "#fee2e2" : "#e0e7ff"); color: @(sub.Grade == "F" || sub.Grade == "D" ? "#dc2626" : "#4338ca"); border: 1.5px solid @(sub.Grade == "F" || sub.Grade == "D" ? "#fca5a5" : "#c7d2fe"); border-radius: 6px; min-width: 50px; display: inline-block;">
+                                                        @sub.Grade
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted fw-bold">-</span>
+                                                }
+                                            </td>
+                                            <td class="text-center fw-bold text-dark" style="vertical-align: middle;">
+                                                @(sub.GradePoint > 0 ? sub.GradePoint.ToString("F2") : (sub.Grade == "F" ? "0.00" : "-"))
+                                            </td>
+                                            <td class="text-center fw-bolder text-primary" style="vertical-align: middle;">
+                                                @sub.GradePointEarned.ToString("F2")
+                                            </td>
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                @if (!string.IsNullOrEmpty(sub.Status) && sub.Status != "-")
+                                                {
+                                                    <span class="badge @GetStatusBadgeClass(sub.Status)" style="font-size: 0.74rem; padding: 4px 7px; border-radius: 6px;">
+                                                        @sub.Status
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                @if (showReexam)
+                                                {
+                                                    <select class="form-select form-select-sm border-warning shadow-none" 
+                                                            @bind="sub.ReexamGrade" 
+                                                            @bind:after="() => OnReexamGradeUpdated(sub)"
+                                                            style="min-width: 80px; height: 36px; padding: 4px 18px 4px 8px; font-size: 0.88rem; line-height: 1.4; color: #92400e; background-color: #fffbeb; font-weight: 700; border-radius: 6px; text-align: center;">
+                                                        <option value="">--</option>
+                                                        @if (AvailableGrades != null && AvailableGrades.Any(g => g.Name == "C" || g.Name == "D" || g.Name == "F"))
+                                                        {
+                                                            @foreach (var g in AvailableGrades.Where(g => g.Name == "C" || g.Name == "D" || g.Name == "F"))
+                                                            {
+                                                                <option value="@g.Name">@g.Name</option>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="C">C</option>
+                                                            <option value="D">D</option>
+                                                            <option value="F">F</option>
+                                                        }
+                                                    </select>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted fw-bold">-</span>
+                                                }
+                                            </td>
+                                            <td class="text-center" style="vertical-align: middle;">
+                                                @if (sub.IsSubjectDisqualified)
+                                                {
+                                                    <span class="badge bg-danger text-white py-1.5 px-2" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-ban me-1"></i> @(LangService.IsMyanmar ? "ပိတ်သိမ်း" : "Disqualified")
+                                                    </span>
+                                                }
+                                                else if (isSemesterFail && isRegularFail)
+                                                {
+                                                    <span class="badge bg-danger text-white py-1.5 px-2" style="font-size: 0.74rem;" title="@(LangService.IsMyanmar ? "နှစ်ဝက်ကျရှုံးသဖြင့် Re-exam ဖြေဆိုခွင့်မရှိပါ (Sem Repeat)" : "Semester Fail - Re-exam not permitted (Repeat Semester)")">
+                                                        <i class="bi bi-x-circle-fill me-1"></i> @(LangService.IsMyanmar ? "နှစ်ဝက်ကျရှုံး (Sem Repeat)" : "Semester Fail")
+                                                    </span>
+                                                }
+                                                else if (isRegularFail && (sub.ReexamIsPass == true || (!string.IsNullOrEmpty(sub.ReexamGrade) && sub.ReexamGrade != "D" && sub.ReexamGrade != "F")))
+                                                {
+                                                    <span class="badge bg-success text-white py-1.5 px-2" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-check-circle me-1"></i> @(LangService.IsMyanmar ? "အောင်မြင် (Re-exam)" : "Passed (Re-exam)")
+                                                    </span>
+                                                }
+                                                else if (isRegularFail && (sub.ReexamIsPass == false || sub.ReexamGrade == "D" || sub.ReexamGrade == "F"))
+                                                {
+                                                    <span class="badge bg-danger text-white py-1.5 px-2" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-arrow-repeat me-1"></i> @(LangService.IsMyanmar ? "Retake လိုအပ်" : "Retake Required")
+                                                    </span>
+                                                }
+                                                else if (isRegularFail && string.IsNullOrEmpty(sub.ReexamGrade))
+                                                {
+                                                    <span class="badge bg-warning text-dark py-1.5 px-2" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-clock-history me-1"></i> @(LangService.IsMyanmar ? "Re-exam စောင့်ဆိုင်း" : "Re-exam Pending")
+                                                    </span>
+                                                }
+                                                else if (!string.IsNullOrEmpty(sub.Grade) && sub.Grade != "D" && sub.Grade != "F")
+                                                {
+                                                    <span class="badge bg-success text-white py-1.5 px-2" style="font-size: 0.74rem;">
+                                                        <i class="bi bi-check-circle me-1"></i> @(LangService.IsMyanmar ? "အောင်မြင်" : "Passed")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-light text-secondary border py-1.5 px-2" style="font-size: 0.74rem;">@(LangService.IsMyanmar ? "အမှတ်မထည့်ရသေး" : "Not Graded")</span>
+                                                }
+                                            </td>
+                                            <td class="text-muted small" style="font-size: 0.82rem; vertical-align: middle;">
                                                 @if (!string.IsNullOrEmpty(sub.PrerequisiteInfo) && sub.PrerequisiteInfo != "-")
                                                 {
                                                     <span class="badge bg-light text-dark border">
-                                                        <i class="bi bi-arrow-return-right me-1 text-primary"></i>@sub.PrerequisiteInfo
+                                                        @sub.PrerequisiteInfo
                                                     </span>
                                                 }
                                                 else
@@ -420,12 +602,50 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- 📊 GPA / CGPA Calculation Summary Card (Footer) -->
+                        <div class="card border-0 mt-3 p-3" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 1.5px solid #e2e8f0;">
+                            <div class="row align-items-center g-3 text-center text-md-start">
+                                <div class="col-md-3 col-6">
+                                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                        @(LangService.IsMyanmar ? "စုစုပေါင်း Credit Unit" : "Total Credit Unit")
+                                    </div>
+                                    <div class="fw-bolder fs-5 text-dark">
+                                        <i class="bi bi-award me-1 text-success"></i>@GetTotalCredits() <span class="text-muted fs-6 fw-normal">Units</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                        @(LangService.IsMyanmar ? "စုစုပေါင်း Grade Points" : "Total Grade Points")
+                                    </div>
+                                    <div class="fw-bolder fs-5 text-primary">
+                                        <i class="bi bi-calculator me-1"></i>@GetTotalGradePoints().ToString("F2") <span class="text-muted fs-6 fw-normal">cps</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                        @(LangService.IsMyanmar ? "နှစ်ဝက် GPA" : "Semester GPA")
+                                    </div> 
+                                    <div class="fw-bolder fs-5" style="color: #4f46e5;">
+                                        <i class="bi bi-graph-up-arrow me-1"></i>@GetSemesterGPA().ToString("F2")
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                        @(LangService.IsMyanmar ? "စုစုပေါင်း CGPA" : "Overall CGPA")
+                                    </div>
+                                    <div class="fw-bolder fs-5" style="color: #059669;">
+                                        <i class="bi bi-mortarboard-fill me-1"></i>@GetOverallCGPA().ToString("F2")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     }
                     else
                     {
                         <div class="text-center py-4 text-muted">
                             <i class="bi bi-journal-x fs-1 d-block mb-2 text-secondary"></i>
-                            ဤကျောင်းသား၏ Semester/Major အတွက် ဘာသာရပ်များ မတွေ့ရှိပါ။
+                            @(LangService.IsMyanmar ? "ဤကျောင်းသား၏ Semester/Major အတွက် ဘာသာရပ်များ မတွေ့ရှိပါ။" : "No subjects found for this student's semester and major.")
                         </div>
                     }
 
@@ -441,19 +661,19 @@
                 <!-- Modal Footer -->
                 <div class="modal-footer border-top px-4 py-3 d-flex justify-content-between align-items-center" style="background-color: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
                     <div>
-                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CloseViewModal">Close</button>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="CloseViewModal">@(LangService.IsMyanmar ? "ပိတ်မည်" : "Close")</button>
                     </div>
                     <div>
                         <button type="button" class="btn btn-primary px-4 d-inline-flex align-items-center" @onclick="SaveGrades" disabled="@(isSaving || IsDetailLoading || DetailData == null || !DetailData.Subjects.Any())">
                             @if (isSaving)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                <span>Saving...</span>
+                                <span>@(LangService.IsMyanmar ? "သိမ်းဆည်းနေပါသည်..." : "Saving...")</span>
                             }
                             else
                             {
                                 <i class="bi bi-check2-circle me-1.5"></i>
-                                <span>Save Grades</span>
+                                <span>@(LangService.IsMyanmar ? "အမှတ်များ သိမ်းဆည်းမည်" : "Save Grades")</span>
                             }
                         </button>
                     </div>
@@ -465,7 +685,15 @@
 
 @code {
     public List<StudentEnrollmentResultModel>? AllResults { get; set; }
-    public List<GradeModel>? AvailableGrades { get; set; }
+    public List<GradeModel>? AvailableGrades { get; set; } = GradeCalculator.DefaultGradeTiers.Select(t => new GradeModel
+    {
+        GradeId = 0,
+        Name = t.LetterGrade,
+        GradePoint = t.GradePoint,
+        Status = t.Status,
+        MinMark = t.MinMark,
+        MaxMark = t.MaxMark
+    }).ToList();
     public List<SemesterModel> SemesterList { get; set; } = new();
     
     // Filters
@@ -481,13 +709,14 @@
     private int TotalPages { get; set; } = 1;
 
     public bool IsLoading { get; set; } = true;
-    private bool ShowDetailModal { get; set; } = false;
-    private bool IsDetailLoading { get; set; } = false;
-    private bool isSaving { get; set; } = false;
-    private bool isSaveSuccess { get; set; } = false;
-    private string saveMessage { get; set; } = "";
-    private StudentEnrollmentResultModel? SelectedResult { get; set; }
+    public bool ShowDetailModal { get; set; } = false;
+    public bool IsDetailLoading { get; set; } = false;
+    public StudentEnrollmentResultModel? SelectedResult { get; set; }
     private StudentEnrollmentDetailResponseModel? DetailData { get; set; }
+
+    private bool isSaving { get; set; } = false;
+    private string saveMessage { get; set; } = "";
+    private bool isSaveSuccess { get; set; } = false;
 
     private IEnumerable<string> AvailableSemesters
     {
@@ -505,50 +734,6 @@
         }
     }
 
-    private IEnumerable<StudentEnrollmentResultModel> GetFilteredResults()
-    {
-        if (AllResults == null) return Enumerable.Empty<StudentEnrollmentResultModel>();
-
-        var query = AllResults.AsEnumerable();
-
-        if (!string.IsNullOrWhiteSpace(SearchTerm))
-        {
-            var term = SearchTerm.Trim();
-            query = query.Where(r =>
-                (r.StudentName != null && r.StudentName.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
-                (r.RollNo != null && r.RollNo.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
-                (r.SubjectName != null && r.SubjectName.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
-                (r.SubjectCode != null && r.SubjectCode.Contains(term, StringComparison.OrdinalIgnoreCase))
-            );
-        }
-
-        if (SelectedSemester != "All" && !string.IsNullOrWhiteSpace(SelectedSemester))
-        {
-            query = query.Where(r => string.Equals(r.SemesterName?.Trim(), SelectedSemester.Trim(), StringComparison.OrdinalIgnoreCase));
-        }
-
-        return query.ToList();
-    }
-
-    private IEnumerable<StudentEnrollmentResultModel> PagedResults
-    {
-        get
-        {
-            var filtered = GetFilteredResults().ToList();
-            int count = filtered.Count;
-            int calcPages = (int)Math.Ceiling((decimal)count / PageSize);
-            TotalPages = calcPages < 1 ? 1 : calcPages;
-
-            if (CurrentPage > TotalPages)
-            {
-                CurrentPage = TotalPages;
-            }
-
-            return filtered.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-        }
-    }
-
-    // Custom Dropdown Open States
     private bool isSemesterDropdownOpen = false;
 
     private void ToggleSemesterDropdown()
@@ -560,7 +745,6 @@
     {
         SelectedSemesterInput = semesterName ?? "All";
         isSemesterDropdownOpen = false;
-        // Search button ကို နှိပ်မှသာ Filter လုပ်မည် (Auto-search မလုပ်ပါ)
     }
 
     private void CloseAllDropdowns()
@@ -568,9 +752,52 @@
         isSemesterDropdownOpen = false;
     }
 
+    private IEnumerable<StudentEnrollmentResultModel> FilteredResults
+    {
+        get
+        {
+            if (AllResults == null) return Enumerable.Empty<StudentEnrollmentResultModel>();
+
+            var list = AllResults.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                var term = SearchTerm.Trim();
+                list = list.Where(r => 
+                    (r.StudentName != null && r.StudentName.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                    (r.RollNo != null && r.RollNo.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                    (r.MajorName != null && r.MajorName.Contains(term, StringComparison.OrdinalIgnoreCase))
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedSemester) && SelectedSemester != "All")
+            {
+                list = list.Where(r => r.SemesterName != null && r.SemesterName.Equals(SelectedSemester, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return list;
+        }
+    }
+
+    private IEnumerable<StudentEnrollmentResultModel> PagedResults
+    {
+        get
+        {
+            var filtered = FilteredResults.ToList();
+            TotalPages = (int)Math.Ceiling(filtered.Count / (double)PageSize);
+            if (TotalPages == 0) TotalPages = 1;
+
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+            if (CurrentPage < 1) CurrentPage = 1;
+
+            return filtered
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize);
+        }
+    }
+
     private async Task ApplyFilter()
     {
-        CloseAllDropdowns();
         SearchTerm = SearchInput;
         SelectedSemester = SelectedSemesterInput;
         CurrentPage = 1;
@@ -583,7 +810,6 @@
 
     private async Task ResetFilter()
     {
-        CloseAllDropdowns();
         SearchInput = "";
         SelectedSemesterInput = "All";
         SearchTerm = "";
@@ -627,6 +853,34 @@
             var regId = result.RegistrationId ?? result.EnrollmentId;
             var url = $"Enrollment/registration/{regId}/details";
             DetailData = await HttpClientService.ExecuteAsync<StudentEnrollmentDetailResponseModel>(url, EnumHttpMethod.Get);
+
+            if (DetailData?.Subjects != null)
+            {
+                foreach (var sub in DetailData.Subjects)
+                {
+                    if (!string.IsNullOrWhiteSpace(sub.Grade))
+                    {
+                        sub.GradePoint = GradeCalculator.GetGradePoint(sub.Grade);
+                        sub.Status = GradeCalculator.GetGradeStatus(sub.Grade);
+                        sub.GradePointEarned = GradeCalculator.CalculateGradePointsEarned(sub.GradePoint, sub.CreditUnit);
+                        sub.IsPass = sub.Grade != "D" && sub.Grade != "F";
+                    }
+                    else if (sub.MarksObtained.HasValue)
+                    {
+                        var info = GradeCalculator.GetGradeInfoFromMarks(sub.MarksObtained.Value);
+                        sub.Grade = info.LetterGrade;
+                        sub.GradePoint = info.GradePoint;
+                        sub.Status = info.Status;
+                        sub.GradePointEarned = GradeCalculator.CalculateGradePointsEarned(sub.GradePoint, sub.CreditUnit);
+                        sub.IsPass = sub.Grade != "D" && sub.Grade != "F";
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(sub.ReexamGrade))
+                    {
+                        sub.ReexamIsPass = sub.ReexamGrade != "D" && sub.ReexamGrade != "F";
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -636,6 +890,194 @@
         {
             IsDetailLoading = false;
         }
+    }
+
+    private void OnMarksChanged(StudentSubjectGradeItemModel sub, ChangeEventArgs e)
+    {
+        var valStr = e.Value?.ToString()?.Trim();
+        if (string.IsNullOrWhiteSpace(valStr))
+        {
+            sub.MarksObtained = null;
+            sub.Grade = string.Empty;
+            sub.GradePoint = 0.0m;
+            sub.GradePointEarned = 0.0m;
+            sub.Status = string.Empty;
+            sub.IsPass = false;
+            sub.ReexamGrade = null;
+            sub.ReexamMarksObtained = null;
+            sub.ReexamIsPass = null;
+            sub.IsSubjectDisqualified = false;
+            StateHasChanged();
+            return;
+        }
+
+        if (decimal.TryParse(valStr, out decimal marks))
+        {
+            // Strict range limits: Must be between 0 and 100
+            if (marks < 0) marks = 0;
+            if (marks > 100) marks = 100;
+            sub.MarksObtained = marks;
+
+            var info = GradeCalculator.GetGradeInfoFromMarks(marks);
+            sub.Grade = info.LetterGrade;
+            sub.GradePoint = info.GradePoint;
+            sub.Status = info.Status;
+            sub.GradePointEarned = GradeCalculator.CalculateGradePointsEarned(sub.GradePoint, sub.CreditUnit);
+            sub.IsPass = sub.Grade != "D" && sub.Grade != "F";
+
+            // If mark is a passing mark, auto-clear Reexam Grade, Reexam Marks, Reexam Status
+            if (sub.IsPass)
+            {
+                sub.ReexamGrade = null;
+                sub.ReexamMarksObtained = null;
+                sub.ReexamIsPass = null;
+                sub.IsSubjectDisqualified = false;
+            }
+
+            // If whole semester is failed (>50% failed), auto-clear all reexam fields
+            if (IsEntireSemesterFailed())
+            {
+                foreach (var s in DetailData.Subjects)
+                {
+                    s.ReexamGrade = null;
+                    s.ReexamMarksObtained = null;
+                    s.ReexamIsPass = null;
+                }
+            }
+        }
+        else
+        {
+            sub.MarksObtained = null;
+            sub.Grade = string.Empty;
+            sub.GradePoint = 0.0m;
+            sub.GradePointEarned = 0.0m;
+            sub.Status = string.Empty;
+            sub.IsPass = false;
+            sub.ReexamGrade = null;
+            sub.ReexamMarksObtained = null;
+            sub.ReexamIsPass = null;
+            sub.IsSubjectDisqualified = false;
+        }
+        StateHasChanged();
+    }
+
+    private void OnReexamGradeUpdated(StudentSubjectGradeItemModel sub)
+    {
+        if (!string.IsNullOrEmpty(sub.ReexamGrade))
+        {
+            sub.ReexamIsPass = sub.ReexamGrade != "D" && sub.ReexamGrade != "F";
+            if (sub.ReexamIsPass == true)
+            {
+                sub.IsPass = true;
+                sub.IsSubjectDisqualified = false;
+            }
+        }
+        else
+        {
+            sub.ReexamIsPass = null;
+        }
+        StateHasChanged();
+    }
+
+    private bool IsEntireSemesterFailed()
+    {
+        if (DetailData?.Subjects == null || !DetailData.Subjects.Any()) return false;
+
+        // Filter strictly to current semester curriculum subjects (exclude Retake and Carry-over subjects from previous semesters)
+        var currentSemName = (DetailData.SemesterName ?? "").Trim();
+        var curriculumSubs = DetailData.Subjects
+            .Where(s => {
+                if (s.IsRetake || s.IsCarriedOver) return false;
+                if (!string.IsNullOrEmpty(currentSemName) && !string.IsNullOrEmpty(s.SemesterName))
+                {
+                    return string.Equals(s.SemesterName.Trim(), currentSemName, StringComparison.OrdinalIgnoreCase);
+                }
+                return true;
+            })
+            .ToList();
+
+        // Fallback to all subjects only if no distinct curriculum subjects exist
+        if (!curriculumSubs.Any())
+        {
+            curriculumSubs = DetailData.Subjects.ToList();
+        }
+
+        int totalCount = curriculumSubs.Count;
+        if (totalCount == 0) return false;
+
+        // Pass count: Grade is not D/F/empty, or Marks >= 50, or IsPass is true
+        int passCount = curriculumSubs.Count(s =>
+            s.IsPass ||
+            (!string.IsNullOrWhiteSpace(s.Grade) && s.Grade != "D" && s.Grade != "F") ||
+            (s.MarksObtained.HasValue && s.MarksObtained.Value >= 50));
+
+        // 50% Rule: <= 50% passed means semester failed!
+        return passCount <= (totalCount / 2.0);
+    }
+
+    private bool HasAnyGradedSubjects()
+    {
+        if (DetailData?.Subjects == null || !DetailData.Subjects.Any()) return false;
+        return DetailData.Subjects.Any(s => s.MarksObtained.HasValue || (!string.IsNullOrWhiteSpace(s.Grade) && s.Grade != "-"));
+    }
+
+    private int GetTotalCredits()
+    {
+        if (DetailData?.Subjects == null) return 0;
+        return DetailData.Subjects.Sum(s => s.CreditUnit);
+    }
+
+    private decimal GetTotalGradePoints()
+    {
+        if (DetailData?.Subjects == null) return 0.0m;
+        return DetailData.Subjects.Sum(s => s.GradePointEarned);
+    }
+
+    private decimal GetSemesterGPA()
+    {
+        if (!HasAnyGradedSubjects()) return 0.0m;
+
+        int totalCredits = GetTotalCredits();
+        decimal totalGradePoints = GetTotalGradePoints();
+        return GradeCalculator.CalculateSemesterGPA(totalGradePoints, totalCredits);
+    }
+
+    private decimal GetOverallCGPA()
+    {
+        if (!HasAnyGradedSubjects() && (DetailData?.PriorSemesterGPAs == null || !DetailData.PriorSemesterGPAs.Any()))
+        {
+            return 0.0m;
+        }
+
+        var allGpas = new List<decimal>();
+        if (DetailData?.PriorSemesterGPAs != null && DetailData.PriorSemesterGPAs.Any())
+        {
+            allGpas.AddRange(DetailData.PriorSemesterGPAs);
+        }
+
+        decimal currentSemGpa = GetSemesterGPA();
+        if (currentSemGpa > 0)
+        {
+            allGpas.Add(currentSemGpa);
+        }
+
+        if (!allGpas.Any()) return 0.0m;
+        return GradeCalculator.CalculateCumulativeGPAFromSemesterGpas(allGpas);
+    }
+
+    private string GetStatusBadgeClass(string? status)
+    {
+        if (string.IsNullOrEmpty(status)) return "bg-light text-secondary border";
+        return status switch
+        {
+            "Excellent" => "bg-success text-white",
+            "Very Good" => "bg-primary text-white",
+            "Good" => "bg-info text-dark",
+            "Satisfactory" => "bg-warning text-dark",
+            "Marginal" => "bg-secondary text-white",
+            "Poor" => "bg-danger text-white",
+            _ => "bg-light text-secondary border"
+        };
     }
 
     private void CloseViewModal()
@@ -663,15 +1105,37 @@
                 Grades = DetailData.Subjects.Select(s => new SaveGradeItemModel
                 {
                     SubjectId = s.SubjectId,
-                    Grade = s.Grade
+                    Grade = s.Grade,
+                    MarksObtained = s.MarksObtained
                 }).ToList()
             };
 
             var res = await HttpClientService.ExecuteAsync<ActionResponseModel>("Enrollment/save-student-grades", EnumHttpMethod.Post, req);
+
+            var reexamSubs = DetailData.Subjects.Where(s => !string.IsNullOrEmpty(s.ReexamGrade)).ToList();
+            if (reexamSubs.Any())
+            {
+                var reexamReq = new SaveReexamGradesRequestModel
+                {
+                    RegistrationId = DetailData.RegistrationId,
+                    StudentId = DetailData.StudentId,
+                    SemesterId = DetailData.SemesterId,
+                    ReexamGrades = reexamSubs.Select(s => new SaveReexamGradeItemModel
+                    {
+                        SubjectId = s.SubjectId,
+                        ReexamGrade = s.ReexamGrade,
+                        ReexamMarksObtained = s.ReexamMarksObtained
+                    }).ToList()
+                };
+
+                await HttpClientService.ExecuteAsync<ActionResponseModel>("Enrollment/save-reexam-grades", EnumHttpMethod.Post, reexamReq);
+            }
+
             if (res != null && res.IsSuccess)
             {
                 isSaveSuccess = true;
-                saveMessage = "Grades saved successfully!";
+                saveMessage = "Grades & Re-exam results saved successfully!";
+                await LoadResults();
             }
             else
             {
@@ -692,7 +1156,32 @@
 
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += HandleLanguageChanged;
         await Task.WhenAll(LoadResults(), LoadGrades(), LoadSemesters());
+    }
+
+    private void HandleLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedLang = await JS.InvokeAsync<string?>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang) && savedLang != LangService.CurrentLanguage)
+                {
+                    LangService.SetLanguage(savedLang);
+                    StateHasChanged();
+                }
+            }
+            catch { }
+        }
     }
 
     private async Task LoadSemesters()
@@ -711,7 +1200,11 @@
     {
         try
         {
-            AvailableGrades = await HttpClientService.ExecuteAsync<List<GradeModel>>("Grade", EnumHttpMethod.Get);
+            var apiGrades = await HttpClientService.ExecuteAsync<List<GradeModel>>("Grade", EnumHttpMethod.Get);
+            if (apiGrades != null && apiGrades.Any())
+            {
+                AvailableGrades = apiGrades;
+            }
         }
         catch (Exception ex)
         {
@@ -743,3 +1236,52 @@
         }
     }
 }
+
+<script>
+    (function () {
+        if (window.__markInputListenerAttached) return;
+        window.__markInputListenerAttached = true;
+
+        document.addEventListener("input", function (e) {
+            if (e.target && e.target.classList.contains("mark-input")) {
+                let val = e.target.value;
+                if (val === "" || val === null || val === undefined) return;
+
+                // Keep only digits and at most one decimal point
+                val = val.replace(/[^0-9.]/g, "");
+                const parts = val.split(".");
+                if (parts.length > 2) {
+                    val = parts[0] + "." + parts.slice(1).join("");
+                }
+
+                // Disallow multiple leading zeros e.g. "0000" -> "0", "08" -> "8"
+                if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+                    val = String(parseFloat(val) || 0);
+                }
+
+                // Clamp to max 100
+                const num = parseFloat(val);
+                if (!isNaN(num)) {
+                    if (num > 100) {
+                        val = "100";
+                    } else if (num < 0) {
+                        val = "0";
+                    }
+                }
+
+                if (e.target.value !== val) {
+                    e.target.value = val;
+                }
+            }
+        }, true);
+
+        document.addEventListener("keydown", function (e) {
+            if (e.target && e.target.classList.contains("mark-input")) {
+                if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                    e.preventDefault();
+                }
+            }
+        }, true);
+    })();
+</script>
+

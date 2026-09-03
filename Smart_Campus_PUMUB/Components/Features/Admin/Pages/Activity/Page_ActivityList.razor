@@ -4,6 +4,8 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "လှုပ်ရှားမှုများ" : "Activity Directory")</PageTitle>
+
 <style>
     .custom-table {
         background: rgba(20, 24, 33, 0.6);
@@ -66,7 +68,7 @@
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        max-height: 228px; /* Approximately 6 items */
+        max-height: 228px;
         overflow-y: auto;
         z-index: 1050;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
@@ -107,13 +109,13 @@
 
     .dropdown-item-custom:hover {
         background-color: #f3f4f6;
-        color: #5A4FCF;
+        color: #0d6efd;
         font-weight: 600;
     }
 
     .dropdown-item-custom.selected {
-        background-color: rgba(90, 79, 207, 0.08);
-        color: #5A4FCF;
+        background-color: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
         font-weight: 700;
     }
 </style>
@@ -124,15 +126,18 @@
 }
 
 <div class="tab-pane fade show active" id="v-pills-activity">
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-        <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-                <i class="bi bi-clipboard-check fs-5" style="color: #5A4FCF;"></i>
-            </div>
-            <div>
-                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Activity Directory</h4>
-                <small class="text-secondary">ကျောင်းတွင်း/ကျောင်းပြင် လှုပ်ရှားမှုများနှင့် ပွဲလမ်းသဘင်များ စီမံခန့်ခွဲခြင်း</small>
-            </div>
+    <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+            <i class="bi bi-clipboard-check fs-5" style="color: #0d6efd;"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "လှုပ်ရှားမှုများ" : "Activity Directory")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "ကျောင်းတွင်း/ကျောင်းပြင် လှုပ်ရှားမှုများနှင့် ပွဲလမ်းများ စီမံခန့်ခွဲခြင်း" : "Manage campus events and activities")
+            </small>
         </div>
     </div>
 
@@ -143,16 +148,16 @@
             <div class="col">
                 <div class="position-relative">
                     <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Title or Location..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "ခေါင်းစဉ်၊ တည်နေရာဖြင့် ရှာရန်..." : "Search by Title or Location...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
                 </div>
             </div>
 
-            <!-- Location Dropdown (approx 6 items height with scroll) -->
+            <!-- Location Dropdown -->
             <div class="col-md-3">
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="ToggleLocationDropdown">
-                        <span class="text-truncate">@(SelectedLocationInput == "All" ? "All Locations" : SelectedLocationInput)</span>
+                        <span class="text-truncate">@(SelectedLocationInput == "All" ? (LangService.IsMyanmar ? "နေရာ အားလုံး" : "All Locations") : SelectedLocationInput)</span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -161,7 +166,7 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(SelectedLocationInput == "All" ? "selected" : "")" 
                                  @onclick='() => SelectLocation("All")'>
-                                <span>All Locations</span>
+                                <span>@(LangService.IsMyanmar ? "နေရာ အားလုံး" : "All Locations")</span>
                                 @if (SelectedLocationInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
                             @foreach (var loc in LocationList.Where(l => !string.IsNullOrEmpty(l)))
@@ -179,10 +184,10 @@
 
             <!-- Search and Reset Buttons -->
             <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                     <i class="bi bi-search"></i>
                 </button>
-                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
@@ -190,7 +195,7 @@
             <!-- Add Button -->
             <AuthorizeView Policy="Activity.Create">
                 <div class="col-auto">
-                    <NavLink href="/admin/activity/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Activity">
+                    <NavLink href="/admin/activity/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Activity")">
                         <i class="bi bi-plus-lg"></i>
                     </NavLink>
                 </div>
@@ -204,7 +209,7 @@
         {
             <div class="text-center my-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-dark mt-3 small fw-bold">Activities စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading activities...")</div>
             </div>
         }
         else if (!string.IsNullOrEmpty(ErrorMessage))
@@ -215,7 +220,7 @@
         {
             <div class="text-center my-5 text-dark">
                 <i class="bi bi-folder-x display-4 text-secondary"></i>
-                <p class="mt-3 mb-0 small fw-bold text-dark">ပြသရန် Activity မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
+                <p class="mt-3 mb-0 small fw-bold text-dark">@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No activities found.")</p>
             </div>
         }
         else
@@ -224,13 +229,14 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 10%;">No.</th>
-                            <th style="width: 15%;">Image</th>
-                            <th style="width: 30%;">Activity Title</th>
-                            <th style="width: 20%;">Location</th>
+                            <th style="width: 8%;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th style="width: 14%;">@(LangService.IsMyanmar ? "ဓာတ်ပုံ" : "Image")</th>
+                            <th style="width: 28%;">@(LangService.IsMyanmar ? "ခေါင်းစဉ်" : "Activity Title")</th>
+                            <th style="width: 18%;">@(LangService.IsMyanmar ? "တည်နေရာ" : "Location")</th>
+                            <th style="width: 14%;">@(LangService.IsMyanmar ? "ရက်စွဲ" : "Date")</th>
                             @if (canManageActivity)
                             {
-                                <th style="width: 25%; text-align: center;">Actions</th>
+                                <th style="width: 18%; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                             }
                         </tr>
                     </thead>
@@ -241,31 +247,61 @@
                             <tr class="table-row-hover">
                                 <td class="fw-bold text-dark">@count.ToString("D2")</td>
                                 <td>
-                                    @if (!string.IsNullOrEmpty(activity.Image))
+                                    @if (activity.ImageList.Any())
                                     {
-                                        <img src="@($"https://localhost:7297/{activity.Image}")" class="rounded" alt="Activity Image" style="width: 60px; height: 40px; object-fit: cover;" />
+                                        <div class="position-relative d-inline-block" style="width: 60px; height: 42px;">
+                                            <img src="@GetFullImageUrl(activity.PrimaryImage)" class="rounded" alt="Activity Image" style="width: 60px; height: 42px; object-fit: cover;" />
+                                            @if (activity.ImageList.Count > 1)
+                                            {
+                                                <span class="badge bg-dark bg-opacity-75 text-white position-absolute bottom-0 end-0 m-0.5 px-1 py-0.5 rounded" style="font-size: 0.6rem;">
+                                                    <i class="bi bi-images"></i> @activity.ImageList.Count
+                                                </span>
+                                            }
+                                        </div>
                                     }
                                     else
                                     {
-                                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 40px;">
-                                            <i class="bi bi-image text-light"></i>
+                                        <div class="bg-secondary bg-opacity-25 rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 42px;">
+                                            <i class="bi bi-image text-muted"></i>
                                         </div>
                                     }
                                 </td>
                                 <td class="fw-bold text-dark">@activity.ActivityTitle</td>
-                                <td class="fw-bold text-dark">@activity.Location</td>
+                                <td class="fw-semibold text-muted">
+                                    @if (!string.IsNullOrEmpty(activity.Location))
+                                    {
+                                        <span><i class="bi bi-geo-alt text-primary me-1"></i>@activity.Location</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="fw-semibold text-secondary small">
+                                    @{
+                                        var displayDate = activity.ActivityDate ?? (activity.CreatedAt.Year > 1 ? activity.CreatedAt : null);
+                                    }
+                                    @if (displayDate.HasValue)
+                                    {
+                                        <span><i class="bi bi-calendar-event me-1 text-primary"></i>@displayDate.Value.ToString("yyyy-MM-dd")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
                                 @if (canManageActivity)
                                 {
                                     <td>
                                         <div class="d-flex justify-content-center align-items-center gap-2">
                                             <AuthorizeView Policy="Activity.Edit">
                                                 <NavLink href="@($"/admin/activity/edit/{activity.ActivityId}")" class="btn btn-action-edit d-inline-flex align-items-center">
-                                                    <i class="bi bi-pencil me-1.5"></i> Edit
+                                                    <i class="bi bi-pencil me-1.5"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
                                                 </NavLink>
                                             </AuthorizeView>
                                             <AuthorizeView Policy="Activity.Delete">
                                                 <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(activity)">
-                                                    <i class="bi bi-trash me-1.5"></i> Delete
+                                                    <i class="bi bi-trash me-1.5"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
                                                 </button>
                                             </AuthorizeView>
                                         </div>
@@ -291,11 +327,11 @@
             <div class="modal-content tech-card">
 
                 <div class="modal-header border-0">
-                    <h5 class="text-danger">Confirm Delete</h5>
+                    <h5 class="text-danger">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
                 </div>
 
                 <div class="modal-body text-center">
-                    Are you sure to delete <strong>@SelectedActivity?.ActivityTitle</strong>?
+                    @(LangService.IsMyanmar ? $"ဤ လှုပ်ရှားမှု \"{SelectedActivity?.ActivityTitle}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure to delete {SelectedActivity?.ActivityTitle}?")
 
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
@@ -315,13 +351,13 @@
                     <button class="btn btn-secondary"
                             @onclick="CloseDeleteModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
                     <button class="btn btn-danger"
                             @onclick="DeleteActivity"
                             disabled="@(IsProcessing || IsSuccess)">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
 

@@ -4,6 +4,7 @@ using Smart_Campus_PUMUB.BlazorServer.Frontend.Services;
 using Smart_Campus_PUMUB.Components.Features.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student;
 
-public partial class Page_StudentDatabank : ComponentBase
+public partial class Page_StudentDatabank : ComponentBase, IDisposable
 {
     [Inject]
     public HttpClientService HttpClientService { get; set; } = null!;
@@ -19,11 +20,41 @@ public partial class Page_StudentDatabank : ComponentBase
     [Inject]
     public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
+    [Inject]
+    public AdminLanguageService LangService { get; set; } = default!;
+
+    [Inject]
+    public IJSRuntime JS { get; set; } = default!;
+
     private List<StudentPersonalInfoResponse> Students { get; set; } = new();
     private List<FacultyModel> FacultyList { get; set; } = new();
     private List<MajorModel> MajorList { get; set; } = new();
 
     private bool IsLoading { get; set; } = true;
+
+    public async Task SetLanguage(string lang)
+    {
+        LangService.SetLanguage(lang);
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "admin_dashboard_lang", lang);
+        }
+        catch { }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleLanguageChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (LangService != null)
+        {
+            LangService.OnLanguageChanged -= HandleLanguageChanged;
+        }
+    }
 
     // Filters
     private string SearchInput { get; set; } = "";
@@ -45,6 +76,10 @@ public partial class Page_StudentDatabank : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        if (LangService != null)
+        {
+            LangService.OnLanguageChanged += HandleLanguageChanged;
+        }
         await LoadMetadataAsync();
         await LoadStudentsAsync();
     }
@@ -52,6 +87,16 @@ public partial class Page_StudentDatabank : ComponentBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JS.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -103,11 +148,9 @@ public partial class Page_StudentDatabank : ComponentBase
     private async Task LoadStudentsAsync()
     {
         IsLoading = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
         try
         {
-            var delayTask = Task.Delay(1000);
-
             int? queryFacultyId = null;
             if (_userFacultyId.HasValue && _userFacultyId.Value > 0)
             {
@@ -144,10 +187,7 @@ public partial class Page_StudentDatabank : ComponentBase
             }
 
             var url = $"studentpersonalinfo/paginate?{string.Join("&", queryParams)}";
-            var fetchTask = HttpClientService.ExecuteAsync<PagedResult<StudentPersonalInfoResponse>>(url, EnumHttpMethod.Get);
-
-            await Task.WhenAll(fetchTask, delayTask);
-            var response = await fetchTask;
+            var response = await HttpClientService.ExecuteAsync<PagedResult<StudentPersonalInfoResponse>>(url, EnumHttpMethod.Get);
 
             if (response != null)
             {
@@ -171,7 +211,7 @@ public partial class Page_StudentDatabank : ComponentBase
         finally
         {
             IsLoading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

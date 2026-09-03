@@ -29,7 +29,7 @@ public partial class Page_PaymentEdit
             {
                 paymentModel.AmountPaid = response.AmountPaid;
                 paymentModel.PaymentMethod = response.PaymentMethod;
-                PreviewImageUrl = $"https://localhost:7297/{response.ReceiptImage}";
+                PreviewImageUrl = $"http://localhost:5077/{response.ReceiptImage}";
             }
         }
         catch (Exception ex) { statusMessage = $"Error: {ex.Message}"; }

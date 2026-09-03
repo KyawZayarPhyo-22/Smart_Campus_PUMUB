@@ -2,53 +2,152 @@
 @layout AdminLayout
 @namespace Smart_Campus_PUMUB.Components.Admin.Pages.Activity
 @using Smart_Campus_PUMUB.WebApi.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @rendermode InteractiveServer
 
-<div class="modal-dialog modal-md mt-5">
-    <div class="modal-content tech-card">
-        <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold">Edit Activity Info</h5>
+<div class="modal-dialog modal-lg mt-4">
+    <div class="modal-content tech-card shadow-lg" style="border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);">
+        <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-3 p-2 d-flex align-items-center justify-content-center" style="background: rgba(13, 110, 253, 0.12); width: 40px; height: 40px;">
+                    <i class="bi bi-pencil-square fs-5 text-primary"></i>
+                </div>
+                <h5 class="modal-title fw-bold mb-0 text-white">Edit Activity Info</h5>
+            </div>
+            <NavLink href="/admin/activities" class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-x-lg"></i>
+            </NavLink>
         </div>
+
         @if (IsLoading)
         {
-            <div class="modal-body text-center my-4"><div class="spinner-border text-primary"></div></div>
+            <div class="modal-body text-center my-5 py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="text-muted mt-2 small">Loading activity data...</div>
+            </div>
         }
         else
         {
             <EditForm Model="activityModel" OnValidSubmit="UpdateActivity" FormName="EditActivityForm">
                 <DataAnnotationsValidator />
-                <div class="modal-body">
-                    <div class="col-12 mb-3">
-                        <label class="form-label text-light">Activity Title</label>
-                        <InputText @bind-Value="activityModel.ActivityTitle" class="form-control" />
-                    </div>
-                    <div class="col-12 mb-3">
-                        <label class="form-label text-light">Location</label>
-                        <InputText @bind-Value="activityModel.Location" class="form-control" />
-                    </div>
-                    <div class="col-12 mb-3">
-                        <label class="form-label text-light">Description</label>
-                        <InputTextArea @bind-Value="activityModel.Description" class="form-control" rows="3" />
-                    </div>
-                    <div class="col-12 mb-2">
-                        <label class="form-label text-light">Change Image (Optional)</label>
-                        <InputFile OnChange="HandleFileSelected" class="form-control" accept=".jpg,.jpeg,.png" />
-                        @if (!string.IsNullOrEmpty(PreviewImageUrl))
+                <div class="modal-body px-4 py-3">
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label class="form-label text-light fw-semibold">Activity Title <span class="text-danger">*</span></label>
+                            <InputText @bind-Value="activityModel.ActivityTitle" class="form-control" placeholder="Enter Activity Title" required />
+                        </div>
+                        
+                        <div class="col-md-5">
+                            <label class="form-label text-light fw-semibold">Activity Date (ကျင်းပသည့်ရက်စွဲ)</label>
+                            <InputDate @bind-Value="activityModel.ActivityDate" class="form-control" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-light fw-semibold">Location</label>
+                            <InputText @bind-Value="activityModel.Location" class="form-control" placeholder="Enter Location" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-light fw-semibold">Description</label>
+                            <InputTextArea @bind-Value="activityModel.Description" class="form-control" rows="4" placeholder="Enter Description" />
+                        </div>
+
+                        <!-- Existing Images Section -->
+                        @if (activityModel.ExistingImages != null && activityModel.ExistingImages.Any())
                         {
-                            <div class="mt-2 text-center">
-                                <img src="@PreviewImageUrl" class="rounded img-thumbnail" style="max-height: 150px; object-fit: cover;" />
+                            <div class="col-12">
+                                <label class="form-label text-light fw-semibold d-flex justify-content-between align-items-center">
+                                    <span>Existing Photos (လက်ရှိ ဓာတ်ပုံများ)</span>
+                                    <span class="badge bg-secondary">@activityModel.ExistingImages.Count photos</span>
+                                </label>
+                                <div class="row g-2">
+                                    @for (int i = 0; i < activityModel.ExistingImages.Count; i++)
+                                    {
+                                        var idx = i;
+                                        var imgPath = activityModel.ExistingImages[i];
+                                        <div class="col-4 col-sm-3 position-relative">
+                                            <div class="card h-100 border-0 rounded-3 overflow-hidden shadow-sm position-relative" style="background: rgba(255,255,255,0.05); height: 110px;">
+                                                <img src="@GetFullImageUrl(imgPath)" alt="Existing photo" class="w-100 h-100" style="object-fit: cover;" />
+                                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center" 
+                                                        style="width: 24px; height: 24px; font-size: 0.7rem;" 
+                                                        @onclick="() => RemoveExistingImage(idx)" 
+                                                        title="Delete this photo">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         }
+
+                        <!-- Add New Additional Images -->
+                        <div class="col-12">
+                            <label class="form-label text-light fw-semibold d-flex justify-content-between align-items-center">
+                                <span>Add New Photos (ပုံအသစ်များ ထပ်ထည့်ရန်)</span>
+                                <small class="text-muted">JPG, PNG, WEBP</small>
+                            </label>
+                            
+                            <div class="upload-dropzone p-3 rounded-3 text-center mb-3" style="border: 2px dashed rgba(13, 110, 253, 0.4); background: rgba(13, 110, 253, 0.04); cursor: pointer; position: relative;">
+                                <i class="bi bi-cloud-arrow-up fs-2 text-primary d-block mb-1"></i>
+                                <span class="text-light fw-semibold">Click to select new images</span>
+                                <InputFile OnChange="HandleNewFilesSelected" class="position-absolute top-0 start-0 w-100 h-100 opacity-0" style="cursor: pointer;" accept=".jpg,.jpeg,.png,.webp" multiple />
+                            </div>
+
+                            @if (activityModel.NewImages != null && activityModel.NewImages.Any())
+                            {
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="badge bg-success px-3 py-1.5 rounded-pill">
+                                        <i class="bi bi-plus-circle me-1"></i> @activityModel.NewImages.Count New Photo(s) ready to add
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0" @onclick="ClearNewImages">
+                                        <i class="bi bi-x-circle me-1"></i> Clear new
+                                    </button>
+                                </div>
+
+                                <div class="row g-2">
+                                    @for (int i = 0; i < activityModel.NewImages.Count; i++)
+                                    {
+                                        var newIdx = i;
+                                        var newImg = activityModel.NewImages[i];
+                                        <div class="col-4 col-sm-3 position-relative">
+                                            <div class="card h-100 border-0 rounded-3 overflow-hidden shadow-sm position-relative" style="background: rgba(255,255,255,0.05); height: 110px;">
+                                                <img src="@newImg.PreviewUrl" alt="@newImg.FileName" class="w-100 h-100" style="object-fit: cover;" />
+                                                <span class="badge bg-success position-absolute top-0 start-0 m-1" style="font-size: 0.65rem;">New</span>
+                                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-0 d-flex align-items-center justify-content-center" 
+                                                        style="width: 24px; height: 24px; font-size: 0.7rem;" 
+                                                        @onclick="() => RemoveNewImage(newIdx)" 
+                                                        title="Remove new image">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
+
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
-                        <div class="small text-info mt-2">@statusMessage</div>
+                        <div class="alert alert-info py-2 mt-3 mb-0 d-flex align-items-center">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <span>@statusMessage</span>
+                        </div>
                     }
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <NavLink href="/admin/activities" class="nav-link me-3"><span class="sidebar-text text-muted">Cancel</span></NavLink>
-                    <button type="submit" class="btn btn-primary" disabled="@isProcessing">
-                        @(isProcessing ? "Saving..." : "Save Changes")
+
+                <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                    <NavLink href="/admin/activities" class="btn btn-secondary px-4 me-2">Cancel</NavLink>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold" disabled="@isProcessing">
+                        @if (isProcessing)
+                        {
+                            <span><span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-check2 me-1.5"></i> Save Changes</span>
+                        }
                     </button>
                 </div>
             </EditForm>

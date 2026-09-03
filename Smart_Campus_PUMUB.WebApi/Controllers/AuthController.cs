@@ -222,6 +222,11 @@ public class AuthController : ControllerBase
             return BadRequest(new { isSuccess = false, message = "Password သည် အနည်းဆုံး ၈ လုံး ရှိရမည်။" });
         }
 
+        if (request.NewPassword == request.CurrentPassword)
+        {
+            return BadRequest(new { isSuccess = false, message = "စကားဝှက်အသစ်သည် လက်ရှိ (Email မှ ပို့ပေးထားသော) စကားဝှက်ဟောင်းနှင့် မတူညီရပါ။" });
+        }
+
         // ── Step 1: Check User table ──
         var user = _db.Users.FirstOrDefault(x => x.UserName == request.UserName && x.IsDelete == false);
         if (user != null)

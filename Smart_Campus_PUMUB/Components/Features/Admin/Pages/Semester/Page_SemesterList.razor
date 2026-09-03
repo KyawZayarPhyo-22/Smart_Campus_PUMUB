@@ -4,6 +4,8 @@
 @using Smart_Campus_PUMUB.WebApi.Models
 @rendermode InteractiveServer
 
+<PageTitle>@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်များ" : "Semester Directory")</PageTitle>
+
 <style>
     .custom-table {
         background: rgba(20, 24, 33, 0.6);
@@ -55,57 +57,60 @@
 </style>
 
 <div class="tab-pane fade show active" id="v-pills-semester">
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-        <div class="d-flex align-items-center">
-            <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-                <i class="bi bi-calendar2-range fs-5" style="color: #5A4FCF;"></i>
-            </div>
-            <div>
-                <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Semester Directory</h4>
-                <small class="text-secondary">စာသင်နှစ်ဝက်များနှင့် ဘာသာရပ်ရွေးချယ်ခွင့် ကန့်သတ်ချက်များ စီမံခန့်ခွဲခြင်း</small>
-            </div>
+    <div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+            <i class="bi bi-calendar2-range fs-5" style="color: #0d6efd;"></i>
+        </div>
+        <div>
+            <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+                @(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်များ" : "Semester Directory")
+            </h4>
+            <small class="text-secondary d-block">
+                @(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်များနှင့် ဘာသာရပ်ရွေးချယ်ခွင့်များ စီမံခန့်ခွဲခြင်း" : "Manage academic semesters and elective limits")
+            </small>
         </div>
     </div>
 
-<!-- 🔹 Filter Section -->
-<div class="material-card p-3 mb-4">
-    <div class="row g-3 align-items-center">
-        <!-- Search Input -->
-        <div class="col">
-            <div class="position-relative">
-                <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by Semester Name..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+    <!-- 🔹 Filter Section -->
+    <div class="material-card p-3 mb-4">
+        <div class="row g-3 align-items-center">
+            <!-- Search Input -->
+            <div class="col">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
+                    <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်အမည်ဖြင့် ရှာရန်..." : "Search by Semester Name...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                </div>
             </div>
-        </div>
 
-        <!-- Search and Reset Buttons -->
-        <div class="col-md-2 d-flex gap-2">
-            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
-                <i class="bi bi-search"></i>
-            </button>
-            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
-                <i class="bi bi-arrow-clockwise"></i>
-            </button>
-        </div>
-
-        <!-- Add Button -->
-        <AuthorizeView Policy="Semester.Create">
-            <div class="col-auto">
-                <NavLink href="/admin/semester/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Semester">
-                    <i class="bi bi-plus-lg"></i>
-                </NavLink>
+            <!-- Search and Reset Buttons -->
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
             </div>
-        </AuthorizeView>
+
+            <!-- Add Button -->
+            <AuthorizeView Policy="Semester.Create">
+                <div class="col-auto">
+                    <NavLink href="/admin/semester/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Semester")">
+                        <i class="bi bi-plus-lg"></i>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
+        </div>
     </div>
-</div>
 
-<div class="tech-card p-4">
+    <div class="tech-card p-4">
 
         @if (IsLoading)
         {
             <div class="text-center my-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="text-dark mt-3 small fw-bold">Semester စာရင်းများကို ဆွဲယူနေပါသည်...</div>
+                <div class="text-dark mt-3 small fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading semesters...")</div>
             </div>
         }
         else if (!string.IsNullOrEmpty(ErrorMessage))
@@ -116,7 +121,7 @@
         {
             <div class="text-center my-5 text-dark">
                 <i class="bi bi-folder-x display-4 text-secondary"></i>
-                <p class="mt-3 mb-0 small fw-bold text-dark">ပြသရန် Semester မရှိသေးပါ သို့မဟုတ် ရှာဖွေမှုမတွေ့ပါ။</p>
+                <p class="mt-3 mb-0 small fw-bold text-dark">@(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No semesters found.")</p>
             </div>
         }
         else
@@ -125,12 +130,12 @@
                 <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 10%;">No.</th>
-                            <th style="width: 40%;">Semester Name</th>
-                            <th style="width: 25%; text-align: center;">Max Electives</th>
+                            <th style="width: 10%;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th style="width: 40%;">@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အမည်" : "Semester Name")</th>
+                            <th style="width: 25%; text-align: center;">@(LangService.IsMyanmar ? "ရွေးချယ်ခွင့် အများဆုံး" : "Max Electives")</th>
                             @if (canManageSemester)
                             {
-                                <th style="width: 25%; text-align: center;">Actions</th>
+                                <th style="width: 25%; text-align: center;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                             }
                         </tr>
                     </thead>
@@ -161,12 +166,12 @@
                                         <div class="d-flex justify-content-center align-items-center gap-2">
                                             <AuthorizeView Policy="Semester.Edit">
                                                 <NavLink href="@($"/admin/semester/edit/{semester.SemesterId}")" class="btn btn-action-edit d-inline-flex align-items-center">
-                                                    <i class="bi bi-pencil me-1.5"></i> Edit
+                                                    <i class="bi bi-pencil me-1.5"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
                                                 </NavLink>
                                             </AuthorizeView>
                                             <AuthorizeView Policy="Semester.Delete">
                                                 <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(semester)">
-                                                    <i class="bi bi-trash me-1.5"></i> Delete
+                                                    <i class="bi bi-trash me-1.5"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
                                                 </button>
                                             </AuthorizeView>
                                         </div>
@@ -192,13 +197,12 @@
             <div class="modal-content tech-card">
 
                 <div class="modal-header border-0">
-                    <h5 class="text-danger">Confirm Delete</h5>
+                    <h5 class="text-danger">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
                 </div>
 
                 <div class="modal-body text-center">
 
-                    Are you sure to delete
-                    <strong>@SelectedSemester?.SemesterName</strong>?
+                    @(LangService.IsMyanmar ? $"ဤ စာသင်နှစ်ဝက် \"{SelectedSemester?.SemesterName}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure to delete {SelectedSemester?.SemesterName}?")
 
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
@@ -219,13 +223,13 @@
                     <button class="btn btn-secondary"
                             @onclick="CloseDeleteModal"
                             disabled="@IsProcessing">
-                        Cancel
+                        @(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")
                     </button>
 
                     <button class="btn btn-danger"
                             @onclick="DeleteSemester"
                             disabled="@(IsProcessing || IsSuccess)">
-                        @(IsProcessing ? "Deleting..." : "Yes, Delete")
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
 

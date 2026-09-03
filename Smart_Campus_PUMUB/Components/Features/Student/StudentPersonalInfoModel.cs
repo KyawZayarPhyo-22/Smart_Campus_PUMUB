@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Smart_Campus_PUMUB.Components.Features.Admin.Pages.Student;
 
 namespace Smart_Campus_PUMUB.WebApi.Models;
 
@@ -59,11 +60,26 @@ public class StudentPersonalInfoRequest
     public string? nrc_township { get; set; }
     public string? nrc_type { get; set; }
     public string? nrc_number { get; set; }
+    public string? student_image { get; set; }
+    public string? nrc_front_image { get; set; }
+    public string? nrc_back_image { get; set; }
+    public string? census_image { get; set; }
+    public string? father_nrc_front_image { get; set; }
+    public string? father_nrc_back_image { get; set; }
+    public string? mother_nrc_front_image { get; set; }
+    public string? mother_nrc_back_image { get; set; }
 }
 
 public class StudentPersonalInfoResponse : StudentPersonalInfoRequest
 {
     public int Id { get; set; }
+    public string? Status { get; set; }
+    public bool IsGraduated { get; set; }
+    public bool IsDisqualified { get; set; }
+    public string? GraduationStatus { get; set; }
+    public int EarnedCredits { get; set; }
+    public StudentRetakeStatusModel? RetakeStatus { get; set; }
+    public StudentModel? StudentData { get; set; }
     public DateTime? CreatedDateTime { get; set; }
     public DateTime? ModifiedDateTime { get; set; }
 }

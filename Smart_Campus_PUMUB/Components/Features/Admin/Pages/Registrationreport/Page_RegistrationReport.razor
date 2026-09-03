@@ -199,22 +199,26 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-2 no-print">
-    <div class="d-flex align-items-center">
-        <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
+    <div class="d-flex align-items-start gap-3">
+        <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background: rgba(90, 79, 207, 0.08); border: 1.5px solid rgba(90, 79, 207, 0.25);">
             <i class="bi bi-file-earmark-bar-graph fs-5" style="color: #5A4FCF;"></i>
         </div>
         <div>
-            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">System Reports</h4>
-            <small class="text-secondary">ကျောင်းအပ်နှံမှုနှင့် ငွေပေးချေမှုဆိုင်ရာ အစီရင်ခံစာများ</small>
+            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">
+                @(LangService.IsMyanmar ? "စနစ်အစီရင်ခံစာများ" : "System Reports")
+            </h4>
+            <small class="text-secondary">
+                @(LangService.IsMyanmar ? "ကျောင်းအပ်နှံမှုနှင့် ငွေပေးချေမှုဆိုင်ရာ အစီရင်ခံစာများ" : "Student admission registration and payment collection reports")
+            </small>
         </div>
     </div>
 
     <div>
-        <button class="btn btn-secondary btn-action me-2 fw-bold" @onclick="PrintReport">
-            <i class="bi bi-printer me-1"></i> Print
+        <button class="btn btn-action me-2 fw-bold" style="background-color: #0d6efd !important; color: #ffffff !important; border: 1px solid #0d6efd !important;" @onclick="PrintReport">
+            <i class="bi bi-printer me-1 text-white"></i> @(LangService.IsMyanmar ? "ပရင့်ထုတ်မည်" : "Print")
         </button>
         <button class="btn btn-success btn-action fw-bold" @onclick="@(ActiveTab == 1 ? ExportAdmissionToExcel : ExportPaymentToExcel)">
-            <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
+            <i class="bi bi-file-earmark-excel me-1"></i> @(LangService.IsMyanmar ? "Excel ထုတ်မည်" : "Export to Excel")
         </button>
     </div>
 </div>
@@ -223,12 +227,12 @@
     <ul class="nav nav-tabs nav-tabs-custom border-0 d-flex">
         <li class="nav-item">
             <a class="nav-link fw-bold @(ActiveTab == 1 ? "active" : "")" @onclick="() => ActiveTab = 1">
-                <i class="bi bi-person-check me-2"></i> Admission Report
+                <i class="bi bi-person-check me-2"></i> @(LangService.IsMyanmar ? "ကျောင်းအပ်နှံမှု အစီရင်ခံစာ" : "Admission Report")
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link fw-bold @(ActiveTab == 2 ? "active" : "")" @onclick="() => ActiveTab = 2">
-                <i class="bi bi-wallet2 me-2"></i> Payment Report
+                <i class="bi bi-wallet2 me-2"></i> @(LangService.IsMyanmar ? "ငွေပေးချေမှု အစီရင်ခံစာ" : "Payment Report")
             </a>
         </li>
     </ul>
@@ -239,7 +243,9 @@
     <div class="material-card p-4 mb-4 no-print" style="position: relative; z-index: 1045;">
         <div class="row g-3 align-items-end">
             <div class="col-xl-4 col-lg-4 col-md-6">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Date Range Filter</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "ရက်စွဲအပိုင်းအခြား" : "Date Range Filter")
+                </label>
                 <div class="d-flex align-items-center gap-2">
                     <input type="date" class="form-control material-input flex-fill" style="padding: 0.55rem 0.6rem; font-size: 0.85rem;" @bind="AdmFromDate" />
                     <span class="fw-bold" style="color: #000000 !important;">~</span>
@@ -247,13 +253,15 @@
                 </div>
             </div>
 
-            <!-- Semester Filter (was Academic Year) -->
+            <!-- Semester Filter -->
             <div class="col-xl-2 col-lg-2 col-md-3">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Semester</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester")
+                </label>
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="ToggleAdmSemesterDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
-                        <span class="text-truncate">@(AdmSelectedYear == "All" ? "All Semesters" : AdmSelectedYear)</span>
+                        <span class="text-truncate">@(AdmSelectedYear == "All" ? (LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters") : AdmSelectedYear)</span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -262,12 +270,12 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(AdmSelectedYear == "All" ? "selected" : "")" 
                                  @onclick='() => SelectAdmSemester("All")'>
-                                <span>All Semesters</span>
+                                <span>@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters")</span>
                                 @if (AdmSelectedYear == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
-                            @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                            @foreach (var lvl in AvailableSemesters)
                             {
-                                var currentLvl = lvl!;
+                                var currentLvl = lvl;
                                 <div class="dropdown-item-custom @(AdmSelectedYear == currentLvl ? "selected" : "")" 
                                      @onclick='() => SelectAdmSemester(currentLvl)'>
                                     <span>@currentLvl</span>
@@ -281,11 +289,13 @@
 
             <!-- Major Filter -->
             <div class="col-xl-2 col-lg-2 col-md-3">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Major</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "မေဂျာ" : "Major")
+                </label>
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="ToggleAdmMajorDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
-                        <span class="text-truncate">@(AdmSelectedMajor == "All" ? "All Majors" : AdmSelectedMajor)</span>
+                        <span class="text-truncate">@(AdmSelectedMajor == "All" ? (LangService.IsMyanmar ? "မေဂျာ အားလုံး" : "All Majors") : AdmSelectedMajor)</span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -294,12 +304,12 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(AdmSelectedMajor == "All" ? "selected" : "")" 
                                  @onclick='() => SelectAdmMajor("All")'>
-                                <span>All Majors</span>
+                                <span>@(LangService.IsMyanmar ? "မေဂျာ အားလုံး" : "All Majors")</span>
                                 @if (AdmSelectedMajor == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
-                            @foreach (var maj in RawStudentList.Select(s => s.Major).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                            @foreach (var maj in AvailableMajors)
                             {
-                                var currentMaj = maj!;
+                                var currentMaj = maj;
                                 <div class="dropdown-item-custom @(AdmSelectedMajor == currentMaj ? "selected" : "")" 
                                      @onclick='() => SelectAdmMajor(currentMaj)'>
                                     <span>@currentMaj</span>
@@ -313,11 +323,18 @@
 
             <!-- Status Filter -->
             <div class="col-xl-2 col-lg-2 col-md-6">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Status</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "အခြေအနေ" : "Status")
+                </label>
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="ToggleAdmStatusDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
-                        <span class="text-truncate">@(AdmSelectedStatus == "All" ? "All" : AdmSelectedStatus)</span>
+                        <span class="text-truncate">
+                            @(AdmSelectedStatus == "All" ? (LangService.IsMyanmar ? "အားလုံး" : "All") : 
+                              AdmSelectedStatus == "Approved" ? (LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved") :
+                              AdmSelectedStatus == "Pending" ? (LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending") :
+                              AdmSelectedStatus == "Rejected" ? (LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected") : AdmSelectedStatus)
+                        </span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -326,17 +343,24 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(AdmSelectedStatus == "All" ? "selected" : "")" 
                                  @onclick='() => SelectAdmStatus("All")'>
-                                <span>All</span>
+                                <span>@(LangService.IsMyanmar ? "အားလုံး" : "All")</span>
                                 @if (AdmSelectedStatus == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
-                            @foreach (var st in new[] { "Approved", "Pending", "Rejected" })
-                            {
-                                <div class="dropdown-item-custom @(AdmSelectedStatus == st ? "selected" : "")" 
-                                     @onclick='() => SelectAdmStatus(st)'>
-                                    <span>@st</span>
-                                    @if (AdmSelectedStatus == st) { <i class="bi bi-check2 text-primary"></i> }
-                                </div>
-                            }
+                            <div class="dropdown-item-custom @(AdmSelectedStatus == "Approved" ? "selected" : "")" 
+                                 @onclick='() => SelectAdmStatus("Approved")'>
+                                <span>@(LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved")</span>
+                                @if (AdmSelectedStatus == "Approved") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            <div class="dropdown-item-custom @(AdmSelectedStatus == "Pending" ? "selected" : "")" 
+                                 @onclick='() => SelectAdmStatus("Pending")'>
+                                <span>@(LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending")</span>
+                                @if (AdmSelectedStatus == "Pending") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            <div class="dropdown-item-custom @(AdmSelectedStatus == "Rejected" ? "selected" : "")" 
+                                 @onclick='() => SelectAdmStatus("Rejected")'>
+                                <span>@(LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected")</span>
+                                @if (AdmSelectedStatus == "Rejected") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
                         </div>
                     }
                 </div>
@@ -344,10 +368,10 @@
 
             <div class="col-xl-2 col-lg-2 col-md-6">
                 <div class="d-flex gap-2">
-                    <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ApplyAdmissionFilter" title="Search">
+                    <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyAdmissionFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                         <i class="bi bi-search"></i>
                     </button>
-                    <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ResetAdmissionFilter" title="Reset">
+                    <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ResetAdmissionFilter" title="@(LangService.IsMyanmar ? "မူလအတိုင်း" : "Reset")">
                         <i class="bi bi-arrow-clockwise"></i>
                     </button>
                 </div>
@@ -360,7 +384,9 @@
         {
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="mt-2 fw-bold" style="color: #000000 !important; font-size: 0.95rem;">Admission Report ဒေတာများကို ဆွဲယူနေပါသည်...</div>
+                <div class="mt-2 fw-bold" style="color: #000000 !important; font-size: 0.95rem;">
+                    @(LangService.IsMyanmar ? "ကျောင်းအပ်နှံမှု အစီရင်ခံစာ ရယူနေပါသည်..." : "Loading admission report data...")
+                </div>
             </div>
         }
         else
@@ -369,13 +395,13 @@
                 <table class="table custom-table align-middle">
                     <thead>
                         <tr>
-                            <th class="text-center fw-bold">No.</th>
-                            <th class="fw-bold">Admission Date</th>
-                            <th class="fw-bold">Roll No</th>
-                            <th class="fw-bold">Name</th>
-                            <th class="fw-bold">Major</th>
-                            <th class="fw-bold">Semester</th>
-                            <th class="text-center fw-bold">Status</th>
+                            <th class="text-center fw-bold">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "ကျောင်းအပ်ရက်စွဲ" : "Admission Date")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll No")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "အမည်" : "Name")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "မေဂျာ" : "Major")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester")</th>
+                            <th class="text-center fw-bold">@(LangService.IsMyanmar ? "အခြေအနေ" : "Status")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -385,6 +411,9 @@
                         @foreach (var s in AdmissionReportData)
                         {
                             var currentStatus = string.IsNullOrEmpty(s.Status) ? "Pending" : s.Status;
+                            var statusText = currentStatus == "Approved" ? (LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved") :
+                                             currentStatus == "Rejected" ? (LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected") :
+                                             (LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending");
                             <tr style="font-size: 0.9rem;">
                                 <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
                                 <td class="fw-bold text-white"><i class="bi bi-calendar-check me-2 text-muted"></i>@s.CreatedDatetime.ToString("dd-MM-yyyy")</td>
@@ -394,7 +423,7 @@
                                 <td><span class="badge rounded-pill fw-bold" style="background: #4F46E5; color: #ffffff !important; font-size: 0.82rem; padding: 6px 12px; letter-spacing: 0.3px;">@s.AcademicYearLevel</span></td>
                                 <td class="text-center">
                                     <span class="badge px-2 py-1 fw-bold @(currentStatus == "Approved" ? "bg-success text-white" : currentStatus == "Rejected" ? "bg-danger text-white" : "bg-warning text-dark")" style="border-radius: 6px;">
-                                        @currentStatus
+                                        @statusText
                                     </span>
                                 </td>
                             </tr>
@@ -403,9 +432,9 @@
 
                         <tr style="background-color: #1a1a27; font-size: 0.9rem;" class="fw-bold">
                             <td colspan="7" class="text-center py-3">
-                                <span class="me-4 text-info fw-bold"><i class="bi bi-people me-1"></i> Total Registrations: <strong class="text-white">@TotalRegistrations</strong></span>
-                                <span class="me-4 text-success fw-bold"><i class="bi bi-check-circle me-1"></i> Approved: <strong class="text-white">@TotalApprovedReg</strong></span>
-                                <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i> Rejected: <strong class="text-white">@TotalRejectedReg</strong></span>
+                                <span class="me-4 text-info fw-bold"><i class="bi bi-people me-1"></i> @(LangService.IsMyanmar ? "စုစုပေါင်း စာရင်းသွင်းမှု" : "Total Registrations"): <strong class="text-white">@TotalRegistrations</strong></span>
+                                <span class="me-4 text-success fw-bold"><i class="bi bi-check-circle me-1"></i> @(LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved"): <strong class="text-white">@TotalApprovedReg</strong></span>
+                                <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i> @(LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected"): <strong class="text-white">@TotalRejectedReg</strong></span>
                             </td>
                         </tr>
                     </tbody>
@@ -423,7 +452,9 @@
     <div class="material-card p-4 mb-4 no-print" style="position: relative; z-index: 1045;">
         <div class="row g-3 align-items-end">
             <div class="col-xl-4 col-lg-4 col-md-6">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Date Range Filter</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "ရက်စွဲအပိုင်းအခြား" : "Date Range Filter")
+                </label>
                 <div class="d-flex align-items-center gap-2">
                     <input type="date" class="form-control material-input flex-fill" style="padding: 0.55rem 0.6rem; font-size: 0.85rem;" @bind="PayFromDate" />
                     <span class="fw-bold" style="color: #000000 !important;">~</span>
@@ -433,11 +464,13 @@
 
             <!-- Semester Filter -->
             <div class="col-xl-2 col-lg-2 col-md-3">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Semester</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "စာသင်နှစ်ဝက်" : "Semester")
+                </label>
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="TogglePaySemesterDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
-                        <span class="text-truncate">@(PaySelectedYear == "All" ? "All Semesters" : PaySelectedYear)</span>
+                        <span class="text-truncate">@(PaySelectedYear == "All" ? (LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters") : PaySelectedYear)</span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -446,12 +479,12 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(PaySelectedYear == "All" ? "selected" : "")" 
                                  @onclick='() => SelectPaySemester("All")'>
-                                <span>All Semesters</span>
+                                <span>@(LangService.IsMyanmar ? "စာသင်နှစ်ဝက် အားလုံး" : "All Semesters")</span>
                                 @if (PaySelectedYear == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
-                            @foreach (var lvl in RawStudentList.Select(s => s.AcademicYearLevel).Distinct().Where(l => !string.IsNullOrEmpty(l)))
+                            @foreach (var lvl in AvailableSemesters)
                             {
-                                var currentLvl = lvl!;
+                                var currentLvl = lvl;
                                 <div class="dropdown-item-custom @(PaySelectedYear == currentLvl ? "selected" : "")" 
                                      @onclick='() => SelectPaySemester(currentLvl)'>
                                     <span>@currentLvl</span>
@@ -465,11 +498,13 @@
 
             <!-- Payment Method Filter -->
             <div class="col-xl-2 col-lg-2 col-md-3">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Payment Method</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "ပေးချေနည်းလမ်း" : "Payment Method")
+                </label>
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="TogglePayMethodDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
-                        <span class="text-truncate">@(PaySelectedMethod == "All" ? "All Methods" : PaySelectedMethod)</span>
+                        <span class="text-truncate">@(PaySelectedMethod == "All" ? (LangService.IsMyanmar ? "နည်းလမ်း အားလုံး" : "All Methods") : PaySelectedMethod)</span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -478,7 +513,7 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(PaySelectedMethod == "All" ? "selected" : "")" 
                                  @onclick='() => SelectPayMethod("All")'>
-                                <span>All Methods</span>
+                                <span>@(LangService.IsMyanmar ? "နည်းလမ်း အားလုံး" : "All Methods")</span>
                                 @if (PaySelectedMethod == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
                             @foreach (var meth in new[] { "KBZPay", "WavePay", "Cash" })
@@ -496,11 +531,18 @@
 
             <!-- Status Filter -->
             <div class="col-xl-2 col-lg-2 col-md-6">
-                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">Status</label>
+                <label class="small mb-2 fw-bold text-uppercase" style="color: #000000 !important;">
+                    @(LangService.IsMyanmar ? "အခြေအနေ" : "Status")
+                </label>
                 <div class="custom-dropdown-container">
                     <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                             @onclick="TogglePayStatusDropdown" style="background-color: #ffffff; color: #374151; border-color: #e5e7eb;">
-                        <span class="text-truncate">@(PaySelectedStatus == "All" ? "All" : PaySelectedStatus)</span>
+                        <span class="text-truncate">
+                            @(PaySelectedStatus == "All" ? (LangService.IsMyanmar ? "အားလုံး" : "All") : 
+                              PaySelectedStatus == "Approved" ? (LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved") :
+                              PaySelectedStatus == "Pending" ? (LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending") :
+                              PaySelectedStatus == "Rejected" ? (LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected") : PaySelectedStatus)
+                        </span>
                         <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                     </button>
 
@@ -509,17 +551,24 @@
                         <div class="custom-dropdown-menu shadow">
                             <div class="dropdown-item-custom @(PaySelectedStatus == "All" ? "selected" : "")" 
                                  @onclick='() => SelectPayStatus("All")'>
-                                <span>All</span>
+                                <span>@(LangService.IsMyanmar ? "အားလုံး" : "All")</span>
                                 @if (PaySelectedStatus == "All") { <i class="bi bi-check2 text-primary"></i> }
                             </div>
-                            @foreach (var st in new[] { "Approved", "Pending", "Rejected" })
-                            {
-                                <div class="dropdown-item-custom @(PaySelectedStatus == st ? "selected" : "")" 
-                                 @onclick='() => SelectPayStatus(st)'>
-                                    <span>@st</span>
-                                    @if (PaySelectedStatus == st) { <i class="bi bi-check2 text-primary"></i> }
-                                </div>
-                            }
+                            <div class="dropdown-item-custom @(PaySelectedStatus == "Approved" ? "selected" : "")" 
+                                 @onclick='() => SelectPayStatus("Approved")'>
+                                <span>@(LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved")</span>
+                                @if (PaySelectedStatus == "Approved") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            <div class="dropdown-item-custom @(PaySelectedStatus == "Pending" ? "selected" : "")" 
+                                 @onclick='() => SelectPayStatus("Pending")'>
+                                <span>@(LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending")</span>
+                                @if (PaySelectedStatus == "Pending") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
+                            <div class="dropdown-item-custom @(PaySelectedStatus == "Rejected" ? "selected" : "")" 
+                                 @onclick='() => SelectPayStatus("Rejected")'>
+                                <span>@(LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected")</span>
+                                @if (PaySelectedStatus == "Rejected") { <i class="bi bi-check2 text-primary"></i> }
+                            </div>
                         </div>
                     }
                 </div>
@@ -527,10 +576,10 @@
 
             <div class="col-xl-2 col-lg-2 col-md-6">
                 <div class="d-flex gap-2">
-                    <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ApplyPaymentFilter" title="Search">
+                    <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyPaymentFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                         <i class="bi bi-search"></i>
                     </button>
-                    <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ResetPaymentFilter" title="Reset">
+                    <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" style="height: 38px;" type="button" @onclick="ResetPaymentFilter" title="@(LangService.IsMyanmar ? "မူလအတိုင်း" : "Reset")">
                         <i class="bi bi-arrow-clockwise"></i>
                     </button>
                 </div>
@@ -543,7 +592,9 @@
         {
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
-                <div class="mt-2 fw-bold" style="color: #000000 !important; font-size: 0.95rem;">Payment Report ဒေတာများကို ဆွဲယူနေပါသည်...</div>
+                <div class="mt-2 fw-bold" style="color: #000000 !important; font-size: 0.95rem;">
+                    @(LangService.IsMyanmar ? "ငွေပေးချေမှု အစီရင်ခံစာ ရယူနေပါသည်..." : "Loading payment report data...")
+                </div>
             </div>
         }
         else
@@ -552,13 +603,13 @@
                 <table class="table custom-table align-middle">
                     <thead>
                         <tr>
-                            <th class="text-center fw-bold">No.</th>
-                            <th class="fw-bold">Date</th>
-                            <th class="fw-bold">Roll No</th>
-                            <th class="fw-bold">Name</th>
-                            <th class="fw-bold">Method</th>
-                            <th class="text-end fw-bold">Amount Paid</th>
-                            <th class="text-center fw-bold">Status</th>
+                            <th class="text-center fw-bold">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "ရက်စွဲ" : "Date")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "ခုံအမှတ်" : "Roll No")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "အမည်" : "Name")</th>
+                            <th class="fw-bold">@(LangService.IsMyanmar ? "ပေးချေနည်းလမ်း" : "Method")</th>
+                            <th class="text-end fw-bold">@(LangService.IsMyanmar ? "ပေးချေငွေပမာဏ" : "Amount Paid")</th>
+                            <th class="text-center fw-bold">@(LangService.IsMyanmar ? "အခြေအနေ" : "Status")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -569,6 +620,9 @@
                         @foreach (var p in PaymentReportData)
                         {
                             totalAmount += p.AmountPaid;
+                            var payStatus = p.Status == "Approved" ? (LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved") :
+                                            p.Status == "Rejected" ? (LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected") :
+                                            (LangService.IsMyanmar ? "စိစစ်ဆဲ" : "Pending");
                             <tr style="font-size: 0.9rem;">
                                 <td class="text-center text-muted fw-bold">@count.ToString("D2")</td>
                                 <td class="fw-bold text-white"><i class="bi bi-calendar-event me-2 text-muted"></i>@p.PaymentDate.ToString("dd-MM-yyyy")</td>
@@ -581,7 +635,7 @@
                                 <td class="text-end text-success fw-bold">@p.AmountPaid.ToString("N0") <span class="text-muted fw-bold" style="font-size: 0.8rem;">MMK</span></td>
                                 <td class="text-center">
                                     <span class="badge px-2 py-1 fw-bold @(p.Status == "Approved" ? "bg-success text-white" : p.Status == "Rejected" ? "bg-danger text-white" : "bg-warning text-dark")" style="border-radius: 6px;">
-                                        @p.Status
+                                        @payStatus
                                     </span>
                                 </td>
                             </tr>
@@ -590,12 +644,12 @@
 
                         <tr style="background-color: #1a1a27; font-size: 0.9rem;" class="fw-bold">
                             <td colspan="4" class="py-3 ps-4">
-                                <span class="me-4 text-info fw-bold"><i class="bi bi-wallet2 me-1"></i> Total: <strong class="text-white">@TotalPayments</strong></span>
-                                <span class="me-4 text-success fw-bold"><i class="bi bi-check-circle me-1"></i> Approved: <strong class="text-white">@TotalApprovedPay</strong></span>
-                                <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i> Rejected: <strong class="text-white">@TotalRejectedPay</strong></span>
+                                <span class="me-4 text-info fw-bold"><i class="bi bi-wallet2 me-1"></i> @(LangService.IsMyanmar ? "စုစုပေါင်း" : "Total"): <strong class="text-white">@TotalPayments</strong></span>
+                                <span class="me-4 text-success fw-bold"><i class="bi bi-check-circle me-1"></i> @(LangService.IsMyanmar ? "အတည်ပြုပြီး" : "Approved"): <strong class="text-white">@TotalApprovedPay</strong></span>
+                                <span class="text-danger fw-bold"><i class="bi bi-x-circle me-1"></i> @(LangService.IsMyanmar ? "ပယ်ချသည်" : "Rejected"): <strong class="text-white">@TotalRejectedPay</strong></span>
                             </td>
                             <td colspan="3" class="text-end py-3 pe-4">
-                                <span class="text-white fw-bold text-uppercase me-2" style="font-size: 0.8rem; letter-spacing: 1px;">Total Revenue:</span>
+                                <span class="text-white fw-bold text-uppercase me-2" style="font-size: 0.8rem; letter-spacing: 1px;">@(LangService.IsMyanmar ? "စုစုပေါင်း ရငွေ:" : "Total Revenue:")</span>
                                 <span class="text-success fw-bold fs-5">@TotalRevenue.ToString("N0") <span class="text-muted fw-bold" style="font-size: 0.8rem;">MMK</span></span>
                             </td>
                         </tr>

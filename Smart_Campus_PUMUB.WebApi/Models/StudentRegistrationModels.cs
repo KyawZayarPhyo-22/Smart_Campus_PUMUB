@@ -61,9 +61,23 @@ public class StudentRegistrationCreateRequestModel
     public string? selected_subject_ids { get; set; }
 
     // 📷 Images Upload Fields
+    public string? student_image { get; set; }
+    public string? nrc_front_image { get; set; }
+    public string? nrc_back_image { get; set; }
+    public string? census_image { get; set; }
+    public string? father_nrc_front_image { get; set; }
+    public string? father_nrc_back_image { get; set; }
+    public string? mother_nrc_front_image { get; set; }
+    public string? mother_nrc_back_image { get; set; }
     public IFormFile? StudentImageFile { get; set; }
     public IFormFile? SignatureImageFile { get; set; }
-
+    public IFormFile? NrcFrontImageFile { get; set; }
+    public IFormFile? NrcBackImageFile { get; set; }
+    public IFormFile? CensusImageFile { get; set; }
+    public IFormFile? FatherNrcFrontImageFile { get; set; }
+    public IFormFile? FatherNrcBackImageFile { get; set; }
+    public IFormFile? MotherNrcFrontImageFile { get; set; }
+    public IFormFile? MotherNrcBackImageFile { get; set; }
 }
 
 
@@ -90,5 +104,11 @@ public class SubjectGradeBindingModel
     public int SubjectId { get; set; }
     public string SubjectName { get; set; } = "";
     public string SubjectCode { get; set; } = "";
+    public string? SemesterName { get; set; }
     public string? Grade { get; set; }
+    public string? ReexamGrade { get; set; }
+    public bool? ReexamIsPass { get; set; }
+    public bool IsRetake { get; set; } = false;
+    public bool IsCarriedOver { get; set; } = false;
+    public bool IsReexam { get; set; } = false;
 }

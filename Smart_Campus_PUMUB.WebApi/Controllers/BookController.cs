@@ -230,7 +230,7 @@ public class BookController : ControllerBase
     }
 
     [HttpGet("paginate")]
-    [AllowAnonymous]
+    [Permission("Book.View")]
     public IActionResult GetBooksPaginated(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,

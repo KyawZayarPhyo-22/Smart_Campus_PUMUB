@@ -7,6 +7,8 @@
 @using System.Linq
 @using Microsoft.AspNetCore.Components
 
+<PageTitle>@(LangService.IsMyanmar ? "ဆရာ/ဆရာမများ" : "Tutor Directory")</PageTitle>
+
 <style>
     .search-input {
         padding-left: 2.6rem !important;
@@ -24,7 +26,7 @@
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        max-height: 228px; /* Approximately 6 items */
+        max-height: 228px;
         overflow-y: auto;
         z-index: 1050;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
@@ -65,13 +67,13 @@
 
     .dropdown-item-custom:hover {
         background-color: #f3f4f6;
-        color: #5A4FCF;
+        color: #0d6efd;
         font-weight: 600;
     }
 
     .dropdown-item-custom.selected {
-        background-color: rgba(90, 79, 207, 0.08);
-        color: #5A4FCF;
+        background-color: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
         font-weight: 700;
     }
 
@@ -95,17 +97,35 @@
         font-size: 0.9rem;
     }
 
-    .btn-action {
+    .btn-action-edit {
+        background: rgba(13, 110, 253, 0.1);
+        color: #39b5ff;
+        border: 1px solid rgba(13, 110, 253, 0.3);
         border-radius: 6px;
-        padding: 0.25rem 0.6rem;
+        padding: 4px 10px;
         font-size: 0.85rem;
-        font-weight: 500;
-        transition: transform 0.2s;
+        transition: all 0.2s ease;
     }
 
-        .btn-action:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
+    .btn-action-edit:hover {
+        background: #0d6efd;
+        color: #ffffff;
+    }
+
+    .btn-action-delete {
+        background: rgba(220, 53, 69, 0.1);
+        color: #ff6b6b;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action-delete:hover {
+        background: #dc3545;
+        color: #ffffff;
+    }
 </style>
 
 @if (isFacultyDropdownOpen || isPositionDropdownOpen)
@@ -113,15 +133,18 @@
     <div style="position: fixed; inset: 0; z-index: 1040; background: transparent;" @onclick="CloseAllDropdowns"></div>
 }
 
-<div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-    <div class="d-flex align-items-center">
-        <div class="rounded p-2 me-3 shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: transparent; border: 1.5px solid #5A4FCF;">
-            <i class="bi bi-person-workspace fs-5" style="color: #5A4FCF;"></i>
-        </div>
-        <div>
-            <h4 class="fw-bolder text-white mb-0" style="letter-spacing: 0.5px;">Tutor Directory</h4>
-            <small class="text-secondary">ဆရာ/ဆရာမများနှင့် သင်ကြားရေးဝန်ထမ်းများ စာရင်း စီမံခန့်ခွဲခြင်း</small>
-        </div>
+<div class="d-flex align-items-center gap-3 mb-4 mt-2 py-1">
+    <div class="rounded-3 p-2 shadow-sm d-flex align-items-center justify-content-center flex-shrink-0"
+         style="width: 44px; height: 44px; background: rgba(13, 110, 253, 0.08); border: 1.5px solid rgba(13, 110, 253, 0.25);">
+        <i class="bi bi-person-workspace fs-5" style="color: #0d6efd;"></i>
+    </div>
+    <div>
+        <h4 class="fw-bolder mb-1" style="letter-spacing: 0.5px; color: #1e293b;">
+            @(LangService.IsMyanmar ? "ဆရာ/ဆရာမများ" : "Tutor Directory")
+        </h4>
+        <small class="text-secondary d-block">
+            @(LangService.IsMyanmar ? "ဆရာ/ဆရာမများနှင့် သင်ကြားရေးဝန်ထမ်းများ စီမံခန့်ခွဲခြင်း" : "Manage academic tutors and teaching staff")
+        </small>
     </div>
 </div>
 
@@ -131,16 +154,16 @@
         <div class="col">
             <div class="position-relative">
                 <i class="bi bi-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 0.9rem;"></i>
-                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="Search by name, phone..." @bind="SearchInput" @onkeyup="HandleKeyUp" />
+                <input type="text" class="form-control material-input search-input w-100" style="padding-left: 2.6rem !important;" placeholder="@(LangService.IsMyanmar ? "အမည်၊ ဖုန်းနံပါတ်ဖြင့် ရှာရန်..." : "Search by name, phone...")" @bind="SearchInput" @onkeyup="HandleKeyUp" />
             </div>
         </div>
 
-        <!-- Faculty Custom Dropdown Filter (approx 6 items height with scroll) -->
+        <!-- Faculty Custom Dropdown Filter -->
         <div class="col-md-3">
             <div class="custom-dropdown-container">
                 <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                         @onclick="ToggleFacultyDropdown" disabled="@isFacultyAdminLocked">
-                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? "All Faculties" : SelectedFacultyInput)</span>
+                    <span class="text-truncate">@(SelectedFacultyInput == "All" ? (LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties") : SelectedFacultyInput)</span>
                     <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                 </button>
 
@@ -149,7 +172,7 @@
                     <div class="custom-dropdown-menu shadow">
                         <div class="dropdown-item-custom @(SelectedFacultyInput == "All" ? "selected" : "")" 
                              @onclick='() => SelectFaculty("All")'>
-                            <span>All Faculties</span>
+                            <span>@(LangService.IsMyanmar ? "မဟာဌာန အားလုံး" : "All Faculties")</span>
                             @if (SelectedFacultyInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         @if (FacultyList != null)
@@ -168,12 +191,12 @@
             </div>
         </div>
 
-        <!-- Position Custom Dropdown Filter (approx 6 items height with scroll) -->
+        <!-- Position Custom Dropdown Filter -->
         <div class="col-md-3">
             <div class="custom-dropdown-container">
                 <button type="button" class="form-select material-input fw-semibold text-start d-flex justify-content-between align-items-center w-100" 
                         @onclick="TogglePositionDropdown">
-                    <span class="text-truncate">@(SelectedPositionInput == "All" ? "All Positions" : SelectedPositionInput)</span>
+                    <span class="text-truncate">@(SelectedPositionInput == "All" ? (LangService.IsMyanmar ? "ရာထူး အားလုံး" : "All Positions") : SelectedPositionInput)</span>
                     <i class="bi bi-chevron-down ms-2 text-muted" style="font-size: 0.75rem;"></i>
                 </button>
 
@@ -182,7 +205,7 @@
                     <div class="custom-dropdown-menu shadow">
                         <div class="dropdown-item-custom @(SelectedPositionInput == "All" ? "selected" : "")" 
                              @onclick='() => SelectPosition("All")'>
-                            <span>All Positions</span>
+                            <span>@(LangService.IsMyanmar ? "ရာထူး အားလုံး" : "All Positions")</span>
                             @if (SelectedPositionInput == "All") { <i class="bi bi-check2 text-primary"></i> }
                         </div>
                         @if (PositionList != null)
@@ -203,10 +226,10 @@
 
         <!-- Search and Reset Buttons -->
         <div class="col-md-2 d-flex gap-2">
-            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ApplyFilter" title="Search">
+            <button class="btn btn-primary w-50 d-flex align-items-center justify-content-center" style="background-color: #0d6efd !important; border-color: #0d6efd !important;" type="button" @onclick="ApplyFilter" title="@(LangService.IsMyanmar ? "ရှာမည်" : "Search")">
                 <i class="bi bi-search"></i>
             </button>
-            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="Reset">
+            <button class="btn btn-secondary w-50 d-flex align-items-center justify-content-center" type="button" @onclick="ResetFilter" title="@(LangService.IsMyanmar ? "ပြန်လည်သတ်မှတ်မည်" : "Reset")">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
         </div>
@@ -214,7 +237,7 @@
         <!-- Add Tutor Button -->
         <AuthorizeView Policy="Tutor.Create">
             <div class="col-auto">
-                <NavLink href="/admin/tutor/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px;" title="Add Tutor">
+                <NavLink href="/admin/tutor/create" class="btn btn-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 38px; background-color: #0d6efd !important; border-color: #0d6efd !important;" title="@(LangService.IsMyanmar ? "အသစ်ထည့်မည်" : "Add Tutor")">
                     <i class="bi bi-plus-lg"></i>
                 </NavLink>
             </div>
@@ -227,15 +250,15 @@
         <table class="table custom-table align-middle">
             <thead>
                 <tr>
-                    <th class="text-center" style="width: 50px;">No.</th>
-                    <th class="text-center" style="width: 70px;">Profile</th>
-                    <th>Name</th>
-                    <th>Faculty</th>
-                    <th>Position</th>
-                    <th>Phone</th>
+                    <th class="text-center" style="width: 50px;">@(LangService.IsMyanmar ? "စဉ်" : "No.")</th>
+                    <th class="text-center" style="width: 70px;">@(LangService.IsMyanmar ? "ဓာတ်ပုံ" : "Profile")</th>
+                    <th>@(LangService.IsMyanmar ? "အမည်" : "Name")</th>
+                    <th>@(LangService.IsMyanmar ? "မဟာဌာန" : "Faculty")</th>
+                    <th>@(LangService.IsMyanmar ? "ရာထူး" : "Position")</th>
+                    <th>@(LangService.IsMyanmar ? "ဖုန်းနံပါတ်" : "Phone")</th>
                     @if (canManageTutor)
                     {
-                        <th class="text-center" style="width: 160px;">Actions</th>
+                        <th class="text-center" style="width: 160px;">@(LangService.IsMyanmar ? "လုပ်ဆောင်ချက်" : "Actions")</th>
                     }
                 </tr>
             </thead>
@@ -245,10 +268,8 @@
                     <tr>
                         <td colspan="@(canManageTutor ? 7 : 6)">
                             <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 250px;">
-                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
-                                    <span class="visually-hidden">ရယူနေပါသည်...</span>
-                                </div>
-                                <div class="text-muted fs-6 fw-bold" style="font-weight: 700;">ဆရာ/ဆရာမ အချက်အလက်များ ရယူနေပါသည်...</div>
+                                <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                                <div class="text-muted fs-6 fw-bold">@(LangService.IsMyanmar ? "ဒေတာများကို ဆွဲယူနေပါသည်..." : "Loading tutors...")</div>
                             </div>
                         </td>
                     </tr>
@@ -261,7 +282,7 @@
                         <tr>
                             <td class="text-center fw-bold text-dark">@count.ToString("D2")</td>
                             <td class="text-center">
-                                <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"https://localhost:7297/{tutor.Profile}")" 
+                                <img src="@(string.IsNullOrEmpty(tutor.Profile) ? "https://via.placeholder.com/50" : $"http://localhost:5077/{tutor.Profile}")" 
                                      class="rounded-circle shadow-sm" width="45" height="45" style="object-fit: cover;">
                             </td>
                             <td class="fw-bold text-dark">@tutor.TutorName</td>
@@ -281,16 +302,16 @@
                             @if (canManageTutor)
                             {
                                 <td class="text-center">
-                                    <div class="d-flex justify-content-center gap-1">
+                                    <div class="d-flex justify-content-center gap-2">
                                         <AuthorizeView Policy="Tutor.Edit">
-                                            <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-outline-info btn-action" title="Edit">
-                                                <i class="bi bi-pencil me-1"></i> Edit
+                                            <NavLink href="@($"/admin/tutor/edit/{tutor.TutorId}")" class="btn btn-action-edit d-inline-flex align-items-center">
+                                                <i class="bi bi-pencil me-1.5"></i> @(LangService.IsMyanmar ? "ပြင်မည်" : "Edit")
                                             </NavLink>
                                         </AuthorizeView>
                                         
                                         <AuthorizeView Policy="Tutor.Delete">
-                                            <button class="btn btn-outline-danger btn-action" @onclick="() => OpenDeleteModal(tutor)" title="Delete">
-                                                <i class="bi bi-trash me-1"></i> Delete
+                                            <button class="btn btn-action-delete d-inline-flex align-items-center" @onclick="() => OpenDeleteModal(tutor)">
+                                                <i class="bi bi-trash me-1.5"></i> @(LangService.IsMyanmar ? "ဖျက်မည်" : "Delete")
                                             </button>
                                         </AuthorizeView>
                                     </div>
@@ -305,7 +326,7 @@
                     <tr>
                         <td colspan="@(canManageTutor ? 7 : 6)" style="text-align: center !important; padding-top: 3rem !important; padding-bottom: 3rem !important; color: #6c757d;">
                             <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-                            ဆရာ/ဆရာမ မှတ်တမ်းများ မတွေ့ရှိပါ။
+                            @(LangService.IsMyanmar ? "ပြသရန် အချက်အလက် မရှိပါ။" : "No tutors found.")
                         </td>
                     </tr>
                 }
@@ -322,19 +343,19 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content tech-card">
                 <div class="modal-header border-0">
-                    <h5 class="text-danger fw-bold mb-0">Confirm Delete</h5>
+                    <h5 class="text-danger fw-bold mb-0">@(LangService.IsMyanmar ? "ဖျက်ရန် အတည်ပြုခြင်း" : "Confirm Delete")</h5>
                 </div>
-                <div class="modal-body text-center text-white py-3">
-                    Are you sure you want to delete <strong>@SelectedTutor?.TutorName</strong>?
+                <div class="modal-body text-center text-dark py-3">
+                    @(LangService.IsMyanmar ? $"ဆရာ/ဆရာမ \"{SelectedTutor?.TutorName}\" ကို ဖျက်ရန် သေချာပါသလား?" : $"Are you sure you want to delete {SelectedTutor?.TutorName}?")
                 </div>
                 <div class="modal-footer border-0">
-                    <button class="btn btn-secondary" @onclick="() => ShowModal = false">Cancel</button>
+                    <button class="btn btn-secondary" @onclick="() => ShowModal = false">@(LangService.IsMyanmar ? "မလုပ်တော့ပါ" : "Cancel")</button>
                     <button class="btn btn-danger" @onclick="DeleteTutor" disabled="@IsProcessing">
                         @if (IsProcessing)
                         {
                             <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                         }
-                        Yes, Delete
+                        @(IsProcessing ? (LangService.IsMyanmar ? "ဖျက်နေသည်..." : "Deleting...") : (LangService.IsMyanmar ? "သေချာသည်၊ ဖျက်မည်" : "Yes, Delete"))
                     </button>
                 </div>
             </div>

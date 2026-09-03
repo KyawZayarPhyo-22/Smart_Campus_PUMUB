@@ -69,7 +69,7 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
             if (SelectedStudentId <= 0 || SelectedSemesterId <= 0 || SelectedSubjectId <= 0)
             {
-                ErrorMessage = "Please select Student, Semester, and Subject.";
+                ErrorMessage = "ကျေးဇူးပြု၍ ကျောင်းသား၊ Semester နှင့် ဘာသာရပ်ကို ရွေးချယ်ပေးပါ။";
                 return;
             }
 
@@ -86,12 +86,12 @@ namespace Smart_Campus_PUMUB.Components.Features.Student
 
             if (response != null && response.IsSuccess)
             {
-                SuccessMessage = response.Message ?? "Successfully enrolled!";
+                SuccessMessage = response.Message ?? "ဘာသာရပ် အောင်မြင်စွာ စာရင်းသွင်းပြီးပါပြီ။";
                 SelectedSubjectId = 0; // Reset subject selection
             }
             else
             {
-                ErrorMessage = response?.Message ?? "Failed to enroll.";
+                ErrorMessage = response?.Message ?? "ဘာသာရပ် စာရင်းသွင်းခြင်း မအောင်မြင်ပါ။";
                 MissingPrerequisites = response?.MissingPrerequisites;
             }
 

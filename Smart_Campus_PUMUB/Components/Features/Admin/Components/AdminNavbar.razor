@@ -4,6 +4,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject AdminLanguageService LangService
 
 <style>
     .profile-pill {
@@ -56,7 +57,7 @@
         background-color: #10b981;
         border: 2px solid #ffffff;
         border-radius: 50%;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
 
     .profile-role-badge {
@@ -87,7 +88,7 @@
     }
 
     .admin-topnav {
-        z-index: 1070 !important;
+        z-index: 1060 !important;
     }
 
     .profile-dropdown-card {
@@ -99,8 +100,8 @@
         border: 1px solid #e5e7eb;
         border-radius: 16px;
         padding: 12px;
-        box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.06);
-        z-index: 1100;
+        box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.18), 0 10px 15px -5px rgba(0, 0, 0, 0.08);
+        z-index: 1085 !important;
         animation: dropdownSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -109,6 +110,7 @@
             opacity: 0;
             transform: translateY(8px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -204,15 +206,53 @@
         color: #ffffff !important;
         transform: translateX(3px);
     }
+
+    .btn-home-modern {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 10px 16px;
+        background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #3730a3 !important;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        margin-bottom: 8px;
+    }
+
+    .btn-home-modern i {
+        font-size: 1.05rem;
+        transition: transform 0.2s ease;
+        color: #ffffff !important;
+    }
+
+    .btn-home-modern:hover {
+        background: linear-gradient(135deg, #4338ca 0%, #312e81 100%) !important;
+        color: #ffffff !important;
+        border-color: #312e81 !important;
+        box-shadow: 0 6px 18px rgba(79, 70, 229, 0.5) !important;
+        transform: translateY(-1px);
+        text-decoration: none !important;
+    }
+
+    .btn-home-modern:hover i {
+        color: #ffffff !important;
+        transform: scale(1.15);
+    }
 </style>
 
 <header class="admin-topnav sticky-top">
     <div class="d-flex align-items-center gap-3">
 
         <!-- Sidebar toggle button -->
-        <button class="nav-icon-btn p-0 me-1 border-0"
-                type="button"
-                onclick="toggleDesktopSidebar()"
+        <button class="nav-icon-btn p-0 me-1 border-0" type="button" onclick="toggleDesktopSidebar()"
                 aria-label="Toggle sidebar">
             <i class="bi bi-layout-sidebar-inset fs-5"></i>
         </button>
@@ -223,10 +263,12 @@
                 <ol class="breadcrumb mb-0 breadcrumb-pill d-flex align-items-center gap-2">
                     <li class="breadcrumb-item d-flex align-items-center gap-1">
                         <i class="bi bi-shield-lock-fill" style="color: #4f46e5;"></i>
-                        <a href="/admin/dashboard" style="color: #4f46e5 !important; font-weight: 700; text-decoration: none;">Admin</a>
+                        <a href="/admin/dashboard"
+                           style="color: #4f46e5 !important; font-weight: 700; text-decoration: none;">@(LangService.IsMyanmar ? "စီမံခန့်ခွဲသူ" : "Admin")</a>
                     </li>
                     <li class="breadcrumb-item active d-flex align-items-center gap-1" aria-current="page">
-                        <span class="badge px-3 py-1.5 rounded-pill" style="background: rgba(79, 70, 229, 0.1); color: #4f46e5 !important; font-weight: 700; font-size: 0.85rem;">
+                        <span class="badge px-3 py-1.5 rounded-pill"
+                              style="background: rgba(79, 70, 229, 0.1); color: #4f46e5 !important; font-weight: 700; font-size: 0.85rem;">
                             @activeMenuTitle
                         </span>
                     </li>
@@ -241,11 +283,10 @@
         <!-- Profile Dropdown -->
         <AuthorizeView>
             <Authorized>
-                <div class="position-relative" style="z-index: 1090;">
+                <div class="position-relative" style="z-index: 1080;">
                     <button type="button"
                             class="profile-pill d-flex align-items-center gap-2 border-0 @(isProfileMenuOpen ? "active" : "")"
-                            id="profileDropdown"
-                            @onclick="ToggleProfileMenu"
+                            id="profileDropdown" @onclick="ToggleProfileMenu"
                             aria-expanded="@(isProfileMenuOpen ? "true" : "false")">
                         <div class="profile-avatar-wrapper">
                             <div class="profile-avatar-circle shadow-sm">
@@ -254,7 +295,8 @@
                             <span class="status-indicator-dot"></span>
                         </div>
                         <div class="d-none d-sm-block lh-1 text-start me-1">
-                            <span class="d-block fw-bold text-dark" style="font-size:0.85rem; letter-spacing: 0.2px;">@context.User.Identity?.Name</span>
+                            <span class="d-block fw-bold text-dark"
+                                  style="font-size:0.85rem; letter-spacing: 0.2px;">@context.User.Identity?.Name</span>
                             <span class="profile-role-badge">
                                 @(context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "ADMIN")
                             </span>
@@ -264,11 +306,12 @@
 
                     @if (isProfileMenuOpen)
                     {
-                        <!-- Outside click backdrop (z-index 1091) -->
-                        <div style="position: fixed; inset: 0; z-index: 1091; background: transparent;" @onclick="CloseProfileMenuImmediately"></div>
+                        <!-- Outside click backdrop (z-index 1081) -->
+                        <div style="position: fixed; inset: 0; z-index: 1081; background: transparent;"
+                             @onclick="CloseProfileMenuImmediately"></div>
 
-                        <!-- Dropdown card sits ABOVE backdrop (z-index 1095) -->
-                        <div class="profile-dropdown-card" style="z-index: 1095;" aria-labelledby="profileDropdown">
+                        <!-- Dropdown card sits ABOVE backdrop (z-index 1085) -->
+                        <div class="profile-dropdown-card" style="z-index: 1085 !important;" aria-labelledby="profileDropdown">
                             <div class="profile-card-header mb-2">
                                 <div class="profile-card-avatar shadow-sm">
                                     @GetInitials(context.User.Identity?.Name)
@@ -277,17 +320,19 @@
                                     <div class="profile-card-name text-truncate">@context.User.Identity?.Name</div>
                                     <div class="profile-card-subtitle">
                                         <span class="profile-online-badge"></span>
-                                        <span>@(context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Administrator")</span>
+                                        <span>@(LangService.IsMyanmar ? "အွန်လိုင်း" : "Online")</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="my-2" style="border-top: 1px solid #f1f5f9;"></div>
                             <div>
-                                <button type="button" 
-                                        class="btn-logout-modern border-0" 
-                                        @onclick="Logout">
+                                <a href="/" class="btn-home-modern">
+                                    <i class="bi bi-house-door-fill"></i>
+                                    <span>@(LangService.IsMyanmar ? "ပင်မစာမျက်နှာသို့" : "Home")</span>
+                                </a>
+                                <button type="button" class="btn-logout-modern border-0" @onclick="Logout">
                                     <i class="bi bi-box-arrow-right"></i>
-                                    <span>Logout</span>
+                                    <span>@(LangService.IsMyanmar ? "အကောင့်ထွက်မည်" : "Logout")</span>
                                 </button>
                             </div>
                         </div>
@@ -295,7 +340,7 @@
                 </div>
             </Authorized>
             <NotAuthorized>
-                <a href="/login" class="btn btn-primary rounded-pill px-4">Login</a>
+                <a href="/login" class="btn btn-primary rounded-pill px-4">@(LangService.IsMyanmar ? "အကောင့်ဝင်မည်" : "Login")</a>
             </NotAuthorized>
         </AuthorizeView>
 
@@ -311,7 +356,30 @@
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += OnLocationChanged;
+        LangService.OnLanguageChanged += HandleLanguageChanged;
         UpdateActiveMenuTitle(NavigationManager.Uri);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang))
+                {
+                    LangService.SetLanguage(savedLang);
+                }
+            }
+            catch { }
+        }
+    }
+
+    private void HandleLanguageChanged()
+    {
+        UpdateActiveMenuTitle(NavigationManager.Uri);
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -328,31 +396,35 @@
         if (relativePath.Contains("#"))
             relativePath = relativePath.Substring(0, relativePath.IndexOf("#"));
 
-        if (relativePath.StartsWith("admin/student-databank")) activeMenuTitle = "Student Databank";
-        else if (relativePath.StartsWith("admin/student-directory")) activeMenuTitle = "Student Directory (Pass/Fail)";
-        else if (relativePath.StartsWith("admin/student")) activeMenuTitle = "Register Databank";
-        else if (relativePath.StartsWith("admin/tutor")) activeMenuTitle = "Tutor Directory";
-        else if (relativePath.StartsWith("admin/role")) activeMenuTitle = "Roles";
-        else if (relativePath.StartsWith("admin/position")) activeMenuTitle = "Position";
-        else if (relativePath.StartsWith("admin/facult")) activeMenuTitle = "Faculty";
-        else if (relativePath.StartsWith("admin/semester")) activeMenuTitle = "Semester";
-        else if (relativePath.StartsWith("admin/categor")) activeMenuTitle = "Category";
-        else if (relativePath.StartsWith("admin/payment")) activeMenuTitle = "Payment Fees";
-        else if (relativePath.StartsWith("admin/department")) activeMenuTitle = "Department";
-        else if (relativePath.StartsWith("admin/subject")) activeMenuTitle = "Subject";
-        else if (relativePath.StartsWith("admin/activit")) activeMenuTitle = "Activities";
-        else if (relativePath.StartsWith("admin/rule")) activeMenuTitle = "Rules";
-        else if (relativePath.StartsWith("admin/permission")) activeMenuTitle = "Permissions";
-        else if (relativePath.StartsWith("admin/book")) activeMenuTitle = "Books";
-        else if (relativePath.StartsWith("admin/user")) activeMenuTitle = "User Management";
-        else if (relativePath.StartsWith("admin/acc-register")) activeMenuTitle = "Acc Register";
-        else if (relativePath.StartsWith("admin/report")) activeMenuTitle = "Student Admission Report";
-        else activeMenuTitle = "Dashboard";
+        bool my = LangService.IsMyanmar;
+
+        if (relativePath.StartsWith("admin/student-databank")) activeMenuTitle = my ? "ကျောင်းသားမှတ်တမ်း" : "Student Databank";
+        else if (relativePath.StartsWith("admin/student-directory")) activeMenuTitle = my ? "ကျောင်းသားလမ်းညွှန်" : "Student Directory";
+        else if (relativePath.StartsWith("admin/student-ranking")) activeMenuTitle = my ? "အဆင့်သတ်မှတ်ချက်နှင့် မဟာဘွဲ့အရည်အချင်း" : "Student Ranking & Master Eligibility";
+        else if (relativePath.StartsWith("admin/student")) activeMenuTitle = my ? "စာရင်းသွင်းမှတ်တမ်း" : "Register Databank";
+        else if (relativePath.StartsWith("admin/tutor")) activeMenuTitle = my ? "ဆရာ/ဆရာမ စာရင်း" : "Tutor Directory";
+        else if (relativePath.StartsWith("admin/role")) activeMenuTitle = my ? "အခန်းကဏ္ဍများ" : "Roles";
+        else if (relativePath.StartsWith("admin/position")) activeMenuTitle = my ? "ရာထူး" : "Position";
+        else if (relativePath.StartsWith("admin/facult")) activeMenuTitle = my ? "မဟာဌာန" : "Faculty";
+        else if (relativePath.StartsWith("admin/semester")) activeMenuTitle = my ? "စာသင်နှစ်ဝက်" : "Semester";
+        else if (relativePath.StartsWith("admin/categor")) activeMenuTitle = my ? "စာအုပ်အမျိုးအစား" : "Category";
+        else if (relativePath.StartsWith("admin/payment")) activeMenuTitle = my ? "အခကြေးငွေ သတ်မှတ်ချက်" : "Payment Fees";
+        else if (relativePath.StartsWith("admin/department")) activeMenuTitle = my ? "ဌာန" : "Department";
+        else if (relativePath.StartsWith("admin/subject")) activeMenuTitle = my ? "ဘာသာရပ်" : "Subject";
+        else if (relativePath.StartsWith("admin/activit")) activeMenuTitle = my ? "လှုပ်ရှားမှုများ" : "Activities";
+        else if (relativePath.StartsWith("admin/rule")) activeMenuTitle = my ? "စည်းမျဉ်းများ" : "Rules";
+        else if (relativePath.StartsWith("admin/permission")) activeMenuTitle = my ? "ခွင့်ပြုချက်များ" : "Permissions";
+        else if (relativePath.StartsWith("admin/book")) activeMenuTitle = my ? "စာအုပ်များ" : "Books";
+        else if (relativePath.StartsWith("admin/user")) activeMenuTitle = my ? "အသုံးပြုသူ စီမံခန့်ခွဲမှု" : "User Management";
+        else if (relativePath.StartsWith("admin/acc-register")) activeMenuTitle = my ? "အကောင့်ဖွင့်ခြင်း" : "Acc Register";
+        else if (relativePath.StartsWith("admin/report")) activeMenuTitle = my ? "ကျောင်းဝင်ခွင့်အစီရင်ခံစာ" : "Admission Report";
+        else activeMenuTitle = my ? "ပင်မစာမျက်နှာ" : "Dashboard";
     }
 
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        LangService.OnLanguageChanged -= HandleLanguageChanged;
     }
 
     private void ToggleProfileMenu()

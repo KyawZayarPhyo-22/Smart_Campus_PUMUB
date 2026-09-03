@@ -9,13 +9,16 @@ using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Role;
 
-public partial class Page_RoleList
+public partial class Page_RoleList : IDisposable
 {
     [Inject]
     public HttpClientService HttpClientService { get; set; } = null!;
 
     [Inject]
     public IJSRuntime JSRuntime { get; set; } = null!;
+
+    [Inject] 
+    public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
     // 🔗 API မှ လာမည့် List အား လက်ခံသိမ်းဆည်းမည့် နေရာ
     private List<RoleModel> RoleList { get; set; } = new();
@@ -75,7 +78,23 @@ public partial class Page_RoleList
     // စာမျက်နှာ စတင်ပွင့်လာချိန်တွင် API အား GET ခေါ်ခြင်း
     protected override async Task OnInitializedAsync()
     {
+        LangService.OnLanguageChanged += StateHasChanged;
         await LoadRoles();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        try
+        {
+            var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+            if (!string.IsNullOrEmpty(savedLang))
+            {
+                LangService.SetLanguage(savedLang);
+            }
+        }
+        catch { }
     }
 
     private async Task LoadRoles()
@@ -85,7 +104,7 @@ public partial class Page_RoleList
         StateHasChanged();
         try
         {
-            var delayTask = Task.Delay(1000);
+            var delayTask = Task.Delay(500);
             var fetchTask = HttpClientService.ExecuteAsync<PagedResult<RoleModel>>(
                 $"role/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}", 
                 EnumHttpMethod.Get
@@ -102,7 +121,7 @@ public partial class Page_RoleList
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားအယွင်းရှိပါသည်။ Error: {ex.Message}";
+            ErrorMessage = LangService.IsMyanmar ? $"ဒေတာဆွဲယူရာတွင် အမှားအယွင်းရှိပါသည်။ Error: {ex.Message}" : $"Failed to load data. Error: {ex.Message}";
         }
         finally
         {
@@ -116,7 +135,6 @@ public partial class Page_RoleList
         SelectedRole = role;
         ShowModal = true;
 
-        // 💡 ဒီနေရာမှာ ထည့်ပေးပါ - Modal အသစ်ဖွင့်တိုင်း Message ကို Clear လုပ်မယ်
         statusMessage = "";
         IsSuccess = false;
     }
@@ -125,55 +143,16 @@ public partial class Page_RoleList
     {
         SelectedRole = null;
         ShowModal = false;
+        statusMessage = "";
+        IsSuccess = false;
     }
 
-    //private async Task DeleteRole()
-    //{
-    //    if (SelectedRole == null) return;
-
-    //    IsProcessing = true;
-    //    statusMessage = "ဖျက်သိမ်းနေပါသည်...";
-
-    //    try
-    //    {
-    //        var response = await HttpClientService.ExecuteAsync<RoleDeleteResponseModel>(
-    //            $"role/{SelectedRole.RoleId}",
-    //            EnumHttpMethod.Delete
-    //        );
-
-    //        if (response?.IsSuccess == true)
-    //        {
-    //            statusMessage = response.Message ?? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
-    //            CloseDeleteModal();
-    //            await LoadRoles(); // refresh table
-    //        }
-    //        else
-    //        {
-    //            statusMessage = response?.Message ?? "ဖျက်သိမ်း၍ မရပါ။";
-    //        }
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        statusMessage = $"Error: {ex.Message}";
-    //    }
-    //    finally
-    //    {
-    //        IsProcessing = false;
-    //    }
-    //}
-    //private void CloseDeleteModal()
-    //{
-    //    SelectedRole = null;
-    //    ShowModal = false;
-    //    statusMessage = ""; // Reset message
-    //    IsSuccess = false;
-    //}
     private async Task DeleteRole()
     {
         if (SelectedRole == null) return;
 
         IsProcessing = true;
-        statusMessage = "ဖျက်သိမ်းနေပါသည်...";
+        statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
         IsSuccess = false;
 
         try
@@ -182,23 +161,19 @@ public partial class Page_RoleList
                 $"role/{SelectedRole.RoleId}",
                 EnumHttpMethod.Delete
             );
-          //  var response = await HttpClientService.ExecuteAsync<SemesterDeleteResponseModel>(
-          //    $"semester/{SelectedSemester.SemesterId}",
-          //    EnumHttpMethod.Delete
-          //);
+
             if (response != null && response.IsSuccess)
             {
-                statusMessage = "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။";
+                statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
                 IsSuccess = true;
 
-                await Task.Delay(1500);
+                await Task.Delay(800);
                 CloseDeleteModal();
                 await LoadRoles();
             }
             else
             {
-                // API ကနေ response အမှားပြန်လာရင် ဒီစာသားကို ပြပါ
-                statusMessage = "ဤ Role ကို User များက အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။";
+                statusMessage = LangService.IsMyanmar ? "ဤ Role ကို User များက အသုံးပြုနေသောကြောင့် ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this role because it is in use.");
                 IsSuccess = false;
             }
         }
@@ -214,5 +189,8 @@ public partial class Page_RoleList
         }
     }
 
-
+    public void Dispose()
+    {
+        LangService.OnLanguageChanged -= StateHasChanged;
+    }
 }

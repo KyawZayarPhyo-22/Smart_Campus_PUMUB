@@ -11,11 +11,12 @@ using System.Threading.Tasks;
 
 namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
 {
-    public partial class Page_PermissionList
+    public partial class Page_PermissionList : IDisposable
     {
         [Inject] public HttpClientService HttpClientService { get; set; } = null!;
         [Inject] public IJSRuntime JSRuntime { get; set; } = null!;
         [Inject] public AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+        [Inject] public Smart_Campus_PUMUB.Components.Features.Services.AdminLanguageService LangService { get; set; } = null!;
 
         private List<PermissionModel> PermissionList { get; set; } = new();
         private string SearchTerm { get; set; } = "";
@@ -66,7 +67,23 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
 
         protected override async Task OnInitializedAsync()
         {
+            LangService.OnLanguageChanged += StateHasChanged;
             await LoadPermissions();
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (!firstRender) return;
+
+            try
+            {
+                var savedLang = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "admin_dashboard_lang");
+                if (!string.IsNullOrEmpty(savedLang))
+                {
+                    LangService.SetLanguage(savedLang);
+                }
+            }
+            catch { }
         }
 
         private async Task LoadPermissions()
@@ -76,7 +93,7 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
             StateHasChanged();
             try
             {
-                var delayTask = Task.Delay(1000);
+                var delayTask = Task.Delay(500);
                 var fetchTask = HttpClientService.ExecuteAsync<PagedResult<PermissionModel>>(
                     $"permission/paginate?pageNumber={CurrentPage}&pageSize={PageSize}&searchTerm={Uri.EscapeDataString(SearchTerm)}",
                     EnumHttpMethod.Get
@@ -92,7 +109,7 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}";
+                ErrorMessage = LangService.IsMyanmar ? $"ဒေတာဆွဲယူရာတွင် အမှားရှိပါသည်။ Error: {ex.Message}" : $"Failed to load data. Error: {ex.Message}";
             }
             finally
             {
@@ -125,7 +142,7 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
             if (SelectedPermission == null) return;
 
             IsProcessing = true;
-            statusMessage = string.Empty;
+            statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းနေပါသည်..." : "Deleting...";
 
             try
             {
@@ -137,29 +154,34 @@ namespace Smart_Campus_PUMUB.Components.Admin.Pages.Permission
                 if (response != null && response.IsSuccess)
                 {
                     IsSuccess = true;
-                    statusMessage = response.Message;
+                    statusMessage = LangService.IsMyanmar ? "ဖျက်သိမ်းမှု အောင်မြင်ပါသည်။" : (response.Message ?? "Deleted successfully.");
                     StateHasChanged();
 
-                    await Task.Delay(1000);
+                    await Task.Delay(800);
                     CloseDeleteModal();
                     await LoadPermissions();
                 }
                 else
                 {
                     IsSuccess = false;
-                    statusMessage = response?.Message ?? "ဖျက်ခြင်း မအောင်မြင်ပါ။";
+                    statusMessage = LangService.IsMyanmar ? "ဤ လုပ်ပိုင်ခွင့် ကို ဖျက်၍ မရပါ။" : (response?.Message ?? "Cannot delete this permission.");
                 }
             }
             catch (Exception ex)
             {
                 IsSuccess = false;
-                statusMessage = $"အမှားဖြစ်ပေါ်ခဲ့သည်: {ex.Message}";
+                statusMessage = $"Error: {ex.Message}";
             }
             finally
             {
                 IsProcessing = false;
                 StateHasChanged();
             }
+        }
+
+        public void Dispose()
+        {
+            LangService.OnLanguageChanged -= StateHasChanged;
         }
     }
 }
